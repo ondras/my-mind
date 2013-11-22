@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<script src="js/mm.js"></script>
+		<script src="js/item.js"></script>
+		<script src="js/root.js"></script>
+		<script src="js/map.js"></script>
+		<script src="js/selection.js"></script>
+		<script src="js/keyboard.js"></script>
+		<script src="js/action.js"></script>
+		<script src="js/app.js"></script>
+		<link rel="stylesheet" href="css/style.css" />
+	</head>
+	<body>
+		<script>
+		var app = new MM.App();
+
+		var map = new MM.Map();
+		var root = map.getRoot();
+		root.setText("This is <s>Sparta</s> Root");
+		
+		var left = root.getLeft();
+		var c1 = left.insertChild().setText("left 1");
+		left.insertChild().setText("left 2");
+		
+		app.getSelection().addItem(c1);
+		
+		var right = root.getRight();
+		right.insertChild().setText("right 1");
+		right.insertChild().setText("right 2");
+
+		map.build(document.body);
+		</script>
+	</body>
+</html>
