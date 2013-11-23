@@ -34,8 +34,6 @@ MM.Command.Select.prototype._child = function(side) {
 	selection.remove(item);
 	selection.add(children[0]);
 }
-MM.Command.Select.prototype._getSide = function() {
-}
 
 MM.Command.SelectLeft = function() {
 	MM.Command.Select.call(this);

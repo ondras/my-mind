@@ -20,7 +20,7 @@ MM.Item.prototype.getText = function() {
 	return this._dom.content.innerHTML;
 }
 
-MM.Item.prototype.getChildren = function() {
+MM.Item.prototype.getChildren = function(side) {
 	return this._children;
 }
 
