@@ -10,26 +10,31 @@
 		<script src="js/selection.js"></script>
 		<script src="js/keyboard.js"></script>
 		<script src="js/action.js"></script>
+		<script src="js/command.js"></script>
+		<script src="js/command.select.js"></script>
 		<script src="js/app.js"></script>
 		<link rel="stylesheet" href="css/style.css" />
 	</head>
 	<body>
 		<script>
-		var app = new MM.App();
+		MM.App.init();
 
 		var map = new MM.Map();
 		var root = map.getRoot();
 		root.setText("This is <s>Sparta</s> Root");
 		
 		var left = root.getLeft();
-		var c1 = left.insertNewChild().setText("left 1");
-		left.insertNewChild().setText("left 2");
+		var c1 = left.insertChild(new MM.Item()).setText("left 1");
+		left.insertChild(new MM.Item()).setText("left 2");
 		
-		app.getSelection().addItem(c1);
+		c1.insertChild(new MM.Item()).setText("left 1.1");
+		c1.insertChild(new MM.Item()).setText("left 1.2");
+		
+		MM.App.selection.add(c1);
 		
 		var right = root.getRight();
-		right.insertNewChild().setText("right 1");
-		right.insertNewChild().setText("right 2");
+		right.insertChild(new MM.Item()).setText("right 1");
+		right.insertChild(new MM.Item()).setText("right 2");
 
 		map.build(document.body);
 		</script>

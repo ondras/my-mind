@@ -1,3 +1,3 @@
-.selected {
+.selected > span {
 	font-weight: bold;
 }

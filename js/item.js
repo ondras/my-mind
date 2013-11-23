@@ -1,11 +1,11 @@
-MM.Item = function(parent) {
+MM.Item = function() {
 	this._dom = {
 		node: document.createElement("li"),
 		content: document.createElement("span"),
 		children: document.createElement("ul")
 	}
 	this._children = [];
-	this._parent = parent;
+	this._parent = null;
 	this._dom.node.appendChild(this._dom.content);
 	
 	this._oldText = "";
@@ -32,7 +32,7 @@ MM.Item.prototype.getParent = function() {
 	return this._parent;
 }
 
-MM.Item.prototype.setParent = function(this) {
+MM.Item.prototype.setParent = function(parent) {
 	this._parent = parent;
 	return this;
 }
@@ -50,10 +50,6 @@ MM.Item.prototype.insertChild = function(child, index) {
 	
 	child.setParent(this);
 	return child;
-}
-
-MM.Item.prototype.insertNewChild = function(index) {
-	return this.insertChild(new MM.Item(), index);
 }
 
 MM.Item.prototype.removeChild = function(child) {
@@ -74,19 +70,15 @@ MM.Item.prototype.removeChild = function(child) {
 MM.Item.prototype.startEditing = function() {
 	this._oldText = this.getText();
 	this._dom.content.contentEditable = true;
+	this._dom.content.focus();
 	return this;
 }
 
-MM.Item.prototype.stopEditing = function(save) {
+MM.Item.prototype.stopEditing = function() {
+	this._dom.content.blur();
 	this._dom.content.contentEditable = false;
-	
-	if (save) {
-		var action = new WM.Action.SetText(this, this.getText());
-		this._oldText = "";
-		return action;
-	} else {
-		this.setText(this._oldText);		
-		this._oldText = "";
-		return this;
-	}
+	var result = this._dom.content.innerHTML;
+	this._dom.content.innerHTML = this._oldText;
+	this._oldText = "";
+	return result;
 }

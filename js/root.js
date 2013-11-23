@@ -5,8 +5,8 @@ MM.Root = function() {
 	this._dom.node = document.createElement("div");
 	while (old.firstChild) { this._dom.node.appendChild(old.firstChild); }
 	
-	this._left = this.insertNewChild();
-	this._right = this.insertNewChild();
+	this._left = this.insertChild(new MM.Item());
+	this._right = this.insertChild(new MM.Item());
 }
 MM.Root.prototype = Object.create(MM.Item.prototype);
 
