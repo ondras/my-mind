@@ -32,6 +32,22 @@ MM.Item.prototype.getParent = function() {
 	return this._parent;
 }
 
+MM.Item.prototype.getRoot = function() {
+	var node = this;
+	while (node.getParent()) { node = node.getParent(); }
+	return node;
+}
+
+MM.Item.prototype.getSide = function() {
+	var root = this.getRoot();
+	var node = this;
+
+	while (node.getParent() != root) { node = node.getParent(); }
+	
+	var left = root.getChildren("left");
+	return (left.indexOf(node) == -1 ? "right" : "left");
+}
+
 MM.Item.prototype.setParent = function(parent) {
 	this._parent = parent;
 	return this;
