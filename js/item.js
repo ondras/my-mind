@@ -17,24 +17,30 @@ MM.Item.prototype.getText = function() {
 	return this._dom.content.innerHTML;
 }
 
+MM.Item.prototype.getChildren = function() {
+	return this._children;
+}
+
 MM.Item.prototype.getNode = function() {
 	return this._dom.node;
 }
 
-MM.Item.prototype.insertChild = function(index) {
-	if (arguments.length == 0) { index = this._children.length; }
+MM.Item.prototype.insertChild = function(child, index) {
+	if (arguments.length == 1) { index = this._children.length; }
 	if (!this._children.length) {
 		this._dom.node.appendChild(this._dom.children);
 	}
 	
-	var child = new MM.Item();
 	var next = null;
-
 	if (index < this._children.length) { next = this._children[index].getNode(); }
 	this._dom.children.insertBefore(child.getNode(), next);
 	this._children.splice(index, 0, child);
 	
 	return child;
+}
+
+MM.Item.prototype.insertNewChild = function(index) {
+	return this.insertChild(new MM.Item(), index);
 }
 
 MM.Item.prototype.removeChild = function(child) {

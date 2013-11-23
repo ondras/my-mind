@@ -22,14 +22,14 @@
 		root.setText("This is <s>Sparta</s> Root");
 		
 		var left = root.getLeft();
-		var c1 = left.insertChild().setText("left 1");
-		left.insertChild().setText("left 2");
+		var c1 = left.insertNewChild().setText("left 1");
+		left.insertNewChild().setText("left 2");
 		
 		app.getSelection().addItem(c1);
 		
 		var right = root.getRight();
-		right.insertChild().setText("right 1");
-		right.insertChild().setText("right 2");
+		right.insertNewChild().setText("right 1");
+		right.insertNewChild().setText("right 2");
 
 		map.build(document.body);
 		</script>

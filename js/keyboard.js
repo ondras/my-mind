@@ -13,9 +13,10 @@ MM.Keyboard.prototype.handleEvent = function(e) {
 }
 
 MM.Keyboard.prototype._handleKeyDown = function(e) {
+	var selected = this._app.getSelection().getItems();
+
 	switch (e.keyCode) {
 		case 32:
-			var selected = this._app.getSelection().getItems();
 			if (selected.length != 1) { return; }
 			var text = prompt();
 			var action = new MM.Action.SetText(selected[0], text);
