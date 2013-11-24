@@ -43,7 +43,8 @@ MM.Command.Edit = function() {
 }
 MM.Command.Edit.prototype = Object.create(MM.Command.prototype);
 MM.Command.Edit.prototype.execute = function() {
-	MM.App.startEditing();
+	MM.App.current.startEditing();
+	MM.App.editing = true;
 }
 
 MM.Command.Finish = function() {
@@ -53,7 +54,8 @@ MM.Command.Finish = function() {
 }
 MM.Command.Finish.prototype = Object.create(MM.Command.prototype);
 MM.Command.Finish.prototype.execute = function() {
-	var text = MM.App.stopEditing();
+	MM.App.editing = false;
+	var text = MM.App.current.stopEditing();
 	var action = new MM.Action.SetText(MM.App.current, text);
 	MM.App.action(action);
 }
@@ -65,5 +67,46 @@ MM.Command.Cancel = function() {
 }
 MM.Command.Cancel.prototype = Object.create(MM.Command.prototype);
 MM.Command.Cancel.prototype.execute = function() {
-	MM.App.stopEditing();
+	MM.App.editing = false;
+	MM.App.current.stopEditing();
+}
+
+MM.Command.InsertSibling = function() {
+	MM.Command.call(this);
+	this._keys.push({keyCode: 13, type:"keydown"});
+}
+MM.Command.InsertSibling.prototype = Object.create(MM.Command.prototype);
+MM.Command.InsertSibling.prototype.execute = function() {
+	var item = MM.App.current;
+	var parent = item.getParent();
+	if (parent) {
+		var index = parent.getChildren().indexOf(item);
+		var action = new MM.Action.InsertItem(parent, index+1);
+	} else {
+		/* FIXME */
+	}
+	MM.App.action(action);	
+}
+
+MM.Command.InsertChild = function() {
+	MM.Command.call(this);
+	this._keys.push({keyCode: 45, type:"keydown"});
+}
+MM.Command.InsertChild.prototype = Object.create(MM.Command.prototype);
+MM.Command.InsertChild.prototype.execute = function() {
+	var action = new MM.Action.InsertItem(MM.App.current, 0);
+	MM.App.action(action);	
+}
+
+MM.Command.Delete = function() {
+	MM.Command.call(this);
+	this._keys.push({keyCode: 46, type:"keydown"});
+}
+MM.Command.Delete.prototype = Object.create(MM.Command.prototype);
+MM.Command.Delete.prototype.isValid = function() {
+	return MM.Command.prototype.isValid.call(this) && MM.App.current.getParent();
+}
+MM.Command.Delete.prototype.execute = function() {
+	var action = new MM.Action.RemoveItem(MM.App.current);
+	MM.App.action(action);	
 }

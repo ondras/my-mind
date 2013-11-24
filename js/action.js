@@ -34,18 +34,45 @@ MM.Action.InsertItem.prototype.undo = function() {
 
 MM.Action.RemoveItem = function(item) {
 	this._item = item;
+	this._children = item.getChildren().slice();
 	this._parent = item.getParent();
-	this._index = children.indexOf(this._item);
+	this._side = item.getSide();
+	this._index = this._parent.getChildren(this._side).indexOf(this._item);
 }
 MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.RemoveItem.prototype.perform = function() {
-	var children = this._parent.getChildren();
-	this._parent.removeChild(this._item);
-	/* FIXME select something */
-	/* FIXME root! */
+	for (var i=this._children.length-1;i>=0;i--) {
+		var child = this._children[i];
+		this._item.removeChild(child);
+		if (this._parent.getParent()) { /* normal node */
+			this._parent.insertChild(child, this._index);
+		} else { /* root */
+			this._parent.insertChild(this._side, child, this._index);
+		}
+	}
 	
+	if (this._parent.getParent()) {
+		this._parent.removeChild(this._item);
+	} else {
+		this._parent.removeChild(this._side, this._item);
+	}
+	MM.App.select(this._parent);	
 }
 MM.Action.RemoveItem.prototype.undo = function() {
-	this._parent.insertChild(this._item, this._index);
+	for (var i=0;i<this._children.length;i++) {
+		var child = this._children[i];
+		if (this._parent.getParent()) {
+			this._parent.removeChild(child);
+		} else {
+			this._parent.removeChild(this._side, child);
+		}
+		this._item.insertChild(child);
+	}
+
+	if (this._parent.getParent()) {
+		this._parent.insertChild(this._item, this._index);
+	} else {
+		this._parent.insertChild(this._side, this._item, this._index);
+	}
 	MM.App.select(this._item);
 }

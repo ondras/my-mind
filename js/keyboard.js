@@ -24,22 +24,3 @@ MM.Keyboard.prototype._keyOK = function(key, e) {
 	}
 	return true;
 }
-
-MM.Keyboard.prototype._handleKeyDown = function(e) {
-	switch (e.keyCode) {
-		case 37: /* left */
-		break;
-		case 38: /* top */
-		break;
-		case 39: /* right */
-		break;
-		case 40: /* bottom */
-		break;
-		
-		case 45: /* insert */
-		break;
-
-		case 46: /* delete */
-		break;
-	}
-}
