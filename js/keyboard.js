@@ -4,12 +4,9 @@ MM.Keyboard = function() {
 }
 
 MM.Keyboard.prototype.handleEvent = function(e) {
-	var editing = !!MM.App.editing;
-	
 	for (var i=0;i<MM.App.commands.length;i++) {
 		var command = MM.App.commands[i];
 		if (!command.isValid()) { continue; }
-		if (command.inEditMode() != editing) { continue; }
 		var keys = command.getKeys();
 		for (var j=0;j<keys.length;j++) {
 			if (this._keyOK(keys[j], e)) {

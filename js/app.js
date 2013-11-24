@@ -2,7 +2,7 @@ MM.App = {
 	commands: [],
 	keyboard: null,
 	current: null,
-	editing: null,
+	editing: false,
 	history: [],
 	historyIndex: 0,
 	map: null,
@@ -33,6 +33,16 @@ MM.App = {
 		this.current.getNode().classList.add("current");
 	},
 	
+	startEditing: function() {
+		this.current.startEditing();
+		this.editing = true;
+	},
+	
+	stopEditing: function() {
+		this.editing = false;
+		return this.current.stopEditing();
+	},
+
 	init: function() {
 		this.keyboard = new MM.Keyboard();
 		for (var p in MM.Command) { this.commands.push(new MM.Command[p]()); }

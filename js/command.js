@@ -3,10 +3,7 @@ MM.Command = function() {
 	this._editMode = false;
 }
 MM.Command.prototype.isValid = function() {
-	return true;
-}
-MM.Command.prototype.inEditMode = function() {
-	return this._editMode;
+	return (this._editMode == MM.App.editing);
 }
 MM.Command.prototype.getKeys = function() {
 	return this._keys;
@@ -20,7 +17,7 @@ MM.Command.Undo = function() {
 }
 MM.Command.Undo.prototype = Object.create(MM.Command.prototype);
 MM.Command.Undo.prototype.isValid = function() {
-	return !!MM.App.historyIndex;
+	return MM.Command.prototype.isValid.call(this) && !!MM.App.historyIndex;
 }
 MM.Command.Undo.prototype.execute = function() {
 	MM.App.history[MM.App.historyIndex-1].undo();
@@ -33,7 +30,7 @@ MM.Command.Redo = function() {
 }
 MM.Command.Redo.prototype = Object.create(MM.Command.prototype);
 MM.Command.Redo.prototype.isValid = function() {
-	return (MM.App.historyIndex != MM.App.history.length);
+	return (MM.Command.prototype.isValid.call(this) && MM.App.historyIndex != MM.App.history.length);
 }
 MM.Command.Redo.prototype.execute = function() {
 	MM.App.history[MM.App.historyIndex].perform();
@@ -46,12 +43,7 @@ MM.Command.Edit = function() {
 }
 MM.Command.Edit.prototype = Object.create(MM.Command.prototype);
 MM.Command.Edit.prototype.execute = function() {
-	if (MM.App.editing) {
-		 /* FIXME */
-	}
-	var item = MM.App.current;
-	item.startEditing();
-	MM.App.editing = true;
+	MM.App.startEditing();
 }
 
 MM.Command.Finish = function() {
@@ -61,8 +53,17 @@ MM.Command.Finish = function() {
 }
 MM.Command.Finish.prototype = Object.create(MM.Command.prototype);
 MM.Command.Finish.prototype.execute = function() {
-	var text = MM.App.editing.stopEditing();
-	MM.App.editing = null;
+	var text = MM.App.stopEditing();
 	var action = new MM.Action.SetText(MM.App.current, text);
 	MM.App.action(action);
+}
+
+MM.Command.Cancel = function() {
+	MM.Command.call(this);
+	this._keys.push({keyCode: 27, type:"keydown"});
+	this._editMode = true;
+}
+MM.Command.Cancel.prototype = Object.create(MM.Command.prototype);
+MM.Command.Cancel.prototype.execute = function() {
+	MM.App.stopEditing();
 }

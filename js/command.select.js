@@ -5,6 +5,8 @@ MM.Command.Select.prototype = Object.create(MM.Command.prototype);
 MM.Command.Select.prototype._move = function(diff) {
 	var item = MM.App.current;
 	var parent = item.getParent();
+	if (!parent) { return; }
+
 	var children = parent.getChildren(item.getSide());
 	var index = children.indexOf(item);
 	index += diff;
@@ -31,9 +33,6 @@ MM.Command.SelectLeft = function() {
 	this._keys.push({keyCode: 37, type:"keydown"});
 }
 MM.Command.SelectLeft.prototype = Object.create(MM.Command.Select.prototype);
-MM.Command.SelectLeft.prototype.isValid = function() {
-	/* FIXME */return true;
-};
 MM.Command.SelectLeft.prototype.execute = function() {
 	var item = MM.App.current;
 	if (item.getRoot() == item || item.getSide() == "left") {
@@ -48,9 +47,6 @@ MM.Command.SelectRight = function() {
 	this._keys.push({keyCode: 39, type:"keydown"});
 }
 MM.Command.SelectRight.prototype = Object.create(MM.Command.Select.prototype);
-MM.Command.SelectRight.prototype.isValid = function() {
-	/* FIXME */return true;
-};
 MM.Command.SelectRight.prototype.execute = function() {
 	var item = MM.App.current;
 	if (item.getRoot() == item || item.getSide() == "right") {
