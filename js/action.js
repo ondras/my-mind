@@ -16,23 +16,20 @@ MM.Action.SetText.prototype.undo = function() {
 }
 
 MM.Action.InsertItem = function(parent, index) {
-	this._selected = WM.App.selection.get().slice();
 	this._parent = parent;
 	this._index = index;
 	this._item = null;
 }
 MM.Action.InsertItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.InsertItem.prototype.perform = function() {
-	var selection = MM.App.selection;
 	this._item = this._parent.insertChild(this._index);
 	/* FIXME root! */
-	selection.clear();
-	selection.add(this._item);
+	MM.App.select(this._item);
 }
 MM.Action.InsertItem.prototype.undo = function() {
 	this._parent.removeChild(this._item);
 	this._item = null;
-	selection.set(this._selected);
+	MM.App.select(this._parent);
 }
 
 MM.Action.RemoveItem = function(item) {
@@ -42,7 +39,6 @@ MM.Action.RemoveItem = function(item) {
 }
 MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.RemoveItem.prototype.perform = function() {
-	MM.App.selection.remove(this._item);
 	var children = this._parent.getChildren();
 	this._parent.removeChild(this._item);
 	/* FIXME select something */
@@ -51,7 +47,5 @@ MM.Action.RemoveItem.prototype.perform = function() {
 }
 MM.Action.RemoveItem.prototype.undo = function() {
 	this._parent.insertChild(this._item, this._index);
-	var selection = MM.App.selection;
-	selection.clear();
-	selection.add(this._item);
+	MM.App.select(this._item);
 }

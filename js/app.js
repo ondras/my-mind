@@ -1,10 +1,11 @@
 MM.App = {
 	commands: [],
 	keyboard: null,
-	selection: null,
+	current: null,
 	editing: null,
 	history: [],
 	historyIndex: 0,
+	map: null,
 	
 	action: function(action) {
 		if (this.historyIndex < this.history.length) { /* remove undoed actions */
@@ -18,9 +19,22 @@ MM.App = {
 		return this;
 	},
 	
+	setMap: function(map) {
+		this.map = map;
+		this.map.build(document.body);
+		this.select(map.getRoot());
+	},
+	
+	select: function(item) {
+		if (this.current) {
+			this.current.getNode().classList.remove("current");
+		}
+		this.current = item;
+		this.current.getNode().classList.add("current");
+	},
+	
 	init: function() {
 		this.keyboard = new MM.Keyboard();
-		this.selection = new MM.Selection();
 		for (var p in MM.Command) { this.commands.push(new MM.Command[p]()); }
 	}
 }
