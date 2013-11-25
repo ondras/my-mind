@@ -1,6 +1,7 @@
 MM.Command = function() {
 	this._keys = [];
 	this._editMode = false;
+	this._name = "";
 }
 MM.Command.prototype.isValid = function() {
 	return (this._editMode == MM.App.editing);
@@ -8,12 +9,63 @@ MM.Command.prototype.isValid = function() {
 MM.Command.prototype.getKeys = function() {
 	return this._keys;
 }
+MM.Command.prototype.getName = function() {
+	return this._name;
+}
 MM.Command.prototype.execute = function() {
+}
+
+MM.Command.Help = function() {
+	MM.Command.call(this);
+
+	this._name = "Show/hide help";
+	this._keys.push({charCode: "?".charCodeAt(0)});
+	this._visible = false;
+	this._dom = {
+		node: document.createElement("div"),
+		table: document.createElement("table")
+	}
+	this._dom.node.id = "help";
+	this._dom.node.appendChild(this._dom.table);
+	document.body.appendChild(this._dom.node)
+}
+MM.Command.Help.prototype = Object.create(MM.Command.prototype);
+MM.Command.Help.prototype.execute = function() {
+	if (this._visible) {
+		this._visible = false;
+		this._dom.node.style.opacity = 0;
+		return;
+	}
+
+	var all = MM.App.commands;
+	this._dom.table.innerHTML = "";
+
+	for (var i=0;i<all.length;i++) {
+		var c = all[i];
+		var name = c.getName();
+		if (!name) { continue; }
+		this._buildRow(c);
+	}
+
+	this._visible = true;
+	this._dom.node.style.opacity = 1;
+}
+MM.Command.Help.prototype._buildRow = function(command) {
+	var name = command.getName();
+	if (!name) { return; }
+	var row = this._dom.table.insertRow(-1);
+
+	var keys = command.getKeys().map(this._formatKey, this);
+	row.insertCell().innerHTML = name;
+	row.insertCell().innerHTML = keys.join("/");
+}
+MM.Command.Help.prototype._formatKey = function(key) {
+	return "asd";
 }
 
 MM.Command.Undo = function() {
 	MM.Command.call(this);
-	this._keys.push({charCode: "z".charCodeAt(0), ctrlKey: true, type:"keypress"});
+	this._keys.push({charCode: "z".charCodeAt(0), ctrlKey: true});
 }
 MM.Command.Undo.prototype = Object.create(MM.Command.prototype);
 MM.Command.Undo.prototype.isValid = function() {
@@ -26,7 +78,7 @@ MM.Command.Undo.prototype.execute = function() {
 
 MM.Command.Redo = function() {
 	MM.Command.call(this);
-	this._keys.push({charCode: "y".charCodeAt(0), ctrlKey: true, type:"keypress"});
+	this._keys.push({charCode: "y".charCodeAt(0), ctrlKey: true});
 }
 MM.Command.Redo.prototype = Object.create(MM.Command.prototype);
 MM.Command.Redo.prototype.isValid = function() {
@@ -39,7 +91,7 @@ MM.Command.Redo.prototype.execute = function() {
 
 MM.Command.Edit = function() {
 	MM.Command.call(this);
-	this._keys.push({keyCode: 32, type:"keydown"});
+	this._keys.push({keyCode: 32});
 }
 MM.Command.Edit.prototype = Object.create(MM.Command.prototype);
 MM.Command.Edit.prototype.execute = function() {
@@ -49,7 +101,7 @@ MM.Command.Edit.prototype.execute = function() {
 
 MM.Command.Finish = function() {
 	MM.Command.call(this);
-	this._keys.push({keyCode: 13, type:"keydown"});
+	this._keys.push({keyCode: 13});
 	this._editMode = true;
 }
 MM.Command.Finish.prototype = Object.create(MM.Command.prototype);
@@ -62,7 +114,7 @@ MM.Command.Finish.prototype.execute = function() {
 
 MM.Command.Cancel = function() {
 	MM.Command.call(this);
-	this._keys.push({keyCode: 27, type:"keydown"});
+	this._keys.push({keyCode: 27});
 	this._editMode = true;
 }
 MM.Command.Cancel.prototype = Object.create(MM.Command.prototype);
@@ -73,7 +125,7 @@ MM.Command.Cancel.prototype.execute = function() {
 
 MM.Command.InsertSibling = function() {
 	MM.Command.call(this);
-	this._keys.push({keyCode: 13, type:"keydown"});
+	this._keys.push({keyCode: 13});
 }
 MM.Command.InsertSibling.prototype = Object.create(MM.Command.prototype);
 MM.Command.InsertSibling.prototype.execute = function() {
@@ -93,7 +145,7 @@ MM.Command.InsertSibling.prototype.execute = function() {
 
 MM.Command.InsertChild = function() {
 	MM.Command.call(this);
-	this._keys.push({keyCode: 45, type:"keydown"});
+	this._keys.push({keyCode: 45});
 }
 MM.Command.InsertChild.prototype = Object.create(MM.Command.prototype);
 MM.Command.InsertChild.prototype.execute = function() {
@@ -107,7 +159,7 @@ MM.Command.InsertChild.prototype.execute = function() {
 
 MM.Command.Delete = function() {
 	MM.Command.call(this);
-	this._keys.push({keyCode: 46, type:"keydown"});
+	this._keys.push({keyCode: 46});
 }
 MM.Command.Delete.prototype = Object.create(MM.Command.prototype);
 MM.Command.Delete.prototype.isValid = function() {

@@ -1,3 +1,13 @@
 .current > span {
 	font-weight: bold;
 }
+
+#help {
+	position: fixed;
+	right: 50px;
+	bottom: 50px;
+	background-color: rgba(0, 0, 0, 0.3);
+	color: #fff;
+	padding: 0.5em;
+	border-radius: 20px;
+}

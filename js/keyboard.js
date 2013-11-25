@@ -19,6 +19,8 @@ MM.Keyboard.prototype.handleEvent = function(e) {
 }
 
 MM.Keyboard.prototype._keyOK = function(key, e) {
+	if ("keyCode" in key && e.type != "keydown") { return false; }
+	if ("charCode" in key && e.type != "keypress") { return false; }
 	for (var p in key) {
 		if (key[p] != e[p]) { return false; }
 	}
