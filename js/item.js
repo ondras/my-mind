@@ -4,6 +4,9 @@ MM.Item = function() {
 		content: document.createElement("span"),
 		children: document.createElement("ul")
 	}
+	this._dom.node.classList.add("item");
+	this._dom.content.classList.add("text");
+	this._dom.children.classList.add("children");
 	this._children = [];
 	this._parent = null;
 	this._dom.node.appendChild(this._dom.content);

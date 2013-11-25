@@ -18,17 +18,17 @@ body {
 	opacity: 1;
 }
 
-.map ul {
+.map .children {
 	padding: 0;
 	display: inline-block;
 	vertical-align: middle;
 }
 
-.map li {
+.map .item {
 	list-style: none;
 }
 
-.map span {
+.map .text {
 	display: inline-block;
 	vertical-align: middle;
 	padding: 0.2em 0.3em;
@@ -36,15 +36,16 @@ body {
 	min-width: 0.5em;
 	min-height: 1em;
 	border: 1px solid transparent;
+	outline: none;
 }
 
-.map .current > span {
-	box-shadow: 0 0 3px navy;
+.map .current > .text {
+	box-shadow: 0 0 3px #333;
 }
 
 .map .root {
 	padding: 0.5em 1em;
-	background-color: #ccc;
+	background-color: #ddd;
 	border-radius: 50%;
 	font-weight: bold;
 }

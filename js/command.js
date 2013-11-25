@@ -18,6 +18,7 @@ MM.Command.prototype.execute = function() {
 MM.Command.Undo = function() {
 	MM.Command.call(this);
 	this._keys.push({charCode: "z".charCodeAt(0), ctrlKey: true});
+	this._name = "Undo last action";
 }
 MM.Command.Undo.prototype = Object.create(MM.Command.prototype);
 MM.Command.Undo.prototype.isValid = function() {
@@ -31,6 +32,7 @@ MM.Command.Undo.prototype.execute = function() {
 MM.Command.Redo = function() {
 	MM.Command.call(this);
 	this._keys.push({charCode: "y".charCodeAt(0), ctrlKey: true});
+	this._name = "Redo last action";
 }
 MM.Command.Redo.prototype = Object.create(MM.Command.prototype);
 MM.Command.Redo.prototype.isValid = function() {
@@ -44,6 +46,8 @@ MM.Command.Redo.prototype.execute = function() {
 MM.Command.Edit = function() {
 	MM.Command.call(this);
 	this._keys.push({keyCode: 32});
+	this._keys.push({keyCode: 113});
+	this._name = "Edit item";
 }
 MM.Command.Edit.prototype = Object.create(MM.Command.prototype);
 MM.Command.Edit.prototype.execute = function() {
@@ -78,6 +82,7 @@ MM.Command.Cancel.prototype.execute = function() {
 MM.Command.InsertSibling = function() {
 	MM.Command.call(this);
 	this._keys.push({keyCode: 13});
+	this._name = "Insert a sibling";
 }
 MM.Command.InsertSibling.prototype = Object.create(MM.Command.prototype);
 MM.Command.InsertSibling.prototype.execute = function() {
@@ -98,6 +103,7 @@ MM.Command.InsertSibling.prototype.execute = function() {
 MM.Command.InsertChild = function() {
 	MM.Command.call(this);
 	this._keys.push({keyCode: 45});
+	this._name = "Insert a child";
 }
 MM.Command.InsertChild.prototype = Object.create(MM.Command.prototype);
 MM.Command.InsertChild.prototype.execute = function() {
@@ -112,6 +118,7 @@ MM.Command.InsertChild.prototype.execute = function() {
 MM.Command.Delete = function() {
 	MM.Command.call(this);
 	this._keys.push({keyCode: 46});
+	this._name = "Delete an item";
 }
 MM.Command.Delete.prototype = Object.create(MM.Command.prototype);
 MM.Command.Delete.prototype.isValid = function() {
