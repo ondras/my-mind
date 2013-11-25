@@ -85,7 +85,10 @@ MM.Command.InsertSibling.prototype.execute = function() {
 	} else {
 		var action = new MM.Action.InsertItem(item, item.getChildren().length);
 	}
-	MM.App.action(action);	
+	MM.App.action(action);
+
+	var edit = new MM.Command.Edit();
+	edit.execute();
 }
 
 MM.Command.InsertChild = function() {
@@ -97,6 +100,9 @@ MM.Command.InsertChild.prototype.execute = function() {
 	var item = MM.App.current;
 	var action = new MM.Action.InsertItem(item, item.getChildren().length);
 	MM.App.action(action);	
+
+	var edit = new MM.Command.Edit();
+	edit.execute();
 }
 
 MM.Command.Delete = function() {
