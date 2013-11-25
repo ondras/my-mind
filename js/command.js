@@ -15,54 +15,6 @@ MM.Command.prototype.getName = function() {
 MM.Command.prototype.execute = function() {
 }
 
-MM.Command.Help = function() {
-	MM.Command.call(this);
-
-	this._name = "Show/hide help";
-	this._keys.push({charCode: "?".charCodeAt(0)});
-	this._visible = false;
-	this._dom = {
-		node: document.createElement("div"),
-		table: document.createElement("table")
-	}
-	this._dom.node.id = "help";
-	this._dom.node.appendChild(this._dom.table);
-	document.body.appendChild(this._dom.node)
-}
-MM.Command.Help.prototype = Object.create(MM.Command.prototype);
-MM.Command.Help.prototype.execute = function() {
-	if (this._visible) {
-		this._visible = false;
-		this._dom.node.style.opacity = 0;
-		return;
-	}
-
-	var all = MM.App.commands;
-	this._dom.table.innerHTML = "";
-
-	for (var i=0;i<all.length;i++) {
-		var c = all[i];
-		var name = c.getName();
-		if (!name) { continue; }
-		this._buildRow(c);
-	}
-
-	this._visible = true;
-	this._dom.node.style.opacity = 1;
-}
-MM.Command.Help.prototype._buildRow = function(command) {
-	var name = command.getName();
-	if (!name) { return; }
-	var row = this._dom.table.insertRow(-1);
-
-	var keys = command.getKeys().map(this._formatKey, this);
-	row.insertCell().innerHTML = name;
-	row.insertCell().innerHTML = keys.join("/");
-}
-MM.Command.Help.prototype._formatKey = function(key) {
-	return "asd";
-}
-
 MM.Command.Undo = function() {
 	MM.Command.call(this);
 	this._keys.push({charCode: "z".charCodeAt(0), ctrlKey: true});

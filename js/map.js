@@ -1,5 +1,8 @@
 MM.Map = function() {
 	this._root = new MM.Root();
+	this._node = document.createElement("div");
+	this._node.className = "map";
+	this._node.appendChild(this._root.getNode());
 }
 
 MM.Map.prototype.getRoot = function() {
@@ -7,5 +10,5 @@ MM.Map.prototype.getRoot = function() {
 }
 
 MM.Map.prototype.build = function(where) {
-	where.appendChild(this._root.getNode());
+	where.appendChild(this._node);
 }

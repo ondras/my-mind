@@ -1,5 +1,6 @@
-.current > span {
-	font-weight: bold;
+body {
+	margin: 0;
+	font-family: sans-serif;
 }
 
 #help {
@@ -10,4 +11,40 @@
 	color: #fff;
 	padding: 0.5em;
 	border-radius: 20px;
+	opacity: 0;
+	transition: all 0.5s;
+}
+#help.visible {
+	opacity: 1;
+}
+
+.map ul {
+	padding: 0;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.map li {
+	list-style: none;
+}
+
+.map span {
+	display: inline-block;
+	vertical-align: middle;
+	padding: 0.2em 0.3em;
+	border-radius: 0.5em;
+	min-width: 0.5em;
+	min-height: 1em;
+	border: 1px solid transparent;
+}
+
+.map .current > span {
+	box-shadow: 0 0 3px navy;
+}
+
+.map .root {
+	padding: 0.5em 1em;
+	background-color: #ccc;
+	border-radius: 50%;
+	font-weight: bold;
 }

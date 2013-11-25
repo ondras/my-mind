@@ -18,16 +18,15 @@ MM.Action.SetText.prototype.undo = function() {
 MM.Action.InsertItem = function(parent, index) {
 	this._parent = parent;
 	this._index = index;
-	this._item = null;
+	this._item = new MM.Item();
 }
 MM.Action.InsertItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.InsertItem.prototype.perform = function() {
-	this._item = this._parent.insertChild(new MM.Item(), this._index);
+	this._item = this._parent.insertChild(this._item, this._index);
 	MM.App.select(this._item);
 }
 MM.Action.InsertItem.prototype.undo = function() {
 	this._parent.removeChild(this._item);
-	this._item = null;
 	MM.App.select(this._parent);
 }
 
