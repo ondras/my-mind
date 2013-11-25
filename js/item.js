@@ -1,6 +1,6 @@
 MM.Item = function() {
 	this._dom = {
-		node: document.createElement("li"),
+		node: document.createElement(this._nodeName),
 		content: document.createElement("span"),
 		children: document.createElement("ul")
 	}
@@ -10,6 +10,7 @@ MM.Item = function() {
 	
 	this._oldText = "";
 }
+MM.Item.prototype._nodeName = "li";
 
 MM.Item.prototype.setText = function(text) {
 	this._dom.content.innerHTML = text;
@@ -20,7 +21,7 @@ MM.Item.prototype.getText = function() {
 	return this._dom.content.innerHTML;
 }
 
-MM.Item.prototype.getChildren = function(side) {
+MM.Item.prototype.getChildren = function() {
 	return this._children;
 }
 
@@ -32,20 +33,16 @@ MM.Item.prototype.getParent = function() {
 	return this._parent;
 }
 
-MM.Item.prototype.getRoot = function() {
-	var node = this;
-	while (node.getParent()) { node = node.getParent(); }
-	return node;
-}
-
 MM.Item.prototype.getSide = function() {
-	var root = this.getRoot();
 	var node = this;
 
-	while (node.getParent() != root) { node = node.getParent(); }
-	
-	var left = root.getChildren("left");
-	return (left.indexOf(node) == -1 ? "right" : "left");
+	while (node.getParent()) { 
+		var parent = node.getParent();
+		if (!parent.getParent()) {
+			return parent.getSide(node);
+		}
+		node = parent;
+	}
 }
 
 MM.Item.prototype.setParent = function(parent) {

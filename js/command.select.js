@@ -6,8 +6,8 @@ MM.Command.Select.prototype._move = function(diff) {
 	var item = MM.App.current;
 	var parent = item.getParent();
 	if (!parent) { return; }
-
-	var children = parent.getChildren(item.getSide());
+	/* FIXME left/right */
+	var children = parent.getChildren();
 	var index = children.indexOf(item);
 	index += diff;
 	index = (index+children.length) % children.length;
@@ -20,9 +20,9 @@ MM.Command.Select.prototype._parent = function() {
 	
 	MM.App.select(parent);
 }
-MM.Command.Select.prototype._child = function(side) {
+MM.Command.Select.prototype._child = function() {
 	var item = MM.App.current;
-	var children = item.getChildren(side);
+	var children = item.getChildren();
 	if (!children.length) { return; }
 
 	MM.App.select(children[0]);
@@ -35,8 +35,8 @@ MM.Command.SelectLeft = function() {
 MM.Command.SelectLeft.prototype = Object.create(MM.Command.Select.prototype);
 MM.Command.SelectLeft.prototype.execute = function() {
 	var item = MM.App.current;
-	if (item.getRoot() == item || item.getSide() == "left") {
-		this._child("left");
+	if (!item.getParent() || item.getSide() == "left") {
+		this._child();
 	} else {
 		this._parent();
 	}
@@ -49,8 +49,8 @@ MM.Command.SelectRight = function() {
 MM.Command.SelectRight.prototype = Object.create(MM.Command.Select.prototype);
 MM.Command.SelectRight.prototype.execute = function() {
 	var item = MM.App.current;
-	if (item.getRoot() == item || item.getSide() == "right") {
-		this._child("right");
+	if (!item.getParent() || item.getSide() == "right") {
+		this._child();
 	} else {
 		this._parent();
 	}

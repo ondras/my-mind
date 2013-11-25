@@ -22,8 +22,7 @@ MM.Action.InsertItem = function(parent, index) {
 }
 MM.Action.InsertItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.InsertItem.prototype.perform = function() {
-	this._item = this._parent.insertChild(this._index);
-	/* FIXME root! */
+	this._item = this._parent.insertChild(new MM.Item(), this._index);
 	MM.App.select(this._item);
 }
 MM.Action.InsertItem.prototype.undo = function() {
@@ -36,43 +35,26 @@ MM.Action.RemoveItem = function(item) {
 	this._item = item;
 	this._children = item.getChildren().slice();
 	this._parent = item.getParent();
-	this._side = item.getSide();
-	this._index = this._parent.getChildren(this._side).indexOf(this._item);
+	this._index = this._parent.getChildren().indexOf(this._item);
 }
 MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.RemoveItem.prototype.perform = function() {
 	for (var i=this._children.length-1;i>=0;i--) {
 		var child = this._children[i];
 		this._item.removeChild(child);
-		if (this._parent.getParent()) { /* normal node */
-			this._parent.insertChild(child, this._index);
-		} else { /* root */
-			this._parent.insertChild(this._side, child, this._index);
-		}
+		this._parent.insertChild(child, this._index);
 	}
 	
-	if (this._parent.getParent()) {
-		this._parent.removeChild(this._item);
-	} else {
-		this._parent.removeChild(this._side, this._item);
-	}
+	this._parent.removeChild(this._item);
 	MM.App.select(this._parent);	
 }
 MM.Action.RemoveItem.prototype.undo = function() {
 	for (var i=0;i<this._children.length;i++) {
 		var child = this._children[i];
-		if (this._parent.getParent()) {
-			this._parent.removeChild(child);
-		} else {
-			this._parent.removeChild(this._side, child);
-		}
+		this._parent.removeChild(child);
 		this._item.insertChild(child);
 	}
 
-	if (this._parent.getParent()) {
-		this._parent.insertChild(this._item, this._index);
-	} else {
-		this._parent.insertChild(this._side, this._item, this._index);
-	}
+	this._parent.insertChild(this._item, this._index);
 	MM.App.select(this._item);
 }

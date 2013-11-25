@@ -7,7 +7,6 @@
 		<script src="js/item.js"></script>
 		<script src="js/root.js"></script>
 		<script src="js/map.js"></script>
-		<script src="js/selection.js"></script>
 		<script src="js/keyboard.js"></script>
 		<script src="js/action.js"></script>
 		<script src="js/command.js"></script>
@@ -23,13 +22,13 @@
 		var root = map.getRoot();
 		root.setText("This is <s>Sparta</s> Root");
 		
-		var c1 = root.insertChild("left", new MM.Item()).setText("left 1");
-		root.insertChild("left", new MM.Item()).setText("left 2");
+		var c1 = root.insertChild(new MM.Item()).setText("left 1");
+		root.insertChild(new MM.Item()).setText("left 2");
 		c1.insertChild(new MM.Item()).setText("left 1.1");
 		c1.insertChild(new MM.Item()).setText("left 1.2");
 		
-		root.insertChild("right", new MM.Item()).setText("right 1");
-		root.insertChild("right", new MM.Item()).setText("right 2");
+		root.insertChild(new MM.Item()).setText("right 1");
+		root.insertChild(new MM.Item()).setText("right 2");
 
 		MM.App.setMap(map);
 		</script>

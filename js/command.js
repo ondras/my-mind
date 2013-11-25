@@ -83,7 +83,7 @@ MM.Command.InsertSibling.prototype.execute = function() {
 		var index = parent.getChildren().indexOf(item);
 		var action = new MM.Action.InsertItem(parent, index+1);
 	} else {
-		/* FIXME */
+		var action = new MM.Action.InsertItem(item, item.getChildren().length);
 	}
 	MM.App.action(action);	
 }
@@ -94,7 +94,8 @@ MM.Command.InsertChild = function() {
 }
 MM.Command.InsertChild.prototype = Object.create(MM.Command.prototype);
 MM.Command.InsertChild.prototype.execute = function() {
-	var action = new MM.Action.InsertItem(MM.App.current, 0);
+	var item = MM.App.current;
+	var action = new MM.Action.InsertItem(item, item.getChildren().length);
 	MM.App.action(action);	
 }
 
