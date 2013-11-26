@@ -6,6 +6,7 @@ MM.App = {
 	history: [],
 	historyIndex: 0,
 	map: null,
+	layout: null,
 	
 	action: function(action) {
 		if (this.historyIndex < this.history.length) { /* remove undoed actions */
@@ -25,16 +26,22 @@ MM.App = {
 		this.select(map.getRoot());
 	},
 	
+	setLayout: function(layoutCtor) {
+		if (this.layout) { this.layout.destroy(); }
+		this.layout = new layoutCtor();
+	},
+
 	select: function(item) {
 		if (this.current) {
-			this.current.getNode().classList.remove("current");
+			this.current.getDOM().node.classList.remove("current");
 		}
 		this.current = item;
-		this.current.getNode().classList.add("current");
+		this.current.getDOM().node.classList.add("current");
 	},
 	
 	init: function() {
 		this.keyboard = new MM.Keyboard();
+		this.layout = new MM.Layout();
 		for (var p in MM.Command) { this.commands.push(new MM.Command[p]()); }
 	}
 }

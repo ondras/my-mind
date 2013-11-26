@@ -2,7 +2,7 @@ MM.Map = function() {
 	this._root = new MM.Root();
 	this._node = document.createElement("div");
 	this._node.className = "map";
-	this._node.appendChild(this._root.getNode());
+	this._node.appendChild(this._root.getDOM().node);
 }
 
 MM.Map.prototype.getRoot = function() {

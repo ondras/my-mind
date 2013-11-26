@@ -1,4 +1,9 @@
 MM.Item = function() {
+	this._children = [];
+	this._parent = null;
+	this._oldText = "";
+	this._layout = {}; /* layout-specific data */
+
 	this._dom = {
 		node: document.createElement(this._nodeName),
 		content: document.createElement("span"),
@@ -7,16 +12,14 @@ MM.Item = function() {
 	this._dom.node.classList.add("item");
 	this._dom.content.classList.add("text");
 	this._dom.children.classList.add("children");
-	this._children = [];
-	this._parent = null;
 	this._dom.node.appendChild(this._dom.content);
 	
-	this._oldText = "";
 }
 MM.Item.prototype._nodeName = "li";
 
 MM.Item.prototype.setText = function(text) {
 	this._dom.content.innerHTML = text;
+	MM.publish("item-change", this);
 	return this;
 }
 
@@ -28,8 +31,12 @@ MM.Item.prototype.getChildren = function() {
 	return this._children;
 }
 
-MM.Item.prototype.getNode = function() {
-	return this._dom.node;
+MM.Item.prototype.getLayout = function() {
+	return this._children;
+}
+
+MM.Item.prototype.getDOM = function() {
+	return this._dom;
 }
 
 MM.Item.prototype.getParent = function() {
@@ -50,6 +57,7 @@ MM.Item.prototype.getSide = function() {
 
 MM.Item.prototype.setParent = function(parent) {
 	this._parent = parent;
+	MM.publish("item-change", this);
 	return this;
 }
 
@@ -60,18 +68,19 @@ MM.Item.prototype.insertChild = function(child, index) {
 	}
 	
 	var next = null;
-	if (index < this._children.length) { next = this._children[index].getNode(); }
-	this._dom.children.insertBefore(child.getNode(), next);
+	if (index < this._children.length) { next = this._children[index].getDOM().node; }
+	this._dom.children.insertBefore(child.getDOM().node, next);
 	this._children.splice(index, 0, child);
 	
 	child.setParent(this);
+	MM.publish("item-change", this);
 	return child;
 }
 
 MM.Item.prototype.removeChild = function(child) {
 	var index = this._children.indexOf(child);
 	this._children.splice(index, 1);
-	var node = child.getNode();
+	var node = child.getDOM().node;
 	node.parentNode.removeChild(node);
 	
 	child.setParent(null);
@@ -80,6 +89,7 @@ MM.Item.prototype.removeChild = function(child) {
 		this._dom.children.parentNode.removeChild(this._dom.children);
 	}
 	
+	MM.publish("item-change", this);
 	return child;
 }
 
