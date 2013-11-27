@@ -5,3 +5,7 @@
 .map .children {
 	top: 0;
 }
+
+.map .children, .map .text, .map .item {
+	transition: all 0.3s ease-out; 
+}

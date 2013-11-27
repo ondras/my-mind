@@ -12,10 +12,10 @@ MM.Layout.prototype.destroy = function() {
 }
 
 MM.Layout.prototype.event = function(event, publisher) {
-	this._updateItem(publisher);
 }
 
-MM.Layout.prototype.getItemByDirection = function(item, direction) {
+MM.Layout.prototype.pickItem = function(item, direction) {
+	return item;
 }
 
 MM.Layout.prototype._addStyle = function(name) {

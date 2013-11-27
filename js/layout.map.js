@@ -22,8 +22,8 @@ MM.Layout.Map.prototype._updateItem = function(item) {
 		height += this._getItemHeight(child);
 	}, this);
 	
-	var top = height;
-	if (top) {
+	var top = 0;
+	if (height) {
 		top = (height - dom.content.offsetHeight)/2;
 	}
 	dom.content.style.top = Math.round(top) + "px";

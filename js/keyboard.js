@@ -11,7 +11,7 @@ MM.Keyboard.prototype.handleEvent = function(e) {
 		for (var j=0;j<keys.length;j++) {
 			if (this._keyOK(keys[j], e)) {
 				e.preventDefault();
-				command.execute();
+				command.execute(e);
 				return;
 			}
 		}

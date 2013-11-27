@@ -29,6 +29,7 @@ body {
 	min-height: 1em;
 	border: 1px solid transparent;
 	outline: none;
+	display: inline-block;
 }
 
 .map .root {
