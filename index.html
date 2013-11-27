@@ -23,6 +23,8 @@
 		MM.App.setLayout(MM.Layout.Map);
 
 		var map = new MM.Map();
+		MM.App.setMap(map);
+
 		var root = map.getRoot();
 		root.setText("This is <s>Sparta</s> Root");
 		
@@ -34,7 +36,6 @@
 		root.insertChild(new MM.Item()).setText("right 1");
 		root.insertChild(new MM.Item()).setText("right 2");
 
-		MM.App.setMap(map);
 		</script>
 	</body>
 </html>

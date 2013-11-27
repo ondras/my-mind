@@ -1,0 +1,9 @@
+.map .item, .map .children, .map .text {
+	position: absolute;
+}
+
+.map .item, .map .children {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}

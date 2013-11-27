@@ -18,3 +18,22 @@ body {
 	opacity: 1;
 }
 
+.map .current > .text {
+	box-shadow: 0 0 3px #333;
+}
+
+.map .text {
+	padding: 0.2em 0.3em;
+	border-radius: 0.5em;
+	min-width: 0.5em;
+	min-height: 1em;
+	border: 1px solid transparent;
+	outline: none;
+}
+
+.map .root {
+	padding: 0.5em 1em;
+	background-color: #ddd;
+	border-radius: 50%;
+	font-weight: bold;
+}
