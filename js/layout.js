@@ -1,6 +1,6 @@
 MM.Layout = function() {
 	this._styles = [];
-	MM.subscribe("item-change", this);
+	this._bbox = [0, 0, 0, 0]; /* l, t, r, b */
 }
 
 MM.Layout.prototype.destroy = function() {
@@ -8,10 +8,14 @@ MM.Layout.prototype.destroy = function() {
 		var node = this._styles.pop();
 		node.parentNode.removeChild(node);
 	}
-	MM.unsubscribe("item-change", this);
 }
 
-MM.Layout.prototype.event = function(event, publisher) {
+MM.Layout.prototype.getBBox = function() {
+	return this._bbox;
+}
+
+MM.Layout.prototype.updateItem = function(item) {
+	return this;
 }
 
 MM.Layout.prototype.pickItem = function(item, direction) {

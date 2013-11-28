@@ -5,10 +5,6 @@ MM.Layout.Map = function() {
 }
 MM.Layout.Map.prototype = Object.create(MM.Layout.prototype);
 
-MM.Layout.Map.prototype.event = function(event, publisher) {
-	this._updateItem(publisher);
-}
-
 MM.Layout.Map.prototype.pickItem = function(item, direction) {
 	switch (direction) {
 		case 37: /* left FIXME */
@@ -26,7 +22,7 @@ MM.Layout.Map.prototype.pickItem = function(item, direction) {
 	}
 }
 
-MM.Layout.Map.prototype._updateItem = function(item) {
+MM.Layout.Map.prototype.updateItem = function(item) {
 	var dom = item.getDOM();
 	var contentWidth = dom.content.offsetWidth;
 	dom.children.style.left = contentWidth + "px";
@@ -46,5 +42,7 @@ MM.Layout.Map.prototype._updateItem = function(item) {
 	dom.content.style.top = Math.round(top) + "px";
 	
 	var parent = item.getParent();
-	if (parent) { this._updateItem(parent); }
+	if (parent) { this.updateItem(parent); }
+	
+	return this;
 }

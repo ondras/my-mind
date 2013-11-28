@@ -21,7 +21,7 @@ MM.Item.prototype._nodeName = "li";
 
 MM.Item.prototype.setText = function(text) {
 	this._dom.content.innerHTML = text;
-	MM.publish("item-change", this);
+	this._map.notify(this);
 	return this;
 }
 
@@ -51,7 +51,6 @@ MM.Item.prototype.getParent = function() {
 
 MM.Item.prototype.setParent = function(parent) {
 	this._parent = parent;
-	MM.publish("item-change", this);
 	return this;
 }
 
@@ -61,7 +60,11 @@ MM.Item.prototype.insertChild = function(child, index) {
 		this._dom.node.appendChild(this._dom.children);
 	}
 
-	if (!child) { child = this._map.createItem(); }
+	var newChild = false;
+	if (!child) { 
+		child = this._map.createItem(); 
+		newChild = true;
+	}
 	
 	var next = null;
 	if (index < this._children.length) { next = this._children[index].getDOM().node; }
@@ -69,7 +72,8 @@ MM.Item.prototype.insertChild = function(child, index) {
 	this._children.splice(index, 0, child);
 	
 	child.setParent(this);
-	MM.publish("item-change", this);
+	if (newChild) { this._map.notify(child); }
+	this._map.notify(this);
 	return child;
 }
 
@@ -85,7 +89,7 @@ MM.Item.prototype.removeChild = function(child) {
 		this._dom.children.parentNode.removeChild(this._dom.children);
 	}
 	
-	MM.publish("item-change", this);
+	this._map.notify(this);
 	return child;
 }
 

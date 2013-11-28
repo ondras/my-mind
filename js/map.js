@@ -33,3 +33,11 @@ MM.Map.prototype.setLayout = function(layout) {
 MM.Map.prototype.build = function(where) {
 	where.appendChild(this._node);
 }
+
+/**
+ * Item notifies the map about its change
+ */
+MM.Map.prototype.notify = function(item) {
+	/* FIXME only when in the DOM */
+	this._layout.updateItem(item);
+}
