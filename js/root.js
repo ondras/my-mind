@@ -1,5 +1,5 @@
-MM.Root = function() {
-	MM.Item.call(this);
+MM.Root = function(map) {
+	MM.Item.call(this, map);
 	this._dom.content.classList.add("root");
 }
 MM.Root.prototype = Object.create(MM.Item.prototype);

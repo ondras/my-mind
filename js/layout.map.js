@@ -9,6 +9,23 @@ MM.Layout.Map.prototype.event = function(event, publisher) {
 	this._updateItem(publisher);
 }
 
+MM.Layout.Map.prototype.pickItem = function(item, direction) {
+	switch (direction) {
+		case 37: /* left FIXME */
+			return this._pickParent(item);
+		break;
+		case 38: /* top */
+			return this._pickSibling(item, -1);
+		break;
+		case 39: /* right FIXME */
+			return this._pickChild(item);
+		break;
+		case 40: /* down */
+			return this._pickSibling(item, +1);
+		break;
+	}
+}
+
 MM.Layout.Map.prototype._updateItem = function(item) {
 	var dom = item.getDOM();
 	var contentWidth = dom.content.offsetWidth;

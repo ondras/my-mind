@@ -1,6 +1,8 @@
-MM.Item = function() {
+MM.Item = function(map) {
+	this._map = map;
 	this._children = [];
 	this._parent = null;
+
 	this._oldText = "";
 	this._layout = {}; /* layout-specific data */
 
@@ -32,27 +34,19 @@ MM.Item.prototype.getChildren = function() {
 }
 
 MM.Item.prototype.getLayout = function() {
-	return this._children;
+	return this._layout;
 }
 
 MM.Item.prototype.getDOM = function() {
 	return this._dom;
 }
 
-MM.Item.prototype.getParent = function() {
-	return this._parent;
+MM.Item.prototype.getMap = function() {
+	return this._map;
 }
 
-MM.Item.prototype.getSide = function() {
-	var node = this;
-
-	while (node.getParent()) { 
-		var parent = node.getParent();
-		if (!parent.getParent()) {
-			return parent.getSide(node);
-		}
-		node = parent;
-	}
+MM.Item.prototype.getParent = function() {
+	return this._parent;
 }
 
 MM.Item.prototype.setParent = function(parent) {
@@ -62,10 +56,12 @@ MM.Item.prototype.setParent = function(parent) {
 }
 
 MM.Item.prototype.insertChild = function(child, index) {
-	if (arguments.length == 1) { index = this._children.length; }
+	if (arguments.length < 2) { index = this._children.length; }
 	if (!this._children.length) {
 		this._dom.node.appendChild(this._dom.children);
 	}
+
+	if (!child) { child = this._map.createItem(); }
 	
 	var next = null;
 	if (index < this._children.length) { next = this._children[index].getDOM().node; }

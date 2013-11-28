@@ -6,7 +6,6 @@ MM.App = {
 	history: [],
 	historyIndex: 0,
 	map: null,
-	layout: null,
 	
 	action: function(action) {
 		if (this.historyIndex < this.history.length) { /* remove undoed actions */
@@ -26,11 +25,6 @@ MM.App = {
 		this.select(map.getRoot());
 	},
 	
-	setLayout: function(layoutCtor) {
-		if (this.layout) { this.layout.destroy(); }
-		this.layout = new layoutCtor();
-	},
-
 	select: function(item) {
 		if (this.current) {
 			this.current.getDOM().node.classList.remove("current");

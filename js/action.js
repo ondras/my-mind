@@ -18,7 +18,7 @@ MM.Action.SetText.prototype.undo = function() {
 MM.Action.InsertItem = function(parent, index) {
 	this._parent = parent;
 	this._index = index;
-	this._item = new MM.Item();
+	this._item = this._parent.getMap().createItem();
 }
 MM.Action.InsertItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.InsertItem.prototype.perform = function() {

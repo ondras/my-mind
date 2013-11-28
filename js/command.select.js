@@ -7,7 +7,7 @@ MM.Command.Select = function() {
 }
 MM.Command.Select.prototype = Object.create(MM.Command.prototype);
 MM.Command.Select.prototype.execute = function(e) {
-	var layout = MM.App.layout;
+	var layout = MM.App.map.getLayout();
 	var item = layout.pickItem(MM.App.current, e.keyCode);
 	MM.App.select(item);
 }

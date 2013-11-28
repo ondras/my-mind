@@ -21,21 +21,18 @@
 	<body>
 		<script>
 		MM.App.init();
-		MM.App.setLayout(MM.Layout.Map);
 
-		var map = new MM.Map();
+		var map = new MM.Map({root:"This is <s>Sparta</s> Root", layout:new MM.Layout.Map()});
 		MM.App.setMap(map);
 
 		var root = map.getRoot();
-		root.setText("This is <s>Sparta</s> Root");
+		var c1 = root.insertChild(map.createItem()).setText("left 1");
+		root.insertChild().setText("left 2");
+		c1.insertChild().setText("left 1.1");
+		c1.insertChild().setText("left 1.2");
 		
-		var c1 = root.insertChild(new MM.Item()).setText("left 1");
-		root.insertChild(new MM.Item()).setText("left 2");
-		c1.insertChild(new MM.Item()).setText("left 1.1");
-		c1.insertChild(new MM.Item()).setText("left 1.2");
-		
-		root.insertChild(new MM.Item()).setText("right 1");
-		root.insertChild(new MM.Item()).setText("right 2");
+		root.insertChild().setText("right 1");
+		root.insertChild().setText("right 2");
 
 		</script>
 	</body>

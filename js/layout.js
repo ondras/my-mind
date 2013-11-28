@@ -35,3 +35,24 @@ MM.Layout.prototype._getItemHeight = function(item) {
 	}, this);
 	return Math.max(contentHeight, childrenHeight);
 }
+
+
+MM.Layout.prototype._pickParent = function(item) {
+	return item.getParent() || item;
+}
+
+MM.Layout.prototype._pickChild = function(item) {
+	var children = item.getChildren();
+	return (children.length ? children[0] : item);
+}
+
+MM.Layout.prototype._pickSibling = function(item, dir) {
+	var parent = item.getParent();
+	if (!parent) { return item; }
+
+	var children = parent.getChildren();
+	var index = children.indexOf(item);
+	index += dir;
+	index = (index+children.length) % children.length;
+	return children[index];
+}
