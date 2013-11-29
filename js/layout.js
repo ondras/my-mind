@@ -14,7 +14,7 @@ MM.Layout.prototype.getBBox = function() {
 	return this._bbox;
 }
 
-MM.Layout.prototype.updateItem = function(item) {
+MM.Layout.prototype.positionItem = function(item) {
 	return this;
 }
 
@@ -29,17 +29,6 @@ MM.Layout.prototype._addStyle = function(name) {
 	document.head.appendChild(node);
 	this._styles.push(node);
 }
-
-MM.Layout.prototype._getItemHeight = function(item) {
-	var contentHeight = item.getDOM().content.offsetHeight;
-	var childrenHeight = 0;
-	var children = item.getChildren();
-	children.forEach(function(child) {
-		childrenHeight += this._getItemHeight(child);
-	}, this);
-	return Math.max(contentHeight, childrenHeight);
-}
-
 
 MM.Layout.prototype._pickParent = function(item) {
 	return item.getParent() || item;

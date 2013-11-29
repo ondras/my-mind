@@ -45,7 +45,7 @@ MM.Action.RemoveItem.prototype.perform = function() {
 	}
 	
 	this._parent.removeChild(this._item);
-	MM.App.select(this._parent);	
+	MM.App.select(this._parent); /* FIXME select next neighbor first */
 }
 MM.Action.RemoveItem.prototype.undo = function() {
 	for (var i=0;i<this._children.length;i++) {

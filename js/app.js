@@ -20,8 +20,9 @@ MM.App = {
 	},
 	
 	setMap: function(map) {
+		if (this.map) { this.map.hide(); }
 		this.map = map;
-		this.map.build(document.body);
+		this.map.show(document.body);
 		this.select(map.getRoot());
 	},
 	

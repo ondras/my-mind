@@ -22,7 +22,7 @@ MM.Layout.Map.prototype.pickItem = function(item, direction) {
 	}
 }
 
-MM.Layout.Map.prototype.updateItem = function(item) {
+MM.Layout.Map.prototype.positionItem = function(item) {
 	var dom = item.getDOM();
 	var contentWidth = dom.content.offsetWidth;
 	dom.children.style.left = contentWidth + "px";
@@ -31,8 +31,9 @@ MM.Layout.Map.prototype.updateItem = function(item) {
 	
 	var children = item.getChildren();
 	children.forEach(function(child) {
-		child.getDOM().node.style.top = height+"px";
-		height += this._getItemHeight(child);
+		var node = child.getDOM().node;
+		node.style.top = height+"px";
+		height += node.offsetHeight;
 	}, this);
 	
 	var top = 0;
@@ -40,9 +41,7 @@ MM.Layout.Map.prototype.updateItem = function(item) {
 		top = (height - dom.content.offsetHeight)/2;
 	}
 	dom.content.style.top = Math.round(top) + "px";
-	
-	var parent = item.getParent();
-	if (parent) { this.updateItem(parent); }
+	dom.node.style.height = Math.max(height, dom.content.offsetHeight) + "px";
 	
 	return this;
 }

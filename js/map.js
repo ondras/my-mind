@@ -10,6 +10,8 @@ MM.Map = function(options) {
 	this._node = document.createElement("div");
 	this._node.className = "map";
 	this._node.appendChild(this._root.getDOM().node);
+
+	this._visible = false;
 }
 
 MM.Map.prototype.createItem = function() {
@@ -30,14 +32,24 @@ MM.Map.prototype.setLayout = function(layout) {
 	return this;
 }
 
-MM.Map.prototype.build = function(where) {
+MM.Map.prototype.show = function(where) {
 	where.appendChild(this._node);
+	this._visible = true;
+}
+
+MM.Map.prototype.hide = function() {
+	this._node.parentNode.removeChild(this._node);
+	this._visible = false;
 }
 
 /**
  * Item notifies the map about its change
  */
 MM.Map.prototype.notify = function(item) {
-	/* FIXME only when in the DOM */
-	this._layout.updateItem(item);
+	if (!this._visible) { return; }
+
+	while (item) {
+		this._layout.positionItem(item);
+		item = item.getParent();
+	}
 }

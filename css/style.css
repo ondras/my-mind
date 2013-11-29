@@ -26,7 +26,8 @@ body {
 	padding: 0.2em 0.3em;
 	border-radius: 0.5em;
 	min-width: 0.5em;
-	min-height: 1em;
+	min-height: 1.3em;
+	line-height: 1.3em;
 	border: 1px solid transparent;
 	outline: none;
 	display: inline-block;
