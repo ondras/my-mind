@@ -14,7 +14,8 @@
 		<script src="js/command.help.js"></script>
 		<script src="js/layout.js"></script>
 		<script src="js/layout.plain.js"></script>
-		<script src="js/layout.map.js"></script>
+		<script src="js/layout.tree.js"></script>
+		<script src="js/layout.freemind.js"></script>
 		<script src="js/app.js"></script>
 		<link rel="stylesheet" href="css/style.css" />
 	</head>
@@ -22,17 +23,23 @@
 		<script>
 		MM.App.init();
 
-		var map = new MM.Map({root:"This is <s>Sparta</s> Root", layout:new MM.Layout.Map()});
+		var map = new MM.Map({root:"This is <s>Sparta</s> Root", layout:new MM.Layout.FreeMind()});
 		MM.App.setMap(map);
-
+//setTimeout(function() {
 		var root = map.getRoot();
-		var c1 = root.insertChild(map.createItem()).setText("left 1");
+		
+		var c1 = root.insertChild(map.createItem()).setText("right 1");
+		root.insertChild().setText("left 1");
+	
+		root.insertChild().setText("right 2");
+
 		root.insertChild().setText("left 2");
 		c1.insertChild().setText("left 1.1");
 		c1.insertChild().setText("left 1.2");
 		
-		root.insertChild().setText("right 1");
-		root.insertChild().setText("right 2");
+root.getDOM().node.style.left = "300px";
+root.getDOM().node.style.top = "200px";
+//}, 500);
 
 		</script>
 	</body>

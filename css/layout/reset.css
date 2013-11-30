@@ -1,5 +1,9 @@
-.map .item, .map .children, .map .text {
+.map .item {
 	position: absolute;
+}
+
+.map .text {
+	position: relative;
 }
 
 .map .item, .map .children {

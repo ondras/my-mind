@@ -31,6 +31,7 @@ body {
 	border: 1px solid transparent;
 	outline: none;
 	display: inline-block;
+	white-space: pre;
 }
 
 .map .root {
@@ -45,3 +46,4 @@ body {
 	transition-timing-function: ease-out;
 	transition-property: left, top, right, bottom;
 }
+

@@ -49,7 +49,7 @@ MM.Map.prototype.notify = function(item) {
 	if (!this._visible) { return; }
 
 	while (item) {
-		this._layout.positionItem(item);
+		this._layout.updateItem(item);
 		item = item.getParent();
 	}
 }

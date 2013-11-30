@@ -14,7 +14,7 @@ MM.Layout.prototype.getBBox = function() {
 	return this._bbox;
 }
 
-MM.Layout.prototype.positionItem = function(item) {
+MM.Layout.prototype.updateItem = function(item) {
 	return this;
 }
 
@@ -48,4 +48,56 @@ MM.Layout.prototype._pickSibling = function(item, dir) {
 	index += dir;
 	index = (index+children.length) % children.length;
 	return children[index];
+}
+
+MM.Layout.prototype._updateItem = function(item, childDirection) {
+	var dom = item.getDOM();
+
+	var oppositeDirection = {
+		left: "right",
+		right: "left",
+		top: "bottom",
+		bottom: "top"
+	};
+	var size = {
+		left: "width",
+		right: "width",
+		top: "height",
+		bottom: "height"
+	};
+	var oppositeSize = {
+		width: "height",
+		height: "width"
+	};
+	var position = {
+		left: "top",
+		right: "top",
+		top: "left",
+		bottom: "left"
+	}
+	
+	var dir = oppositeDirection[childDirection];
+	var pos = position[childDirection];
+	var s1 = size[childDirection];
+	var s2 = oppositeSize[s1];
+	var S1 = s1.charAt(0).toUpperCase() + s1.substring(1);
+	var S2 = s2.charAt(0).toUpperCase() + s2.substring(1);
+
+	var total = 0;
+	var children = item.getChildren();
+	children.forEach(function(child) {
+		var node = child.getDOM().node;
+		node.style[dir] = dom.content["offset" + S1] + "px";
+		node.style[pos] = total+"px";
+		total += node["offset" + S2];
+	}, this);
+	
+	var offset = 0;
+	if (total) {
+		offset = (total - dom.content["offset" + S2])/2;
+	}
+
+	dom.content.style[pos] = Math.round(offset) + "px";
+	dom.node.style[s2] = Math.max(total, dom.content["offset" + S2]) + "px";
+	return this;
 }
