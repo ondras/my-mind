@@ -44,28 +44,64 @@ MM.Layout.FreeMind.prototype._getSide = function(item) {
 	return (index % 2 ? "left" : "right");
 }
 
+MM.Layout.FreeMind.prototype._pickSibling = function(item, dir) {
+	var parent = item.getParent();
+	if (!parent) { return item; }
+
+	var children = parent.getChildren();
+	if (!parent.getParent()) {
+		var side = this._getSide(item);
+		children = children.filter(function(child) {
+			return (this._getSide(child) == side);
+		}, this);
+	}
+	
+	var index = children.indexOf(item);
+	index += dir;
+	index = (index+children.length) % children.length;
+	return children[index];
+}
+
 MM.Layout.FreeMind.prototype._updateRoot = function(item) {
 	var dom = item.getDOM();
-
-	var totalLeft = 0;
-	var totalRight = 0;
 	var children = item.getChildren();
+
+	var heightLeft = 0;
+	var heightRight = 0;
 
 	children.forEach(function(child, index) {
 		var node = child.getDOM().node;
 		var side = this._getSide(child);
 		
 		if (side == "left") {
-			node.style.right = dom.content.offsetWidth + "px";
-			node.style.top = totalLeft+"px";
-			totalLeft += node.offsetHeight;
+			heightLeft += node.offsetHeight;
 		} else {
-			node.style.left = dom.content.offsetWidth + "px";
-			node.style.top = totalRight+"px";
-			totalRight += node.offsetHeight;
+			heightRight += node.offsetHeight;
 		}
 	}, this);
+
+	var height = Math.max(heightLeft, heightRight, dom.content.offsetHeight);
+	var topLeft = Math.round((height-heightLeft)/2);
+	var topRight = Math.round((height-heightRight)/2);
+
+	children.forEach(function(child, index) {
+		var node = child.getDOM().node;
+		var side = this._getSide(child);
+		
+		if (side == "left") {
+			node.style.right = (dom.content.offsetWidth + this._options.spacing) + "px";
+			node.style.top = topLeft+"px";
+			topLeft += node.offsetHeight;
+		} else {
+			node.style.left = (dom.content.offsetWidth + this._options.spacing) + "px";
+			node.style.top = topRight+"px";
+			topRight += node.offsetHeight;
+		}
+	}, this);
+
+	dom.content.style.top = Math.round((height - dom.content.offsetHeight)/2) + "px";
 }
+
 
 MM.Layout.FreeMind.prototype._pickSide = function(item, side) {
 	var children = item.getChildren();

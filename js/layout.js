@@ -1,6 +1,9 @@
-MM.Layout = function() {
+MM.Layout = function(options) {
+	this._options = {
+		spacing: 10
+	};
+	for (var p in options) { this._options[p] = options[p]; }
 	this._styles = [];
-	this._bbox = [0, 0, 0, 0]; /* l, t, r, b */
 }
 
 MM.Layout.prototype.destroy = function() {
@@ -8,10 +11,6 @@ MM.Layout.prototype.destroy = function() {
 		var node = this._styles.pop();
 		node.parentNode.removeChild(node);
 	}
-}
-
-MM.Layout.prototype.getBBox = function() {
-	return this._bbox;
 }
 
 MM.Layout.prototype.updateItem = function(item) {
@@ -87,7 +86,7 @@ MM.Layout.prototype._updateItem = function(item, childDirection) {
 	var children = item.getChildren();
 	children.forEach(function(child) {
 		var node = child.getDOM().node;
-		node.style[dir] = dom.content["offset" + S1] + "px";
+		node.style[dir] = (dom.content["offset" + S1] + this._options.spacing) + "px";
 		node.style[pos] = total+"px";
 		total += node["offset" + S2];
 	}, this);
