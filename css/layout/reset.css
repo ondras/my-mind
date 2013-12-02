@@ -2,6 +2,10 @@
 	position: absolute;
 }
 
+.map canvas {
+	position: absolute;
+}
+
 .map .text {
 	position: relative;
 }

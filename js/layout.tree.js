@@ -22,6 +22,6 @@ MM.Layout.Tree.prototype.pickItem = function(item, direction) {
 	}
 }
 
-MM.Layout.Tree.prototype.updateItem = function(item) {
-	return this._updateItem(item, "bottom");
+MM.Layout.Tree.prototype.layoutItem = function(item) {
+	return this._layoutItem(item, "bottom");
 }

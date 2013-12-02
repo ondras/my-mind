@@ -26,12 +26,12 @@ MM.Layout.FreeMind.prototype.pickItem = function(item, direction) {
 	}
 }
 
-MM.Layout.FreeMind.prototype.updateItem = function(item) {
+MM.Layout.FreeMind.prototype.layoutItem = function(item) {
 	if (item.getParent()) {
 		var side = this._getSide(item);
-		return this._updateItem(item, side);
+		return this._layoutItem(item, side);
 	} else {
-		this._updateRoot(item);
+		this._layoutRoot(item);
 	}
 }
 
@@ -62,7 +62,7 @@ MM.Layout.FreeMind.prototype._pickSibling = function(item, dir) {
 	return children[index];
 }
 
-MM.Layout.FreeMind.prototype._updateRoot = function(item) {
+MM.Layout.FreeMind.prototype._layoutRoot = function(item) {
 	var dom = item.getDOM();
 	var children = item.getChildren();
 
@@ -89,10 +89,12 @@ MM.Layout.FreeMind.prototype._updateRoot = function(item) {
 		var side = this._getSide(child);
 		
 		if (side == "left") {
+			node.style.left = "";
 			node.style.right = (dom.content.offsetWidth + this._options.spacing) + "px";
 			node.style.top = topLeft+"px";
 			topLeft += node.offsetHeight;
 		} else {
+			node.style.right = "";
 			node.style.left = (dom.content.offsetWidth + this._options.spacing) + "px";
 			node.style.top = topRight+"px";
 			topRight += node.offsetHeight;

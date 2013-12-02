@@ -72,11 +72,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	this._children.splice(index, 0, child);
 	
 	child.setParent(this);
-	if (newChild) { 
-		this._map.notify(child);
-	} else {
-		this._map.notify(this);
-	}
+	this._map.notify(child);
 	return child;
 }
 

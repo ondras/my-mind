@@ -42,6 +42,16 @@ MM.Map.prototype.hide = function() {
 	this._visible = false;
 }
 
+MM.Map.prototype.center = function() {
+	var bbox = this._layout.getBBox(this._root);
+	var left = (bbox[2]-bbox[0])/2;
+	var top = (bbox[3]-bbox[1])/2;
+
+	var avail = [window.innerWidth, window.innerHeight];
+	this._node.style.left = Math.round(avail[0]/2 - left) + "px";
+	this._node.style.top = Math.round(avail[1]/2 - left) + "px";
+}
+
 /**
  * Item notifies the map about its change
  */
@@ -49,7 +59,7 @@ MM.Map.prototype.notify = function(item) {
 	if (!this._visible) { return; }
 
 	while (item) {
-		this._layout.updateItem(item);
+		this._layout.layoutItem(item);
 		item = item.getParent();
 	}
 }

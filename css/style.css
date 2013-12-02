@@ -18,6 +18,10 @@ body {
 	opacity: 1;
 }
 
+.map {
+	position: absolute;
+}
+
 .map .current > .text {
 	box-shadow: 0 0 3px #333;
 }
@@ -34,9 +38,9 @@ body {
 	white-space: pre;
 }
 
-.map .root {
+.map .root > .text {
 	padding: 0.5em 1em;
-	background-color: #ddd;
+	background-color: #ccf;
 	border-radius: 50%;
 	font-weight: bold;
 }
