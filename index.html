@@ -25,7 +25,7 @@
 
 		var map = new MM.Map({root:"This is <s>Sparta</s> Root", layout:new MM.Layout.FreeMind()});
 		MM.App.setMap(map);
-//setTimeout(function() {
+setTimeout(function() {
 		var root = map.getRoot();
 		
 		var c1 = root.insertChild(map.createItem()).setText("right 1");
@@ -33,11 +33,13 @@
 	
 		root.insertChild().setText("right 2");
 
-		root.insertChild().setText("left 2");
-		c1.insertChild().setText("left 1.1");
-		c1.insertChild().setText("left 1.2");
+		root.insertChild().setText("left 2").insertChild().setText("left 2.1");
+
+		c1.insertChild().setText("right 1.1");
+		c1.insertChild().setText("right 1.2");
+		c1.insertChild().setText("right 1.3");
 		
-//}, 500);
+}, 600);
 
 		map.center();
 

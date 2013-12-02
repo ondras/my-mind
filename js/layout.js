@@ -1,6 +1,6 @@
 MM.Layout = function(options) {
 	this._options = {
-		spacing: 10,
+		spacing: 20,
 		underline: 0.9
 	};
 	for (var p in options) { this._options[p] = options[p]; }
@@ -77,7 +77,7 @@ MM.Layout.prototype._layoutItemHorizontal = function(item, childDirection) {
 		right: "left"
 	};
 	this._layoutItemGeneric(item, oppositeDirection[childDirection], "top", "width", "height");
-//	this._drawLinesHorizontal(item, childDirection);
+	this._drawLinesHorizontal(item, oppositeDirection[childDirection]);
 }
 
 MM.Layout.prototype._layoutItemVertical = function(item, childDirection) {
@@ -118,14 +118,65 @@ MM.Layout.prototype._layoutItemGeneric = function(item, mainDirection, childDire
 	return this;
 }
 
+MM.Layout.prototype._drawLinesHorizontal = function(item, mainDirection) {
+	var dom = item.getDOM();
+	var children = item.getChildren();
 
-MM.Layout.prototype._drawLinesHorizontal = function(item) {
+	var canvas = this._getCanvas(item);
+
+	var width = dom.content.offsetWidth;
+	if (children.length) { width += this._options.spacing; }
+	canvas.width = width;
+	canvas.height = dom.node.offsetHeight;
+	canvas.style.left = canvas.style.right = canvas.style.top = canvas.style.bottom = "";
+	canvas.style.top = 0;
+	canvas.style[mainDirection] = 0;
+
+
+	var ctx = canvas.getContext("2d");
+
+	/* underline */
+	var left = 0;
+	var right = canvas.width;
+	var top = this._getUnderline(dom.content);
+
+	if (children.length > 1) {
+		if (mainDirection == "left") {
+			right -= this._options.spacing/2;
+		} else {
+			left += this._options.spacing/2;
+		}
+	}
+
+	ctx.beginPath();
+	ctx.moveTo(left, top);
+	ctx.lineTo(right, top);
+	ctx.stroke();
+
+	if (children.length < 2) { return; }
+
+	ctx.beginPath();
+	var c1 = children[0].getDOM();
+	var c2 = children[children.length-1].getDOM();
+	var y1 = this._getUnderline(c1.content) + c1.node.offsetTop;
+	var y2 = this._getUnderline(c2.content) + c2.node.offsetTop;
+
+	/* top corner */
+	ctx.moveTo(canvas.width, y1);
+	ctx.arcTo(canvas.width-this._options.spacing/2, y1, canvas.width-this._options.spacing/2, y1+this._options.spacing/2, this._options.spacing/2);
+	ctx.lineTo(canvas.width-this._options.spacing/2, y2-this._options.spacing/2);
+	ctx.stroke();
+//	ctx.moveTo(canvas.width, )
 }
 
 MM.Layout.prototype._drawLinesVertical = function(item) {
 }
 
-MM.Layout.prototype._draw = function(item) {
+MM.Layout.prototype._getUnderline = function(node) {
+	return Math.round(this._options.underline * node.offsetHeight + node.offsetTop) + 0.5;
+}
+
+MM.Layout.prototype._getCanvas = function(item) {
 	var dom = item.getDOM();
 	var canvas = dom.canvas;
 	if (!canvas) {
@@ -133,17 +184,5 @@ MM.Layout.prototype._draw = function(item) {
 		dom.node.appendChild(canvas);
 		dom.canvas = canvas;
 	}
-
-	canvas.style.left = 0;
-	canvas.style.top = dom.content.style.top;
-	canvas.width = dom.content.offsetWidth;
-	canvas.height = dom.content.offsetHeight;
-
-	var ctx = canvas.getContext("2d");
-	ctx.beginPath();
-	var top = Math.round(this._options.underline * canvas.height) + 0.5;
-	ctx.moveTo(0, top);
-	ctx.lineTo(canvas.width, top);
-	ctx.stroke();
-
+	return canvas;
 }

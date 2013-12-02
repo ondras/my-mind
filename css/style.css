@@ -44,10 +44,3 @@ body {
 	border-radius: 50%;
 	font-weight: bold;
 }
-
-.map .children, .map .text, .map .item {
-	transition-duration: 300ms;
-	transition-timing-function: ease-out;
-	transition-property: left, top, right, bottom;
-}
-
