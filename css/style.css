@@ -18,7 +18,7 @@ body {
 	opacity: 1;
 }
 
-.map {
+.map, .map canvas {
 	position: absolute;
 }
 

@@ -36,7 +36,6 @@ MM.App = {
 	
 	init: function() {
 		this.keyboard = new MM.Keyboard();
-		this.layout = new MM.Layout();
 		for (var p in MM.Command) { this.commands.push(new MM.Command[p]()); }
 	}
 }

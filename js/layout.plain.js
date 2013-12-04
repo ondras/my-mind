@@ -1,10 +1,6 @@
-MM.Layout.Plain = function() {
-	MM.Layout.call(this);
-	this._addStyle("plain.css");
-}
-MM.Layout.Plain.prototype = Object.create(MM.Layout.prototype);
+MM.Layout.Plain = Object.create(MM.Layout);
 
-MM.Layout.Plain.prototype.pickItem = function(item, direction) {
+MM.Layout.Plain.pick = function(item, direction) {
 	switch (direction) {
 		case 37: /* left */
 			return this._pickParent(item);

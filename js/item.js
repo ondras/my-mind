@@ -2,26 +2,42 @@ MM.Item = function(map) {
 	this._map = map;
 	this._children = [];
 	this._parent = null;
+	this._layout = null;
 
 	this._oldText = "";
-	this._layout = {}; /* layout-specific data */
 
 	this._dom = {
 		node: document.createElement(this._nodeName),
 		content: document.createElement("span"),
-		children: document.createElement("ul")
+		children: document.createElement("ul"),
+		canvas: document.createElement("canvas")
 	}
 	this._dom.node.classList.add("item");
 	this._dom.content.classList.add("text");
 	this._dom.children.classList.add("children");
+	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
-	
 }
 MM.Item.prototype._nodeName = "li";
 
+MM.Item.prototype.update = function() {
+	if (!this._map.isVisible()) { return; }
+	this._layout.update(this);
+	if (this._parent) { this._parent.update(); }
+}
+
+MM.Item.prototype.updateBBox = function(box) {
+	var node = this._dom.node;
+	box[0] = Math.min(box[0], box[0] + node.offsetLeft);
+	box[1] = Math.min(box[1], box[1] + node.offsetTop);
+	box[2] = Math.max(box[2], box[0] + node.offsetWidth);
+	box[3] = Math.max(box[3], box[1] + node.offsetHeight);
+	return box;
+}
+
 MM.Item.prototype.setText = function(text) {
 	this._dom.content.innerHTML = text;
-	this._map.notify(this);
+	this.update();
 	return this;
 }
 
@@ -35,6 +51,12 @@ MM.Item.prototype.getChildren = function() {
 
 MM.Item.prototype.getLayout = function() {
 	return this._layout;
+}
+
+MM.Item.prototype.setLayout = function(layout) {
+	this._layout = layout;
+	this.update();
+	return this;
 }
 
 MM.Item.prototype.getDOM = function() {
@@ -72,7 +94,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	this._children.splice(index, 0, child);
 	
 	child.setParent(this);
-	this._map.notify(child);
+	child.setLayout(this._layout);
 	return child;
 }
 
@@ -88,7 +110,7 @@ MM.Item.prototype.removeChild = function(child) {
 		this._dom.children.parentNode.removeChild(this._dom.children);
 	}
 	
-	this._map.notify(this);
+	this.update();
 	return child;
 }
 

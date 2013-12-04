@@ -1,11 +1,6 @@
-MM.Layout.FreeMind = function() {
-	MM.Layout.call(this);
-	this._addStyle("reset.css");
-	this._addStyle("freemind.css");
-}
-MM.Layout.FreeMind.prototype = Object.create(MM.Layout.prototype);
+MM.Layout.FreeMind = Object.create(MM.Layout);
 
-MM.Layout.FreeMind.prototype.pickItem = function(item, direction) {
+MM.Layout.FreeMind.pick = function(item, direction) {
 	switch (direction) {
 		case 37: /* left */
 			if (!item.getParent()) { return this._pickSide(item, "left"); } 
@@ -26,16 +21,19 @@ MM.Layout.FreeMind.prototype.pickItem = function(item, direction) {
 	}
 }
 
-MM.Layout.FreeMind.prototype.layoutItem = function(item) {
+MM.Layout.FreeMind.update = function(item) {
+	this._reset(item);
+
 	if (item.getParent()) {
 		var side = this._getSide(item);
-		return this._layoutItem(item, side);
+		var name = side.charAt(0).toUpperCase() + side.substring(1);
+		MM.Layout[name].update(item);
 	} else {
 		this._layoutRoot(item);
 	}
 }
 
-MM.Layout.FreeMind.prototype._getSide = function(item) {
+MM.Layout.FreeMind._getSide = function(item) {
 	while (item.getParent().getParent()) {
 		item = item.getParent();
 	}
@@ -44,7 +42,7 @@ MM.Layout.FreeMind.prototype._getSide = function(item) {
 	return (index % 2 ? "left" : "right");
 }
 
-MM.Layout.FreeMind.prototype._pickSibling = function(item, dir) {
+MM.Layout.FreeMind._pickSibling = function(item, dir) {
 	var parent = item.getParent();
 	if (!parent) { return item; }
 
@@ -62,12 +60,14 @@ MM.Layout.FreeMind.prototype._pickSibling = function(item, dir) {
 	return children[index];
 }
 
-MM.Layout.FreeMind.prototype._layoutRoot = function(item) {
+MM.Layout.FreeMind._layoutRoot = function(item) {
 	var dom = item.getDOM();
 	var children = item.getChildren();
 
 	var heightLeft = 0;
 	var heightRight = 0;
+	var childrenLeft = [];
+	var childrenRight = [];
 
 	children.forEach(function(child, index) {
 		var node = child.getDOM().node;
@@ -75,8 +75,10 @@ MM.Layout.FreeMind.prototype._layoutRoot = function(item) {
 		
 		if (side == "left") {
 			heightLeft += node.offsetHeight;
+			childrenLeft.push(child);
 		} else {
 			heightRight += node.offsetHeight;
+			childrenRight.push(child);
 		}
 	}, this);
 
@@ -90,23 +92,45 @@ MM.Layout.FreeMind.prototype._layoutRoot = function(item) {
 		
 		if (side == "left") {
 			node.style.left = "";
-			node.style.right = (dom.content.offsetWidth + this._options.spacing) + "px";
+			node.style.right = (dom.content.offsetWidth + MM.Layout.SPACING) + "px";
 			node.style.top = topLeft+"px";
 			topLeft += node.offsetHeight;
 		} else {
 			node.style.right = "";
-			node.style.left = (dom.content.offsetWidth + this._options.spacing) + "px";
+			node.style.left = (dom.content.offsetWidth + MM.Layout.SPACING) + "px";
 			node.style.top = topRight+"px";
 			topRight += node.offsetHeight;
 		}
 	}, this);
 
 	dom.content.style.top = Math.round((height - dom.content.offsetHeight)/2) + "px";
+	dom.node.style.height = height + "px";
+
+	this._anchorRootCanvas(item, childrenLeft, childrenRight);
+	this._drawHorizontalConnectors(item, "left", childrenLeft);
+	this._drawHorizontalConnectors(item, "right", childrenRight);
 }
 
+MM.Layout.FreeMind._anchorRootCanvas = function(item, childrenLeft, childrenRight) {
+	var dom = item.getDOM();
+	var canvas = dom.canvas;
 
-MM.Layout.FreeMind.prototype._pickSide = function(item, side) {
+	var width = dom.node.offsetWidth;
+	if (childrenLeft) { 
+		canvas.style.left = (-MM.Layout.SPACING) + "px";
+		width += MM.Layout.SPACING; 
+	} else {
+		canvas.style.left = 0;
+	}
+	if (childrenRight) { width += MM.Layout.SPACING; }
+
+	canvas.width = width;
+	canvas.height = dom.node.offsetHeight;
+
+}
+
+MM.Layout.FreeMind._pickSide = function(item, side) {
 	var children = item.getChildren();
 	var index = (side == "right" ? 0 : 1);
-	return (children.length > index+1 ? children[index] : item);
+	return (children.length > index ? children[index] : item);
 }

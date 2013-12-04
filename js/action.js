@@ -48,12 +48,13 @@ MM.Action.RemoveItem.prototype.perform = function() {
 	MM.App.select(this._parent); /* FIXME select next neighbor first */
 }
 MM.Action.RemoveItem.prototype.undo = function() {
+	this._parent.insertChild(this._item, this._index);
+
 	for (var i=0;i<this._children.length;i++) {
 		var child = this._children[i];
 		this._parent.removeChild(child);
 		this._item.insertChild(child);
 	}
 
-	this._parent.insertChild(this._item, this._index);
 	MM.App.select(this._item);
 }

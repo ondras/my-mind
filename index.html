@@ -14,7 +14,10 @@
 		<script src="js/command.help.js"></script>
 		<script src="js/layout.js"></script>
 		<script src="js/layout.plain.js"></script>
-		<script src="js/layout.tree.js"></script>
+		<script src="js/layout.up.js"></script>
+		<script src="js/layout.down.js"></script>
+		<script src="js/layout.left.js"></script>
+		<script src="js/layout.right.js"></script>
 		<script src="js/layout.freemind.js"></script>
 		<script src="js/app.js"></script>
 		<link rel="stylesheet" href="css/style.css" />
@@ -23,24 +26,30 @@
 		<script>
 		MM.App.init();
 
-		var map = new MM.Map({root:"This is <s>Sparta</s> Root", layout:new MM.Layout.FreeMind()});
+		var map = new MM.Map({root:"This is <s>Sparta</s> Root"});
 		MM.App.setMap(map);
-setTimeout(function() {
+
 		var root = map.getRoot();
+		root.setLayout(MM.Layout.Up);
 		
-		var c1 = root.insertChild(map.createItem()).setText("right 1");
-		root.insertChild().setText("left 1");
+		var r1 = root.insertChild().setText("right 1");
+		r1.insertChild().setText("right 1.1");
+		r1.insertChild().setText("right 1.2");
+		r1.insertChild().setText("right 1.3");
+
+		var l1 = root.insertChild().setText("left 1");
+		l1.insertChild().setText("left 1.1");
+		l1.insertChild().setText("left 1.2");
+		l1.insertChild().setText("left 1.3");
+		l1.insertChild().setText("left 1.4");
 	
-		root.insertChild().setText("right 2");
+		var r2 = root.insertChild().setText("right 2");
+		r2.insertChild().setText("right 2.1");
+		r2.insertChild().setText("right 2.2");
 
-		root.insertChild().setText("left 2").insertChild().setText("left 2.1");
-
-		c1.insertChild().setText("right 1.1");
-		c1.insertChild().setText("right 1.2");
-		c1.insertChild().setText("right 1.3");
+		var l2 = root.insertChild().setText("left 2");
+		l2.insertChild().setText("left 2.1");
 		
-}, 600);
-
 		map.center();
 
 		</script>
