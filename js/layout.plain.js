@@ -1,5 +1,7 @@
 MM.Layout.Plain = Object.create(MM.Layout);
-MM.Layout.Plain.childDirection = "right";
+MM.Layout.Plain.getChildDirection = function() {
+	return "right";
+}
 
 MM.Layout.Plain.pick = function(item, direction) {
 	if (item.getParent()) { return MM.Layout.pick(item, direction); }

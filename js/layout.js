@@ -2,8 +2,7 @@ MM.Layout = {
 	SPACING_RANK: 16,
 	SPACING_CHILD: 4,
 	UNDERLINE: 0.85,
-	LINE_COLOR: "#aaa",
-	childDirection: ""
+	LINE_COLOR: "#aaa"
 };
 
 /**
@@ -13,6 +12,10 @@ MM.Layout.update = function(item) {
 	return this;
 }
 
+MM.Layout.getChildDirection = function(item) {
+	return "";
+}
+
 MM.Layout.pick = function(item, dir) {
 	var opposite = {
 		left: "right",
@@ -20,21 +23,24 @@ MM.Layout.pick = function(item, dir) {
 		top: "bottom",
 		bottom: "top"
 	}
-	var parent = item.getParent();
+	
+	/* direction for a child */
+	var children = item.getChildren();
+	for (var i=0;i<children.length;i++) {
+		var child = children[i];
+		if (this.getChildDirection(child) == dir) { return child; }
+	}
 
-	if (dir == this.childDirection && item.getChildren().length) {
-		return item.getChildren()[0];
-	} else if (parent) {
-		var parentDir = parent.getLayout().childDirection;
-		if (dir == parentDir) {
-			return item;
-		} else if (dir == opposite[parentDir]) {
-			return parent;
-		} else {
-			return this._pickSibling(item, (dir == "left" || dir == "top" ? -1 : +1));
-		}
-	} else {
+	var parent = item.getParent();
+	if (!parent) { return item; }
+	
+	var thisChildDirection = parent.getLayout().getChildDirection(item);
+	if (thisChildDirection == dir) {
 		return item;
+	} else if (thisChildDirection == opposite[dir]) {
+		return parent;
+	} else {
+		return this._pickSibling(item, (dir == "left" || dir == "top" ? -1 : +1));
 	}
 }
 

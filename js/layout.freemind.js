@@ -1,29 +1,36 @@
 MM.Layout.FreeMind = Object.create(MM.Layout);
 MM.Layout.FreeMind.UNDERLINE = 0.5;
 
-MM.Layout.FreeMind.pick = function(item, dir) {
+MM.Layout.FreeMind.xpick = function(item, dir) {
 	if (item.getParent()) {
-		var side = this._getSide(item);
-		var name = side.charAt(0).toUpperCase() + side.substring(1);
-		return MM.Layout[name].pick(item, dir);
-		/* FIXME parent direction ambigous */
+		var side = this.getChildDirection(item);
+		var opposite = {
+			left: "right",
+			right: "left",
+			top: "bottom",
+			bottom: "top"
+		}
+		if (!item.getParent().getParent() && opposite[dir] == side) {
+			return item.getParent();
+		} else { 
+			var name = side.charAt(0).toUpperCase() + side.substring(1);
+			return MM.Layout[name].pick(item, dir);
+		}
 	}
-	switch (direction) {
-		case 37: /* left */
-			if (!item.getParent()) { return this._pickSide(item, "left"); } 
-			var side = this._getSide(item);
-			return (side == "right" ? this._pickParent(item) : this._pickChild(item));
+
+	switch (dir) {
+		case "left":
+		case "right":
+			var children = item.getChildren();
+			for (var i=0;i<children.length;i++) {
+				var child = children[i];
+				if (this.getChildDirection(child) == dir) { return child; }
+			}
+			return item;
 		break;
-		case 38: /* top */
-			return this._pickSibling(item, -1);
-		break;
-		case 39: /* right */
-			if (!item.getParent()) { return this._pickSide(item, "right"); } 
-			var side = this._getSide(item);
-			return (side == "left" ? this._pickParent(item) : this._pickChild(item));
-		break;
-		case 40: /* down */
-			return this._pickSibling(item, +1);
+		
+		default:
+			return item;
 		break;
 	}
 }
@@ -35,7 +42,7 @@ MM.Layout.FreeMind.getUnderline = function(item) {
 
 MM.Layout.FreeMind.update = function(item) {
 	if (item.getParent()) {
-		var side = this._getSide(item);
+		var side = this.getChildDirection(item);
 		var name = side.charAt(0).toUpperCase() + side.substring(1);
 		MM.Layout[name].update(item);
 	} else {
@@ -43,7 +50,7 @@ MM.Layout.FreeMind.update = function(item) {
 	}
 }
 
-MM.Layout.FreeMind._getSide = function(item) {
+MM.Layout.FreeMind.getChildDirection = function(item) {
 	while (item.getParent().getParent()) {
 		item = item.getParent();
 	}
@@ -58,9 +65,9 @@ MM.Layout.FreeMind._pickSibling = function(item, dir) {
 
 	var children = parent.getChildren();
 	if (!parent.getParent()) {
-		var side = this._getSide(item);
+		var side = this.getChildDirection(item);
 		children = children.filter(function(child) {
-			return (this._getSide(child) == side);
+			return (this.getChildDirection(child) == side);
 		}, this);
 	}
 	
@@ -90,7 +97,7 @@ MM.Layout.FreeMind._layoutRoot = function(item) {
 
 	children.forEach(function(child, index) {
 		var node = child.getDOM().node;
-		var side = this._getSide(child);
+		var side = this.getChildDirection(child);
 		
 		if (side == "left") {
 			childrenLeft.push(child);

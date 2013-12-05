@@ -1,4 +1,8 @@
 MM.Layout.Side = Object.create(MM.Layout);
+MM.Layout.Side.childDirection = "";
+MM.Layout.Side.getChildDirection = function(item) {
+	return this.childDirection;
+}
 MM.Layout.Side.update = function(item) {
 	this._layoutItem(item, this.childDirection);
 	if (this.childDirection == "left" || this.childDirection == "right") {
