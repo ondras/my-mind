@@ -4,8 +4,8 @@ MM.Map = function(options) {
 	}
 	for (var p in options) { o[p] = options[p]; }
 
-	this._root = new MM.Root(this).setText(o.root);
-	this._node = document.createElement("div");
+	this._root = this.createItem().setText(o.root);
+	this._node = document.createElement("ul");
 	this._node.className = "map";
 	this._node.appendChild(this._root.getDOM().node);
 

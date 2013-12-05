@@ -156,13 +156,13 @@ MM.Layout._drawHorizontalConnectors = function(item, side, children) {
 	var R = MM.Layout.SPACING_RANK/2;
 	var width = (children.length == 1 ? 2*R : R);
 	
-	var y = this._getUnderline(dom.content);
+	var y = this.getUnderline(item);
 
 	if (side == "left") {
-		var x1 = canvas.width - dom.content.offsetWidth;
+		var x1 = dom.content.offsetLeft + 0.5;
 		var x2 = x1 - width;
 	} else {
-		var x1 = dom.content.offsetWidth;
+		var x1 = dom.content.offsetWidth + dom.content.offsetLeft + 0.5;
 		var x2 = x1 + width;
 	}
 
@@ -174,13 +174,13 @@ MM.Layout._drawHorizontalConnectors = function(item, side, children) {
 	if (children.length == 1) { return; }
 
 	/* rounded connectors */
-	var c1 = children[0].getDOM();
-	var c2 = children[children.length-1].getDOM();
+	var c1 = children[0];
+	var c2 = children[children.length-1];
 	var offset = dom.content.offsetWidth + width;
-	var x = Math.round(side == "left" ? canvas.width - offset : offset) + 0.5;
+	var x = x2;
 
-	var y1 = this._getUnderline(c1.content) + c1.node.offsetTop;
-	var y2 = this._getUnderline(c2.content) + c2.node.offsetTop;
+	var y1 = c1.getLayout().getUnderline(c1) + c1.getDOM().node.offsetTop;
+	var y2 = c2.getLayout().getUnderline(c2) + c2.getDOM().node.offsetTop;
 	var x1 = this._getChildAnchor(c1, side);
 	var x2 = this._getChildAnchor(c2, side);
 
@@ -191,8 +191,8 @@ MM.Layout._drawHorizontalConnectors = function(item, side, children) {
 	ctx.arcTo(x, y2, x2, y2, R);
 
 	for (var i=1; i<children.length-1; i++) {
-		var c = children[i].getDOM();
-		var y = this._getUnderline(c.content) + c.node.offsetTop;
+		var c = children[i];
+		var y = c.getLayout().getUnderline(c) + c.getDOM().node.offsetTop;
 		ctx.moveTo(x, y);
 		ctx.lineTo(this._getChildAnchor(c, side), y);
 	}
@@ -210,14 +210,14 @@ MM.Layout._drawVerticalConnectors = function(item, side, children) {
 	/* first part */
 	var R = MM.Layout.SPACING_RANK/2;
 	
-	var x = this._getCenterline(dom.content);
+	var x = this.getCenterline(item);
 	var height = (children.length == 1 ? 2*R : R);
 
 	if (side == "top") {
 		var y1 = canvas.height - dom.content.offsetHeight;
 		var y2 = y1 - height;
 	} else {
-		var y1 = this._getUnderline(dom.content);
+		var y1 = this.getUnderline(item);
 		var y2 = dom.content.offsetHeight + height;
 	}
 
@@ -229,13 +229,13 @@ MM.Layout._drawVerticalConnectors = function(item, side, children) {
 	if (children.length == 1) { return; }
 
 	/* rounded connectors */
-	var c1 = children[0].getDOM();
-	var c2 = children[children.length-1].getDOM();
+	var c1 = children[0];
+	var c2 = children[children.length-1];
 	var offset = dom.content.offsetHeight + height;
 	var y = Math.round(side == "top" ? canvas.height - offset : offset) + 0.5;
 
-	var x1 = this._getCenterline(c1.content) + c1.node.offsetLeft;
-	var x2 = this._getCenterline(c2.content) + c2.node.offsetLeft;
+	var x1 = c1.getLayout().getCenterline(c1) + c1.getDOM().node.offsetLeft;
+	var x2 = c2.getLayout().getCenterline(c2) + c2.getDOM().node.offsetLeft;
 	var y1 = this._getChildAnchor(c1, side);
 	var y2 = this._getChildAnchor(c2, side);
 
@@ -246,8 +246,8 @@ MM.Layout._drawVerticalConnectors = function(item, side, children) {
 	ctx.arcTo(x2, y, x2, y2, R);
 
 	for (var i=1; i<children.length-1; i++) {
-		var c = children[i].getDOM();
-		var x = this._getCenterline(c.content) + c.node.offsetLeft;
+		var c = children[i];
+		var x = c.getLayout().getCenterline(c) + c.getDOM().node.offsetLeft;
 		ctx.moveTo(x, y);
 		ctx.lineTo(x, this._getChildAnchor(c, side));
 	}
@@ -276,7 +276,7 @@ MM.Layout._underline = function(item) {
 	var left = dom.content.offsetLeft;
 	var right = left + dom.content.offsetWidth;
 
-	var top = this._getUnderline(dom.content);
+	var top = this.getUnderline(item);
 
 	ctx.beginPath();
 	ctx.moveTo(left, top);
@@ -284,15 +284,18 @@ MM.Layout._underline = function(item) {
 	ctx.stroke();
 }
 
-MM.Layout._getUnderline = function(node) {
-	return Math.round(MM.Layout.UNDERLINE * node.offsetHeight + node.offsetTop) + 0.5;
+MM.Layout.getUnderline = function(item) {
+	var node = item.getDOM().content;
+	return Math.round(this.UNDERLINE * node.offsetHeight + node.offsetTop) + 0.5;
 }
 
-MM.Layout._getCenterline = function(node) {
+MM.Layout.getCenterline = function(item) {
+	var node = item.getDOM().content;
 	return Math.round(node.offsetLeft + node.offsetWidth/2) + 0.5;
 }
 
-MM.Layout._getChildAnchor = function(dom, side) {
+MM.Layout._getChildAnchor = function(item, side) {
+	var dom = item.getDOM();
 	if (side == "left" || side == "right") {
 		var pos = dom.node.offsetLeft + dom.content.offsetLeft;
 		if (side == "left") { pos += dom.content.offsetWidth; }

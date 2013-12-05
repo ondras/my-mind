@@ -1,6 +1,7 @@
 body {
 	margin: 0;
 	font-family: sans-serif;
+	background-color: #eee;
 }
 
 #help {
@@ -18,8 +19,10 @@ body {
 	opacity: 1;
 }
 
-.map, .map canvas {
+.map {
 	position: absolute;
+	margin: 0;
+	padding: 0;
 }
 
 .map .current > .text {
@@ -36,11 +39,18 @@ body {
 	outline: none;
 	display: inline-block;
 	white-space: pre;
+	border-width: 2px;
 }
 
-.map .root > .text {
+.map > li > .text {
 	padding: 0.5em 1em;
 	background-color: #ccf;
 	border-radius: 50%;
 	font-weight: bold;
+}
+
+.map > li > ul > li > .text {
+	background-color: #fff;
+	border: 2px solid #888;
+	border-radius: 3px;
 }

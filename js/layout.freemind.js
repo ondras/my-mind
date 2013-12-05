@@ -1,4 +1,5 @@
 MM.Layout.FreeMind = Object.create(MM.Layout);
+MM.Layout.FreeMind.UNDERLINE = 0.5;
 
 MM.Layout.FreeMind.pick = function(item, dir) {
 	if (item.getParent()) {
@@ -25,6 +26,11 @@ MM.Layout.FreeMind.pick = function(item, dir) {
 			return this._pickSibling(item, +1);
 		break;
 	}
+}
+
+MM.Layout.FreeMind.getUnderline = function(item) {
+	if (item.getParent()) { return MM.Layout.getUnderline(item); }
+	return MM.Layout.getUnderline.call(this, item);
 }
 
 MM.Layout.FreeMind.update = function(item) {
