@@ -34,17 +34,18 @@ MM.Layout.pick = function(item, dir) {
 	var parent = item.getParent();
 	if (!parent) { return item; }
 	
-	var thisChildDirection = parent.getLayout().getChildDirection(item);
+	var parentLayout = parent.getLayout();
+	var thisChildDirection = parentLayout.getChildDirection(item);
 	if (thisChildDirection == dir) {
 		return item;
 	} else if (thisChildDirection == opposite[dir]) {
 		return parent;
 	} else {
-		return this._pickSibling(item, (dir == "left" || dir == "top" ? -1 : +1));
+		return parentLayout.pickSibling(item, (dir == "left" || dir == "top" ? -1 : +1));
 	}
 }
 
-MM.Layout._pickSibling = function(item, dir) {
+MM.Layout.pickSibling = function(item, dir) {
 	var parent = item.getParent();
 	if (!parent) { return item; }
 

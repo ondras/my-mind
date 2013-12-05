@@ -1,40 +1,6 @@
 MM.Layout.FreeMind = Object.create(MM.Layout);
 MM.Layout.FreeMind.UNDERLINE = 0.5;
 
-MM.Layout.FreeMind.xpick = function(item, dir) {
-	if (item.getParent()) {
-		var side = this.getChildDirection(item);
-		var opposite = {
-			left: "right",
-			right: "left",
-			top: "bottom",
-			bottom: "top"
-		}
-		if (!item.getParent().getParent() && opposite[dir] == side) {
-			return item.getParent();
-		} else { 
-			var name = side.charAt(0).toUpperCase() + side.substring(1);
-			return MM.Layout[name].pick(item, dir);
-		}
-	}
-
-	switch (dir) {
-		case "left":
-		case "right":
-			var children = item.getChildren();
-			for (var i=0;i<children.length;i++) {
-				var child = children[i];
-				if (this.getChildDirection(child) == dir) { return child; }
-			}
-			return item;
-		break;
-		
-		default:
-			return item;
-		break;
-	}
-}
-
 MM.Layout.FreeMind.getUnderline = function(item) {
 	if (item.getParent()) { return MM.Layout.getUnderline(item); }
 	return MM.Layout.getUnderline.call(this, item);
@@ -59,7 +25,7 @@ MM.Layout.FreeMind.getChildDirection = function(item) {
 	return (index % 2 ? "left" : "right");
 }
 
-MM.Layout.FreeMind._pickSibling = function(item, dir) {
+MM.Layout.FreeMind.pickSibling = function(item, dir) {
 	var parent = item.getParent();
 	if (!parent) { return item; }
 
@@ -75,12 +41,6 @@ MM.Layout.FreeMind._pickSibling = function(item, dir) {
 	index += dir;
 	index = (index+children.length) % children.length;
 	return children[index];
-}
-
-MM.Layout.FreeMind._pickSide = function(item, side) {
-	var children = item.getChildren();
-	var index = (side == "right" ? 0 : 1);
-	return (children.length > index ? children[index] : item);
 }
 
 MM.Layout.FreeMind._layoutRoot = function(item) {
