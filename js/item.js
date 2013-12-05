@@ -22,7 +22,6 @@ MM.Item.prototype._nodeName = "li";
 
 MM.Item.prototype.update = function() {
 	if (!this._map.isVisible()) { return; }
-	console.log("updating", this.getText());
 	this.getLayout().update(this);
 	if (this._parent) { this._parent.update(); }
 }

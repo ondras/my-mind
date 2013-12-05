@@ -45,7 +45,14 @@ MM.Action.RemoveItem.prototype.perform = function() {
 	}
 	
 	this._parent.removeChild(this._item);
-	MM.App.select(this._parent); /* FIXME select next neighbor first */
+
+	var children = this._parent.getChildren();
+	var index = Math.min(this._index, children.length-1);
+	if (index > -1) {
+		MM.App.select(children[index]);
+	} else {
+		MM.App.select(this._parent);
+	}
 }
 MM.Action.RemoveItem.prototype.undo = function() {
 	this._parent.insertChild(this._item, this._index);
