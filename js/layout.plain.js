@@ -1,27 +1,19 @@
 MM.Layout.Plain = Object.create(MM.Layout);
+MM.Layout.Plain.childDirection = "right";
 
 MM.Layout.Plain.pick = function(item, direction) {
+	if (item.getParent()) { return MM.Layout.pick(item, direction); }
+
 	switch (direction) {
-		case 37: /* left */
-			return this._pickParent(item);
+		case "left": 
+			return item; 
 		break;
-		case 38: /* top */
-			if (!item.getParent()) {
-				var children = item.getChildren();
-				return (children.length ? children[children.length-1] : item);
-			} else {
-				return this._pickSibling(item, -1);
-			}
+		case "right": 
+		case "bottom": 
+			return (item.getChildren().length ? item.getChildren()[0] : item);
 		break;
-		case 39: /* right */
-			return this._pickChild(item);
-		break;
-		case 40: /* down */
-			if (!item.getParent()) {
-				return this._pickChild(item);
-			} else {
-				return this._pickSibling(item, +1);
-			}
+		case "top":
+			return (item.getChildren().length ? item.getChildren()[item.getChildren().length-1] : item);
 		break;
 	}
 }

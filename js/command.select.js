@@ -7,8 +7,16 @@ MM.Command.Select = function() {
 }
 MM.Command.Select.prototype = Object.create(MM.Command.prototype);
 MM.Command.Select.prototype.execute = function(e) {
+	var dirs = {
+		37: "left",
+		38: "top",
+		39: "right",
+		40: "bottom"
+	}
+	var dir = dirs[e.keyCode];
+
 	var layout = MM.App.current.getLayout();
-	var item = layout.pick(MM.App.current, e.keyCode);
+	var item = layout.pick(MM.App.current, dir);
 	MM.App.select(item);
 }
 

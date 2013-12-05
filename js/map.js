@@ -35,12 +35,8 @@ MM.Map.prototype.hide = function() {
 }
 
 MM.Map.prototype.center = function() {
-	var bbox = [0, 0, 0, 0];
-	this._root.updateBBox(bbox);
-	var left = (bbox[2]-bbox[0])/2;
-	var top = (bbox[3]-bbox[1])/2;
-
 	var avail = [window.innerWidth, window.innerHeight];
-	this._node.style.left = Math.round(avail[0]/2 - left) + "px";
-	this._node.style.top = Math.round(avail[1]/2 - left) + "px";
+	var node = this._root.getDOM().node;
+	this._node.style.left = Math.round(avail[0]/2 - node.offsetWidth/2) + "px";
+	this._node.style.top = Math.round(avail[1]/2 - node.offsetHeight/2) + "px";
 }

@@ -26,10 +26,6 @@ body {
 	box-shadow: 0 0 3px #333;
 }
 
-.map .item {
-	border: 1px solid #888;
-}
-
 .map .text {
 	padding: 0.2em 0.3em;
 	border-radius: 0.5em;
