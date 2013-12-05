@@ -20,8 +20,8 @@ MM.Layout.Up.pick = function(item, direction) {
 MM.Layout.Up.update = function(item) {
 	this._reset(item);
 
-	this._layoutItem(item, "bottom", "left", "height", "width");
-	this._drawLinesVertical(item, "bottom");
+	this._layoutItem(item, "top");
+//	this._drawLinesVertical(item, "bottom");
 
 	return this;
 }

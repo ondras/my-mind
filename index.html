@@ -30,16 +30,17 @@
 		MM.App.setMap(map);
 
 		var root = map.getRoot();
-		root.setLayout(MM.Layout.Up);
+		root.setLayout(MM.Layout.Right);
 		
 		var r1 = root.insertChild().setText("right 1");
 		r1.insertChild().setText("right 1.1");
-		r1.insertChild().setText("right 1.2");
+		r1.insertChild().setText("right 1.2 zejo");
 		r1.insertChild().setText("right 1.3");
+		r1.setLayout(MM.Layout.Down);
 
 		var l1 = root.insertChild().setText("left 1");
 		l1.insertChild().setText("left 1.1");
-		l1.insertChild().setText("left 1.2");
+		l1.insertChild().setText("left 1.2<br/>xxx");
 		l1.insertChild().setText("left 1.3");
 		l1.insertChild().setText("left 1.4");
 	

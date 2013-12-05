@@ -1,5 +1,6 @@
 MM.Layout = {
-	SPACING: 16,
+	SPACING_RANK: 16,
+	SPACING_CHILD: 4,
 	UNDERLINE: 0.85,
 	LINE_COLOR: "#aaa"
 };
@@ -39,32 +40,73 @@ MM.Layout._pickSibling = function(item, dir) {
 /**
  * Generic child layout routine. Updates item's orthogonal size according to the sum of its children.
  */
-MM.Layout._layoutItem = function(item, mainDirection, childDirection, mainSize, childSize) {
+MM.Layout._layoutItem = function(item, rankDirection) {
+	var sizeProps = ["width", "height"];
+	var posProps = ["left", "top"];
+	var rankIndex = (rankDirection == "left" || rankDirection == "right" ? 0 : 1);
+	var childIndex = (rankIndex+1) % 2;
+
+	var rankPosProp = posProps[rankIndex];
+	var childPosProp = posProps[childIndex];
+	var rankSizeProp = sizeProps[rankIndex];
+	var childSizeProp = sizeProps[childIndex];
+
+	var bbox = this._computeChildrenBBox(item, rankIndex, childIndex);
+
 	var dom = item.getDOM();
-	var mainProp = "offset" + mainSize.charAt(0).toUpperCase() + mainSize.substring(1);
-	var childProp = "offset" + childSize.charAt(0).toUpperCase() + childSize.substring(1);
+	var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
 
-	var total = 0;
-	var children = item.getChildren();
-	children.forEach(function(child) {
+	var offset = [0, 0];
+	if (rankDirection == "right") { offset[0] = contentSize[0] + MM.Layout.SPACING_RANK; }
+	if (rankDirection == "bottom") { offset[1] = contentSize[1] + MM.Layout.SPACING_RANK; }
+
+	/* position children */
+	item.getChildren().forEach(function(child, index) {
 		var node = child.getDOM().node;
-		node.style.left = node.style.right = node.style.top = node.style.bottom = "";
+		var childSize = [node.offsetWidth, node.offsetHeight];
 
-		node.style[mainDirection] = (dom.content[mainProp] + MM.Layout.SPACING) + "px";
-		node.style[childDirection] = total+"px";
+		if (rankDirection == "left") { offset[0] = bbox[0] - childSize[0]; }
+		if (rankDirection == "top") { offset[1] = bbox[1] - childSize[1]; }
 
-		total += node[childProp];
+		node.style[childPosProp] = offset[childIndex] + "px";
+		node.style[rankPosProp] = offset[rankIndex] + "px";
+
+		offset[childIndex] += childSize[childIndex] + MM.Layout.SPACING_CHILD; /* offset for next child */
 	}, this);
 
-	var offset = 0;
-	if (total) {
-		offset = (total - dom.content[childProp])/2;
-	}
+	var rankSize = contentSize[rankIndex];
+	if (bbox[rankIndex]) { rankSize += bbox[rankIndex] + MM.Layout.SPACING_RANK; }
+	var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
 
-	dom.content.style[childDirection] = Math.round(offset) + "px";
-	dom.node.style[childSize] = Math.max(total, dom.content[childProp]) + "px";
+	/* node size */
+	dom.node.style[rankSizeProp] = rankSize + "px";
+	dom.node.style[childSizeProp] = childSize + "px";
+
+	/* label position */
+	var labelPos = 0;
+	if (rankDirection == "left") { labelPos = rankSize - contentSize[0]; }
+	if (rankDirection == "top") { labelPos = rankSize - contentSize[1]; }
+	dom.content.style[childPosProp] = Math.round((childSize - contentSize[childIndex])/2) + "px";
+	dom.content.style[rankPosProp] = labelPos + "px";
 
 	return this;
+}
+
+MM.Layout._computeChildrenBBox = function(item, rankIndex, childIndex) {
+	var bbox = [0, 0];
+	var children = item.getChildren();
+
+	children.forEach(function(child, index) {
+		var node = child.getDOM().node;
+		var childSize = [node.offsetWidth, node.offsetHeight];
+
+		bbox[rankIndex] = Math.max(bbox[rankIndex], childSize[rankIndex]); /* adjust cardinal size */
+		bbox[childIndex] += childSize[childIndex]; /* adjust orthogonal size */
+	}, this);
+
+	if (children.length > 1) { bbox[childIndex] += MM.Layout.SPACING_CHILD * (children.length-1); } /* child separation */
+
+	return bbox;
 }
 
 MM.Layout._drawLinesHorizontal = function(item, anchor) {
