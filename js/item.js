@@ -22,6 +22,7 @@ MM.Item.prototype._nodeName = "li";
 
 MM.Item.prototype.update = function() {
 	if (!this._map.isVisible()) { return; }
+	console.log("updating", this.getText());
 	this.getLayout().update(this);
 	if (this._parent) { this._parent.update(); }
 }
@@ -86,6 +87,18 @@ MM.Item.prototype.insertChild = function(child, index) {
 	this._children.splice(index, 0, child);
 	
 	child.setParent(this);
+
+	/* recursively update this child's subtree */
+	var func = function(item) {
+		var children = item.getChildren();
+		if (children.length) {
+			children.forEach(func);
+		} else {
+			item.update();
+		}
+	}
+	func(child); 
+
 	return child;
 }
 
