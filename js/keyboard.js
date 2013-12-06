@@ -4,18 +4,19 @@ MM.Keyboard = function() {
 }
 
 MM.Keyboard.prototype.handleEvent = function(e) {
-	for (var i=0;i<MM.App.commands.length;i++) {
-		var command = MM.App.commands[i];
-		if (!command.isValid()) { continue; }
+	MM.Command.ALL.some(function(name) {
+		var command = MM.Command[name];
+		if (!command.isValid()) { return; }
 		var keys = command.getKeys();
-		for (var j=0;j<keys.length;j++) {
-			if (this._keyOK(keys[j], e)) {
+		for (var i=0;i<keys.length;i++) {
+			if (this._keyOK(keys[i], e)) {
 				e.preventDefault();
 				command.execute(e);
-				return;
+				return true;
 			}
 		}
-	}
+		return false;
+	}, this);
 }
 
 MM.Keyboard.prototype._keyOK = function(key, e) {

@@ -1,5 +1,4 @@
 MM.App = {
-	commands: [],
 	keyboard: null,
 	current: null,
 	editing: false,
@@ -58,7 +57,18 @@ MM.App = {
 	init: function() {
 		this._port = document.querySelector("#port");
 		this.keyboard = new MM.Keyboard();
-		for (var p in MM.Command) { this.commands.push(new MM.Command[p]()); }
+
+		MM.Command.ALL = [
+			"Select", "SelectRoot",
+			"InsertChild", "InsertSibling", "Delete",
+			"Undo", "Redo",
+			"Edit", "Newline", "Cancel", "Finish",
+			"Help"
+		];
+
+		MM.Command.ALL.forEach(function(name) {
+			MM.Command[name].init();
+		});
 
 		this._port.addEventListener("click", this);
 		window.addEventListener("resize", this);

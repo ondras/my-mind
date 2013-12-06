@@ -1,13 +1,12 @@
-MM.Command.Select = function() {
-	MM.Command.call(this);
-	this._keys.push({keyCode: 37});
-	this._keys.push({keyCode: 38});
-	this._keys.push({keyCode: 39});
-	this._keys.push({keyCode: 40});
-	this._name = "Move selection";
-}
-MM.Command.Select.prototype = Object.create(MM.Command.prototype);
-MM.Command.Select.prototype.execute = function(e) {
+MM.Command.Select = Object.create(MM.Command);
+MM.Command.Select._keys = [
+	{keyCode: 37},
+	{keyCode: 38},
+	{keyCode: 39},
+	{keyCode: 40}
+];
+MM.Command.Select._name = "Move selection";
+MM.Command.Select.execute = function(e) {
 	var dirs = {
 		37: "left",
 		38: "top",
@@ -21,18 +20,17 @@ MM.Command.Select.prototype.execute = function(e) {
 	MM.App.select(item);
 }
 
-MM.Command.SelectRoot = function() {
-	MM.Command.call(this);
-	this._keys.push({keyCode: 36});
-	this._name = "Select root";
-}
-MM.Command.SelectRoot.prototype = Object.create(MM.Command.prototype);
-MM.Command.SelectRoot.prototype.execute = function() {
+MM.Command.SelectRoot = Object.create(MM.Command);
+MM.Command.SelectRoot._keys = [{keyCode: 36}];
+MM.Command.SelectRoot._name = "Select root";
+MM.Command.SelectRoot.execute = function() {
 	var item = MM.App.current;
 	while (item.getParent()) { item = item.getParent(); }
 	MM.App.select(item);
 }
 
+
+/* FIXME vvv 
 MM.Command.SelectFirst = function() {
 	MM.Command.call(this);
 	this._keys.push({keyCode: 33});
@@ -56,3 +54,4 @@ MM.Command.SelectLast.prototype.execute = function() {
 	var children = parent.getChildren();
 	MM.App.select(children[children.length-1]);
 }
+*/
