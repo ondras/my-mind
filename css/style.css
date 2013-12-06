@@ -30,6 +30,7 @@ body {
 	position: absolute;
 	list-style: none;
 	padding: 0;
+	font-size: 15px;
 }
 
 .map .current > .text {
@@ -37,7 +38,7 @@ body {
 }
 
 .map .text {
-	padding: 0.2em 0.3em;
+	padding: 0.15em 0.4em;
 	border-radius: 0.5em;
 	min-width: 0.5em;
 	min-height: 1.3em;

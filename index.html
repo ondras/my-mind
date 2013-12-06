@@ -34,11 +34,11 @@
 		<div id="ui">
 			<input type="checkbox" id="button" />
 			<label for="button"></label>
-			<div id="bar">BAR.</div>
+			<div id="bar"></div>
 		</div>
 		<script>
 		MM.App.init();
-/*
+
 		var map = new MM.Map({root:"This is <s>Sparta</s> Root"});
 
 		var root = map.getRoot();
@@ -62,11 +62,35 @@
 
 		var l2 = root.insertChild().setText("left 2 veri long k?");
 		l2.insertChild().setText("left 2.1");
-*/
-		var map = MM.Map.fromJSON(JSON.parse(localStorage.data));
+
 		MM.App.setMap(map);
 		map.center();
 
 		</script>
+
+<!--
+
+TODO:
+  shortterm:
+    - fix freemind layout remembering, serialization, parsing
+    - icon font
+    - mma format
+    - mm format
+    - textarea backend
+    - ui base
+    - ui for shapes
+    - ui for layouts
+    - styling
+    - ui for styling
+    - ui for saveload
+
+  longterm:
+    - more formats?
+    - more backends (firebase?)
+    - circular layout
+    - wysiwyg
+
+-->
+
 	</body>
 </html>
