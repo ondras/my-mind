@@ -1,13 +1,20 @@
+@import url(ui.css);
+
 body {
 	margin: 0;
 	font-family: sans-serif;
+	overflow: hidden;
+}
+
+#port {
 	background-color: #eee;
+	overflow: hidden;
 }
 
 #help {
 	position: fixed;
-	right: 50px;
-	bottom: 50px;
+	right: 20px;
+	top: 20px;
 	background-color: rgba(0, 0, 0, 0.3);
 	color: #fff;
 	padding: 0.5em;

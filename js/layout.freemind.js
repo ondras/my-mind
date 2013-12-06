@@ -66,7 +66,7 @@ MM.Layout.FreeMind._layoutRoot = function(item) {
 	var height = Math.max(bboxLeft[1], bboxRight[1], dom.content.offsetHeight);
 
 	var left = 0;
-	this._layoutChildren(childrenLeft, "left", 0, 1, [left, Math.round((height-bboxLeft[1])/2)]);
+	this._layoutChildren(childrenLeft, "left", 0, 1, [left, Math.round((height-bboxLeft[1])/2)], bboxLeft);
 	left += bboxLeft[0];
 
 	if (childrenLeft.length) { left += MM.Layout.SPACING_RANK; }
@@ -74,7 +74,7 @@ MM.Layout.FreeMind._layoutRoot = function(item) {
 	left += dom.content.offsetWidth;
 
 	if (childrenRight.length) { left += MM.Layout.SPACING_RANK; }
-	this._layoutChildren(childrenRight, "right", 0, 1, [left, Math.round((height-bboxRight[1])/2)]);
+	this._layoutChildren(childrenRight, "right", 0, 1, [left, Math.round((height-bboxRight[1])/2)], bboxRight);
 	left += bboxRight[0];
 
 	dom.content.style.top = Math.round((height - dom.content.offsetHeight)/2) + "px";

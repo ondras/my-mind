@@ -10,6 +10,11 @@ MM.Command.Help = function() {
 	this._map = {
 		13: "Enter",
 		32: "Spacebar",
+		36: "Home",
+		37: "←",
+		38: "↑",
+		39: "→",
+		40: "↓",
 		45: "Insert",
 		46: "Delete",
 		112: "F1",

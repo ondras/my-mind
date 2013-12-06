@@ -4,6 +4,7 @@ MM.Command.Select = function() {
 	this._keys.push({keyCode: 38});
 	this._keys.push({keyCode: 39});
 	this._keys.push({keyCode: 40});
+	this._name = "Move selection";
 }
 MM.Command.Select.prototype = Object.create(MM.Command.prototype);
 MM.Command.Select.prototype.execute = function(e) {
@@ -23,6 +24,7 @@ MM.Command.Select.prototype.execute = function(e) {
 MM.Command.SelectRoot = function() {
 	MM.Command.call(this);
 	this._keys.push({keyCode: 36});
+	this._name = "Select root";
 }
 MM.Command.SelectRoot.prototype = Object.create(MM.Command.prototype);
 MM.Command.SelectRoot.prototype.execute = function() {

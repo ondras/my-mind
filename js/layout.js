@@ -4,6 +4,17 @@ MM.Layout = {
 	UNDERLINE: 0.85,
 };
 
+MM.Layout.fromJSON = function(data) {
+	return MM.Layout[data];
+}
+
+MM.Layout.toJSON = function() {
+	for (var p in MM.Layout) {
+		if (MM.Layout[p] == this) { return p; }
+	}
+	return "";
+}
+
 /**
  * Re-draw an item and its children
  */
@@ -77,11 +88,11 @@ MM.Layout._layoutItem = function(item, rankDirection) {
 	dom.node.style.listStyle = "none";
 	dom.content.style.position = "relative";
 
+	/* content size */
 	var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
-	var offset = [0, 0];
-	if (rankDirection == "right") { offset[0] = contentSize[0] + MM.Layout.SPACING_RANK; }
-	if (rankDirection == "bottom") { offset[1] = contentSize[1] + MM.Layout.SPACING_RANK; }
-	var bbox = this._layoutChildren(item.getChildren(), rankDirection, rankIndex, childIndex, offset);
+
+	/* children size */
+	var bbox = this._computeChildrenBBox(item.getChildren(), rankIndex, childIndex);
 
 	/* node size */
 	var rankSize = contentSize[rankIndex];
@@ -89,6 +100,13 @@ MM.Layout._layoutItem = function(item, rankDirection) {
 	var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
 	dom.node.style[rankSizeProp] = rankSize + "px";
 	dom.node.style[childSizeProp] = childSize + "px";
+
+	var offset = [0, 0];
+	if (rankDirection == "right") { offset[0] = contentSize[0] + MM.Layout.SPACING_RANK; }
+	if (rankDirection == "bottom") { offset[1] = contentSize[1] + MM.Layout.SPACING_RANK; }
+	offset[childIndex] = Math.round((childSize - bbox[childIndex])/2);
+	this._layoutChildren(item.getChildren(), rankDirection, rankIndex, childIndex, offset, bbox);
+
 
 	/* label position */
 	var labelPos = 0;
@@ -116,12 +134,10 @@ MM.Layout._computeChildrenBBox = function(children, rankIndex, childIndex) {
 	return bbox;
 }
 
-MM.Layout._layoutChildren = function(children, rankDirection, rankIndex, childIndex, offset) {
+MM.Layout._layoutChildren = function(children, rankDirection, rankIndex, childIndex, offset, bbox) {
 	var posProps = ["left", "top"];
 	var rankPosProp = posProps[rankIndex];
 	var childPosProp = posProps[childIndex];
-
-	var bbox = this._computeChildrenBBox(children, rankIndex, childIndex);
 
 	children.forEach(function(child, index) {
 		var node = child.getDOM().node;

@@ -20,6 +20,27 @@ MM.Item = function(map) {
 	this._dom.node.appendChild(this._dom.content);
 }
 
+MM.Item.fromJSON = function(data, map) {
+	var item = new this(map);
+	item.setText(data.text);
+	item.setLayout(MM.Layout.fromJSON(data.layout));
+	item.setShape(MM.Shape.fromJSON(data.shape));
+	data.children.forEach(function(child) {
+		item.insertChild(MM.Item.fromJSON(child, map));
+	});
+	return item;
+}
+
+MM.Item.prototype.toJSON = function() {
+	var data = {
+		text: this.getText(),
+		children: this._children.map(function(child) { return child.toJSON(); }),
+		layout: this._layout && this._layout.toJSON(),
+		shape: this._shape && this._shape.toJSON()
+	};
+	return data;
+}
+
 MM.Item.prototype.update = function(doNotRecurse) {
 	if (!this._map.isVisible()) { return; }
 	this.getLayout().update(this);
@@ -34,13 +55,13 @@ MM.Item.prototype.updateSubtree = function() {
 }
 
 MM.Item.prototype.setText = function(text) {
-	this._dom.content.innerHTML = text;
+	this._dom.content.innerHTML = text.replace(/\n/g, "<br/>");
 	this.update();
 	return this;
 }
 
 MM.Item.prototype.getText = function() {
-	return this._dom.content.innerHTML;
+	return this._dom.content.innerHTML.replace(/<br\/>/g, "\n");
 }
 
 MM.Item.prototype.getChildren = function() {

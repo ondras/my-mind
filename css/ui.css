@@ -1,0 +1,36 @@
+#ui #button {
+	display: none;
+}
+
+#ui #bar {
+	position: fixed;
+	right: 0;
+	bottom: 0;
+	height: 0;
+	width: 100%;
+	background-color: #fff;
+	transition: height 250ms ease-out;
+}
+
+#ui #button:checked ~ #bar, #ui label:hover ~ #bar, #ui #bar:hover {
+	height: 100px;
+	box-shadow: 0 0 2px 2px #666;
+}
+
+#ui label {
+	cursor: pointer;
+	position: fixed;
+	right: 30px;
+	bottom: 30px;
+	width: 40px;
+	height: 40px;
+	background-color: #999;
+	border-radius: 8px;
+	z-index: 1;
+
+	box-shadow: 0 0 3px 2px #000;
+}
+
+#ui #button:checked ~ label {
+	box-shadow: inset 0 0 3px 2px #000;
+}
