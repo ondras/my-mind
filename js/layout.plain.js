@@ -19,3 +19,9 @@ MM.Layout.Plain.pick = function(item, direction) {
 		break;
 	}
 }
+
+MM.Layout.Plain.update = function(item) {
+	item.getShape().update(item);
+	item.getDOM().canvas.style.display = "none"; /* FIXME reset */
+	item.getShape().updateCanvas(item);
+}

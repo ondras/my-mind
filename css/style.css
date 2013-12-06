@@ -21,12 +21,12 @@ body {
 
 .map {
 	position: absolute;
-	margin: 0;
+	list-style: none;
 	padding: 0;
 }
 
 .map .current > .text {
-	box-shadow: 0 0 3px #333;
+	box-shadow: 0 0 5px #333;
 }
 
 .map .text {
@@ -35,22 +35,13 @@ body {
 	min-width: 0.5em;
 	min-height: 1.3em;
 	line-height: 1.3em;
-	border: 1px solid transparent;
 	outline: none;
 	display: inline-block;
 	white-space: pre;
-	border-width: 2px;
 }
 
 .map > li > .text {
-	padding: 0.5em 1em;
 	background-color: #ccf;
-	border-radius: 50%;
 	font-weight: bold;
-}
-
-.map > li > ul > li > .text {
-	background-color: #fff;
-	border: 2px solid #888;
-	border-radius: 3px;
+	border-width: 2px;
 }

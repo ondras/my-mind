@@ -1,10 +1,4 @@
 MM.Layout.FreeMind = Object.create(MM.Layout);
-MM.Layout.FreeMind.UNDERLINE = 0.5;
-
-MM.Layout.FreeMind.getUnderline = function(item) {
-	if (item.getParent()) { return MM.Layout.getUnderline(item); }
-	return MM.Layout.getUnderline.call(this, item);
-}
 
 MM.Layout.FreeMind.update = function(item) {
 	if (item.getParent()) {
@@ -12,7 +6,9 @@ MM.Layout.FreeMind.update = function(item) {
 		var name = side.charAt(0).toUpperCase() + side.substring(1);
 		MM.Layout[name].update(item);
 	} else {
+		item.getShape().update(item);
 		this._layoutRoot(item);
+		item.getShape().updateCanvas(item);
 	}
 }
 
@@ -46,9 +42,8 @@ MM.Layout.FreeMind.pickSibling = function(item, dir) {
 MM.Layout.FreeMind._layoutRoot = function(item) {
 	var dom = item.getDOM();
 	dom.node.style.position = "absolute";
-	dom.node.style.margin = dom.children.style.margin = 0;
-	dom.node.style.padding = dom.children.style.padding = 0;
-	dom.node.style.listStyle = "none";
+	dom.children.style.padding = 0;
+	dom.children.style.listStyle = "none";
 	dom.content.style.position = "relative";
 
 	var children = item.getChildren();

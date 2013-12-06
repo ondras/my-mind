@@ -1,1 +1,3 @@
-var MM = {};
+var MM = {
+	LINE_COLOR: "#aaa"
+};

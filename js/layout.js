@@ -2,13 +2,14 @@ MM.Layout = {
 	SPACING_RANK: 16,
 	SPACING_CHILD: 4,
 	UNDERLINE: 0.85,
-	LINE_COLOR: "#aaa"
 };
 
 /**
  * Re-draw an item and its children
  */
 MM.Layout.update = function(item) {
+	item.getShape().update(item);
+	item.getShape().updateCanvas(item);
 	return this;
 }
 
@@ -72,8 +73,7 @@ MM.Layout._layoutItem = function(item, rankDirection) {
 
 	var dom = item.getDOM();
 	dom.node.style.position = "absolute";
-	dom.node.style.margin = dom.children.style.margin = 0;
-	dom.node.style.padding = dom.children.style.padding = 0;
+	dom.children.style.padding = 0;
 	dom.node.style.listStyle = "none";
 	dom.content.style.position = "relative";
 
@@ -141,13 +141,11 @@ MM.Layout._layoutChildren = function(children, rankDirection, rankIndex, childIn
 
 MM.Layout._drawLinesHorizontal = function(item, side) {
 	this._anchorCanvas(item);
-	this._underline(item);
 	this._drawHorizontalConnectors(item, side, item.getChildren());
 }
 
 MM.Layout._drawLinesVertical = function(item, side) {
 	this._anchorCanvas(item);
-	this._underline(item);
 	this._drawVerticalConnectors(item, side, item.getChildren());
 }
 
@@ -157,14 +155,11 @@ MM.Layout._drawHorizontalConnectors = function(item, side, children) {
 	var dom = item.getDOM();
 	var canvas = dom.canvas;
 	var ctx = canvas.getContext("2d");
-	ctx.strokeStyle = MM.Layout.LINE_COLOR;
+	ctx.strokeStyle = MM.LINE_COLOR;
+	var R = MM.Layout.SPACING_RANK/2;
 
 	/* first part */
-	var R = MM.Layout.SPACING_RANK/2;
-	var width = (children.length == 1 ? 2*R : R);
-	
-	var y = this.getUnderline(item);
-
+	var y1 = item.getShape().getVerticalAnchor(item);
 	if (side == "left") {
 		var x1 = dom.content.offsetLeft + 0.5;
 		var x2 = x1 - width;
@@ -173,9 +168,24 @@ MM.Layout._drawHorizontalConnectors = function(item, side, children) {
 		var x2 = x1 + width;
 	}
 
+	if (children.length == 1) {
+		var child = children[0];
+		var y2 = child.getShape().getVerticalAnchor(child) + child.getDOM().node.offsetTop;
+		var width = 2*R;
+	} else {
+		var y2 = y1;
+		var width = R;
+	}
+
+	if (side == "left") {
+		var x2 = x1 - width;
+	} else {
+		var x2 = x1 + width;
+	}
+
 	ctx.beginPath();
-	ctx.moveTo(x1, y);
-	ctx.lineTo(x2, y);
+	ctx.moveTo(x1, y1);
+	ctx.lineTo(x2, y2);
 	ctx.stroke();
 
 	if (children.length == 1) { return; }
@@ -186,8 +196,8 @@ MM.Layout._drawHorizontalConnectors = function(item, side, children) {
 	var offset = dom.content.offsetWidth + width;
 	var x = x2;
 
-	var y1 = c1.getLayout().getUnderline(c1) + c1.getDOM().node.offsetTop;
-	var y2 = c2.getLayout().getUnderline(c2) + c2.getDOM().node.offsetTop;
+	var y1 = c1.getShape().getVerticalAnchor(c1) + c1.getDOM().node.offsetTop;
+	var y2 = c2.getShape().getVerticalAnchor(c2) + c2.getDOM().node.offsetTop;
 	var x1 = this._getChildAnchor(c1, side);
 	var x2 = this._getChildAnchor(c2, side);
 
@@ -199,7 +209,7 @@ MM.Layout._drawHorizontalConnectors = function(item, side, children) {
 
 	for (var i=1; i<children.length-1; i++) {
 		var c = children[i];
-		var y = c.getLayout().getUnderline(c) + c.getDOM().node.offsetTop;
+		var y = c.getShape().getVerticalAnchor(c) + c.getDOM().node.offsetTop;
 		ctx.moveTo(x, y);
 		ctx.lineTo(this._getChildAnchor(c, side), y);
 	}
@@ -212,19 +222,19 @@ MM.Layout._drawVerticalConnectors = function(item, side, children) {
 	var dom = item.getDOM();
 	var canvas = dom.canvas;
 	var ctx = canvas.getContext("2d");
-	ctx.strokeStyle = MM.Layout.LINE_COLOR;
+	ctx.strokeStyle = MM.LINE_COLOR;
 
 	/* first part */
 	var R = MM.Layout.SPACING_RANK/2;
 	
-	var x = this.getCenterline(item);
+	var x = item.getShape().getHorizontalAnchor(item);
 	var height = (children.length == 1 ? 2*R : R);
 
 	if (side == "top") {
 		var y1 = canvas.height - dom.content.offsetHeight;
 		var y2 = y1 - height;
 	} else {
-		var y1 = this.getUnderline(item);
+		var y1 = item.getShape().getVerticalAnchor(item);
 		var y2 = dom.content.offsetHeight + height;
 	}
 
@@ -241,8 +251,8 @@ MM.Layout._drawVerticalConnectors = function(item, side, children) {
 	var offset = dom.content.offsetHeight + height;
 	var y = Math.round(side == "top" ? canvas.height - offset : offset) + 0.5;
 
-	var x1 = c1.getLayout().getCenterline(c1) + c1.getDOM().node.offsetLeft;
-	var x2 = c2.getLayout().getCenterline(c2) + c2.getDOM().node.offsetLeft;
+	var x1 = c1.getShape().getHorizontalAnchor(c1) + c1.getDOM().node.offsetLeft;
+	var x2 = c2.getShape().getHorizontalAnchor(c2) + c2.getDOM().node.offsetLeft;
 	var y1 = this._getChildAnchor(c1, side);
 	var y2 = this._getChildAnchor(c2, side);
 
@@ -254,7 +264,7 @@ MM.Layout._drawVerticalConnectors = function(item, side, children) {
 
 	for (var i=1; i<children.length-1; i++) {
 		var c = children[i];
-		var x = c.getLayout().getCenterline(c) + c.getDOM().node.offsetLeft;
+		var x = c.getShape().getHorizontalAnchor(c) + c.getDOM().node.offsetLeft;
 		ctx.moveTo(x, y);
 		ctx.lineTo(x, this._getChildAnchor(c, side));
 	}
@@ -272,33 +282,6 @@ MM.Layout._anchorCanvas = function(item) {
 	canvas.style.left = canvas.style.top = 0;
 	canvas.width = dom.node.offsetWidth;
 	canvas.height = dom.node.offsetHeight;
-}
-
-MM.Layout._underline = function(item) {
-	var dom = item.getDOM();
-
-	var ctx = dom.canvas.getContext("2d");
-	ctx.strokeStyle = MM.Layout.LINE_COLOR;
-
-	var left = dom.content.offsetLeft;
-	var right = left + dom.content.offsetWidth;
-
-	var top = this.getUnderline(item);
-
-	ctx.beginPath();
-	ctx.moveTo(left, top);
-	ctx.lineTo(right, top);
-	ctx.stroke();
-}
-
-MM.Layout.getUnderline = function(item) {
-	var node = item.getDOM().content;
-	return Math.round(this.UNDERLINE * node.offsetHeight + node.offsetTop) + 0.5;
-}
-
-MM.Layout.getCenterline = function(item) {
-	var node = item.getDOM().content;
-	return Math.round(node.offsetLeft + node.offsetWidth/2) + 0.5;
 }
 
 MM.Layout._getChildAnchor = function(item, side) {

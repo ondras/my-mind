@@ -1,13 +1,14 @@
 MM.Item = function(map) {
 	this._map = map;
-	this._children = [];
 	this._parent = null;
-	this._layout = null;
+	this._children = [];
 
+	this._layout = null;
+	this._shape = null;
 	this._oldText = "";
 
 	this._dom = {
-		node: document.createElement(this._nodeName),
+		node: document.createElement("li"),
 		content: document.createElement("span"),
 		children: document.createElement("ul"),
 		canvas: document.createElement("canvas")
@@ -18,12 +19,18 @@ MM.Item = function(map) {
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
 }
-MM.Item.prototype._nodeName = "li";
 
-MM.Item.prototype.update = function() {
+MM.Item.prototype.update = function(doNotRecurse) {
 	if (!this._map.isVisible()) { return; }
 	this.getLayout().update(this);
-	if (this._parent) { this._parent.update(); }
+	if (this._parent && !doNotRecurse) { this._parent.update(); }
+}
+
+MM.Item.prototype.updateSubtree = function() {
+	this._children.forEach(function(child) {
+		child.updateSubtree();
+	});
+	this.update(true);
 }
 
 MM.Item.prototype.setText = function(text) {
@@ -45,8 +52,31 @@ MM.Item.prototype.getLayout = function() {
 }
 
 MM.Item.prototype.setLayout = function(layout) {
-	/* FIXME update children */
 	this._layout = layout;
+	this.updateSubtree();	
+	this.update();
+	return this;
+}
+
+MM.Item.prototype.getShape = function() {
+	if (this._shape) { return this._shape; }
+	var depth = 0;
+	var node = this;
+	while (node.getParent()) {
+		depth++;
+		node = node.getParent();
+	}
+	switch (depth) {
+		case 0: return MM.Shape.Ellipse;
+		case 1: return MM.Shape.Box;
+		default: return MM.Shape.Underline;
+	}
+	return this._shape || this._parent.getShape();
+}
+
+MM.Item.prototype.setShape = function(shape) {
+	this._shape = shape;
+	this.updateSubtree();	
 	this.update();
 	return this;
 }
@@ -87,16 +117,8 @@ MM.Item.prototype.insertChild = function(child, index) {
 	
 	child.setParent(this);
 
-	/* recursively update this child's subtree */
-	var func = function(item) {
-		var children = item.getChildren();
-		if (children.length) {
-			children.forEach(func);
-		} else {
-			item.update();
-		}
-	}
-	func(child); 
+	child.updateSubtree();
+	this.update();
 
 	return child;
 }

@@ -4,12 +4,14 @@ MM.Layout.Side.getChildDirection = function(item) {
 	return this.childDirection;
 }
 MM.Layout.Side.update = function(item) {
+	item.getShape().update(item);
 	this._layoutItem(item, this.childDirection);
 	if (this.childDirection == "left" || this.childDirection == "right") {
 		this._drawLinesHorizontal(item, this.childDirection);
 	} else {
 		this._drawLinesVertical(item, this.childDirection);
 	}
+	item.getShape().updateCanvas(item);
 	return this;
 }
 

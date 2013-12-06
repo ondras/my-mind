@@ -1,10 +1,12 @@
 MM.Map = function(options) {
 	var o = {
-		root: "ROOT"
+		root: "ROOT",
+		layout: MM.Layout.Plain
 	}
 	for (var p in options) { o[p] = options[p]; }
 
-	this._root = this.createItem().setText(o.root);
+	this._root = this.createItem().setText(o.root).setLayout(o.layout);
+
 	this._node = document.createElement("ul");
 	this._node.className = "map";
 	this._node.appendChild(this._root.getDOM().node);
@@ -27,6 +29,7 @@ MM.Map.prototype.getRoot = function() {
 MM.Map.prototype.show = function(where) {
 	where.appendChild(this._node);
 	this._visible = true;
+	this._root.updateSubtree();
 }
 
 MM.Map.prototype.hide = function() {
