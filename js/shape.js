@@ -3,14 +3,15 @@ MM.Shape = {
 }
 
 MM.Shape.fromJSON = function(data) {
-	return MM.Shape[data];
+	return MM.Shape[data.type];
 }
 
 MM.Shape.toJSON = function() {
+	var data = {type:""};
 	for (var p in MM.Shape) {
-		if (MM.Shape[p] == this) { return p; }
+		if (MM.Shape[p] == this) { data.type = p; }
 	}
-	return "";
+	return data;
 }
 
 MM.Shape.update = function(item) {}

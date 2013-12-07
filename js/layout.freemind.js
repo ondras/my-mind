@@ -1,4 +1,6 @@
 MM.Layout.FreeMind = Object.create(MM.Layout);
+MM.Layout.FreeMind._left = [];
+MM.Layout.FreeMind._right = [];
 
 MM.Layout.FreeMind.update = function(item) {
 	if (item.getParent()) {
@@ -13,12 +15,54 @@ MM.Layout.FreeMind.update = function(item) {
 }
 
 MM.Layout.FreeMind.getChildDirection = function(item) {
-	while (item.getParent().getParent()) {
-		item = item.getParent();
+	if (this._left.indexOf(item) > -1) { return "left"; }
+	if (this._right.indexOf(item) > -1) { return "right"; }
+	
+	var top = this._findTopParent(item);
+	if (!top.getParent()) debugger;
+
+	if (this._left.indexOf(top) > -1) { 
+		this._left.push(item);
+		return "left"; 
 	}
-	var children = item.getParent().getChildren();
-	var index = children.indexOf(item);
-	return (index % 2 ? "left" : "right");
+	if (this._right.indexOf(top) > -1) { 
+		this._right.push(item);
+		return "right"; 
+	}
+	
+	var rootChildren = top.getParent().getChildren();
+	var countLeft = 0, countRight = 0;
+	var result = "";
+	rootChildren.forEach(function(child) {
+		if (this._left.indexOf(child) > -1) {
+			countLeft++;
+		} else if (this._right.indexOf(child) > -1) {
+			countRight++;
+		} else {
+			var side = "";
+			if (countLeft < countRight) {
+				side = "left";
+				countLeft++;
+			} else {
+				side = "right";
+				countRight++;
+			}
+			result = side;
+			this["_"+side].push(child);
+			if (child == top) { this["_"+side].push(item); }
+		}
+	}, this);
+	
+	return result;
+}
+
+MM.Layout.FreeMind._findTopParent = function(item) {
+	var parent = item.getParent();
+	while (parent.getParent()) {
+		item = parent;
+		parent = parent.getParent();
+	}
+	return item;
 }
 
 MM.Layout.FreeMind.pickSibling = function(item, dir) {

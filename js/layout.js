@@ -5,14 +5,15 @@ MM.Layout = {
 };
 
 MM.Layout.fromJSON = function(data) {
-	return MM.Layout[data];
+	return MM.Layout[data.type];
 }
 
 MM.Layout.toJSON = function() {
+	var data = {type:""};
 	for (var p in MM.Layout) {
-		if (MM.Layout[p] == this) { return p; }
+		if (MM.Layout[p] == this) { data.type = p; }
 	}
-	return "";
+	return data;
 }
 
 /**
