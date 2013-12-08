@@ -72,7 +72,12 @@ MM.Item.prototype.getLayout = function() {
 	return this._layout || this._parent.getLayout();
 }
 
+MM.Item.prototype.getOwnLayout = function() {
+	return this._layout;
+}
+
 MM.Item.prototype.setLayout = function(layout) {
+	this._reset();
 	this._layout = layout;
 	this.updateSubtree();	
 	this.update();
@@ -93,6 +98,10 @@ MM.Item.prototype.getShape = function() {
 		default: return MM.Shape.Underline;
 	}
 	return this._shape || this._parent.getShape();
+}
+
+MM.Item.prototype.getOwnShape = function() {
+	return this._shape;
 }
 
 MM.Item.prototype.setShape = function(shape) {
@@ -174,4 +183,17 @@ MM.Item.prototype.stopEditing = function() {
 	this._dom.content.innerHTML = this._oldText;
 	this._oldText = "";
 	return result;
+}
+
+MM.Item.prototype._reset = function() {
+	var dom = this._dom;
+
+	dom.canvas.style.display = "";
+
+	dom.node.style.position = "";
+
+	dom.children.style.listStyle = "";
+	dom.children.style.padding = "";
+
+	dom.content.style.position = "";
 }

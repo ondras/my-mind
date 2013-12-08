@@ -4,17 +4,18 @@
 
 #ui #bar {
 	position: fixed;
-	right: -100px;
+	right: 0;
 	top: 0;
-	width: 100px;
+	width: 160px;
 	height: 100%;
 	background-color: #fff;
+	xtransform: translate(100%, 0);
 	transition: all 250ms ease-out;
 }
 
 #ui #button:checked ~ #bar, #ui label:hover ~ #bar, #ui #bar:hover {
 	box-shadow: 0 0 2px 2px #666;
-	right: 0px;
+	transform: translate(0, 0);
 }
 
 #ui label {
@@ -39,4 +40,10 @@
 	list-style: none;
 	margin: 0;
 	padding: 0;
+}
+
+#ui h3 {
+	text-align: center;
+	text-transform: uppercase;
+	margin: 0;
 }

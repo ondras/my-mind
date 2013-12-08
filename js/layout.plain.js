@@ -22,6 +22,6 @@ MM.Layout.Plain.pick = function(item, direction) {
 
 MM.Layout.Plain.update = function(item) {
 	item.getShape().update(item);
-	item.getDOM().canvas.style.display = "none"; /* FIXME reset */
+	item.getDOM().canvas.style.display = "none";
 	item.getShape().updateCanvas(item);
 }

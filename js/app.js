@@ -6,6 +6,7 @@ MM.App = {
 	historyIndex: 0,
 	map: null,
 	_port: null,
+	_ui: null,
 	
 	action: function(action) {
 		if (this.historyIndex < this.history.length) { /* remove undoed actions */
@@ -33,6 +34,7 @@ MM.App = {
 		this.current = item;
 		this.current.getDOM().node.classList.add("current");
 		this.map.ensureItemVisibility(item);
+		this._ui.update();
 	},
 
 	handleEvent: function(e) {
@@ -56,6 +58,7 @@ MM.App = {
 	
 	init: function() {
 		this._port = document.querySelector("#port");
+		this._ui = new MM.UI();
 		this.keyboard = new MM.Keyboard();
 
 		MM.Command.ALL = [

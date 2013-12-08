@@ -85,8 +85,8 @@ MM.Layout._layoutItem = function(item, rankDirection) {
 
 	var dom = item.getDOM();
 	dom.node.style.position = "absolute";
+	dom.children.style.listStyle = "none";
 	dom.children.style.padding = 0;
-	dom.node.style.listStyle = "none";
 	dom.content.style.position = "relative";
 
 	/* content size */
