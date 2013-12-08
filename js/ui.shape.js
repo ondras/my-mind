@@ -1,0 +1,2 @@
+MM.UI.Layout = function() {
+}

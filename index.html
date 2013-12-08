@@ -25,6 +25,9 @@
 		<script src="js/format.json.js"></script>
 		<script src="js/backend.js"></script>
 		<script src="js/backend.local.js"></script>
+		<script src="js/ui.js"></script>
+		<script src="js/ui.layout.js"></script>
+		<script src="js/ui.shape.js"></script>
 		<script src="js/app.js"></script>
 		<link rel="stylesheet" href="css/style.css" />
 	</head>
@@ -34,7 +37,32 @@
 		<div id="ui">
 			<input type="checkbox" id="button" />
 			<label for="button"></label>
-			<div id="bar"></div>
+			<div id="bar">
+				<ul>
+					<li>
+						<span>Map</span>
+						<ul>
+							<li>New</li>
+							<li>Save</li>
+							<li>Load</li>
+							<li>Center</li>
+						</ul>
+					</li>
+					<li>
+						<span>Item</span>
+						<ul>
+							<li>
+								<span>Layout</span>
+								<select id="layout"></select>
+							</li>
+							<li>
+								<span>Shape</span>
+								<select id="shape"></select>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
 		</div>
 		<script>
 		MM.App.init();

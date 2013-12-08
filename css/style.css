@@ -1,9 +1,10 @@
 @import url(ui.css);
 
-body {
+html, body {
 	margin: 0;
 	font-family: sans-serif;
 	overflow: hidden;
+	height: 100%;
 }
 
 #port {
