@@ -32,18 +32,11 @@ MM.Action.InsertItem.prototype.undo = function() {
 
 MM.Action.RemoveItem = function(item) {
 	this._item = item;
-	this._children = item.getChildren().slice();
 	this._parent = item.getParent();
 	this._index = this._parent.getChildren().indexOf(this._item);
 }
 MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.RemoveItem.prototype.perform = function() {
-	for (var i=this._children.length-1;i>=0;i--) {
-		var child = this._children[i];
-		this._item.removeChild(child);
-		this._parent.insertChild(child, this._index);
-	}
-	
 	this._parent.removeChild(this._item);
 
 	var children = this._parent.getChildren();
@@ -56,12 +49,5 @@ MM.Action.RemoveItem.prototype.perform = function() {
 }
 MM.Action.RemoveItem.prototype.undo = function() {
 	this._parent.insertChild(this._item, this._index);
-
-	for (var i=0;i<this._children.length;i++) {
-		var child = this._children[i];
-		this._parent.removeChild(child);
-		this._item.insertChild(child);
-	}
-
 	MM.App.select(this._item);
 }

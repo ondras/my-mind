@@ -78,12 +78,7 @@ MM.Item.prototype.getOwnLayout = function() {
 }
 
 MM.Item.prototype.setLayout = function(layout) {
-	if (this._parent || this._layout) { this.getLayout().unset(this); }
-
 	this._layout = layout;
-
-	this.getLayout().set(this);
-
 	this.updateSubtree();	
 	return this;
 }

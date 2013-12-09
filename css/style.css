@@ -1,5 +1,4 @@
 @import url(ui.css);
-@import url(layout.css);
 @import url(shape.css);
 
 html, body {
@@ -7,6 +6,11 @@ html, body {
 	font-family: sans-serif;
 	overflow: hidden;
 	height: 100%;
+}
+
+ul {
+	padding: 0;
+	list-style: none;
 }
 
 #port {
@@ -21,3 +25,16 @@ html, body {
 	font-size: 15px;
 }
 
+.map .item {
+	position: absolute;
+}
+
+.map .text {
+	position: relative;
+}
+
+.map canvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
