@@ -15,7 +15,7 @@ MM.Layout.Tree.create = function(childDirection) {
 MM.Layout.Tree.update = function(item) {
 	this._layoutItem(item, this.childDirection);
 	this._anchorCanvas(item);
-//	this._drawLines(item, this.childDirection);
+	this._drawLines(item, this.childDirection);
 	return this;
 }
 
@@ -75,62 +75,25 @@ MM.Layout.Tree._drawLines = function(item, side) {
 	var canvas = dom.canvas;
 	var ctx = canvas.getContext("2d");
 	ctx.strokeStyle = MM.LINE_COLOR;
-	var R = this.SPACING_RANK/2;
 
-	/* first part */
+	var R = this.SPACING_RANK/3;
+	var x = (side == "left" ? canvas.width - 2*R : 2*R) + 0.5;
 	var y1 = item.getShape().getVerticalAnchor(item);
-	if (side == "left") {
-		var x1 = dom.content.offsetLeft + 0.5;
-		var x2 = x1 - width;
-	} else {
-		var x1 = dom.content.offsetWidth + dom.content.offsetLeft + 0.5;
-		var x2 = x1 + width;
-	}
 
-	if (children.length == 1) {
-		var child = children[0];
-		var y2 = child.getShape().getVerticalAnchor(child) + child.getDOM().node.offsetTop;
-		var width = 2*R;
-	} else {
-		var y2 = y1;
-		var width = R;
-	}
-
-	if (side == "left") {
-		var x2 = x1 - width;
-	} else {
-		var x2 = x1 + width;
-	}
+	var last = children[children.length-1];
+	var y2 = last.getShape().getVerticalAnchor(last) + last.getDOM().node.offsetTop;
 
 	ctx.beginPath();
-	ctx.moveTo(x1, y1);
-	ctx.lineTo(x2, y2);
-	ctx.stroke();
-
-	if (children.length == 1) { return; }
+	ctx.moveTo(x, y1);
+	ctx.lineTo(x, y2 - R);
 
 	/* rounded connectors */
-	var c1 = children[0];
-	var c2 = children[children.length-1];
-	var offset = dom.content.offsetWidth + width;
-	var x = x2;
-
-	var y1 = c1.getShape().getVerticalAnchor(c1) + c1.getDOM().node.offsetTop;
-	var y2 = c2.getShape().getVerticalAnchor(c2) + c2.getDOM().node.offsetTop;
-	var x1 = this._getChildAnchor(c1, side);
-	var x2 = this._getChildAnchor(c2, side);
-
-	ctx.beginPath();
-	ctx.moveTo(x1, y1);
-	ctx.arcTo(x, y1, x, y1+R, R);
-	ctx.lineTo(x, y2-R);
-	ctx.arcTo(x, y2, x2, y2, R);
-
-	for (var i=1; i<children.length-1; i++) {
+	for (var i=0; i<children.length; i++) {
 		var c = children[i];
 		var y = c.getShape().getVerticalAnchor(c) + c.getDOM().node.offsetTop;
-		ctx.moveTo(x, y);
-		ctx.lineTo(this._getChildAnchor(c, side), y);
+
+		ctx.moveTo(x, y - R);
+		ctx.arcTo(x, y, this._getChildAnchor(c, side), y, R);
 	}
 	ctx.stroke();
 }

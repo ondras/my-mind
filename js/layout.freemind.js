@@ -11,6 +11,9 @@ MM.Layout.FreeMind.update = function(item) {
 }
 
 MM.Layout.FreeMind.getChildDirection = function(item) {
+	while (item.getParent().getParent()) {
+		item = item.getParent();
+	}
 	var index = item.getParent().getChildren().indexOf(item);
 	return (index % 2 ? "left" : "right");
 }
