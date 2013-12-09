@@ -44,14 +44,15 @@ MM.Item.prototype.toJSON = function() {
 MM.Item.prototype.update = function(doNotRecurse) {
 	if (!this._map.isVisible()) { return; }
 	this.getLayout().update(this);
+	this.getShape().update(this);
 	if (this._parent && !doNotRecurse) { this._parent.update(); }
 }
 
-MM.Item.prototype.updateSubtree = function() {
+MM.Item.prototype.updateSubtree = function(isSubChild) {
 	this._children.forEach(function(child) {
-		child.updateSubtree();
+		child.updateSubtree(true);
 	});
-	this.update(true);
+	this.update(isSubChild);
 }
 
 MM.Item.prototype.setText = function(text) {
@@ -77,10 +78,13 @@ MM.Item.prototype.getOwnLayout = function() {
 }
 
 MM.Item.prototype.setLayout = function(layout) {
-	this._reset();
+	if (this._parent || this._layout) { this.getLayout().unset(this); }
+
 	this._layout = layout;
+
+	this.getLayout().set(this);
+
 	this.updateSubtree();	
-	this.update();
 	return this;
 }
 
@@ -105,9 +109,13 @@ MM.Item.prototype.getOwnShape = function() {
 }
 
 MM.Item.prototype.setShape = function(shape) {
+	this.getShape().unset(this);
+
 	this._shape = shape;
+
+	this.getShape().set(this);
+
 	this.updateSubtree();	
-	this.update();
 	return this;
 }
 
@@ -148,7 +156,6 @@ MM.Item.prototype.insertChild = function(child, index) {
 	child.setParent(this);
 
 	child.updateSubtree();
-	this.update();
 
 	return child;
 }
@@ -183,17 +190,4 @@ MM.Item.prototype.stopEditing = function() {
 	this._dom.content.innerHTML = this._oldText;
 	this._oldText = "";
 	return result;
-}
-
-MM.Item.prototype._reset = function() {
-	var dom = this._dom;
-
-	dom.canvas.style.display = "";
-
-	dom.node.style.position = "";
-
-	dom.children.style.listStyle = "";
-	dom.children.style.padding = "";
-
-	dom.content.style.position = "";
 }

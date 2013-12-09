@@ -1,7 +1,7 @@
 MM.Shape.Underline = Object.create(MM.Shape);
 MM.Shape.Underline.VERTICAL_OFFSET = 0.85;
 
-MM.Shape.Underline.updateCanvas = function(item) {
+MM.Shape.Underline.update = function(item) {
 	var dom = item.getDOM();
 
 	var ctx = dom.canvas.getContext("2d");

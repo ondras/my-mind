@@ -1,7 +1,7 @@
 MM.Shape.Box = Object.create(MM.Shape);
-MM.Shape.Box.update = function(item) {
-	var content = item.getDOM().content;
-	content.style.border = "1px solid #666";
-	content.style.borderRadius = "3px";
-	content.style.backgroundColor = "#fff";
+MM.Shape.Box.set = function(item) {
+	item.getDOM().node.classList.add("shape-box");
+}
+MM.Shape.Box.unset = function(item) {
+	item.getDOM().node.classList.remove("shape-box");
 }

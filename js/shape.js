@@ -14,9 +14,21 @@ MM.Shape.toJSON = function() {
 	return data;
 }
 
-MM.Shape.update = function(item) {}
+MM.Shape.set = function(item) {
+	return this;
+}
 
-MM.Shape.updateCanvas = function(item) {}
+MM.Shape.unset = function(item) {
+	return this;
+}
+
+MM.Shape.update = function(item) {
+	return this;
+}
+
+MM.Shape.updateCanvas = function(item) {
+
+}
 
 MM.Shape.getHorizontalAnchor = function(item) {
 	var node = item.getDOM().content;

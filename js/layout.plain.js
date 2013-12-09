@@ -4,7 +4,7 @@ MM.Layout.Plain.getChildDirection = function() {
 }
 
 MM.Layout.Plain.pick = function(item, direction) {
-	if (item.getParent()) { return MM.Layout.pick(item, direction); }
+	if (item.getParent()) { return MM.Layout.pick.call(this, item, direction); }
 
 	switch (direction) {
 		case "left": 
@@ -20,8 +20,10 @@ MM.Layout.Plain.pick = function(item, direction) {
 	}
 }
 
-MM.Layout.Plain.update = function(item) {
-	item.getShape().update(item);
-	item.getDOM().canvas.style.display = "none";
-	item.getShape().updateCanvas(item);
+MM.Layout.Plain.set = function(item) {
+	item.getDOM().node.classList.add("layout-plain");
+}
+
+MM.Layout.Plain.unset = function(item) {
+	item.getDOM().node.classList.remove("layout-plain");
 }

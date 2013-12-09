@@ -1,7 +1,7 @@
-MM.Shape.Ellipse = Object.create(MM.Shape.Box);
-MM.Shape.Ellipse.update = function(item) {
-	MM.Shape.Box.update(item);
-	var content = item.getDOM().content;
-	content.style.borderRadius = "50%";
-	content.style.padding = "0.5em 1em";
+MM.Shape.Ellipse = Object.create(MM.Shape);
+MM.Shape.Ellipse.set = function(item) {
+	item.getDOM().node.classList.add("shape-ellipse");
+}
+MM.Shape.Ellipse.unset = function(item) {
+	item.getDOM().node.classList.remove("shape-ellipse");
 }

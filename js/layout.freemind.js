@@ -1,4 +1,4 @@
-MM.Layout.FreeMind = Object.create(MM.Layout);
+MM.Layout.FreeMind = Object.create(MM.Layout.Side);
 MM.Layout.FreeMind._left = [];
 MM.Layout.FreeMind._right = [];
 
@@ -8,9 +8,7 @@ MM.Layout.FreeMind.update = function(item) {
 		var name = side.charAt(0).toUpperCase() + side.substring(1);
 		MM.Layout[name].update(item);
 	} else {
-		item.getShape().update(item);
 		this._layoutRoot(item);
-		item.getShape().updateCanvas(item);
 	}
 }
 
@@ -85,10 +83,6 @@ MM.Layout.FreeMind.pickSibling = function(item, dir) {
 
 MM.Layout.FreeMind._layoutRoot = function(item) {
 	var dom = item.getDOM();
-	dom.node.style.position = "absolute";
-	dom.children.style.padding = 0;
-	dom.children.style.listStyle = "none";
-	dom.content.style.position = "relative";
 
 	var children = item.getChildren();
 	var childrenLeft = [];

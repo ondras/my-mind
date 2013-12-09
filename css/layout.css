@@ -1,0 +1,39 @@
+.map > .item {
+	position: absolute;
+}
+
+
+.map .layout-absolute .item {
+	position: absolute;
+}
+
+.map .layout-absolute .children {
+	padding: 0;
+	list-style: none;
+}
+
+.map .layout-absolute .text {
+	position: relative;
+}
+
+.map .layout-absolute canvas {
+	display: block;
+}
+
+
+.map .layout-plain .item {
+	position: static;
+}
+
+.map .layout-plain .text {
+	position: static;
+}
+
+.map .layout-plain .children {
+	padding-left: 40px;
+	list-style: circle;
+}
+
+.map .layout-plain canvas {
+	display: none;
+}

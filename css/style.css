@@ -1,4 +1,6 @@
 @import url(ui.css);
+@import url(layout.css);
+@import url(shape.css);
 
 html, body {
 	margin: 0;
@@ -12,21 +14,6 @@ html, body {
 	overflow: hidden;
 }
 
-#help {
-	position: fixed;
-	left: 20px;
-	top: 20px;
-	background-color: rgba(0, 0, 0, 0.3);
-	color: #fff;
-	padding: 0.5em;
-	border-radius: 20px;
-	opacity: 0;
-	transition: all 0.5s;
-}
-#help.visible {
-	opacity: 1;
-}
-
 .map {
 	position: absolute;
 	list-style: none;
@@ -34,23 +21,3 @@ html, body {
 	font-size: 15px;
 }
 
-.map .current > .text {
-	box-shadow: 0 0 5px #333;
-}
-
-.map .text {
-	padding: 0.15em 0.4em;
-	border-radius: 0.5em;
-	min-width: 0.5em;
-	min-height: 1.3em;
-	line-height: 1.3em;
-	outline: none;
-	display: inline-block;
-	white-space: pre;
-}
-
-.map > li > .text {
-	background-color: #ccf;
-	font-weight: bold;
-	border-width: 2px;
-}

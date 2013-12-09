@@ -20,8 +20,14 @@ MM.Layout.toJSON = function() {
  * Re-draw an item and its children
  */
 MM.Layout.update = function(item) {
-	item.getShape().update(item);
-	item.getShape().updateCanvas(item);
+	return this;
+}
+
+MM.Layout.set = function(item) {
+	return this;
+}
+
+MM.Layout.unset = function(item) {
 	return this;
 }
 
@@ -84,10 +90,6 @@ MM.Layout._layoutItem = function(item, rankDirection) {
 	var childSizeProp = sizeProps[childIndex];
 
 	var dom = item.getDOM();
-	dom.node.style.position = "absolute";
-	dom.children.style.listStyle = "none";
-	dom.children.style.padding = 0;
-	dom.content.style.position = "relative";
 
 	/* content size */
 	var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
