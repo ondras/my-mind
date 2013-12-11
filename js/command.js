@@ -1,6 +1,6 @@
 MM.Command = {
 	ALL: [],
-	keys: [],
+	_keys: [],
 	_editMode: false,
 	_name: ""
 }

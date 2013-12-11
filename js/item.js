@@ -5,6 +5,7 @@ MM.Item = function(map) {
 
 	this._layout = null;
 	this._shape = null;
+	this._autoShape = true;
 	this._side = null; /* side preference */
 	this._oldText = "";
 
@@ -39,13 +40,23 @@ MM.Item.prototype.toJSON = function() {
 		side: this._side,
 		children: this._children.map(function(child) { return child.toJSON(); }),
 		layout: this._layout && this._layout.toJSON(),
-		shape: this._shape && this._shape.toJSON()
+		shape: this._autoShape ? null : this._shape.toJSON()
 	};
 	return data;
 }
 
 MM.Item.prototype.update = function(doNotRecurse) {
 	if (!this._map.isVisible()) { return; }
+
+	if (this._autoShape) { /* check for changed auto-shape */
+		var autoShape = this._getAutoShape();
+		if (autoShape != this._shape) {
+			if (this._shape) { this._shape.unset(this); }
+			this._shape = autoShape;
+			this._shape.set(this);
+		}
+	}
+
 	this.getLayout().update(this);
 	this.getShape().update(this);
 	if (this._parent && !doNotRecurse) { this._parent.update(); }
@@ -65,7 +76,7 @@ MM.Item.prototype.setText = function(text) {
 }
 
 MM.Item.prototype.getText = function() {
-	return this._dom.content.innerHTML.replace(/<br\/>/g, "\n");
+	return this._dom.content.innerHTML.replace(/<br\s*\/?>/g, "\n");
 }
 
 MM.Item.prototype.setSide = function(side) {
@@ -96,6 +107,8 @@ MM.Item.prototype.setLayout = function(layout) {
 }
 
 MM.Item.prototype.getShape = function() {
+	return this._shape;
+
 	if (this._shape) { return this._shape; }
 	var depth = 0;
 	var node = this;
@@ -108,21 +121,26 @@ MM.Item.prototype.getShape = function() {
 		case 1: return MM.Shape.Box;
 		default: return MM.Shape.Underline;
 	}
-	return this._shape || this._parent.getShape();
 }
 
 MM.Item.prototype.getOwnShape = function() {
-	return this._shape;
+	return (this._autoShape ? null : this._shape);
 }
 
 MM.Item.prototype.setShape = function(shape) {
-	this.getShape().unset(this);
+	if (this._shape) { this._shape.unset(this); }
 
-	this._shape = shape;
+	if (shape) {
+		this._autoShape = false;
+		this._shape = shape;
+	} else {
+		this._autoShape = true;
+		this._shape = this._getAutoShape();
+	}
 
-	this.getShape().set(this);
+	this._shape.set(this);
+	this.update();
 
-	this.updateSubtree();	
 	return this;
 }
 
@@ -160,9 +178,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	this._dom.children.insertBefore(child.getDOM().node, next);
 	this._children.splice(index, 0, child);
 	
-	child.setSide(null);
 	child.setParent(this);
-
 	child.updateSubtree();
 
 	return child;
@@ -198,4 +214,18 @@ MM.Item.prototype.stopEditing = function() {
 	this._dom.content.innerHTML = this._oldText;
 	this._oldText = "";
 	return result;
+}
+
+MM.Item.prototype._getAutoShape = function() {
+	var depth = 0;
+	var node = this;
+	while (node.getParent()) {
+		depth++;
+		node = node.getParent();
+	}
+	switch (depth) {
+		case 0: return MM.Shape.Ellipse;
+		case 1: return MM.Shape.Box;
+		default: return MM.Shape.Underline;
+	}
 }

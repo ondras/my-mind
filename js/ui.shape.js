@@ -21,7 +21,9 @@ MM.UI.Shape.prototype.update = function() {
 
 MM.UI.Shape.prototype.handleEvent = function(e) {
 	var shape = MM.Shape[this._select.value] || null;
-	MM.App.current.setShape(shape);
+
+	var action = new MM.Action.SetShape(MM.App.current, shape);
+	MM.App.action(action);
 }
 
 MM.UI.Shape.prototype._addItem = function(value, label) {

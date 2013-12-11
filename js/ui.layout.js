@@ -36,7 +36,9 @@ MM.UI.Layout.prototype.update = function() {
 
 MM.UI.Layout.prototype.handleEvent = function(e) {
 	var layout = MM.Layout.fromJSON(this._select.value) || null;
-	MM.App.current.setLayout(layout);
+
+	var action = new MM.Action.SetLayout(MM.App.current, layout);
+	MM.App.action(action);
 }
 
 MM.UI.Layout.prototype._addItem = function(label, value, parent) {

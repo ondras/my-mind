@@ -51,3 +51,29 @@ MM.Action.RemoveItem.prototype.undo = function() {
 	this._parent.insertChild(this._item, this._index);
 	MM.App.select(this._item);
 }
+
+MM.Action.SetLayout = function(item, layout) {
+	this._item = item;
+	this._layout = layout;
+	this._oldLayout = item.getOwnLayout();
+}
+MM.Action.SetLayout.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetLayout.prototype.perform = function() {
+	this._item.setLayout(this._layout);
+}
+MM.Action.SetLayout.prototype.undo = function() {
+	this._item.setLayout(this._oldLayout);
+}
+
+MM.Action.SetShape = function(item, shape) {
+	this._item = item;
+	this._shape = shape;
+	this._oldShape = item.getOwnShape();
+}
+MM.Action.SetShape.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetShape.prototype.perform = function() {
+	this._item.setShape(this._shape);
+}
+MM.Action.SetShape.prototype.undo = function() {
+	this._item.setShape(this._oldShape);
+}

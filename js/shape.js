@@ -1,24 +1,26 @@
 MM.Shape = {
-	VERTICAL_OFFSET: 0.5
+	ALL: [],
+	VERTICAL_OFFSET: 0.5,
+	id: ""
+}
+
+MM.Shape.toJSON = function(data) {
+	return this.id;
 }
 
 MM.Shape.fromJSON = function(data) {
-	return MM.Shape[data.type];
-}
-
-MM.Shape.toJSON = function() {
-	var data = {type:""};
-	for (var p in MM.Shape) {
-		if (MM.Shape[p] == this) { data.type = p; }
-	}
-	return data;
+	return this.ALL.filter(function(item) {
+		return (item.id == data);
+	})[0] || null;
 }
 
 MM.Shape.set = function(item) {
+	item.getDOM().node.classList.add("shape-"+this.id);
 	return this;
 }
 
 MM.Shape.unset = function(item) {
+	item.getDOM().node.classList.remove("shape-"+this.id);
 	return this;
 }
 
