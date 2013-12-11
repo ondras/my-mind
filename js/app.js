@@ -68,7 +68,6 @@ MM.App = {
 			"Edit", "Newline", "Cancel", "Finish",
 			"Help"
 		];
-
 		MM.Command.ALL.forEach(function(name) {
 			MM.Command[name].init();
 		});

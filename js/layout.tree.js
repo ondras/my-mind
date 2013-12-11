@@ -6,9 +6,11 @@ MM.Layout.Tree.getChildDirection = function(item) {
 	return this.childDirection;
 }
 
-MM.Layout.Tree.create = function(childDirection) {
+MM.Layout.Tree.create = function(childDirection, childId) {
 	var layout = Object.create(this);
 	layout.childDirection = childDirection;
+	layout.id = childId;
+	MM.Layout.ALL.push(layout);
 	return layout;
 }
 
@@ -98,5 +100,5 @@ MM.Layout.Tree._drawLines = function(item, side) {
 	ctx.stroke();
 }
 
-MM.Layout.Tree.Left = MM.Layout.Tree.create("left");
-MM.Layout.Tree.Right = MM.Layout.Tree.create("right");
+MM.Layout.Tree.Left = MM.Layout.Tree.create("left", "tree-left");
+MM.Layout.Tree.Right = MM.Layout.Tree.create("right", "tree-right");

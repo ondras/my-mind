@@ -1,4 +1,6 @@
 MM.Layout.FreeMind = Object.create(MM.Layout.Graph);
+MM.Layout.FreeMind.id = "freemind";
+MM.Layout.ALL.push(MM.Layout.FreeMind);
 
 MM.Layout.FreeMind.update = function(item) {
 	if (item.getParent()) {
@@ -10,12 +12,30 @@ MM.Layout.FreeMind.update = function(item) {
 	}
 }
 
+/**
+ * @param {MM.Item} item Child node
+ */
 MM.Layout.FreeMind.getChildDirection = function(item) {
 	while (item.getParent().getParent()) {
 		item = item.getParent();
 	}
-	var index = item.getParent().getChildren().indexOf(item);
-	return (index % 2 ? "left" : "right");
+
+	/* item is now the sub-root node */
+	var side = item.getSide();
+	if (side) { return side; } /* FIXME test for left/right values? */
+
+	var counts = {left:0, right:0};
+	var children = item.getParent().getChildren();
+	for (var i=0;i<children.length;i++) {
+		var side = children[i].getSide();
+		if (!side) {
+			side = (counts.right > counts.left ? "left" : "right");
+			children[i].setSide(side);
+		}
+		counts[side]++;
+	}
+
+	return item.getSide();
 }
 
 MM.Layout.FreeMind.pickSibling = function(item, dir) {

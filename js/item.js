@@ -5,6 +5,7 @@ MM.Item = function(map) {
 
 	this._layout = null;
 	this._shape = null;
+	this._side = null; /* side preference */
 	this._oldText = "";
 
 	this._dom = {
@@ -23,6 +24,7 @@ MM.Item = function(map) {
 MM.Item.fromJSON = function(data, map) {
 	var item = new this(map);
 	item.setText(data.text);
+	item.setSide(data.side);
 	item.setLayout(MM.Layout.fromJSON(data.layout));
 	item.setShape(MM.Shape.fromJSON(data.shape));
 	data.children.forEach(function(child) {
@@ -34,6 +36,7 @@ MM.Item.fromJSON = function(data, map) {
 MM.Item.prototype.toJSON = function() {
 	var data = {
 		text: this.getText(),
+		side: this._side,
 		children: this._children.map(function(child) { return child.toJSON(); }),
 		layout: this._layout && this._layout.toJSON(),
 		shape: this._shape && this._shape.toJSON()
@@ -63,6 +66,15 @@ MM.Item.prototype.setText = function(text) {
 
 MM.Item.prototype.getText = function() {
 	return this._dom.content.innerHTML.replace(/<br\/>/g, "\n");
+}
+
+MM.Item.prototype.setSide = function(side) {
+	this._side = side;
+	return this;
+}
+
+MM.Item.prototype.getSide = function() {
+	return this._side;
 }
 
 MM.Item.prototype.getChildren = function() {
@@ -148,6 +160,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	this._dom.children.insertBefore(child.getDOM().node, next);
 	this._children.splice(index, 0, child);
 	
+	child.setSide(null);
 	child.setParent(this);
 
 	child.updateSubtree();

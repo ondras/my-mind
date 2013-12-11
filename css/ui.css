@@ -1,3 +1,12 @@
+@font-face {
+	font-family: 'WebSymbolsLigaRegular';
+	src: url('font/websymbolsligaregular.eot');
+	src: url('font/websymbolsligaregular.eot?#iefix') format('embedded-opentype'),
+		url('font/websymbolsligaregular.woff') format('woff'),
+		url('font/websymbolsligaregular.ttf') format('truetype'),
+		url('font/websymbolsligaregular.svg#WebSymbolsRegular') format('svg');
+}
+
 #help {
 	position: fixed;
 	left: 20px;
@@ -40,12 +49,15 @@
 	right: 60px;
 	bottom: 30px;
 	width: 40px;
-	height: 40px;
-	background-color: #999;
+	font-size: 21px;
+	line-height: 40px;
 	border-radius: 50%;
+	text-align: center;
 	z-index: 1;
 
+	background-color: #fff;
 	box-shadow: 0 0 3px 2px #000;
+	font-family: WebSymbolsLigaRegular;
 }
 
 #ui #button:checked ~ label {

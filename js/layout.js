@@ -1,18 +1,18 @@
 MM.Layout = {
+	ALL: [],
 	SPACING_RANK: 4,
-	SPACING_CHILD: 4
+	SPACING_CHILD: 4,
+	id: ""
 };
 
 MM.Layout.fromJSON = function(data) {
-	return MM.Layout[data.type];
+	return this.ALL.filter(function(item) {
+		return (item.id == data);
+	})[0] || null;
 }
 
 MM.Layout.toJSON = function() {
-	var data = {type:""};
-	for (var p in MM.Layout) {
-		if (MM.Layout[p] == this) { data.type = p; }
-	}
-	return data;
+	return this.id;
 }
 
 /**
