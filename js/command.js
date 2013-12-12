@@ -120,3 +120,21 @@ MM.Command.Delete.execute = function() {
 	var action = new MM.Action.RemoveItem(MM.App.current);
 	MM.App.action(action);	
 }
+
+MM.Command.Save = Object.create(MM.Command);
+MM.Command.Save._name = "Save map";
+MM.Command.Save.execute = function() {
+	MM.App.ui.showIO("save");
+}
+
+MM.Command.Load = Object.create(MM.Command);
+MM.Command.Load._name = "Load map";
+MM.Command.Load.execute = function() {
+	MM.App.ui.showIO("load");
+}
+
+MM.Command.Center = Object.create(MM.Command);
+MM.Command.Center._name = "Center map";
+MM.Command.Center.execute = function() {
+	MM.App.map.center();
+}

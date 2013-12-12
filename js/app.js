@@ -5,8 +5,8 @@ MM.App = {
 	history: [],
 	historyIndex: 0,
 	map: null,
+	ui: null,
 	_port: null,
-	_ui: null,
 	
 	action: function(action) {
 		if (this.historyIndex < this.history.length) { /* remove undoed actions */
@@ -34,7 +34,7 @@ MM.App = {
 		this.current = item;
 		this.current.getDOM().node.classList.add("current");
 		this.map.ensureItemVisibility(item);
-		this._ui.update();
+		this.ui.update();
 	},
 
 	handleEvent: function(e) {
@@ -58,7 +58,7 @@ MM.App = {
 	
 	init: function() {
 		this._port = document.querySelector("#port");
-		this._ui = new MM.UI();
+		this.ui = new MM.UI();
 		this.keyboard = new MM.Keyboard();
 
 		MM.Command.ALL = [
@@ -66,7 +66,8 @@ MM.App = {
 			"InsertChild", "InsertSibling", "Delete",
 			"Undo", "Redo",
 			"Edit", "Newline", "Cancel", "Finish",
-			"Help"
+			"Help", "Center",
+			"Save", "Load"
 		];
 		MM.Command.ALL.forEach(function(name) {
 			MM.Command[name].init();
@@ -79,7 +80,7 @@ MM.App = {
 	},
 
 	_syncPort: function() {
-		this._port.style.width = window.innerWidth + "px";
+		this._port.style.width = (window.innerWidth - this.ui.getWidth()) + "px";
 		this._port.style.height = window.innerHeight + "px";
 	}
 }

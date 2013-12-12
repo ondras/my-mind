@@ -1,4 +1,4 @@
-.map .text {
+.text {
 	padding: 0.15em 0.4em;
 	min-width: 0.5em;
 	min-height: 1.3em;
@@ -8,24 +8,24 @@
 	white-space: pre;
 }
 
-.map .current > .text {
+.current > .text {
 	box-shadow: 0 0 5px #333;
 }
 
-.map .shape-box > .text {
+.shape-box > .text {
 	background-color: #fff;
 	border: 1px solid #666;
 	border-radius: 3px;
 }
 
-.map .shape-ellipse > .text {
+.shape-ellipse > .text {
 	background-color: #fff;
 	border: 1px solid #666;
 	border-radius: 50%;
 	padding: 0.5em 1em;
 }
 
-.map > .item > .text {
+#port > .item > .text {
 	background-color: #ccf;
 	font-weight: bold;
 	border-width: 2px;

@@ -28,32 +28,41 @@
 		<script src="js/ui.js"></script>
 		<script src="js/ui.layout.js"></script>
 		<script src="js/ui.shape.js"></script>
+		<script src="js/ui.backend.js"></script>
+		<script src="js/ui.io.js"></script>
 		<script src="js/app.js"></script>
 		<link rel="stylesheet" href="css/style.css" />
 	</head>
 	<body>
-		<div id="port"></div>
+		<ul id="port"></ul>
 
 		<div id="ui">
-			<input type="checkbox" id="button" />
-			<label for="button">&#0063;</label>
-			<div id="bar">
-				<h3>Map</h3>
-				<button>New</button>
-				<button>Save</button>
-				<button>Load</button>
-				<button>Center</button>
+			<h3>Map</h3>
+			<div>
+				<button data-command="New">New</button><button data-command="Load">Load</button>
+			</div>
+			<div>
+				<button data-command="Save">Save</button><button data-command="SaveAs">Save As</button>
+			</div>
+			<div>
+				<button data-command="Center">Center</button>
+			</div>
 
-				<h3>Item</h3>
+			<h3>Item</h3>
 
-				<label>
-					<span>Layout</span>
-					<select id="layout"></select>
-				</label>
-				<label>
-					<span>Shape</span>
-					<select id="shape"></select>
-				</label>
+			<div>
+				<span>Layout</span> <select id="layout"></select>
+			</div>
+			<div>
+				<span>Shape</span> <select id="shape"></select>
+			</div>
+
+			<div id="io">
+				<h3></h3>
+				<div>
+					<span>Backend</span>
+					<select id="backend"></select>
+				</div>
 			</div>
 		</div>
 		<script>
@@ -103,6 +112,7 @@ TODO:
     - styling
     - ui for styling
     - ui for saveload
+    - dragdrop
 
   longterm:
     - more formats?

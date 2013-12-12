@@ -6,8 +6,6 @@ MM.Map = function(options) {
 	for (var p in options) { o[p] = options[p]; }
 	this._root = null;
 	this._visible = false;
-	this._node = document.createElement("ul");
-	this._node.className = "map";
 
 	var root = this.createItem().setText(o.root).setLayout(o.layout);
 	this.setRoot(root);
@@ -36,9 +34,7 @@ MM.Map.prototype.isVisible = function() {
 }
 
 MM.Map.prototype.setRoot = function(root) {
-	this._node.innerHTML = "";
 	this._root = root;
-	this._node.appendChild(this._root.getDOM().node);
 	return this;
 }
 
@@ -47,21 +43,23 @@ MM.Map.prototype.getRoot = function() {
 }
 
 MM.Map.prototype.show = function(where) {
-	where.appendChild(this._node);
+	var node = this._root.getDOM().node;
+	where.appendChild(node);
 	this._visible = true;
 	this._root.updateSubtree();
 }
 
 MM.Map.prototype.hide = function() {
-	this._node.parentNode.removeChild(this._node);
+	var node = this._root.getDOM().node;
+	node.parentNode.removeChild(node);
 	this._visible = false;
 }
 
 MM.Map.prototype.center = function() {
-	var avail = [window.innerWidth, window.innerHeight];
 	var node = this._root.getDOM().node;
-	this._node.style.left = Math.round(avail[0]/2 - node.offsetWidth/2) + "px";
-	this._node.style.top = Math.round(avail[1]/2 - node.offsetHeight/2) + "px";
+	var parent = node.parentNode;
+	node.style.left = Math.round((parent.offsetWidth - node.offsetWidth)/2) + "px";
+	node.style.top = Math.round((parent.offsetHeight - node.offsetHeight)/2) + "px";
 }
 
 MM.Map.prototype.getItemFor = function(node) {
@@ -79,7 +77,8 @@ MM.Map.prototype.getItemFor = function(node) {
 MM.Map.prototype.ensureItemVisibility = function(item) {
 	var node = item.getDOM().content;
 	var itemRect = node.getBoundingClientRect();
-	var parentRect = this._node.parentNode.getBoundingClientRect();
+	var root = this._root.getDOM().node;
+	var parentRect = root.parentNode.getBoundingClientRect();
 
 	var delta = [0, 0];
 
@@ -94,7 +93,7 @@ MM.Map.prototype.ensureItemVisibility = function(item) {
 	if (dy < 0) { delta[1] = dy; }
 
 	if (delta[0] || delta[1]) {
-		this._node.style.left = (this._node.offsetLeft + delta[0]) + "px";
-		this._node.style.top = (this._node.offsetTop + delta[1]) + "px";
+		root.style.left = (root.offsetLeft + delta[0]) + "px";
+		root.style.top = (root.offsetTop + delta[1]) + "px";
 	}
 }
