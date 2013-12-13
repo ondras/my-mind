@@ -38,9 +38,9 @@ MM.Item.prototype.toJSON = function() {
 	var data = {
 		text: this.getText(),
 		side: this._side,
-		children: this._children.map(function(child) { return child.toJSON(); }),
 		layout: this._layout && this._layout.toJSON(),
-		shape: this._autoShape ? null : this._shape.toJSON()
+		shape: this._autoShape ? null : this._shape.toJSON(),
+		children: this._children.map(function(child) { return child.toJSON(); })
 	};
 	return data;
 }

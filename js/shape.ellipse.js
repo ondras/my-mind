@@ -1,3 +1,4 @@
-MM.Shape.Ellipse = Object.create(MM.Shape);
-MM.Shape.Ellipse.id = "ellipse";
-MM.Shape.ALL.push(MM.Shape.Ellipse);
+MM.Shape.Ellipse = Object.create(MM.Shape, {
+	id: {value: "ellipse"},
+	label: {value: "Ellipse"}
+});

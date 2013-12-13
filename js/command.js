@@ -127,6 +127,12 @@ MM.Command.Save.execute = function() {
 	MM.App.ui.showIO("save");
 }
 
+MM.Command.SaveAs = Object.create(MM.Command);
+MM.Command.SaveAs._name = "Save map as&hellip;";
+MM.Command.SaveAs.execute = function() {
+	MM.App.ui.showIO("save");
+}
+
 MM.Command.Load = Object.create(MM.Command);
 MM.Command.Load._name = "Load map";
 MM.Command.Load.execute = function() {
@@ -137,4 +143,12 @@ MM.Command.Center = Object.create(MM.Command);
 MM.Command.Center._name = "Center map";
 MM.Command.Center.execute = function() {
 	MM.App.map.center();
+}
+
+MM.Command.New = Object.create(MM.Command, {
+	_name: {value: "New map"}
+});
+MM.Command.New.execute = function() {
+	var map = new MM.Map();
+	MM.App.setMap(map);
 }

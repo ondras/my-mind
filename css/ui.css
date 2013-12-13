@@ -7,71 +7,75 @@
 		url('font/websymbolsligaregular.svg#WebSymbolsRegular') format('svg');
 }
 
-#ui {
+.ui {
 	position: fixed;
 	right: 0;
 	top: 0;
 	height: 100%;
-	text-align: center;
 	background-color: #fff;
 	box-shadow: 0 0 2px 2px #666;
 }
 
-#ui #io {
-	display: none;
-}
-
-#ui h3 {
+.ui h3 {
 	background-color: #999;
 	color: #fff;
 	padding: 0.2em 0;
 	margin: 0;
 	text-transform: uppercase;
+	text-align: center;
 }
 
-#ui h3:not(:nth-child(1)) {
-	margin-top: 0.5rem;
-}
-
-#ui button, #ui select {
+.ui button, .ui select, .ui input {
 	padding: 3px;
-	background-color: #eef;
-	border: 1px solid #aaf;
+	background-color: transparent;
+	border: 1px solid #ccf;
 	border-radius: 4px;
+	transition: all 250ms;
 }
 
-#ui button:hover, #ui select:hover {
+.ui button:hover, .ui select:hover, .ui input:hover, .ui input:focus {
 	border-color: #33f;
 }
 
-#ui button {
+.ui button {
 	cursor: pointer;
 	text-align: center;
 	width: 5rem;
-	margin-top: 0.3rem;
 }
 
-#ui select {
+.ui select {
 	width: 8rem;
 }
 
-#ui button:first-child {
+.ui button:first-child {
 	margin-right: 0.1rem;
 }
 
-#ui button:last-child {
+.ui button:last-child {
 	margin-left: 0.1rem;
 }
 
-#ui button:first-child:last-child {
+.ui button:first-child:last-child {
 	width: 10.2rem;
+	margin: 0;
 }
 
-#ui div {
-	padding: 0.1rem 1rem;
+.ui p {
+	margin: 0.5rem 1rem;
 }
 
-#ui span {
+.ui span {
 	text-transform: uppercase;
 	font-size: 80%;
+}
+
+#io {
+	-webkit-transform: translate(100%, 0);
+	transform: translate(100%, 0);
+	transition: all 250ms;
+}
+
+#io.visible {
+	-webkit-transform: translate(0, 0);
+	transform: translate(0, 0);
 }

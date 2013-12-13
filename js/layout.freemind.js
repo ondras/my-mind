@@ -1,5 +1,7 @@
-MM.Layout.FreeMind = Object.create(MM.Layout.Graph);
-MM.Layout.FreeMind.id = "freemind";
+MM.Layout.FreeMind = Object.create(MM.Layout.Graph, {
+	id: {value:"freemind"},
+	label: {value:"FreeMind"}
+});
 MM.Layout.ALL.push(MM.Layout.FreeMind);
 
 MM.Layout.FreeMind.update = function(item) {

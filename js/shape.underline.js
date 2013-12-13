@@ -1,7 +1,8 @@
-MM.Shape.Underline = Object.create(MM.Shape);
-MM.Shape.Underline.VERTICAL_OFFSET = 0.85;
-MM.Shape.Underline.id = "underline";
-MM.Shape.ALL.push(MM.Shape.Underline);
+MM.Shape.Underline = Object.create(MM.Shape, {
+	id: {value: "underline"},
+	label: {value: "Underline"},
+	VERTICAL_OFFSET: {value: 0.85}
+});
 
 MM.Shape.Underline.update = function(item) {
 	var dom = item.getDOM();

@@ -1,11 +1,7 @@
-MM.Backend = {};
-MM.Backend.name = "";
+MM.Backend = Object.create(MM.Repo);
 
-MM.Backend.save = function(data, name, options) {
+MM.Backend.save = function(data, name) {
 }
 
-MM.Backend.load = function(name, options) {
-}
-
-MM.Backend.list = function(options) {
+MM.Backend.load = function(name) {
 }

@@ -1,8 +1,9 @@
 MM.UI = function() {
-	this._node = document.querySelector("#ui");
+	this._node = document.querySelector(".ui");
 	this._node.addEventListener("click", this);
 	this._layout = new MM.UI.Layout();
 	this._shape = new MM.UI.Shape();
+	this._io = new MM.UI.IO();
 }
 
 MM.UI.prototype.handleEvent = function(e) {

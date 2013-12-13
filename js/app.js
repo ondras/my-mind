@@ -22,8 +22,14 @@ MM.App = {
 	
 	setMap: function(map) {
 		if (this.map) { this.map.hide(); }
+
+		this.history = [];
+		this.historyIndex = 0;
+
 		this.map = map;
 		this.map.show(this._port);
+		map.center();
+
 		this.select(map.getRoot());
 	},
 	
@@ -67,7 +73,7 @@ MM.App = {
 			"Undo", "Redo",
 			"Edit", "Newline", "Cancel", "Finish",
 			"Help", "Center",
-			"Save", "Load"
+			"New", "Save", "Load", "SaveAs"
 		];
 		MM.Command.ALL.forEach(function(name) {
 			MM.Command[name].init();

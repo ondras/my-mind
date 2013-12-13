@@ -1,12 +1,14 @@
-MM.Backend.Local = Object.create(MM.Backend);
-MM.Backend.Local.name = "Browser storage";
-MM.Backend.Local._prefix = "mm-";
+MM.Backend.Local = Object.create(MM.Backend, {
+	label: {value: "Browser storage"},
+	id: {value: "local"},
+	prefix: {value: "mm.map."},
+});
 
 MM.Backend.Local.save = function(data, name, options) {
 	var promise = new Promise();
 
 	try {
-		localStorage.setItem(this._prefix + name, data);
+		localStorage.setItem(this.prefix + name, data);
 		promise.fulfill("OK");
 	} catch (e) {
 		promise.reject(e);
@@ -18,7 +20,7 @@ MM.Backend.Local.load = function(name, options) {
 	var promise = new Promise();
 
 	try {
-		var data = localStorage.getItem(this._prefix + name);
+		var data = localStorage.getItem(this.prefix + name);
 		if (data) {
 			promise.fulfill(data);
 		} else {
@@ -36,7 +38,7 @@ MM.Backend.Local.list = function() {
 	try {
 		var count = localStorage.length;
 		var names = [];
-		var re = new RegExp("^" + this._prefix + "(.*)");
+		var re = new RegExp("^" + this.prefix + "(.*)");
 		for (var i=0;i<count;i++) {
 			var key = localStorage.key(i);
 			var r = key.match(re);

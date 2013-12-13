@@ -1,7 +1,7 @@
 MM.Map = function(options) {
 	var o = {
 		root: "ROOT",
-		layout: MM.Layout.Graph.Right
+		layout: MM.Layout.FreeMind
 	}
 	for (var p in options) { o[p] = options[p]; }
 	this._root = null;

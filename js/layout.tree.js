@@ -1,15 +1,18 @@
-MM.Layout.Tree = Object.create(MM.Layout);
-MM.Layout.Tree.SPACING_RANK = 24;
-MM.Layout.Tree.childDirection = "";
+MM.Layout.Tree = Object.create(MM.Layout, {
+	SPACING_RANK: {value: 24},
+	childDirection: {value: ""}
+});
 
 MM.Layout.Tree.getChildDirection = function(item) {
 	return this.childDirection;
 }
 
-MM.Layout.Tree.create = function(childDirection, childId) {
-	var layout = Object.create(this);
-	layout.childDirection = childDirection;
-	layout.id = childId;
+MM.Layout.Tree.create = function(direction, id, label) {
+	var layout = Object.create(this, {
+		childDirection: {value:direction},
+		id: {value:id},
+		label: {value:label}
+	});
 	MM.Layout.ALL.push(layout);
 	return layout;
 }
@@ -100,5 +103,5 @@ MM.Layout.Tree._drawLines = function(item, side) {
 	ctx.stroke();
 }
 
-MM.Layout.Tree.Left = MM.Layout.Tree.create("left", "tree-left");
-MM.Layout.Tree.Right = MM.Layout.Tree.create("right", "tree-right");
+MM.Layout.Tree.Left = MM.Layout.Tree.create("left", "tree-left", "Left (Tree)");
+MM.Layout.Tree.Right = MM.Layout.Tree.create("right", "tree-right", "Right (Tree)");

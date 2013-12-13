@@ -1,14 +1,17 @@
-MM.Layout = {
-	ALL: [],
-	SPACING_RANK: 4,
-	SPACING_CHILD: 4,
-	id: ""
-};
+MM.Layout = Object.create(MM.Repo, {
+	ALL: {value: []},
+	SPACING_RANK: {value: 4},
+	SPACING_CHILD: {value: 4},
+});
+
+MM.Layout.getByProperty = function(property, value) {
+	return this.ALL.filter(function(item) {
+		return (item[property] == value);
+	})[0] || null;
+}
 
 MM.Layout.fromJSON = function(data) {
-	return this.ALL.filter(function(item) {
-		return (item.id == data);
-	})[0] || null;
+	return this.getById(data);
 }
 
 MM.Layout.toJSON = function() {

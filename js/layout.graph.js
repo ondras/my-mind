@@ -1,15 +1,18 @@
-MM.Layout.Graph = Object.create(MM.Layout);
-MM.Layout.Graph.SPACING_RANK = 16;
-MM.Layout.Graph.childDirection = "";
+MM.Layout.Graph = Object.create(MM.Layout, {
+	SPACING_RANK: {value: 16},
+	childDirection: {value: ""}
+});
 
 MM.Layout.Graph.getChildDirection = function(item) {
 	return this.childDirection;
 }
 
-MM.Layout.Graph.create = function(childDirection, childId) {
-	var layout = Object.create(this);
-	layout.childDirection = childDirection;
-	layout.id = childId;
+MM.Layout.Graph.create = function(direction, id, label) {
+	var layout = Object.create(this, {
+		childDirection: {value:direction},
+		id: {value:id},
+		label: {value:label}
+	});
 	MM.Layout.ALL.push(layout);
 	return layout;
 }
@@ -227,7 +230,7 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 }
 
 
-MM.Layout.Graph.Down = MM.Layout.Graph.create("bottom", "graph-bottom");
-MM.Layout.Graph.Up = MM.Layout.Graph.create("top", "graph-top");
-MM.Layout.Graph.Left = MM.Layout.Graph.create("left", "graph-left");
-MM.Layout.Graph.Right = MM.Layout.Graph.create("right", "graph-right");
+MM.Layout.Graph.Down = MM.Layout.Graph.create("bottom", "graph-bottom", "Bottom (Graph)");
+MM.Layout.Graph.Up = MM.Layout.Graph.create("top", "graph-top", "Top (Graph)");
+MM.Layout.Graph.Left = MM.Layout.Graph.create("left", "graph-left", "Left (Graph)");
+MM.Layout.Graph.Right = MM.Layout.Graph.create("right", "graph-right", "Right (Graph)");

@@ -1,17 +1,13 @@
-MM.Shape = {
-	ALL: [],
-	VERTICAL_OFFSET: 0.5,
-	id: ""
-}
+MM.Shape = Object.create(MM.Repo, {
+	VERTICAL_OFFSET: {value: 0.5},
+});
 
 MM.Shape.toJSON = function(data) {
 	return this.id;
 }
 
 MM.Shape.fromJSON = function(data) {
-	return this.ALL.filter(function(item) {
-		return (item.id == data);
-	})[0] || null;
+	return this.getById(data);
 }
 
 MM.Shape.set = function(item) {
