@@ -161,9 +161,11 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 
 	ctx.beginPath();
 	ctx.moveTo(x1, y1);
+	ctx.lineTo(x+R, y1); /* FIXME */
 	ctx.arcTo(x, y1, x, y1+R, R);
 	ctx.lineTo(x, y2-R);
-	ctx.arcTo(x, y2, x2, y2, R);
+	ctx.arcTo(x, y2, x+R, y2, R); /* FIXME */
+	ctx.lineTo(x2, y2);
 
 	for (var i=1; i<children.length-1; i++) {
 		var c = children[i];

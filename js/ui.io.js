@@ -1,17 +1,20 @@
 MM.UI.IO = function() {
+	this._prefix = "mm.app.";
 	this._mode = "";
 	this._node = document.querySelector("#io");
 	this._heading = this._node.querySelector("h3");
-	this._name = document.querySelector("#name");
-	this._backend = document.querySelector("#backend");
-	this._format = document.querySelector("#format");
 	this._go = document.querySelector("#go");
 	this._close = document.querySelector("#close");
 
+	this._name = document.querySelector("#name");
+	this._name.value = localStorage.getItem("mm.app.name") || "";
+
+	this._backend = document.querySelector("#backend");
 	this._backend.appendChild(MM.Backend.Local.buildOption());
 	this._backend.appendChild(MM.Backend.File.buildOption());
 	this._backend.value = localStorage.getItem("mm.app.backend") || MM.Backend.File.id;
 
+	this._format = document.querySelector("#format");
 	this._format.appendChild(MM.Format.JSON.buildOption());
 	this._format.value = localStorage.getItem("mm.app.format") || MM.Format.JSON.id;
 
@@ -21,10 +24,16 @@ MM.UI.IO = function() {
 	this._format.addEventListener("change", this);
 }
 
+MM.UI.IO.prototype.resetName = function() {
+	this._name.value = "";
+}
+
 MM.UI.IO.prototype.show = function(mode) {
 	this._mode = mode;
 	this._node.classList.add("visible");
 	this._heading.innerHTML = mode;
+	
+	if (!this._name.value && mode == "save") { this._name.value = MM.App.map.getRoot().getText(); }
 
 	var p = this._format.parentNode;
 	p.style.display = (mode == "save" ? "" : "none");
@@ -56,10 +65,18 @@ MM.UI.IO.prototype.handleEvent = function(e) {
 }
 
 MM.UI.IO.prototype._goClick = function() {
+	localStorage.setItem(this._prefix + "backend", this._backend.value);
+	localStorage.setItem(this._prefix + "format", this._format.value);
+	localStorage.setItem(this._prefix + "name", this._name.value);
+	
 	var backend = this._getBackend();
 	switch (this._mode) {
 		case "load":
-			backend.load().then(this._loadDone.bind(this), this._error.bind(this));
+			var name = this._name.value;
+			backend.load(name).then(
+				this._loadDone.bind(this),
+				this._error.bind(this)
+			);
 		break;
 
 		case "save":
@@ -69,7 +86,10 @@ MM.UI.IO.prototype._goClick = function() {
 
 			var name = this._name.value;
 			if (backend.id == "file") { name += "." + format.extension; }
-			backend.save(data, name).then(this._saveDone.bind(this), this._error.bind(this));
+			backend.save(data, name).then(
+				this._saveDone.bind(this),
+				this._error.bind(this)
+			);
 		break;
 	}
 }

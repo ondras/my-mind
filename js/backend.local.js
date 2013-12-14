@@ -1,22 +1,22 @@
 MM.Backend.Local = Object.create(MM.Backend, {
 	label: {value: "Browser storage"},
 	id: {value: "local"},
-	prefix: {value: "mm.map."},
+	prefix: {value: "mm.map."}
 });
 
-MM.Backend.Local.save = function(data, name, options) {
+MM.Backend.Local.save = function(data, name) {
 	var promise = new Promise();
 
 	try {
 		localStorage.setItem(this.prefix + name, data);
-		promise.fulfill("OK");
+		promise.fulfill();
 	} catch (e) {
 		promise.reject(e);
 	}
 	return promise;
 }
 
-MM.Backend.Local.load = function(name, options) {
+MM.Backend.Local.load = function(name) {
 	var promise = new Promise();
 
 	try {

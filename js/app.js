@@ -31,6 +31,7 @@ MM.App = {
 		map.center();
 
 		this.select(map.getRoot());
+		this.ui.resetName();
 	},
 	
 	select: function(item) {

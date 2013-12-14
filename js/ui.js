@@ -4,6 +4,16 @@ MM.UI = function() {
 	this._layout = new MM.UI.Layout();
 	this._shape = new MM.UI.Shape();
 	this._io = new MM.UI.IO();
+	
+	MM.subscribe("update", this);
+}
+
+MM.UI.prototype.resetName = function() {
+	this._io.resetName(); /* FIXME hluboko */
+}
+
+MM.UI.prototype.handle = function(message, publisher) {
+	if (publisher == MM.App.current) { this.update(); }
 }
 
 MM.UI.prototype.handleEvent = function(e) {

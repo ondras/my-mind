@@ -46,6 +46,7 @@ MM.Item.prototype.toJSON = function() {
 }
 
 MM.Item.prototype.update = function(doNotRecurse) {
+	MM.publish("update", this);
 	if (!this._map.isVisible()) { return; }
 
 	if (this._autoShape) { /* check for changed auto-shape */
