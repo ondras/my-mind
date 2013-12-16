@@ -7,7 +7,7 @@ MM.Keyboard.prototype.handleEvent = function(e) {
 	MM.Command.ALL.some(function(name) {
 		var command = MM.Command[name];
 		if (!command.isValid()) { return; }
-		var keys = command.getKeys();
+		var keys = command.keys;
 		for (var i=0;i<keys.length;i++) {
 			if (this._keyOK(keys[i], e)) {
 				e.preventDefault();

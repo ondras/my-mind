@@ -7,6 +7,8 @@ MM.App = {
 	map: null,
 	ui: null,
 	_port: null,
+	_mouse: [0, 0],
+	_fontSize: 100,
 	
 	action: function(action) {
 		if (this.historyIndex < this.history.length) { /* remove undoed actions */
@@ -28,7 +30,6 @@ MM.App = {
 
 		this.map = map;
 		this.map.show(this._port);
-		map.center();
 
 		this.select(map.getRoot());
 		MM.publish("map-change", map);
@@ -43,6 +44,12 @@ MM.App = {
 		this.map.ensureItemVisibility(item);
 		MM.publish("item-select", item);
 	},
+	
+	adjustFontSize: function(diff) {
+		this._fontSize = Math.max(30, this._fontSize + 10*diff);
+		this._port.style.fontSize = this._fontSize + "%";
+		this.map.getRoot().updateSubtree();
+	},
 
 	handleEvent: function(e) {
 		switch (e.type) {
@@ -51,14 +58,30 @@ MM.App = {
 			break;
 
 			case "click":
-				var node = e.target;
-				while (node != this._port) {
-					if (node.classList.contains("text")) {
-						this.select(this.map.getItemFor(node));
-						return;
-					}
-					node = node.parentNode;
-				}
+				var item = this.map.getItemFor(e.target);
+				if (item) { this.select(item); }
+			break;
+			
+			case "mousedown":
+				var item = this.map.getItemFor(e.target);
+				if (item) { return; }
+				this._port.style.cursor = "move";
+				this._port.addEventListener("mousemove", this);
+				this._port.addEventListener("mouseup", this);
+				this._mouse[0] = e.clientX;
+				this._mouse[1] = e.clientY;
+			break;
+			
+			case "mousemove":
+				this.map.moveBy(e.clientX-this._mouse[0], e.clientY-this._mouse[1]);
+				this._mouse[0] = e.clientX;
+				this._mouse[1] = e.clientY;
+			break;
+			
+			case "mouseup":
+				this._port.style.cursor = "";
+				this._port.removeEventListener("mousemove", this);
+				this._port.removeEventListener("mouseup", this);
 			break;
 		} /* switch */
 	},
@@ -73,13 +96,14 @@ MM.App = {
 			"InsertChild", "InsertSibling", "Delete",
 			"Undo", "Redo",
 			"Edit", "Newline", "Cancel", "Finish",
-			"Help", "Center",
+			"Help", "Center", "ZoomIn", "ZoomOut",
 			"New", "Save", "Load", "SaveAs"
 		];
 		MM.Command.ALL.forEach(function(name) {
 			MM.Command[name].init();
 		});
 
+		this._port.addEventListener("mousedown", this);
 		this._port.addEventListener("click", this);
 		window.addEventListener("resize", this);
 
@@ -89,5 +113,6 @@ MM.App = {
 	_syncPort: function() {
 		this._port.style.width = (window.innerWidth - this.ui.getWidth()) + "px";
 		this._port.style.height = window.innerHeight + "px";
+		if (this.map) { this.map.moveBy(0, 0); }
 	}
 }

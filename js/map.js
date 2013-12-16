@@ -6,6 +6,7 @@ MM.Map = function(options) {
 	for (var p in options) { o[p] = options[p]; }
 	this._root = null;
 	this._visible = false;
+	this._position = [0, 0];
 
 	var root = this.createItem().setText(o.root).setLayout(o.layout);
 	this.setRoot(root);
@@ -47,6 +48,7 @@ MM.Map.prototype.show = function(where) {
 	where.appendChild(node);
 	this._visible = true;
 	this._root.updateSubtree();
+	this.moveTo(0, 0);
 }
 
 MM.Map.prototype.hide = function() {
@@ -55,14 +57,30 @@ MM.Map.prototype.hide = function() {
 	this._visible = false;
 }
 
-MM.Map.prototype.center = function() {
+MM.Map.prototype.moveTo = function(x, y) {
+	this._position = [x, y];
+
 	var node = this._root.getDOM().node;
 	var parent = node.parentNode;
-	node.style.left = Math.round((parent.offsetWidth - node.offsetWidth)/2) + "px";
-	node.style.top = Math.round((parent.offsetHeight - node.offsetHeight)/2) + "px";
+	var left = (parent.offsetWidth - node.offsetWidth)/2 + x;
+	var top = (parent.offsetHeight - node.offsetHeight)/2 + y;
+	node.style.left = Math.round(left) + "px";
+	node.style.top = Math.round(top) + "px";
+
+	return this;
+}
+
+MM.Map.prototype.moveBy = function(dx, dy) {
+	return this.moveTo(this._position[0]+dx, this._position[1]+dy);
 }
 
 MM.Map.prototype.getItemFor = function(node) {
+	var port = this._root.getDOM().node.parentNode;
+	while (node != port && !node.classList.contains("text")) {
+		node = node.parentNode;
+	}	
+	if (node == port) { return null; }
+
 	var scan = function(item, node) {
 		if (item.getDOM().content == node) { return item; }
 		var children = item.getChildren();
@@ -70,7 +88,9 @@ MM.Map.prototype.getItemFor = function(node) {
 			var result = scan(children[i], node);
 			if (result) { return result; }
 		}
+		return null;
 	}
+
 	return scan(this._root, node);
 }
 
@@ -93,7 +113,6 @@ MM.Map.prototype.ensureItemVisibility = function(item) {
 	if (dy < 0) { delta[1] = dy; }
 
 	if (delta[0] || delta[1]) {
-		root.style.left = (root.offsetLeft + delta[0]) + "px";
-		root.style.top = (root.offsetTop + delta[1]) + "px";
+		this.moveBy(delta[0], delta[1]);
 	}
 }

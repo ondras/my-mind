@@ -1,6 +1,7 @@
-MM.Command.Help = Object.create(MM.Command);
-MM.Command.Help._keys = [{charCode: "?".charCodeAt(0)}];
-MM.Command.Help._name = "Show/hide help";
+MM.Command.Help = Object.create(MM.Command, {
+	label: {value: "Show/hide help"},
+	keys: {value: [{charCode: "?".charCodeAt(0)}]}
+});
 
 MM.Command.Help.init = function() {
 	this._node = document.createElement("div"),
@@ -40,8 +41,7 @@ MM.Command.Help._build = function() {
 
 	MM.Command.ALL.forEach(function(name) {
 		var c = MM.Command[name];
-		var name = c.getName();
-		if (!name) { return; }
+		if (!c.label) { return; }
 		this._buildRow(c, table);
 	}, this);
 
@@ -49,12 +49,10 @@ MM.Command.Help._build = function() {
 }
 
 MM.Command.Help._buildRow = function(command, table) {
-	var name = command.getName();
-	if (!name) { return; }
 	var row = table.insertRow(-1);
 
-	var keys = command.getKeys().map(this._formatKey, this);
-	row.insertCell().innerHTML = name;
+	var keys = command.keys.map(this._formatKey, this);
+	row.insertCell().innerHTML = command.label;
 	row.insertCell().innerHTML = keys.join("/");
 }
 
