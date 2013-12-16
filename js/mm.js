@@ -1,6 +1,4 @@
 var MM = {
-	LINE_COLOR: "#aaa",
-	
 	_subscribers: {},
 	
 	publish: function(message, publisher) {

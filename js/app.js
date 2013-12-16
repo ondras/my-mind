@@ -31,7 +31,7 @@ MM.App = {
 		map.center();
 
 		this.select(map.getRoot());
-		this.ui.resetName();
+		MM.publish("map-change", map);
 	},
 	
 	select: function(item) {
@@ -41,7 +41,7 @@ MM.App = {
 		this.current = item;
 		this.current.getDOM().node.classList.add("current");
 		this.map.ensureItemVisibility(item);
-		this.ui.update();
+		MM.publish("item-select", item);
 	},
 
 	handleEvent: function(e) {

@@ -21,6 +21,7 @@ MM.Shape.unset = function(item) {
 }
 
 MM.Shape.update = function(item) {
+	item.getDOM().content.style.borderColor = item.getColor();
 	return this;
 }
 

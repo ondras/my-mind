@@ -6,6 +6,7 @@ MM.Item = function(map) {
 	this._layout = null;
 	this._shape = null;
 	this._autoShape = true;
+	this._color = null;
 	this._side = null; /* side preference */
 	this._oldText = "";
 
@@ -22,10 +23,14 @@ MM.Item = function(map) {
 	this._dom.node.appendChild(this._dom.content);
 }
 
+MM.Item.COLOR = "#999";
+
 MM.Item.fromJSON = function(data, map) {
+	/* FIXME bez setteru, testovat pritomnost */
 	var item = new this(map);
 	item.setText(data.text);
 	item.setSide(data.side);
+	item.setColor(data.color);
 	item.setLayout(MM.Layout.fromJSON(data.layout));
 	item.setShape(MM.Shape.fromJSON(data.shape));
 	data.children.forEach(function(child) {
@@ -35,9 +40,11 @@ MM.Item.fromJSON = function(data, map) {
 }
 
 MM.Item.prototype.toJSON = function() {
+	/* FIXME bez prazdnych */
 	var data = {
 		text: this.getText(),
 		side: this._side,
+		color: this._color,
 		layout: this._layout && this._layout.toJSON(),
 		shape: this._autoShape ? null : this._shape.toJSON(),
 		children: this._children.map(function(child) { return child.toJSON(); })
@@ -46,7 +53,7 @@ MM.Item.prototype.toJSON = function() {
 }
 
 MM.Item.prototype.update = function(doNotRecurse) {
-	MM.publish("update", this);
+	MM.publish("item-update", this);
 	if (!this._map.isVisible()) { return; }
 
 	if (this._autoShape) { /* check for changed auto-shape */
@@ -91,6 +98,20 @@ MM.Item.prototype.getSide = function() {
 
 MM.Item.prototype.getChildren = function() {
 	return this._children;
+}
+
+MM.Item.prototype.setColor = function(color) {
+	this._color = color;
+	this.updateSubtree();
+	return this;
+}
+
+MM.Item.prototype.getColor = function() {
+	return this._color || (this._parent ? this._parent.getColor() : MM.Item.COLOR);
+}
+
+MM.Item.prototype.getOwnColor = function() {
+	return this._color;
 }
 
 MM.Item.prototype.getLayout = function() {

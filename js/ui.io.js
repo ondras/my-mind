@@ -16,16 +16,24 @@ MM.UI.IO = function() {
 
 	this._format = document.querySelector("#format");
 	this._format.appendChild(MM.Format.JSON.buildOption());
+	this._format.appendChild(MM.Format.FreeMind.buildOption());
+	this._format.appendChild(MM.Format.MMA.buildOption());
 	this._format.value = localStorage.getItem("mm.app.format") || MM.Format.JSON.id;
 
 	this._go.addEventListener("click", this);
 	this._close.addEventListener("click", this);
 	this._backend.addEventListener("change", this);
 	this._format.addEventListener("change", this);
+
+	MM.subscribe("map-change", this);
 }
 
-MM.UI.IO.prototype.resetName = function() {
-	this._name.value = "";
+MM.UI.IO.prototype.handle = function(message, publisher) {
+	switch (message) {
+		case "map-change":
+			this._name.value = "";
+		break;
+	}
 }
 
 MM.UI.IO.prototype.show = function(mode) {

@@ -79,7 +79,7 @@ MM.Layout.Tree._drawLines = function(item, side) {
 	var dom = item.getDOM();
 	var canvas = dom.canvas;
 	var ctx = canvas.getContext("2d");
-	ctx.strokeStyle = MM.LINE_COLOR;
+	ctx.strokeStyle = item.getColor();
 
 	var R = this.SPACING_RANK/3;
 	var x = (side == "left" ? canvas.width - 2*R : 2*R) + 0.5;

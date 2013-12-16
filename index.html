@@ -24,12 +24,15 @@
 		<script src="js/shape.ellipse.js"></script>
 		<script src="js/format.js"></script>
 		<script src="js/format.json.js"></script>
+		<script src="js/format.freemind.js"></script>
+		<script src="js/format.mma.js"></script>
 		<script src="js/backend.js"></script>
 		<script src="js/backend.local.js"></script>
 		<script src="js/backend.file.js"></script>
 		<script src="js/ui.js"></script>
 		<script src="js/ui.layout.js"></script>
 		<script src="js/ui.shape.js"></script>
+		<script src="js/ui.color.js"></script>
 		<script src="js/ui.io.js"></script>
 		<script src="js/app.js"></script>
 		<link rel="stylesheet" href="css/style.css" />
@@ -61,6 +64,19 @@
 				<span>Shape</span>
 				<select id="shape">
 					<option value="">[automatic]</option>
+				</select>
+			</p>
+			<p>
+				<span>Color</span>
+				<select id="color">
+					<option value="">[default]</option>
+					<option value="#000">Black</option>
+					<option value="#f33">Red</option>
+					<option value="#3f3">Green</option>
+					<option value="#33f">Blue</option>
+					<option value="#fa3">Orange</option>
+					<option value="#3ff">Cyan</option>
+					<option value="#f3f">Magenta</option>
 				</select>
 			</p>
 		</div>
@@ -101,6 +117,7 @@
 		
 		var r1 = root.insertChild().setText("right 1").setShape(MM.Shape.Box);
 		r1.setLayout(MM.Layout.Tree.Right);
+		r1.setColor("#33f");
 		r1.insertChild().setText("right 1.1");
 		r1.insertChild().setText("right 1.2 zejo");
 		r1.insertChild().setText("right 1.3 very long").insertChild().setText("right 1.3.1");
@@ -112,6 +129,7 @@
 		l1.insertChild().setText("left 1.4");
 	
 		var r2 = root.insertChild().setText("right 2");
+		r2.setColor("#f33");
 		r2.insertChild().setText("right 2.1");
 		r2.insertChild().setText("right 2.2");
 
@@ -125,24 +143,28 @@
 
 TODO:
   shortterm:
-    - fix freemind layout remembering, serialization, parsing
     - icon font
-    - mma format
-    - mm format
     - textarea backend
-    - ui base
-    - ui for shapes
-    - ui for layouts
     - styling
     - ui for styling
     - ui for saveload
+    - dragmap
     - dragdrop
+    - autosave
+    - zoom?
+    - clipboard support
 
   longterm:
     - more formats?
     - more backends (firebase?)
     - circular layout
     - wysiwyg
+
+  bugs:
+    - podbarveni color optionu
+    - commandy na Repo
+    - import ne-std barev
+    - tree layout symetricka mezera
 
 -->
 

@@ -8,7 +8,7 @@ MM.Shape.Underline.update = function(item) {
 	var dom = item.getDOM();
 
 	var ctx = dom.canvas.getContext("2d");
-	ctx.strokeStyle = MM.LINE_COLOR;
+	ctx.strokeStyle = item.getColor();
 
 	var left = dom.content.offsetLeft;
 	var right = left + dom.content.offsetWidth;

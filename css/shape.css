@@ -8,10 +8,6 @@
 	white-space: pre;
 }
 
-.current > .text {
-	box-shadow: 0 0 5px #333;
-}
-
 .shape-box > .text {
 	background-color: #fff;
 	border: 1px solid #666;
@@ -25,8 +21,23 @@
 	padding: 0.5em 1em;
 }
 
+/* current */
+
+.current > .text {
+	background-color: #ffb;
+}
+
+/* root */
+
 #port > .item > .text {
-	background-color: #ccf;
 	font-weight: bold;
 	border-width: 2px;
+	font-size: 140%;
+}
+
+/* 1st children */
+
+#port > .item > .children > .item > .text {
+	border-width: 2px;
+	font-size: 120%;
 }

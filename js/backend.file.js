@@ -8,7 +8,7 @@ MM.Backend.File = Object.create(MM.Backend, {
 MM.Backend.File.save = function(data, name) {
 	var link = document.createElement("a");
 	link.download = name;
-	link.href = "data:text/plain;base64," + btoa(data);
+	link.href = "data:text/plain;base64," + btoa(unescape(encodeURIComponent(data)));
 	document.body.appendChild(link);
 	link.click();
 	link.parentNode.removeChild(link);

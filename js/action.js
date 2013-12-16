@@ -77,3 +77,16 @@ MM.Action.SetShape.prototype.perform = function() {
 MM.Action.SetShape.prototype.undo = function() {
 	this._item.setShape(this._oldShape);
 }
+
+MM.Action.SetColor = function(item, color) {
+	this._item = item;
+	this._color = color;
+	this._oldColor = item.getOwnColor();
+}
+MM.Action.SetColor.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetColor.prototype.perform = function() {
+	this._item.setColor(this._color);
+}
+MM.Action.SetColor.prototype.undo = function() {
+	this._item.setColor(this._oldColor);
+}
