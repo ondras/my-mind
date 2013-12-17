@@ -49,6 +49,7 @@ MM.App = {
 		this._fontSize = Math.max(30, this._fontSize + 10*diff);
 		this._port.style.fontSize = this._fontSize + "%";
 		this.map.getRoot().updateSubtree();
+		this.map.moveBy(0, 0);
 	},
 
 	handleEvent: function(e) {

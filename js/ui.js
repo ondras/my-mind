@@ -10,7 +10,7 @@ MM.UI = function() {
 	MM.subscribe("item-select", this);
 }
 
-MM.UI.prototype.handle = function(message, publisher) {
+MM.UI.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
 		case "item-select":
 			this._update();

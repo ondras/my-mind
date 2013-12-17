@@ -154,9 +154,11 @@ MM.Command.Center.execute = function() {
 }
 
 MM.Command.New = Object.create(MM.Command, {
-	label: {value: "New map"}
+	label: {value: "New map"},
+	keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.New.execute = function() {
+	if (!confirm("Throw away your current map and start a new one?")) { return; }
 	var map = new MM.Map();
 	MM.App.setMap(map);
 }

@@ -231,7 +231,7 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 }
 
 
-MM.Layout.Graph.Down = MM.Layout.Graph.create("bottom", "graph-bottom", "Bottom (Graph)");
-MM.Layout.Graph.Up = MM.Layout.Graph.create("top", "graph-top", "Top (Graph)");
-MM.Layout.Graph.Left = MM.Layout.Graph.create("left", "graph-left", "Left (Graph)");
-MM.Layout.Graph.Right = MM.Layout.Graph.create("right", "graph-right", "Right (Graph)");
+MM.Layout.Graph.Down = MM.Layout.Graph.create("bottom", "graph-bottom", "Bottom");
+MM.Layout.Graph.Up = MM.Layout.Graph.create("top", "graph-top", "Top");
+MM.Layout.Graph.Left = MM.Layout.Graph.create("left", "graph-left", "Left");
+MM.Layout.Graph.Right = MM.Layout.Graph.create("right", "graph-right", "Right");

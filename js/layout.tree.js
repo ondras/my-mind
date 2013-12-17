@@ -1,5 +1,5 @@
 MM.Layout.Tree = Object.create(MM.Layout, {
-	SPACING_RANK: {value: 24},
+	SPACING_RANK: {value: 32},
 	childDirection: {value: ""}
 });
 
@@ -38,12 +38,15 @@ MM.Layout.Tree._layoutItem = function(item, rankDirection) {
 
 	/* node size */
 	var rankSize = contentSize[0];
-	if (bbox[0]) { rankSize = Math.max(rankSize, bbox[0] + this.SPACING_RANK); }
 	var childSize = bbox[1] + contentSize[1];
+	if (bbox[0]) { 
+		rankSize = Math.max(rankSize, bbox[0] + this.SPACING_RANK); 
+		childSize += this.SPACING_CHILD;
+	}
 	dom.node.style.width = rankSize + "px";
 	dom.node.style.height = childSize + "px";
 
-	var offset = [this.SPACING_RANK, contentSize[1]];
+	var offset = [this.SPACING_RANK, contentSize[1]+this.SPACING_CHILD];
 	if (rankDirection == "left") { offset[0] = rankSize - bbox[0] - this.SPACING_RANK; }
 	this._layoutChildren(item.getChildren(), rankDirection, offset, bbox);
 
@@ -81,7 +84,7 @@ MM.Layout.Tree._drawLines = function(item, side) {
 	var ctx = canvas.getContext("2d");
 	ctx.strokeStyle = item.getColor();
 
-	var R = this.SPACING_RANK/3;
+	var R = this.SPACING_RANK/4;
 	var x = (side == "left" ? canvas.width - 2*R : 2*R) + 0.5;
 	var y1 = item.getShape().getVerticalAnchor(item);
 
@@ -96,12 +99,14 @@ MM.Layout.Tree._drawLines = function(item, side) {
 	for (var i=0; i<children.length; i++) {
 		var c = children[i];
 		var y = c.getShape().getVerticalAnchor(c) + c.getDOM().node.offsetTop;
+		var anchor = this._getChildAnchor(c, side);
 
 		ctx.moveTo(x, y - R);
-		ctx.arcTo(x, y, this._getChildAnchor(c, side), y, R);
+		ctx.arcTo(x, y, anchor, y, R);
+		ctx.lineTo(anchor, y);
 	}
 	ctx.stroke();
 }
 
-MM.Layout.Tree.Left = MM.Layout.Tree.create("left", "tree-left", "Left (Tree)");
-MM.Layout.Tree.Right = MM.Layout.Tree.create("right", "tree-right", "Right (Tree)");
+MM.Layout.Tree.Left = MM.Layout.Tree.create("left", "tree-left", "Left");
+MM.Layout.Tree.Right = MM.Layout.Tree.create("right", "tree-right", "Right");

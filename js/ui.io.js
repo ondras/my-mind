@@ -28,7 +28,7 @@ MM.UI.IO = function() {
 	MM.subscribe("map-change", this);
 }
 
-MM.UI.IO.prototype.handle = function(message, publisher) {
+MM.UI.IO.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
 		case "map-change":
 			this._name.value = "";
@@ -46,10 +46,13 @@ MM.UI.IO.prototype.show = function(mode) {
 	var p = this._format.parentNode;
 	p.style.display = (mode == "save" ? "" : "none");
 	this._syncBackend();
+
+	this._go.focus();
 }
 
 MM.UI.IO.prototype.hide = function() {
 	this._node.classList.remove("visible");
+	this._go.blur();
 }
 
 MM.UI.IO.prototype.handleEvent = function(e) {

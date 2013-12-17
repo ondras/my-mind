@@ -1,6 +1,12 @@
 MM.UI.Color = function() {
 	this._select = document.querySelector("#color");
 	this._select.addEventListener("change", this);
+
+	var options = this._select.querySelectorAll("option");
+	for (var i=0;i<options.length;i++) {
+		var option = options[i];
+		option.style.backgroundColor = option.value;
+	}
 }
 
 MM.UI.Color.prototype.update = function() {

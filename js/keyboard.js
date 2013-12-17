@@ -4,6 +4,12 @@ MM.Keyboard = function() {
 }
 
 MM.Keyboard.prototype.handleEvent = function(e) {
+	var node = document.activeElement;
+	while (node != document) {
+		if (node.classList.contains("ui")) { return; }
+		node = node.parentNode;
+	}
+
 	MM.Command.ALL.some(function(name) {
 		var command = MM.Command[name];
 		if (!command.isValid()) { return; }

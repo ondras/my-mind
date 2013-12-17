@@ -4,7 +4,7 @@ var MM = {
 	publish: function(message, publisher) {
 		var subscribers = this._subscribers[message] || [];
 		subscribers.forEach(function(subscriber) {
-			subscriber.handle(message, publisher);
+			subscriber.handleMessage(message, publisher);
 		});
 	},
 	

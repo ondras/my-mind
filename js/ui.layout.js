@@ -3,13 +3,15 @@ MM.UI.Layout = function() {
 
 	this._select.appendChild(MM.Layout.FreeMind.buildOption());
 
-	this._select.appendChild(MM.Layout.Graph.Right.buildOption());
-	this._select.appendChild(MM.Layout.Graph.Left.buildOption());
-	this._select.appendChild(MM.Layout.Graph.Down.buildOption());
-	this._select.appendChild(MM.Layout.Graph.Up.buildOption());
+	var label = this._buildGroup("Graph");
+	label.appendChild(MM.Layout.Graph.Right.buildOption());
+	label.appendChild(MM.Layout.Graph.Left.buildOption());
+	label.appendChild(MM.Layout.Graph.Down.buildOption());
+	label.appendChild(MM.Layout.Graph.Up.buildOption());
 
-	this._select.appendChild(MM.Layout.Tree.Right.buildOption());
-	this._select.appendChild(MM.Layout.Tree.Left.buildOption());
+	var label = this._buildGroup("Tree");
+	label.appendChild(MM.Layout.Tree.Right.buildOption());
+	label.appendChild(MM.Layout.Tree.Left.buildOption());
 	
 	this._select.addEventListener("change", this);
 }
@@ -33,4 +35,11 @@ MM.UI.Layout.prototype.handleEvent = function(e) {
 
 MM.UI.Layout.prototype._getOption = function(value) {
 	return this._select.querySelector("option[value='" + value + "']");
+}
+
+MM.UI.Layout.prototype._buildGroup = function(label) {
+	var node = document.createElement("optgroup");
+	node.label = label;
+	this._select.appendChild(node);
+	return node;
 }
