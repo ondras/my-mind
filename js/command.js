@@ -163,7 +163,7 @@ MM.Command.New.execute = function() {
 
 MM.Command.ZoomIn = Object.create(MM.Command, {
 	label: {value: "Zoom in"},
-	keys: {value: [{charCode:"z".charCodeAt(0)}]}
+	keys: {value: [{charCode:"+".charCodeAt(0)}]}
 });
 MM.Command.ZoomIn.execute = function() {
 	MM.App.adjustFontSize(1);
@@ -171,7 +171,7 @@ MM.Command.ZoomIn.execute = function() {
 
 MM.Command.ZoomOut = Object.create(MM.Command, {
 	label: {value: "Zoom out"},
-	keys: {value: [{charCode:"Z".charCodeAt(0)}]}
+	keys: {value: [{charCode:"-".charCodeAt(0)}]}
 });
 MM.Command.ZoomOut.execute = function() {
 	MM.App.adjustFontSize(-1);
