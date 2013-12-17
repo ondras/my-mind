@@ -1,6 +1,10 @@
 MM.UI = function() {
 	this._node = document.querySelector(".ui");
 	this._node.addEventListener("click", this);
+	
+	this._toggle = document.querySelector("#toggle");
+	this._toggle.addEventListener("click", this);
+
 	this._layout = new MM.UI.Layout();
 	this._shape = new MM.UI.Shape();
 	this._color = new MM.UI.Color();
@@ -8,6 +12,8 @@ MM.UI = function() {
 	
 	MM.subscribe("item-update", this);
 	MM.subscribe("item-select", this);
+
+	this._toggleVisibility();
 }
 
 MM.UI.prototype.handleMessage = function(message, publisher) {
@@ -23,10 +29,21 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 }
 
 MM.UI.prototype.handleEvent = function(e) {
+	if (e.target == this._toggle) {
+		e.target.blur();
+		this._toggleVisibility();
+		return;
+	}
+	
 	var command = e.target.getAttribute("data-command");
 	if (!command) { return; }
 
 	MM.Command[command].execute();
+}
+
+MM.UI.prototype._toggleVisibility = function() {
+	this._node.classList.toggle("visible");
+	MM.publish("ui-change", this);
 }
 
 MM.UI.prototype.showIO = function(mode) {
@@ -34,7 +51,7 @@ MM.UI.prototype.showIO = function(mode) {
 }
 
 MM.UI.prototype.getWidth = function() {
-	return this._node.offsetWidth;
+	return (this._node.classList.contains("visible") ? this._node.offsetWidth : 0);
 }
 
 MM.UI.prototype._update = function() {

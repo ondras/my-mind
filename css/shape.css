@@ -1,5 +1,4 @@
 .text {
-	padding: 0.15em 0.4em;
 	min-width: 0.5em;
 	min-height: 1.3em;
 	line-height: 1.3em;
@@ -9,6 +8,7 @@
 }
 
 .shape-box > .text {
+	padding: 0.15em 0.4em;
 	background-color: #fff;
 	border: 1px solid #666;
 	border-radius: 3px;

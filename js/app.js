@@ -29,10 +29,12 @@ MM.App = {
 		this.historyIndex = 0;
 
 		this.map = map;
-		this.map.show(this._port);
-
-		this.select(map.getRoot());
-		MM.publish("map-change", map);
+		
+		if (this.map) {
+			this.map.show(this._port);
+			this.select(map.getRoot());
+			MM.publish("map-change", map);
+		}
 	},
 	
 	select: function(item) {
@@ -51,6 +53,14 @@ MM.App = {
 		this.map.getRoot().updateSubtree();
 		this.map.moveBy(0, 0);
 	},
+	
+	handleMessage: function(message, publisher) {
+		switch (message) {
+			case "ui-change":
+				this._syncPort();
+			break;
+		}
+	},
 
 	handleEvent: function(e) {
 		switch (e.type) {
@@ -59,11 +69,13 @@ MM.App = {
 			break;
 
 			case "click":
+				if (!this.map) { return; }
 				var item = this.map.getItemFor(e.target);
 				if (item) { this.select(item); }
 			break;
 			
 			case "mousedown":
+				if (!this.map) { return; }
 				var item = this.map.getItemFor(e.target);
 				if (item) { return; }
 				this._port.style.cursor = "move";
@@ -104,6 +116,7 @@ MM.App = {
 			MM.Command[name].init();
 		});
 
+		MM.subscribe("ui-change", this);
 		this._port.addEventListener("mousedown", this);
 		this._port.addEventListener("click", this);
 		window.addEventListener("resize", this);

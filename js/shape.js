@@ -25,10 +25,6 @@ MM.Shape.update = function(item) {
 	return this;
 }
 
-MM.Shape.updateCanvas = function(item) {
-
-}
-
 MM.Shape.getHorizontalAnchor = function(item) {
 	var node = item.getDOM().content;
 	return Math.round(node.offsetLeft + node.offsetWidth/2) + 0.5;
@@ -36,5 +32,7 @@ MM.Shape.getHorizontalAnchor = function(item) {
 
 MM.Shape.getVerticalAnchor = function(item) {
 	var node = item.getDOM().content;
-	return Math.round(this.VERTICAL_OFFSET * node.offsetHeight + node.offsetTop) + 0.5;
+	var lines = (item.getText().match(/\n/g) || []).length + 1;
+	var line = node.offsetHeight/lines;
+	return Math.round(node.offsetTop + node.offsetHeight - (1-this.VERTICAL_OFFSET) * line) + 0.5;
 }
