@@ -60,6 +60,10 @@
 	margin-right: 4px;
 }
 
+.ui button.go {
+	font-weight: bold;
+}
+
 .ui p {
 	margin: 8px 16px;
 }

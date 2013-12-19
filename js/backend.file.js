@@ -17,7 +17,7 @@ MM.Backend.File.save = function(data, name) {
 	return promise;
 }
 
-MM.Backend.File.load = function(name) {
+MM.Backend.File.load = function() {
 	var promise = new Promise();
 
 	this.input.type = "file";

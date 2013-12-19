@@ -29,8 +29,10 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 }
 
 MM.UI.prototype.handleEvent = function(e) {
+	/* blur to return focus back to app commands */
+	if (e.target.nodeName.toLowerCase() != "select") { e.target.blur(); }
+
 	if (e.target == this._toggle) {
-		e.target.blur();
 		this._toggleVisibility();
 		return;
 	}

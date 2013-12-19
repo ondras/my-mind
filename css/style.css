@@ -18,6 +18,7 @@ ul {
 	background-color: #eed;
 	overflow: hidden;
 	font-size: 15px;
+	transition: all 250ms;
 }
 
 #help {

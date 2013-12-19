@@ -34,6 +34,9 @@
 		<script src="js/ui.shape.js"></script>
 		<script src="js/ui.color.js"></script>
 		<script src="js/ui.io.js"></script>
+		<script src="js/ui.backend.js"></script>
+		<script src="js/ui.backend.file.js"></script>
+		<script src="js/ui.backend.local.js"></script>
 		<script src="js/app.js"></script>
 		<link rel="stylesheet" href="css/style.css" />
 	</head>
@@ -83,8 +86,7 @@
 			<h3>Application</h3>
 			<p>
 				<button data-command="Help">Help</button>
-			</p>
-			
+			</p>			
 		</div>
 
 		<button id="toggle"></button>
@@ -95,24 +97,35 @@
 				<span>Storage</span>
 				<select id="backend"></select>
 			</p>
-
-			<div data-for="local-save local-load file-save" >
-				<p>
-					<span>Name</span>
-					<input type="text" id="name" />
-				</p>
-			</div>
-
-			<div data-for="file-save">
-				<p>
+			
+			<div id="file">
+				<p data-for="save">
 					<span>Format</span>
-					<select id="format"></select>
+					<select class="format"></select>
+				</p>
+				<p data-for="save">
+					<span>Name</span>
+					<input type="text" class="name" />
+				</p>
+				<p data-for="save load">
+					<button class="go"></button><button class="cancel">Cancel</button>
 				</p>
 			</div>
 
-			<p>
-				<button id="go"><strong>Go</strong></button><button id="close">Close</button>
-			</p>
+			<div id="local">
+				<p data-for="save">
+					<span>Name</span>
+					<input type="text" class="name" />
+				</p>
+				<p data-for="load">
+					<span>Saved maps</span>
+					<select class="list"></select>
+				</p>
+				<p data-for="save load">
+					<button class="go"></button><button class="cancel">Cancel</button>
+				</p>
+			</div>
+
 		</div>
 
 		<script>
