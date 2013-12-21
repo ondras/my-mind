@@ -46,6 +46,7 @@ MM.UI.Backend._action = function() {
 }
 
 MM.UI.Backend._saveDone = function() {
+	MM.App.updateURL(this._backend);
 	MM.App.ui.hideIO();
 }
 
@@ -54,6 +55,7 @@ MM.UI.Backend._loadDone = function(json) {
 		var map = MM.Map.fromJSON(json);
 		MM.App.setMap(map);
 		MM.App.ui.hideIO();
+		MM.App.updateURL(this._backend);
 	} catch (e) { 
 		this._error(e);
 	}

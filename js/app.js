@@ -99,6 +99,11 @@ MM.App = {
 		} /* switch */
 	},
 	
+	updateURL: function(backend) { /* FIXME nekam kde je backend znamy? */
+		var name = this.map.getName();
+		history.replaceState(null, "", "?n=" + encodeURIComponent(name) + "&b=" + backend.id);
+	},
+
 	init: function() {
 		this._port = document.querySelector("#port");
 		this.ui = new MM.UI();
