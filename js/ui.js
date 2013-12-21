@@ -52,6 +52,10 @@ MM.UI.prototype.showIO = function(mode) {
 	this._io.show(mode);
 }
 
+MM.UI.prototype.hideIO = function() {
+	this._io.hide();
+}
+
 MM.UI.prototype.getWidth = function() {
 	return (this._node.classList.contains("visible") ? this._node.offsetWidth : 0);
 }

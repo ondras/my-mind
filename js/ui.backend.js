@@ -19,7 +19,7 @@ MM.UI.Backend.init = function(select) {
 MM.UI.Backend.handleEvent = function(e) {
 	switch (e.target) {
 		case this._cancel:
-			MM.App.ui._io.hide(); /* FIXME */
+			MM.App.ui.hideIO();
 		break;
 
 		case this._go:
@@ -45,6 +45,21 @@ MM.UI.Backend.show = function(mode) {
 MM.UI.Backend._action = function() {
 }
 
+MM.UI.Backend._saveDone = function() {
+	MM.App.ui.hideIO();
+}
+
+MM.UI.Backend._loadDone = function(json) {
+	try {
+		var map = MM.Map.fromJSON(json);
+		MM.App.setMap(map);
+		MM.App.ui.hideIO();
+	} catch (e) { 
+		this._error(e);
+	}
+}
+
 MM.UI.Backend._error = function(e) {
 	alert(e.message);
 }
+

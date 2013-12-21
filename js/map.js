@@ -116,3 +116,9 @@ MM.Map.prototype.ensureItemVisibility = function(item) {
 		this.moveBy(delta[0], delta[1]);
 	}
 }
+
+MM.Map.prototype.getName = function() {
+	var name = this._root.getText();
+	/* FIXME tags */
+	return name.replace(/\n/g, "");
+}
