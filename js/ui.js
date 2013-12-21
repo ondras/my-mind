@@ -63,5 +63,4 @@ MM.UI.prototype.getWidth = function() {
 MM.UI.prototype._update = function() {
 	this._layout.update();
 	this._shape.update();
-	this._color.update();
 }

@@ -52,7 +52,7 @@
 	width: 82px;
 }
 
-.ui select, .ui input {
+.ui select, .ui input, .ui #color {
 	width: 168px;
 }
 
@@ -71,6 +71,30 @@
 .ui span {
 	text-transform: uppercase;
 	font-size: 80%;
+}
+
+.ui #color {
+	display: block;
+}
+
+.ui #color::after {
+	clear: both;
+	content: "";
+	display: block;
+}
+
+.ui [data-color] {
+	display: block;
+	float: left;
+	width: 14px;
+	height: 14px;
+	border-radius: 3px;
+	margin-right: 2px;
+	border: 1px solid transparent;
+}
+
+.ui [data-color]:hover, .ui [data-color]:first-child {
+	border-color: #000;
 }
 
 .ui ~ #toggle {

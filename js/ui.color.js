@@ -1,19 +1,19 @@
 MM.UI.Color = function() {
-	this._select = document.querySelector("#color");
-	this._select.addEventListener("change", this);
+	this._node = document.querySelector("#color");
+	this._node.addEventListener("click", this);
 
-	var options = this._select.querySelectorAll("option");
-	for (var i=0;i<options.length;i++) {
-		var option = options[i];
-		option.style.backgroundColor = option.value;
+	var items = this._node.querySelectorAll("[data-color]");
+	
+	for (var i=0;i<items.length;i++) {
+		var item = items[i];
+		item.style.backgroundColor = item.getAttribute("data-color");
 	}
 }
 
-MM.UI.Color.prototype.update = function() {
-	this._select.value = MM.App.current.getOwnColor() || "";
-}
-
 MM.UI.Color.prototype.handleEvent = function(e) {
-	var action = new MM.Action.SetColor(MM.App.current, this._select.value);
+	if (!e.target.hasAttribute("data-color")) { return; }
+	
+	var color = e.target.getAttribute("data-color") || null;
+	var action = new MM.Action.SetColor(MM.App.current, color);
 	MM.App.action(action);
 }
