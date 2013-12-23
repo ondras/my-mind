@@ -1,10 +1,10 @@
 var MM = {
 	_subscribers: {},
 	
-	publish: function(message, publisher) {
+	publish: function(message, publisher, data) {
 		var subscribers = this._subscribers[message] || [];
 		subscribers.forEach(function(subscriber) {
-			subscriber.handleMessage(message, publisher);
+			subscriber.handleMessage(message, publisher, data);
 		});
 	},
 	

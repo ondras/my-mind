@@ -29,11 +29,11 @@ MM.Item.fromJSON = function(data, map) {
 	/* FIXME bez setteru, testovat pritomnost */
 	var item = new this(map);
 	item.setText(data.text);
-	item.setSide(data.side);
+	item.setSide(data.side || null);
 	item.setColor(data.color);
 	item.setLayout(MM.Layout.fromJSON(data.layout));
 	item.setShape(MM.Shape.fromJSON(data.shape));
-	data.children.forEach(function(child) {
+	(data.children || []).forEach(function(child) {
 		item.insertChild(MM.Item.fromJSON(child, map));
 	});
 	return item;

@@ -6,7 +6,7 @@ MM.UI.IO = function() {
 
 	this._backend = this._node.querySelector("#backend");
 	this._backends = {};
-	var ids = ["local", "file"];
+	var ids = ["local", "firebase", "file"];
 	ids.forEach(function(id) {
 		var ui = MM.UI.Backend.getById(id);
 		ui.init(this._backend);
@@ -15,6 +15,26 @@ MM.UI.IO = function() {
 
 	this._backend.value = localStorage.getItem(this._prefix + "backend") || MM.Backend.File.id;
 	this._backend.addEventListener("change", this);
+	
+	MM.subscribe("save-done", this);
+	MM.subscribe("load-done", this);
+}
+
+MM.UI.IO.prototype.getBackend = function() {
+	return this._backends[this._backend.value];
+}
+
+MM.UI.IO.prototype.handleMessage = function(message, publiser) {
+	switch (message) {
+		case "save-done":
+			this.hide();
+			MM.App.updateURL(this._backend);
+		break;
+		case "load-done":
+			this.hide();
+			MM.App.updateURL(this._backend);
+		break;
+	}
 }
 
 MM.UI.IO.prototype.show = function(mode) {
@@ -42,6 +62,6 @@ MM.UI.IO.prototype._syncBackend = function() {
 	var visible = this._node.querySelector("#" + this._backend.value);
 	visible.style.display = "";
 	
-	this._backends[this._backend.value].show(this._mode);
+	this.getBackend().show(this._mode);
 }
 

@@ -4,6 +4,7 @@ MM.App = {
 	editing: false,
 	history: [],
 	historyIndex: 0,
+	portSize: [0, 0],
 	map: null,
 	ui: null,
 	_port: null,
@@ -100,8 +101,14 @@ MM.App = {
 	},
 	
 	updateURL: function(backend) { /* FIXME nekam kde je backend znamy? */
-		var name = this.map.getName();
-		history.replaceState(null, "", "?n=" + encodeURIComponent(name) + "&b=" + backend.id);
+		var data = this.ui._io.getBackend().getState();
+		data.id = this.map.getId();
+		
+		var arr = [];
+		for (var p in data) {
+			arr.push(encodeURIComponent(p)+"="+encodeURIComponent(data[p]));
+		}
+		history.replaceState(null, "", "?" + arr.join("&"));
 	},
 
 	init: function() {
@@ -130,8 +137,9 @@ MM.App = {
 	},
 
 	_syncPort: function() {
-		this._port.style.width = (window.innerWidth - this.ui.getWidth()) + "px";
-		this._port.style.height = window.innerHeight + "px";
+		this.portSize = [window.innerWidth - this.ui.getWidth(), window.innerHeight];
+		this._port.style.width = this.portSize[0] + "px";
+		this._port.style.height = this.portSize[1] + "px";
 		if (this.map) { this.map.moveBy(0, 0); }
 	}
 }

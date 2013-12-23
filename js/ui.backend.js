@@ -16,10 +16,17 @@ MM.UI.Backend.init = function(select) {
 	select.appendChild(this._backend.buildOption());
 }
 
+MM.UI.Backend.getState = function() {
+	var data = {
+		b: this._backend.id
+	};
+	return data;
+}
+
 MM.UI.Backend.handleEvent = function(e) {
 	switch (e.target) {
 		case this._cancel:
-			MM.App.ui.hideIO();
+			MM.App.ui.hideIO(); /* FIXME posledni duvod pro existenci hideIO */
 		break;
 
 		case this._go:
@@ -46,16 +53,13 @@ MM.UI.Backend._action = function() {
 }
 
 MM.UI.Backend._saveDone = function() {
-	MM.App.updateURL(this._backend);
-	MM.App.ui.hideIO();
+	MM.publish("save-done", this);
 }
 
 MM.UI.Backend._loadDone = function(json) {
 	try {
-		var map = MM.Map.fromJSON(json);
-		MM.App.setMap(map);
-		MM.App.ui.hideIO();
-		MM.App.updateURL(this._backend);
+		MM.App.setMap(MM.Map.fromJSON(json));
+		MM.publish("load-done", this);
 	} catch (e) { 
 		this._error(e);
 	}

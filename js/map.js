@@ -7,6 +7,7 @@ MM.Map = function(options) {
 	this._root = null;
 	this._visible = false;
 	this._position = [0, 0];
+	this._id = btoa(Date.now() + "_" + Math.random());
 
 	var root = this.createItem().setText(o.root).setLayout(o.layout);
 	this.setRoot(root);
@@ -14,6 +15,7 @@ MM.Map = function(options) {
 
 MM.Map.fromJSON = function(data) {
 	var map = new this();
+	if (data.id) { map._id = data.id; } /* FIXME */
 	var root = MM.Item.fromJSON(data.root, map);
 	map.setRoot(root);
 	return map;
@@ -61,9 +63,9 @@ MM.Map.prototype.moveTo = function(x, y) {
 	this._position = [x, y];
 
 	var node = this._root.getDOM().node;
-	var parent = node.parentNode;
-	var left = (parent.offsetWidth - node.offsetWidth)/2 + x;
-	var top = (parent.offsetHeight - node.offsetHeight)/2 + y;
+	var port = MM.App.portSize;
+	var left = (port[0] - node.offsetWidth)/2 + x;
+	var top = (port[1] - node.offsetHeight)/2 + y;
 	node.style.left = Math.round(left) + "px";
 	node.style.top = Math.round(top) + "px";
 
@@ -119,6 +121,9 @@ MM.Map.prototype.ensureItemVisibility = function(item) {
 
 MM.Map.prototype.getName = function() {
 	var name = this._root.getText();
-	/* FIXME tags */
-	return name.replace(/\n/g, "");
+	return name.replace(/\n/g, "").replace(/<.*?>/g, "").trim();
+}
+
+MM.Map.prototype.getId = function() {
+	return this._id;
 }
