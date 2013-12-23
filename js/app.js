@@ -100,17 +100,6 @@ MM.App = {
 		} /* switch */
 	},
 	
-	updateURL: function(backend) { /* FIXME nekam kde je backend znamy? */
-		var data = this.ui._io.getBackend().getState();
-		data.id = this.map.getId();
-		
-		var arr = [];
-		for (var p in data) {
-			arr.push(encodeURIComponent(p)+"="+encodeURIComponent(data[p]));
-		}
-		history.replaceState(null, "", "?" + arr.join("&"));
-	},
-
 	init: function() {
 		this._port = document.querySelector("#port");
 		this.ui = new MM.UI();

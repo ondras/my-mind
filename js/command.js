@@ -127,7 +127,7 @@ MM.Command.Save = Object.create(MM.Command, {
 	keys: {value: [{charCode: "s".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Save.execute = function() {
-	MM.App.ui.showIO("save");
+	MM.App.ui._io.quickSave(); /* FIXME! */
 }
 
 MM.Command.SaveAs = Object.create(MM.Command, {

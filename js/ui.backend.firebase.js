@@ -61,22 +61,22 @@ MM.UI.Backend.Firebase._action = function() {
 		return;
 	}
 	
-	switch (this._mode) {
-		case "save":
-			var map = MM.App.map;
-			this._backend.save(map.toJSON(), map.getId(), map.getName()).then(
-				this._saveDone.bind(this),
-				this._error.bind(this)
-			);
-		break;
-		
-		case "load":
-			this._backend.load(this._list.value).then(
-				this._loadDone.bind(this),
-				this._error.bind(this)
-			);
-		break;
-	}
+	MM.UI.Backend._action.call(this);
+}
+
+MM.UI.Backend.Firebase.save = function() {
+	var map = MM.App.map;
+	this._backend.save(map.toJSON(), map.getId(), map.getName()).then(
+		this._saveDone.bind(this),
+		this._error.bind(this)
+	);
+}
+
+MM.UI.Backend.Firebase.load = function() {
+	this._backend.load(this._list.value).then(
+		this._loadDone.bind(this),
+		this._error.bind(this)
+	);
 }
 
 MM.UI.Backend.Firebase._connected = function() {

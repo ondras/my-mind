@@ -35,6 +35,12 @@ MM.UI.Backend.handleEvent = function(e) {
 	}
 }
 
+MM.UI.Backend.save = function() {
+}
+
+MM.UI.Backend.load = function() {
+}
+
 MM.UI.Backend.show = function(mode) {
 	this._mode = mode;
 
@@ -50,6 +56,15 @@ MM.UI.Backend.show = function(mode) {
 }
 
 MM.UI.Backend._action = function() {
+	switch (this._mode) {
+		case "save":
+			this.save();
+		break;
+		
+		case "load":
+			this.load();
+		break;
+	}
 }
 
 MM.UI.Backend._saveDone = function() {

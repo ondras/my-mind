@@ -56,7 +56,7 @@
 	width: 168px;
 }
 
-.ui button:first-child:not(:last-child) {
+.ui button:first-child {
 	margin-right: 4px;
 }
 

@@ -5,6 +5,7 @@ MM.UI.IO = function() {
 	this._heading = this._node.querySelector("h3");
 
 	this._backend = this._node.querySelector("#backend");
+	this._currentBackend = null;
 	this._backends = {};
 	var ids = ["local", "firebase", "file"];
 	ids.forEach(function(id) {
@@ -20,19 +21,14 @@ MM.UI.IO = function() {
 	MM.subscribe("load-done", this);
 }
 
-MM.UI.IO.prototype.getBackend = function() {
-	return this._backends[this._backend.value];
-}
-
-MM.UI.IO.prototype.handleMessage = function(message, publiser) {
+MM.UI.IO.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
 		case "save-done":
-			this.hide();
-			MM.App.updateURL(this._backend);
-		break;
 		case "load-done":
 			this.hide();
-			MM.App.updateURL(this._backend);
+			/* FIXME nulovat pri nove mindmape */
+			this._currentBackend = publisher;
+			this._updateURL();
 		break;
 	}
 }
@@ -50,6 +46,11 @@ MM.UI.IO.prototype.hide = function() {
 	document.activeElement.blur();
 }
 
+MM.UI.IO.prototype.quickSave = function() {
+	if (!this._currentBackend) { return; }
+	this._currentBackend.save();
+}
+
 MM.UI.IO.prototype.handleEvent = function(e) {
 	localStorage.setItem(this._prefix + "backend", this._backend.value);
 	this._syncBackend();
@@ -62,6 +63,17 @@ MM.UI.IO.prototype._syncBackend = function() {
 	var visible = this._node.querySelector("#" + this._backend.value);
 	visible.style.display = "";
 	
-	this.getBackend().show(this._mode);
+	this._backends[this._backend.value].show(this._mode);
 }
 
+MM.UI.IO.prototype._updateURL = function() {
+	/* FIXME ne u file */
+	var data = this._currentBackend.getState();
+	data.id = MM.App.map.getId();
+	
+	var arr = [];
+	for (var p in data) {
+		arr.push(encodeURIComponent(p)+"="+encodeURIComponent(data[p]));
+	}
+	history.replaceState(null, "", "?" + arr.join("&"));
+}
