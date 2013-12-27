@@ -14,7 +14,6 @@
 		<script src="js/action.js"></script>
 		<script src="js/command.js"></script>
 		<script src="js/command.select.js"></script>
-		<script src="js/command.help.js"></script>
 		<script src="js/layout.js"></script>
 		<script src="js/layout.graph.js"></script>
 		<script src="js/layout.tree.js"></script>
@@ -31,10 +30,12 @@
 		<script src="js/backend.local.js"></script>
 		<script src="js/backend.file.js"></script>
 		<script src="js/backend.firebase.js"></script>
+		<script src="js/notification.js"></script>
 		<script src="js/ui.js"></script>
 		<script src="js/ui.layout.js"></script>
 		<script src="js/ui.shape.js"></script>
 		<script src="js/ui.color.js"></script>
+		<script src="js/ui.help.js"></script>
 		<script src="js/ui.io.js"></script>
 		<script src="js/ui.backend.js"></script>
 		<script src="js/ui.backend.file.js"></script>
@@ -131,7 +132,10 @@
 					<button class="go"></button><button class="cancel">Cancel</button>
 				</p>
 			</div>
+		</div>
 
+		<div id="help" class="ui">
+			<h3>Help</h3>
 		</div>
 
 		<script>
@@ -172,10 +176,8 @@ TODO:
   shortterm:
     - icon font
     - commandy na pan
-    - autosave
     - autoload
     - refactor help
-    - esc v ui.io
     - notification
 
   longterm:

@@ -17,16 +17,20 @@ MM.UI.IO = function() {
 	this._backend.value = localStorage.getItem(this._prefix + "backend") || MM.Backend.File.id;
 	this._backend.addEventListener("change", this);
 	
+	MM.subscribe("map-change", this);
 	MM.subscribe("save-done", this);
 	MM.subscribe("load-done", this);
 }
 
 MM.UI.IO.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
+		case "map-change":
+			this._currentBackend = null;
+		break;
+		
 		case "save-done":
 		case "load-done":
 			this.hide();
-			/* FIXME nulovat pri nove mindmape */
 			this._currentBackend = publisher;
 			this._updateURL();
 		break;
@@ -39,29 +43,41 @@ MM.UI.IO.prototype.show = function(mode) {
 	this._heading.innerHTML = mode;
 	
 	this._syncBackend();
+	window.addEventListener("keydown", this);
 }
 
 MM.UI.IO.prototype.hide = function() {
 	this._node.classList.remove("visible");
 	document.activeElement.blur();
+	window.removeEventListener("keydown", this);
 }
 
 MM.UI.IO.prototype.quickSave = function() {
-	if (!this._currentBackend) { return; }
-	this._currentBackend.save();
+	if (this._currentBackend) { 
+		this._currentBackend.save();
+	} else {
+		this.show("save");
+	}
 }
 
 MM.UI.IO.prototype.handleEvent = function(e) {
-	localStorage.setItem(this._prefix + "backend", this._backend.value);
-	this._syncBackend();
+	switch (e.type) {
+		case "keydown":
+			if (e.keyCode == 27) { this.hide(); }
+		break;
+		
+		case "change":
+			localStorage.setItem(this._prefix + "backend", this._backend.value);
+			this._syncBackend();
+		break;
+	}
 }
 
 MM.UI.IO.prototype._syncBackend = function() {
 	var all = this._node.querySelectorAll("div[id]");
 	[].concat.apply([], all).forEach(function(node) { node.style.display = "none"; });
 	
-	var visible = this._node.querySelector("#" + this._backend.value);
-	visible.style.display = "";
+	this._node.querySelector("#" + this._backend.value).style.display = "";
 	
 	this._backends[this._backend.value].show(this._mode);
 }

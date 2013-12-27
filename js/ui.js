@@ -8,7 +8,6 @@ MM.UI = function() {
 	this._layout = new MM.UI.Layout();
 	this._shape = new MM.UI.Shape();
 	this._color = new MM.UI.Color();
-	this._io = new MM.UI.IO();
 	
 	MM.subscribe("item-update", this);
 	MM.subscribe("item-select", this);
@@ -48,13 +47,6 @@ MM.UI.prototype._toggleVisibility = function() {
 	MM.publish("ui-change", this);
 }
 
-MM.UI.prototype.showIO = function(mode) {
-	this._io.show(mode);
-}
-
-MM.UI.prototype.hideIO = function() {
-	this._io.hide();
-}
 
 MM.UI.prototype.getWidth = function() {
 	return (this._node.classList.contains("visible") ? this._node.offsetWidth : 0);

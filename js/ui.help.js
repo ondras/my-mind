@@ -1,13 +1,5 @@
-MM.Command.Help = Object.create(MM.Command, {
-	label: {value: "Show/hide help"},
-	keys: {value: [{charCode: "?".charCodeAt(0)}]}
-});
-
-MM.Command.Help.init = function() {
-	this._node = document.createElement("div"),
-	this._node.id = "help";
-	document.body.appendChild(this._node);
-	
+MM.UI.Help = function() {
+	this._node = document.querySelector("#help");
 	this._map = {
 		13: "Enter",
 		32: "Spacebar",
@@ -29,26 +21,27 @@ MM.Command.Help.init = function() {
 		120: "F9",
 		121: "F10"
 	};
+	
+	this._build();
 }
 
-MM.Command.Help.execute = function() {
-	if (!this._node.firstChild) { this._build(); }
+MM.UI.Help.prototype.toggle = function() {
 	this._node.classList.toggle("visible");
 }
 
-MM.Command.Help._build = function() {
+MM.UI.Help.prototype._build = function() {
 	var table = document.createElement("table");
-
-	MM.Command.ALL.forEach(function(name) {
-		var c = MM.Command[name];
-		if (!c.label) { return; }
+	
+	for (var p in MM.Command) {
+		var c = MM.Command[p];
+		if (!c.label) { continue; }
 		this._buildRow(c, table);
-	}, this);
+	}
 
 	this._node.appendChild(table);
 }
 
-MM.Command.Help._buildRow = function(command, table) {
+MM.UI.Help.prototype._buildRow = function(command, table) {
 	var row = table.insertRow(-1);
 
 	var keys = command.keys.map(this._formatKey, this);
@@ -56,7 +49,7 @@ MM.Command.Help._buildRow = function(command, table) {
 	row.insertCell().innerHTML = keys.join("/");
 }
 
-MM.Command.Help._formatKey = function(key) {
+MM.UI.Help.prototype._formatKey = function(key) {
 	var str = "";
 	if (key.ctrlKey) { str += "Ctrl+"; }
 	if (key.altKey) { str += "Alt+"; }

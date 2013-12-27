@@ -1,5 +1,4 @@
 MM.Command = {
-	ALL: [],
 	keys: [],
 	editMode: false,
 	label: ""
@@ -8,7 +7,6 @@ MM.Command.isValid = function() {
 	return (this.editMode == MM.App.editing);
 }
 MM.Command.execute = function() {}
-MM.Command.init = function() {}
 
 MM.Command.Undo = Object.create(MM.Command, {
 	label: {value: "Undo last action"},
@@ -127,7 +125,7 @@ MM.Command.Save = Object.create(MM.Command, {
 	keys: {value: [{charCode: "s".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Save.execute = function() {
-	MM.App.ui._io.quickSave(); /* FIXME! */
+	MM.App.io.quickSave();
 }
 
 MM.Command.SaveAs = Object.create(MM.Command, {
@@ -135,7 +133,7 @@ MM.Command.SaveAs = Object.create(MM.Command, {
 	keys: {value: [{charCode: "S".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.SaveAs.execute = function() {
-	MM.App.ui.showIO("save");
+	MM.App.io.show("save");
 }
 
 MM.Command.Load = Object.create(MM.Command, {
@@ -143,7 +141,7 @@ MM.Command.Load = Object.create(MM.Command, {
 	keys: {value: [{charCode: "o".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Load.execute = function() {
-	MM.App.ui.showIO("load");
+	MM.App.io.show("load");
 }
 
 MM.Command.Center = Object.create(MM.Command, {
@@ -177,4 +175,12 @@ MM.Command.ZoomOut = Object.create(MM.Command, {
 });
 MM.Command.ZoomOut.execute = function() {
 	MM.App.adjustFontSize(-1);
+}
+
+MM.Command.Help = Object.create(MM.Command, {
+	label: {value: "Show/hide help"},
+	keys: {value: [{charCode: "?".charCodeAt(0)}]}
+});
+MM.Command.Help.execute = function() {
+	MM.App.help.toggle();
 }

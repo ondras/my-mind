@@ -9,20 +9,19 @@ MM.Keyboard.prototype.handleEvent = function(e) {
 		if (node.classList.contains("ui")) { return; }
 		node = node.parentNode;
 	}
-
-	MM.Command.ALL.some(function(name) {
-		var command = MM.Command[name];
-		if (!command.isValid()) { return; }
+	
+	for (var p in MM.Command) {
+		var command = MM.Command[p];
+		if (!command.isValid || !command.isValid()) { continue; }
 		var keys = command.keys;
 		for (var i=0;i<keys.length;i++) {
 			if (this._keyOK(keys[i], e)) {
 				e.preventDefault();
 				command.execute(e);
-				return true;
+				return;
 			}
 		}
-		return false;
-	}, this);
+	}
 }
 
 MM.Keyboard.prototype._keyOK = function(key, e) {

@@ -7,6 +7,9 @@ MM.App = {
 	portSize: [0, 0],
 	map: null,
 	ui: null,
+	io: null,
+	help: null,
+	_notification: null,
 	_port: null,
 	_mouse: [0, 0],
 	_fontSize: 100,
@@ -100,27 +103,24 @@ MM.App = {
 		} /* switch */
 	},
 	
+	notify: function(text) {
+		if (this._notification) {
+			this._notification.hide();
+		}
+		this._notification = new MM.Notification().setText(text).show();
+	},
+	
 	init: function() {
 		this._port = document.querySelector("#port");
 		this.ui = new MM.UI();
+		this.io = new MM.UI.IO();
+		this.help = new MM.UI.Help();
 		this.keyboard = new MM.Keyboard();
 
-		MM.Command.ALL = [
-			"Select", "SelectRoot",
-			"InsertChild", "InsertSibling", "Delete",
-			"Undo", "Redo",
-			"Edit", "Newline", "Cancel", "Finish",
-			"Help", "Center", "ZoomIn", "ZoomOut",
-			"New", "Save", "Load", "SaveAs"
-		];
-		MM.Command.ALL.forEach(function(name) {
-			MM.Command[name].init();
-		});
-
-		MM.subscribe("ui-change", this);
 		this._port.addEventListener("mousedown", this);
 		this._port.addEventListener("click", this);
 		window.addEventListener("resize", this);
+		MM.subscribe("ui-change", this);
 
 		this._syncPort();
 	},
