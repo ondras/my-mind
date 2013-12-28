@@ -56,6 +56,7 @@ MM.Command.Finish.execute = function() {
 }
 
 MM.Command.Newline = Object.create(MM.Command, {
+	label: {value: "Line break"},
 	keys: {value: [
 		{keyCode: 13, altKey:true},
 		{keyCode: 13, ctrlKey:true}

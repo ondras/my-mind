@@ -30,6 +30,7 @@
 		<script src="js/backend.local.js"></script>
 		<script src="js/backend.file.js"></script>
 		<script src="js/backend.firebase.js"></script>
+		<script src="js/backend.gdrive.js"></script>
 		<script src="js/notification.js"></script>
 		<script src="js/ui.js"></script>
 		<script src="js/ui.layout.js"></script>
@@ -41,6 +42,7 @@
 		<script src="js/ui.backend.file.js"></script>
 		<script src="js/ui.backend.local.js"></script>
 		<script src="js/ui.backend.firebase.js"></script>
+		<script src="js/ui.backend.gdrive.js"></script>
 		<script src="js/app.js"></script>
 		<script src="https://cdn.firebase.com/v0/firebase.js"></script>
 		<link rel="stylesheet" href="css/style.css" />
@@ -132,10 +134,28 @@
 					<button class="go"></button><button class="cancel">Cancel</button>
 				</p>
 			</div>
+
+			<div id="gdrive">
+				<p data-for="save load">
+					<button class="go"></button><button class="cancel">Cancel</button>
+				</p>
+			</div>
 		</div>
 
 		<div id="help" class="ui">
 			<h3>Help</h3>
+
+			<p><span>Navigation</span></p>
+			<table class="navigation"></table>
+
+			<p><span>Manipulation</span></p>
+			<table class="manipulation"></table>
+
+			<p><span>Editing</span></p>
+			<table class="editing"></table>
+
+			<p><span>Other</span></p>
+			<table class="other"></table>
 		</div>
 
 		<script>
@@ -177,14 +197,13 @@ TODO:
     - icon font
     - commandy na pan
     - autoload
-    - refactor help
     - notification
+    - google drive backend
 
   longterm:
-    - razeni v localStorage/firebase listingu
+    - razeni v localStorage/firebase/google drive listingu
     - clipboard support
     - mup format
-    - google drive backend
     - circular layout
     - wysiwyg
     - firebase realtime
@@ -196,6 +215,7 @@ TODO:
 
   bugs:
     - commandy bez map hniji
+    - isprototypeof
     
   jen jako request:
 	- firebase multiserver
