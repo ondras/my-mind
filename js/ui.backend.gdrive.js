@@ -2,22 +2,14 @@ MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
 	id: {value: "gdrive"}
 });
 
-MM.UI.Backend.GDrive.init = function(select) {
-	MM.UI.Backend.init.call(this, select);
-	
-//	this._list = this._node.querySelector(".list");
-}
-
 MM.UI.Backend.GDrive.save = function() {
 	var json = MM.App.map.toJSON();
 	var data = MM.Format.JSON.to(json);
-
-	try {
-		this._backend.save(data, MM.App.map.getName());
-		this._saveDone();
-	} catch (e) {
-		this._error(e);
-	}
+	
+	this._backend.save(data, MM.App.map.getName()).then(
+		this._saveDone.bind(this),
+		this._error.bind(this)
+	);
 }
 
 MM.UI.Backend.GDrive.load = function() {

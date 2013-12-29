@@ -13,6 +13,10 @@ MM.UI.Backend.File.init = function(select) {
 	this._format.addEventListener("change", this);
 }
 
+MM.UI.Backend.File.getState = function() {
+	return null;
+}
+
 MM.UI.Backend.File.show = function(mode) {
 	MM.UI.Backend.show.call(this, mode);
 	

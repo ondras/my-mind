@@ -68,6 +68,7 @@ MM.UI.Backend._action = function() {
 }
 
 MM.UI.Backend._saveDone = function() {
+	MM.App.notify("Successfully saved.");
 	MM.publish("save-done", this);
 }
 

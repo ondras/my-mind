@@ -83,13 +83,14 @@ MM.UI.IO.prototype._syncBackend = function() {
 }
 
 MM.UI.IO.prototype._updateURL = function() {
-	/* FIXME ne u file */
 	var data = this._currentBackend.getState();
-	data.id = MM.App.map.getId();
-	
-	var arr = [];
-	for (var p in data) {
-		arr.push(encodeURIComponent(p)+"="+encodeURIComponent(data[p]));
+	if (!data) {
+		history.replaceState(null, "", ".");
+	} else {
+		data.id = MM.App.map.getId();
+		var arr = Object.keys(data).map(function(key) {
+			return encodeURIComponent(key)+"="+encodeURIComponent(data[key]);
+		});
+		history.replaceState(null, "", "?" + arr.join("&"));
 	}
-	history.replaceState(null, "", "?" + arr.join("&"));
 }
