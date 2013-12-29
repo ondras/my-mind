@@ -56,7 +56,7 @@ MM.Backend.GDrive._sendMetadata = function(name) {
 	var promise = new Promise();
 
 	var data = {
-		title: name + ".mymind"
+		title: name
 	}
 
 	var request = gapi.client.request({
