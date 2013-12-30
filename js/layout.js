@@ -4,10 +4,8 @@ MM.Layout = Object.create(MM.Repo, {
 	SPACING_CHILD: {value: 4},
 });
 
-MM.Layout.getByProperty = function(property, value) {
-	return this.ALL.filter(function(item) {
-		return (item[property] == value);
-	})[0] || null;
+MM.Layout.getAll = function() {
+	return this.ALL;
 }
 
 MM.Layout.fromJSON = function(data) {

@@ -4,12 +4,18 @@
 MM.Repo = {
 	id: "", /* internal ID */
 	label: "", /* human-readable label */
-	getByProperty: function(property, value) {
+	getAll: function() {
+		var all = [];
 		for (var p in this) {
 			var val = this[p];
-			if (val && property in val && val[property] == value) { return val; }
+			if (this.isPrototypeOf(val)) { all.push(val); }
 		}
-		return null;
+		return all;
+	},
+	getByProperty: function(property, value) {
+		return this.getAll().filter(function(item) {
+			return item[property] == value;
+		})[0] || null;
 	},
 	getById: function(id) {
 		return this.getByProperty("id", id);

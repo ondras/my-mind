@@ -18,3 +18,11 @@ MM.UI.Backend.GDrive.load = function() {
 		this._error.bind(this)
 	);
 }
+
+MM.UI.Backend.GDrive.getState = function() {
+	var data = {
+		b: this._backend.id,
+		id: this._backend.fileId
+	};
+	return data;
+}

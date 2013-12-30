@@ -1,8 +1,9 @@
-MM.Command = {
-	keys: [],
-	editMode: false,
-	label: ""
-}
+MM.Command = Object.create(MM.Repo, {
+	keys: {value: []},
+	editMode: {value: false},
+	label: {value: ""}
+});
+
 MM.Command.isValid = function() {
 	return (this.editMode == MM.App.editing);
 }

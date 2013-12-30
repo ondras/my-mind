@@ -93,7 +93,6 @@ MM.UI.IO.prototype._updateURL = function() {
 	if (!data) {
 		history.replaceState(null, "", ".");
 	} else {
-		data.id = MM.App.map.getId();
 		var arr = Object.keys(data).map(function(key) {
 			return encodeURIComponent(key)+"="+encodeURIComponent(data[key]);
 		});

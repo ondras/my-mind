@@ -2,7 +2,7 @@ MM.Backend.GDrive = Object.create(MM.Backend, {
 	id: {value: "gdrive"},
 	label: {value: "Google Drive"},
 	CID: {value: "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com"},
-	scope: {value: "https://www.googleapis.com/auth/drive"},
+	scope: {value: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.install"},
 	fileId: {value: null, writable: true}
 });
 

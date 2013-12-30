@@ -16,9 +16,14 @@ MM.UI.Backend.init = function(select) {
 	select.appendChild(this._backend.buildOption());
 }
 
+MM.UI.Backend.reset = function() {
+	this._backend.reset();
+}
+
 MM.UI.Backend.getState = function() {
 	var data = {
-		b: this._backend.id
+		b: this._backend.id,
+		id: MM.App.map.getId()
 	};
 	return data;
 }

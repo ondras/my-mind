@@ -10,12 +10,13 @@ MM.Keyboard.prototype.handleEvent = function(e) {
 		node = node.parentNode;
 	}
 	
-	for (var p in MM.Command) {
-		var command = MM.Command[p];
-		if (!command.isValid || !command.isValid()) { continue; }
+	var commands = MM.Command.getAll();
+	for (var i=0;i<commands.length;i++) {
+		var command = commands[i];
+		if (!command.isValid()) { continue; }
 		var keys = command.keys;
-		for (var i=0;i<keys.length;i++) {
-			if (this._keyOK(keys[i], e)) {
+		for (var j=0;j<keys.length;j++) {
+			if (this._keyOK(keys[j], e)) {
 				e.preventDefault();
 				command.execute(e);
 				return;
