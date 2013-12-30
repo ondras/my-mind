@@ -7,7 +7,6 @@ MM.Backend.GDrive = Object.create(MM.Backend, {
 });
 
 MM.Backend.GDrive.reset = function() {
-	/* FIXME zavolat taky nekdy */
 	this.fileId = null;
 }
 
@@ -132,7 +131,6 @@ MM.Backend.GDrive._load = function() {
 
 MM.Backend.GDrive._auth = function(forceUI) {
 	var promise = new Promise();
-	var error = new Error("Failed to authorize with Google");
 
 	gapi.auth.authorize({
 		"client_id": this.CID,
@@ -148,7 +146,7 @@ MM.Backend.GDrive._auth = function(forceUI) {
 				promise.reject.bind(promise)
 			);
 		} else { /* bad luck */
-			promise.reject(error);
+			promise.reject(new Error("Failed to authorize with Google"));
 		}
 
 	}.bind(this));

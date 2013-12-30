@@ -160,6 +160,7 @@ MM.Command.New.execute = function() {
 	if (!confirm("Throw away your current map and start a new one?")) { return; }
 	var map = new MM.Map();
 	MM.App.setMap(map);
+	MM.publish("map-new", this);
 }
 
 MM.Command.ZoomIn = Object.create(MM.Command, {

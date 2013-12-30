@@ -37,7 +37,6 @@ MM.App = {
 		if (this.map) {
 			this.map.show(this._port);
 			this.select(map.getRoot());
-			MM.publish("map-change", map);
 		}
 	},
 	

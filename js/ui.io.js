@@ -17,22 +17,21 @@ MM.UI.IO = function() {
 	this._backend.value = localStorage.getItem(this._prefix + "backend") || MM.Backend.File.id;
 	this._backend.addEventListener("change", this);
 	
-	MM.subscribe("map-change", this);
+	MM.subscribe("map-new", this);
 	MM.subscribe("save-done", this);
 	MM.subscribe("load-done", this);
 }
 
 MM.UI.IO.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
-		case "map-change":
-			this._currentBackend = null;
+		case "map-new":
+			this._setCurrentBackend(null);
 		break;
 		
 		case "save-done":
 		case "load-done":
 			this.hide();
-			this._currentBackend = publisher;
-			this._updateURL();
+			this._setCurrentBackend(publisher);
 		break;
 	}
 }
@@ -67,7 +66,6 @@ MM.UI.IO.prototype.handleEvent = function(e) {
 		break;
 		
 		case "change":
-			localStorage.setItem(this._prefix + "backend", this._backend.value);
 			this._syncBackend();
 		break;
 	}
@@ -82,8 +80,16 @@ MM.UI.IO.prototype._syncBackend = function() {
 	this._backends[this._backend.value].show(this._mode);
 }
 
+MM.UI.IO.prototype._setCurrentBackend = function(backend) {
+	if (this._currentBackend) { this._currentBackend.reset(); }
+	
+	if (backend) { localStorage.setItem(this._prefix + "backend", backend.id); }
+	this._currentBackend = backend;
+	this._updateURL();
+}
+
 MM.UI.IO.prototype._updateURL = function() {
-	var data = this._currentBackend.getState();
+	var data = this._currentBackend && this._currentBackend.getState();
 	if (!data) {
 		history.replaceState(null, "", ".");
 	} else {
