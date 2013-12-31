@@ -131,8 +131,8 @@ MM.Command.Save.execute = function() {
 }
 
 MM.Command.SaveAs = Object.create(MM.Command, {
-	label: {value: "Save map as&hellip;"},
-	keys: {value: [{charCode: "S".charCodeAt(0), ctrlKey:true}]}
+	label: {value: "Save as&hellip;"},
+	keys: {value: [{charCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}]}
 });
 MM.Command.SaveAs.execute = function() {
 	MM.App.io.show("save");

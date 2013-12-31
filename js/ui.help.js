@@ -10,6 +10,10 @@ MM.UI.Help = function() {
 		40: "↓",
 		45: "Insert",
 		46: "Delete",
+		65: "A",
+		68: "D",
+		83: "S",
+		87: "W",
 		112: "F1",
 		113: "F2",
 		114: "F3",
@@ -23,6 +27,8 @@ MM.UI.Help = function() {
 		"-": "&minus;"
 	};
 	
+	/* FIXME Pan codes */
+	
 	this._build();
 }
 
@@ -32,6 +38,7 @@ MM.UI.Help.prototype.toggle = function() {
 
 MM.UI.Help.prototype._build = function() {
 	var t = this._node.querySelector(".navigation");
+	this._buildRow(t, "Pan");
 	this._buildRow(t, "Select");
 	this._buildRow(t, "SelectRoot");
 	this._buildRow(t, "Center");
@@ -69,9 +76,10 @@ MM.UI.Help.prototype._formatKey = function(key) {
 	var str = "";
 	if (key.ctrlKey) { str += "Ctrl+"; }
 	if (key.altKey) { str += "Alt+"; }
+	if (key.shiftKey) { str += "Shift+"; }
 	if (key.charCode) { 
-		var ch = String.fromCharCode(key.charCode).toUpperCase();
-		str += this._map[ch] || ch; 
+		var ch = String.fromCharCode(key.charCode);
+		str += this._map[ch] || ch.toUpperCase(); 
 	}
 	if (key.keyCode) { str += this._map[key.keyCode] || key.keyCode; }
 	return str;
