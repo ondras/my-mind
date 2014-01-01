@@ -38,6 +38,8 @@ MM.UI.Backend.Local._buildList = function(list) {
 }
 
 MM.UI.Backend.Local.save = function() {
+	MM.UI.Backend.save.call(this);
+	
 	var json = MM.App.map.toJSON();
 	var data = MM.Format.JSON.to(json);
 
@@ -50,6 +52,8 @@ MM.UI.Backend.Local.save = function() {
 }
 
 MM.UI.Backend.Local.load = function() {
+	MM.UI.Backend.load.call(this);
+
 	try {
 		var data = this._backend.load(this._list.value);
 		var json = MM.Format.JSON.from(data);

@@ -9,7 +9,6 @@ MM.App = {
 	ui: null,
 	io: null,
 	help: null,
-	_notification: null,
 	_port: null,
 	_mouse: [0, 0],
 	_fontSize: 100,
@@ -54,7 +53,7 @@ MM.App = {
 		this._fontSize = Math.max(30, this._fontSize + 10*diff);
 		this._port.style.fontSize = this._fontSize + "%";
 		this.map.getRoot().updateSubtree();
-		this.map.moveBy(0, 0);
+		this.map.ensureItemVisibility(this.current);
 	},
 	
 	handleMessage: function(message, publisher) {
@@ -102,13 +101,6 @@ MM.App = {
 		} /* switch */
 	},
 	
-	notify: function(text) {
-		if (this._notification) {
-			this._notification.hide();
-		}
-		this._notification = new MM.Notification().setText(text).show();
-	},
-	
 	init: function() {
 		this._port = document.querySelector("#port");
 		this.ui = new MM.UI();
@@ -128,6 +120,6 @@ MM.App = {
 		this.portSize = [window.innerWidth - this.ui.getWidth(), window.innerHeight];
 		this._port.style.width = this.portSize[0] + "px";
 		this._port.style.height = this.portSize[1] + "px";
-		if (this.map) { this.map.moveBy(0, 0); }
+		if (this.map) { this.map.ensureItemVisibility(this.current); }
 	}
 }

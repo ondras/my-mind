@@ -50,7 +50,7 @@ MM.Map.prototype.show = function(where) {
 	where.appendChild(node);
 	this._visible = true;
 	this._root.updateSubtree();
-	this.moveTo(0, 0);
+	this.center();
 }
 
 MM.Map.prototype.hide = function() {
@@ -59,21 +59,27 @@ MM.Map.prototype.hide = function() {
 	this._visible = false;
 }
 
-MM.Map.prototype.moveTo = function(x, y) {
-	this._position = [x, y];
-
+MM.Map.prototype.center = function() {
 	var node = this._root.getDOM().node;
 	var port = MM.App.portSize;
-	var left = (port[0] - node.offsetWidth)/2 + x;
-	var top = (port[1] - node.offsetHeight)/2 + y;
-	node.style.left = Math.round(left) + "px";
-	node.style.top = Math.round(top) + "px";
+	var left = (port[0] - node.offsetWidth)/2;
+	var top = (port[1] - node.offsetHeight)/2;
+	
+	this._moveTo(Math.round(left), Math.round(top));
 
 	return this;
 }
 
 MM.Map.prototype.moveBy = function(dx, dy) {
-	return this.moveTo(this._position[0]+dx, this._position[1]+dy);
+	return this._moveTo(this._position[0]+dx, this._position[1]+dy);
+}
+
+MM.Map.prototype._moveTo = function(left, top) {
+	this._position = [left, top];
+
+	var node = this._root.getDOM().node;
+	node.style.left = left + "px";
+	node.style.top = top + "px";
 }
 
 MM.Map.prototype.getItemFor = function(node) {

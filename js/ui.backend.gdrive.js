@@ -3,6 +3,8 @@ MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
 });
 
 MM.UI.Backend.GDrive.save = function() {
+	MM.UI.Backend.save.call(this);
+
 	var data = MM.Format.JSON.to(MM.App.map.toJSON());
 	var name = MM.App.map.getName() + "." + MM.Format.JSON.extension;
 	
@@ -13,6 +15,8 @@ MM.UI.Backend.GDrive.save = function() {
 }
 
 MM.UI.Backend.GDrive.load = function() {
+	MM.UI.Backend.load.call(this);
+
 	this._backend.load().then(
 		this.loadDone.bind(this),
 		this._error.bind(this)

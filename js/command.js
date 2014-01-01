@@ -150,7 +150,7 @@ MM.Command.Center = Object.create(MM.Command, {
 	label: {value: "Center map"}
 });
 MM.Command.Center.execute = function() {
-	MM.App.map.moveTo(0, 0);
+	MM.App.map.center();
 }
 
 MM.Command.New = Object.create(MM.Command, {

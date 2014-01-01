@@ -65,6 +65,8 @@ MM.UI.Backend.Firebase._action = function() {
 }
 
 MM.UI.Backend.Firebase.save = function() {
+	MM.UI.Backend.save.call(this);
+
 	var map = MM.App.map;
 	this._backend.save(map.toJSON(), map.getId(), map.getName()).then(
 		this._saveDone.bind(this),
@@ -73,6 +75,8 @@ MM.UI.Backend.Firebase.save = function() {
 }
 
 MM.UI.Backend.Firebase.load = function() {
+	MM.UI.Backend.load.call(this);
+
 	this._backend.load(this._list.value).then(
 		this._loadDone.bind(this),
 		this._error.bind(this)
