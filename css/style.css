@@ -33,23 +33,3 @@ canvas {
 	left: 0;
 	top: 0;
 }
-
-.notification {
-	width: 300px;
-	line-height: 30px;
-	border: 2px solid #000;
-	border-top: none;
-	border-radius: 0 0 5px 5px;
-	background-color: rgba(220, 180, 80, 0.7);
-	text-align: center;
-	position: fixed;
-	left: 50%;
-	top: 0;
-	-webkit-transform: translate(-50%, 0);
-	transform: translate(-50%, 0);
-	transition: all 500ms;
-}
-
-.notification:not(.visible) {
-	opacity: 0;
-}

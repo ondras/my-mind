@@ -142,3 +142,16 @@
 .ui#help table {
 	font-size: 80%;
 }
+
+.ui #throbber {
+	width: 50px;
+	height: 50px;
+	background-image: url(throbber.gif);
+	position: absolute;
+	right: 220px;
+	top: 20px;
+}
+
+.ui #throbber:not(.visible) {
+	opacity: 0;
+}

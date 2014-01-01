@@ -9,10 +9,16 @@ MM.UI = function() {
 	this._shape = new MM.UI.Shape();
 	this._color = new MM.UI.Color();
 	
+	this._throbber = this._node.querySelector("#throbber");
+	
 	MM.subscribe("item-update", this);
 	MM.subscribe("item-select", this);
 
 	this._toggleVisibility();
+}
+
+MM.UI.prototype.setThrobber = function(visible) {
+	this._throbber.classList[visible ? "add" : "remove"]("visible");
 }
 
 MM.UI.prototype.handleMessage = function(message, publisher) {
