@@ -59,55 +59,16 @@ MM.Layout.Circle.pickSibling = function(item, dir) {
 }
 
 MM.Layout.Circle._layoutRoot = function(item) {
-	var sides = this._splitRootChildren(item.getChildren());
-	
-	this._layoutChildren(item, right, 0, Math.PI);
-	this._layoutChildren(item, left, Math.PI, 2*Math.PI);
-	
-	console.log(left);
-	console.log(right);
-	
-	return;
-	
 	var dom = item.getDOM();
-
-	var childrenLeft = [];
-	var childrenRight = [];
-
-	children.forEach(function(child, index) {
-		var node = child.getDOM().node;
-		var side = this.getChildDirection(child);
-		
-		if (side == "left") {
-			childrenLeft.push(child);
-		} else {
-			childrenRight.push(child);
-		}
-	}, this);
-
-	var bboxLeft = this._computeChildrenBBox(childrenLeft, 1);
-	var bboxRight = this._computeChildrenBBox(childrenRight, 1);
-	var height = Math.max(bboxLeft[1], bboxRight[1], dom.content.offsetHeight);
-
-	var left = 0;
-	this._layoutChildren(childrenLeft, "left", [left, Math.round((height-bboxLeft[1])/2)], bboxLeft);
-	left += bboxLeft[0];
-
-	if (childrenLeft.length) { left += this.SPACING_RANK; }
-	dom.content.style.left = left + "px";
-	left += dom.content.offsetWidth;
-
-	if (childrenRight.length) { left += this.SPACING_RANK; }
-	this._layoutChildren(childrenRight, "right", [left, Math.round((height-bboxRight[1])/2)], bboxRight);
-	left += bboxRight[0];
-
-	dom.content.style.top = Math.round((height - dom.content.offsetHeight)/2) + "px";
-	dom.node.style.height = height + "px";
-	dom.node.style.width = left + "px";
-
-	this._anchorCanvas(item);
-	this._drawHorizontalConnectors(item, "left", childrenLeft);
-	this._drawHorizontalConnectors(item, "right", childrenRight);
+	var sides = this._splitRootChildren(item.getChildren());
+	var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
+	var totalSize = [0, 0];
+	
+	var bboxLeft = this._computeBBox(sides[0]);
+	var bboxRight = this._computeBBox(sides[1]);
+	totalSize[1] = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
+	
+	this._positionTop(sides[0]
 }
 
 MM.Layout.Circle._splitRootChildren = function(children) {
@@ -129,5 +90,13 @@ MM.Layout.Circle._splitRootChildren = function(children) {
 		half -= childrenHeights.shift();
 	}
 	
-	return 
+	return [left.reverse(), right];
+}
+
+/**
+ * @param {number} angle 0..Math.PI
+ * @returns {number}
+ */
+MM.Layout.Circle._angleToOffset = function(angle) {
+	return 100*Math.sin(angle); /* FIXME */
 }
