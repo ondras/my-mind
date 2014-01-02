@@ -75,14 +75,6 @@ MM.Map.prototype.moveBy = function(dx, dy) {
 	return this._moveTo(this._position[0]+dx, this._position[1]+dy);
 }
 
-MM.Map.prototype._moveTo = function(left, top) {
-	this._position = [left, top];
-
-	var node = this._root.getDOM().node;
-	node.style.left = left + "px";
-	node.style.top = top + "px";
-}
-
 MM.Map.prototype.getItemFor = function(node) {
 	var port = this._root.getDOM().node.parentNode;
 	while (node != port && !node.classList.contains("text")) {
@@ -134,3 +126,12 @@ MM.Map.prototype.getName = function() {
 MM.Map.prototype.getId = function() {
 	return this._id;
 }
+
+MM.Map.prototype._moveTo = function(left, top) {
+	this._position = [left, top];
+
+	var node = this._root.getDOM().node;
+	node.style.left = left + "px";
+	node.style.top = top + "px";
+}
+

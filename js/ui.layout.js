@@ -1,6 +1,7 @@
 MM.UI.Layout = function() {
 	this._select = document.querySelector("#layout");
 
+	this._select.appendChild(MM.Layout.Circle.buildOption());
 	this._select.appendChild(MM.Layout.FreeMind.buildOption());
 
 	var label = this._buildGroup("Graph");
