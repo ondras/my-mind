@@ -30,7 +30,6 @@ MM.UI.Backend.File._action = function() {
 }
 
 MM.UI.Backend.File.save = function() {
-	MM.UI.Backend.save.call(this);
 	var format = MM.Format.getById(this._format.value);
 	var json = MM.App.map.toJSON();
 	var data = format.to(json);
@@ -43,8 +42,6 @@ MM.UI.Backend.File.save = function() {
 }
 
 MM.UI.Backend.File.load = function() {
-	MM.UI.Backend.load.call(this);
-
 	this._backend.load().then(
 		this._loadDone.bind(this),
 		this._error.bind(this)

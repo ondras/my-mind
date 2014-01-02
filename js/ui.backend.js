@@ -41,11 +41,9 @@ MM.UI.Backend.handleEvent = function(e) {
 }
 
 MM.UI.Backend.save = function() {
-	MM.publish("save-start", this);
 }
 
 MM.UI.Backend.load = function() {
-	MM.publish("load-start", this);
 }
 
 MM.UI.Backend.show = function(mode) {
@@ -75,10 +73,12 @@ MM.UI.Backend._action = function() {
 }
 
 MM.UI.Backend._saveDone = function() {
+	MM.App.ui.setThrobber(false);
 	MM.publish("save-done", this);
 }
 
 MM.UI.Backend._loadDone = function(json) {
+	MM.App.ui.setThrobber(false);
 	try {
 		MM.App.setMap(MM.Map.fromJSON(json));
 		MM.publish("load-done", this);
@@ -88,6 +88,7 @@ MM.UI.Backend._loadDone = function(json) {
 }
 
 MM.UI.Backend._error = function(e) {
+	MM.App.ui.setThrobber(false);
 	alert(e.message);
 }
 

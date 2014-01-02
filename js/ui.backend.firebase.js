@@ -65,7 +65,7 @@ MM.UI.Backend.Firebase._action = function() {
 }
 
 MM.UI.Backend.Firebase.save = function() {
-	MM.UI.Backend.save.call(this);
+	MM.App.ui.setThrobber(true);
 
 	var map = MM.App.map;
 	this._backend.save(map.toJSON(), map.getId(), map.getName()).then(
@@ -75,7 +75,7 @@ MM.UI.Backend.Firebase.save = function() {
 }
 
 MM.UI.Backend.Firebase.load = function() {
-	MM.UI.Backend.load.call(this);
+	MM.App.ui.setThrobber(true);
 
 	this._backend.load(this._list.value).then(
 		this._loadDone.bind(this),
