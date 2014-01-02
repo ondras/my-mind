@@ -14,7 +14,8 @@ MM.UI.Backend.Firebase.init = function(select) {
 }
 
 MM.UI.Backend.Firebase.setState = function(data) {
-	/* FIXME */
+	this._backend.connect(data.s);
+	this._load(data.id);
 }
 
 MM.UI.Backend.Firebase.getState = function() {
@@ -81,9 +82,13 @@ MM.UI.Backend.Firebase.save = function() {
 }
 
 MM.UI.Backend.Firebase.load = function() {
+	this._load(this._list.value);
+}
+
+MM.UI.Backend.Firebase._load = function(id) {
 	MM.App.ui.setThrobber(true);
 
-	this._backend.load(this._list.value).then(
+	this._backend.load(id).then(
 		this._loadDone.bind(this),
 		this._error.bind(this)
 	);

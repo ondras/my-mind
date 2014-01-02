@@ -30,7 +30,7 @@ MM.UI.Backend.getState = function() {
 MM.UI.Backend.handleEvent = function(e) {
 	switch (e.target) {
 		case this._cancel:
-			MM.App.io.hide(); /* FIXME posledni duvod pro existenci hideIO */
+			MM.App.io.hide();
 		break;
 
 		case this._go:

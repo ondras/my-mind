@@ -41,8 +41,3 @@ MM.Backend.Firebase.load = function(id) {
 	});
 	return promise;
 }
-
-MM.Backend.Firebase.list = function() {
-	var promise = new Promise();
-	return promise;
-}

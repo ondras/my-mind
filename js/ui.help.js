@@ -27,8 +27,6 @@ MM.UI.Help = function() {
 		"-": "&minus;"
 	};
 	
-	/* FIXME Pan codes */
-	
 	this._build();
 }
 

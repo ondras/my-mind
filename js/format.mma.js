@@ -26,7 +26,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 			g = Math.round(g/17).toString(16);
 			b = Math.round(b/17).toString(16);
 		}
-		json.color = "#" + [r,g,b].join(""); /* FIXME closest color? */
+		json.color = "#" + [r,g,b].join("");
 	}
 
 
