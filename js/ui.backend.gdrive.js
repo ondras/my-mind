@@ -17,16 +17,42 @@ MM.UI.Backend.GDrive.save = function() {
 MM.UI.Backend.GDrive.load = function() {
 	MM.App.ui.setThrobber(true);
 
-	this._backend.load().then(
-		this.loadDone.bind(this),
+	this._backend.pick().then(
+		this._picked.bind(this),
 		this._error.bind(this)
 	);
 }
 
+MM.UI.Backend.GDrive._picked = function(id) {
+	MM.App.ui.setThrobber(false);
+	if (!id) { return;  }
+
+	MM.App.ui.setThrobber(true);
+
+	this._backend.load(id).then(
+		this._loadDone.bind(this),
+		this._error.bind(this)
+	)
+}
+
+MM.UI.Backend.GDrive.setState = function(data) {
+	this._picked(data.id);
+}
+
 MM.UI.Backend.GDrive.getState = function() {
 	var data = {
-		b: this._backend.id,
 		id: this._backend.fileId
 	};
 	return data;
+}
+
+MM.UI.Backend.GDrive._loadDone = function(data) {
+	try {
+		var format = MM.Format.JSON;
+		var json = format.from(data);
+	} catch (e) { 
+		this._error(e);
+	}
+
+	MM.UI.Backend._loadDone.call(this, json);
 }

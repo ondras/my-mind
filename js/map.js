@@ -23,7 +23,8 @@ MM.Map.fromJSON = function(data) {
 
 MM.Map.prototype.toJSON = function() {
 	var data = {
-		root: this._root.toJSON()
+		root: this._root.toJSON(),
+		id: this._id
 	};
 	return data;
 }

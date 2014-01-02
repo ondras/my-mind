@@ -1,8 +1,9 @@
 MM.Backend.GDrive = Object.create(MM.Backend, {
 	id: {value: "gdrive"},
 	label: {value: "Google Drive"},
-	CID: {value: "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com"},
 	scope: {value: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.install"},
+	clientId: {value: "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com"},
+	apiKey: {value: "AIzaSyCzu1qVxlgufneOYpBgDJXN6Z9SNVcHYWM"},
 	fileId: {value: null, writable: true}
 });
 
@@ -37,14 +38,16 @@ MM.Backend.GDrive._send = function(data, name) {
 	});
 
 	request.execute(function(response) {
-		if (response) {
+		if (!response) {
+			promise.reject(new Error("Failed to upload to Google Drive"));
+		} else if (response.error) {
+			promise.reject(response.error);
+		} else {
 			this.fileId = response.id;
 			this._sendMetadata(name).then(
 				promise.fulfill.bind(promise),
 				promise.reject.bind(promise)
 			);
-		} else {
-			promise.reject(new Error("Failed to upload to Google Drive"));
 		}
 	}.bind(this));
 	
@@ -78,32 +81,74 @@ MM.Backend.GDrive._sendMetadata = function(name) {
 	return promise;
 }
 
-MM.Backend.GDrive.load = function() {
-	this._init().then(
-		function() { alert("ok"); },
-		function() { alert("fail"); }
+MM.Backend.GDrive.load = function(id) {
+	return this._connect().then(
+		this._load.bind(this, id)
 	);
-	
-	return;
+}
+
+MM.Backend.GDrive._load = function(id) {
+	this.fileId = id;
 
 	var promise = new Promise();
 
-	this.input.type = "file";
+	var request = gapi.client.request({
+		path: "/drive/v2/files/" + this.fileId,
+		method: "GET"
+	});
 
-	this.input.onchange = function(e) {
-		var file = e.target.files[0];
-		if (!file) { return; }
+	request.execute(function(response) {
+		if (response && response.downloadUrl) {
+			var xhr = new XMLHttpRequest();
+			xhr.open("get", response.downloadUrl, true);
+			xhr.setRequestHeader("Authorization", "Bearer " + gapi.auth.getToken().access_token);
+			Promise.send(xhr).then(
+				function(xhr) { promise.fulfill(xhr.responseText); },
+				function(xhr) { promise.reject(xhr.responseText); }
+			);
+		} else {
+			promise.reject(response && response.error || new Error("Failed to download file"));
+		}
+	});
 
-		var index = file.name.lastIndexOf(".");
-		if (index > -1) { this.extension = file.name.substring(index+1).toLowerCase(); }
+	return promise;
+}
 
-		var reader = new FileReader();
-		reader.onload = function() { promise.fulfill(reader.result); }
-		reader.onerror = function() { promise.reject(reader.error); }
-		reader.readAsText(file);
-	}.bind(this);
+MM.Backend.GDrive.pick = function() {
+	return this._connect().then(
+		this._pick.bind(this)
+	);
+}
 
-	this.input.click();
+MM.Backend.GDrive._pick = function() {
+	var promise = new Promise();
+
+	var token = gapi.auth.getToken();
+
+	var view = new google.picker.DocsView(google.picker.ViewId.DOCS)
+//		.setMimeTypes("application/json")
+		.setMode(google.picker.DocsViewMode.LIST);
+
+	var picker = new google.picker.PickerBuilder()
+		.enableFeature(google.picker.Feature.NAV_HIDDEN)
+		.addView(view)
+		.setOAuthToken(token.access_token)
+		.setDeveloperKey(this.apiKey)
+		.setCallback(function(data) {
+			switch (data[google.picker.Response.ACTION]) {
+				case google.picker.Action.PICKED:
+			 		var doc = data[google.picker.Response.DOCUMENTS][0];
+			 		promise.fulfill(doc.id);
+				break;
+
+				case google.picker.Action.CANCEL:
+					promise.fulfill(null);
+				break;
+			}
+		})
+		.build();
+	picker.setVisible(true);
+
 	return promise;
 }
 
@@ -111,11 +156,11 @@ MM.Backend.GDrive._connect = function() {
 	if (window.gapi && window.gapi.auth.getToken()) {
 		return new Promise().fulfill();
 	} else {
-		return this._load().then(this._auth.bind(this));
+		return this._loadGapi().then(this._auth.bind(this));
 	}
 }
 
-MM.Backend.GDrive._load = function() {
+MM.Backend.GDrive._loadGapi = function() {
 	/* FIXME jen poprve */
 	var promise = new Promise();
 	if (window.gapi) { return promise.fulfill(); }
@@ -123,7 +168,7 @@ MM.Backend.GDrive._load = function() {
 	var script = document.createElement("script");
 	var name = ("cb"+Math.random()).replace(".", "");
 	window[name] = promise.fulfill.bind(promise);
-	script.src = "https://apis.google.com/js/client.js?onload=" + name;
+	script.src = "https://apis.google.com/js/client:picker.js?onload=" + name;
 	document.body.appendChild(script);
 
 	return promise;
@@ -133,12 +178,11 @@ MM.Backend.GDrive._auth = function(forceUI) {
 	var promise = new Promise();
 
 	gapi.auth.authorize({
-		"client_id": this.CID,
+		"client_id": this.clientId,
 		"scope": this.scope,
 		"immediate": !forceUI
 	}, function(token) {
-		
-		if (token) { /* done */
+		if (token && !token.error) { /* done */
 			promise.fulfill();
 		} else if (!forceUI) { /* try again with ui */
 			this._auth(true).then(
@@ -146,9 +190,8 @@ MM.Backend.GDrive._auth = function(forceUI) {
 				promise.reject.bind(promise)
 			);
 		} else { /* bad luck */
-			promise.reject(new Error("Failed to authorize with Google"));
+			promise.reject(token && token.error || new Error("Failed to authorize with Google"));
 		}
-
 	}.bind(this));
 
 	return promise;

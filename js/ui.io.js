@@ -22,6 +22,16 @@ MM.UI.IO = function() {
 	MM.subscribe("load-done", this);
 }
 
+MM.UI.IO.prototype.restore = function() {
+	var parts = {};
+	location.search.substring(1).split("&").forEach(function(item) {
+		var keyvalue = item.split("=");
+		parts[decodeURIComponent(keyvalue[0])] = decodeURIComponent(keyvalue[1]);
+	})
+	var backend = MM.UI.Backend.getById(parts.b);
+	if (backend) { backend.setState(parts); }
+}
+
 MM.UI.IO.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
 		case "map-new":
@@ -81,7 +91,7 @@ MM.UI.IO.prototype._syncBackend = function() {
 }
 
 MM.UI.IO.prototype._setCurrentBackend = function(backend) {
-	if (this._currentBackend) { this._currentBackend.reset(); }
+	if (this._currentBackend && this._currentBackend != backend) { this._currentBackend.reset(); }
 	
 	if (backend) { localStorage.setItem(this._prefix + "backend", backend.id); }
 	this._currentBackend = backend;
@@ -93,6 +103,7 @@ MM.UI.IO.prototype._updateURL = function() {
 	if (!data) {
 		history.replaceState(null, "", ".");
 	} else {
+		data.b = this._currentBackend.id;
 		var arr = Object.keys(data).map(function(key) {
 			return encodeURIComponent(key)+"="+encodeURIComponent(data[key]);
 		});

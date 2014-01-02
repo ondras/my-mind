@@ -4,23 +4,23 @@ MM.Backend.Local = Object.create(MM.Backend, {
 	prefix: {value: "mm.map."}
 });
 
-MM.Backend.Local.save = function(data, name) {
-	localStorage.setItem(this.prefix + name, data);
+MM.Backend.Local.save = function(data, id, name) {
+	localStorage.setItem(this.prefix + id, data);
+
+	var names = this.list();
+	names[id] = name;
+	localStorage.setItem(this.prefix + "names", JSON.stringify(names));
 }
 
-MM.Backend.Local.load = function(name) {
-	return localStorage.getItem(this.prefix + name);
+MM.Backend.Local.load = function(id) {
+	return localStorage.getItem(this.prefix + id);
 }
 
 MM.Backend.Local.list = function() {
-	var count = localStorage.length;
-	var names = [];
-	var re = new RegExp("^" + this.prefix + "(.*)");
-	for (var i=0;i<count;i++) {
-		var key = localStorage.key(i);
-		var r = key.match(re);
-		if (r) { names.push(r[1]); }
+	try {
+		var data = localStorage.getItem(this.prefix + "names") || "{}";
+		return JSON.parse(data);
+	} catch (e) {
+		return {};
 	}
-
-	return names;
 }

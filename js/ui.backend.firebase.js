@@ -13,10 +13,16 @@ MM.UI.Backend.Firebase.init = function(select) {
 	MM.subscribe("firebase-list", this);
 }
 
+MM.UI.Backend.Firebase.setState = function(data) {
+	/* FIXME */
+}
+
 MM.UI.Backend.Firebase.getState = function() {
-	var state = MM.UI.Backend.getState.call(this);
-	state.s = this._server.value;
-	return state;
+	var data = {
+		id: MM.App.map.getId(),
+		s: this._server.value
+	};
+	return data;
 }
 
 MM.UI.Backend.Firebase.show = function(mode) {

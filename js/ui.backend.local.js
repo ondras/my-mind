@@ -16,7 +16,7 @@ MM.UI.Backend.Local.show = function(mode) {
 	if (mode == "load") { 
 		var list = this._backend.list();
 		this._list.innerHTML = "";
-		if (list.length) {
+		if (Object.keys(list).length) {
 			this._go.disabled = false;
 			this._buildList(list);
 		} else {
@@ -29,12 +29,24 @@ MM.UI.Backend.Local.show = function(mode) {
 	}
 }
 
+MM.UI.Backend.Local.setState = function(data) {
+	this._load(data.id);
+}
+
+MM.UI.Backend.Local.getState = function() {
+	var data = {
+		id: MM.App.map.getId()
+	};
+	return data;
+}
+
 MM.UI.Backend.Local._buildList = function(list) {
-	list.forEach(function(name) {
+	for (var id in list) {
 		var o = document.createElement("option");
-		o.value = o.innerHTML = name;
+		o.value = id;
+		o.innerHTML = list[id];
 		this._list.appendChild(o);
-	}, this);
+	}
 }
 
 MM.UI.Backend.Local.save = function() {
@@ -42,7 +54,7 @@ MM.UI.Backend.Local.save = function() {
 	var data = MM.Format.JSON.to(json);
 
 	try {
-		this._backend.save(data, MM.App.map.getName());
+		this._backend.save(data, MM.App.map.getId(), MM.App.map.getName());
 		this._saveDone();
 	} catch (e) {
 		this._error(e);
@@ -50,8 +62,12 @@ MM.UI.Backend.Local.save = function() {
 }
 
 MM.UI.Backend.Local.load = function() {
+	this._load(this._list.value);
+}
+
+MM.UI.Backend.Local._load = function(id) {
 	try {
-		var data = this._backend.load(this._list.value);
+		var data = this._backend.load(id);
 		var json = MM.Format.JSON.from(data);
 	} catch (e) {
 		this._error(e);
