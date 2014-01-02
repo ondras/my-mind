@@ -27,9 +27,26 @@ MM.UI.IO.prototype.restore = function() {
 	location.search.substring(1).split("&").forEach(function(item) {
 		var keyvalue = item.split("=");
 		parts[decodeURIComponent(keyvalue[0])] = decodeURIComponent(keyvalue[1]);
-	})
+	});
+
 	var backend = MM.UI.Backend.getById(parts.b);
-	if (backend) { backend.setState(parts); }
+	if (backend) { 
+		backend.setState(parts); 
+		return;
+	}
+
+	if (parts.state) {
+		try {
+			var state = JSON.parse(parts.state);
+			if (state.action == "open") {
+				state = {
+					b: "gdrive",
+					id: state.ids[0]
+				};
+				MM.UI.Backend.GDrive.setState(state);
+			}
+		} catch (e) { }
+	}
 }
 
 MM.UI.IO.prototype.handleMessage = function(message, publisher) {
