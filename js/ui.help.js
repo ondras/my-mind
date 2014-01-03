@@ -1,8 +1,11 @@
 MM.UI.Help = function() {
 	this._node = document.querySelector("#help");
 	this._map = {
+		8: "Backspace",
 		13: "↩",
 		32: "Spacebar",
+		33: "PgUp",
+		34: "PgDown",
 		36: "Home",
 		37: "←",
 		38: "↑",
@@ -39,13 +42,14 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "Pan");
 	this._buildRow(t, "Select");
 	this._buildRow(t, "SelectRoot");
+	this._buildRow(t, "SelectParent");
 	this._buildRow(t, "Center");
-	this._buildRow(t, "ZoomIn");
-	this._buildRow(t, "ZoomOut");
+	this._buildRow(t, "ZoomIn", "ZoomOut");
 
 	var t = this._node.querySelector(".manipulation");
 	this._buildRow(t, "InsertSibling");
 	this._buildRow(t, "InsertChild");
+	this._buildRow(t, "Swap");
 	this._buildRow(t, "Delete");
 
 	var t = this._node.querySelector(".editing");
@@ -53,8 +57,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "Newline");
 
 	var t = this._node.querySelector(".other");
-	this._buildRow(t, "Undo");
-	this._buildRow(t, "Redo");
+	this._buildRow(t, "Undo", "Redo");
 	this._buildRow(t, "Save");
 	this._buildRow(t, "SaveAs");
 	this._buildRow(t, "Load");
@@ -62,12 +65,20 @@ MM.UI.Help.prototype._build = function() {
 }
 
 MM.UI.Help.prototype._buildRow = function(table, commandName) {
-	var command = MM.Command[commandName];
 	var row = table.insertRow(-1);
 
-	var keys = command.keys.map(this._formatKey, this);
-	row.insertCell().innerHTML = command.label;
-	row.insertCell().innerHTML = keys.join("/");
+	var labels = [];
+	var keys = [];
+
+	for (var i=1;i<arguments.length;i++) {
+		var command = MM.Command[arguments[i]];
+		labels.push(command.label);
+		keys = keys.concat(command.keys.map(this._formatKey, this));
+	}
+
+	row.insertCell().innerHTML = labels.join(" / ");
+	row.insertCell().innerHTML = keys.join(" / ");
+
 }
 
 MM.UI.Help.prototype._formatKey = function(key) {

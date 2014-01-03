@@ -52,6 +52,27 @@ MM.Action.RemoveItem.prototype.undo = function() {
 	MM.App.select(this._item);
 }
 
+MM.Action.Swap = function(item, diff) {
+	this._item = item;
+	this._parent = item.getParent();
+
+	var children = this._parent.getChildren();
+	
+	this._sourceIndex = children.indexOf(this._item);
+	this._targetIndex = (this._sourceIndex + diff + children.length) % children.length;
+//	if (this._sourceIndex < this._targetIndex) { this._targetIndex--; }
+}
+MM.Action.Swap.prototype = Object.create(MM.Action.prototype);
+MM.Action.Swap.prototype.perform = function() {
+	this._parent.removeChild(this._item);
+	this._parent.insertChild(this._item, this._targetIndex);
+
+}
+MM.Action.Swap.prototype.undo = function() {
+	this._parent.removeChild(this._item);
+	this._parent.insertChild(this._item, this._sourceIndex);
+}
+
 MM.Action.SetLayout = function(item, layout) {
 	this._item = item;
 	this._layout = layout;

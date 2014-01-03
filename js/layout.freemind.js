@@ -97,6 +97,34 @@ MM.Layout.FreeMind._layoutRoot = function(item) {
 	dom.node.style.width = left + "px";
 
 	this._anchorCanvas(item);
-	this._drawHorizontalConnectors(item, "left", childrenLeft);
-	this._drawHorizontalConnectors(item, "right", childrenRight);
+	this._drawRootConnectors(item, "left", childrenLeft);
+	this._drawRootConnectors(item, "right", childrenRight);
+}
+
+MM.Layout.FreeMind._drawRootConnectors = function(item, side, children) {
+	if (children.length == 0) { return; }
+
+	var dom = item.getDOM();
+	var canvas = dom.canvas;
+	var ctx = canvas.getContext("2d");
+	var R = this.SPACING_RANK/2;
+
+	var x1 = dom.content.offsetLeft + dom.content.offsetWidth/2;
+	var y1 = item.getShape().getVerticalAnchor(item);
+
+	for (var i=0;i<children.length;i++) {
+		var child = children[i];
+
+		var x2 = this._getChildAnchor(child, side);
+		var y2 = child.getShape().getVerticalAnchor(child) + child.getDOM().node.offsetTop;
+
+		ctx.fillStyle = ctx.strokeStyle = child.getColor();
+		ctx.beginPath();
+		ctx.moveTo(x1-R, y1);
+		ctx.quadraticCurveTo((x2+x1)/2, y2, x2, y2);
+		ctx.quadraticCurveTo((x2+x1)/2, y2, x1+R, y1);
+		ctx.fill();
+		ctx.stroke();
+	}
+
 }

@@ -127,6 +127,55 @@ MM.Map.prototype.getId = function() {
 	return this._id;
 }
 
+MM.Map.prototype.pick = function(item, direction) {
+	var candidates = [];
+	var currentRect = item.getDOM().content.getBoundingClientRect();
+
+	this._getPickCandidates(currentRect, this._root, direction, candidates);
+	if (!candidates.length) { return item; }
+
+	candidates.sort(function(a, b) {
+		return a.dist - b.dist;
+	});
+
+	return candidates[0].item;
+}
+
+MM.Map.prototype._getPickCandidates = function(currentRect, item, direction, candidates) {
+	item.getChildren().forEach(function(child) {
+		this._getPickCandidates(currentRect, child, direction, candidates);
+	}, this);
+
+	var node = item.getDOM().content;
+	var rect = node.getBoundingClientRect();
+
+	if (direction == "left" || direction == "right") {
+		var x1 = currentRect.left + currentRect.width/2;
+		var x2 = rect.left + rect.width/2;
+		if (direction == "left" && x2 > x1) { return; }
+		if (direction == "right" && x2 < x1) { return; }
+
+		var diff1 = currentRect.top - rect.bottom;
+		var diff2 = rect.top - currentRect.bottom;
+		var dist = Math.abs(x2-x1);
+	} else {
+		var y1 = currentRect.top + currentRect.height/2;
+		var y2 = rect.top + rect.height/2;
+		if (direction == "top" && y2 > y1) { return; }
+		if (direction == "bottom" && y2 < y1) { return; }
+
+		var diff1 = currentRect.left - rect.right;
+		var diff2 = rect.left - currentRect.right;
+		var dist = Math.abs(y2-y1);
+	}
+
+	var diff = Math.max(diff1, diff2);
+	if (diff > 0) { return; }
+	if (!dist || dist < diff) { return; }
+
+	candidates.push({item:item, dist:dist});
+}
+
 MM.Map.prototype._moveTo = function(left, top) {
 	this._position = [left, top];
 

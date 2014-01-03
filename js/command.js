@@ -10,7 +10,7 @@ MM.Command.isValid = function() {
 MM.Command.execute = function() {}
 
 MM.Command.Undo = Object.create(MM.Command, {
-	label: {value: "Undo last action"},
+	label: {value: "Undo"},
 	keys: {value: [{charCode: "z".charCodeAt(0), ctrlKey: true}]}
 });
 MM.Command.Undo.isValid = function() {
@@ -22,7 +22,7 @@ MM.Command.Undo.execute = function() {
 }
 
 MM.Command.Redo = Object.create(MM.Command, {
-	label: {value: "Redo last action"},
+	label: {value: "Redo"},
 	keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey: true}]},
 });
 MM.Command.Redo.isValid = function() {
@@ -122,6 +122,22 @@ MM.Command.Delete.execute = function() {
 	MM.App.action(action);	
 }
 
+MM.Command.Swap = Object.create(MM.Command, {
+	label: {value: "Swap sibling"},
+	keys: {value: [
+		{keyCode: 33},
+		{keyCode: 34},
+	]}
+});
+MM.Command.Swap.execute = function(e) {
+	var current = MM.App.current;
+	if (!current.getParent() || current.getParent().getChildren().length < 2) { return; }
+
+	var diff = (e.keyCode == 33 ? -1 : 1);
+	var action = new MM.Action.Swap(MM.App.current, diff);
+	MM.App.action(action);	
+}
+
 MM.Command.Save = Object.create(MM.Command, {
 	label: {value: "Save map"},
 	keys: {value: [{charCode: "s".charCodeAt(0), ctrlKey:true}]}
@@ -186,4 +202,57 @@ MM.Command.Help = Object.create(MM.Command, {
 });
 MM.Command.Help.execute = function() {
 	MM.App.help.toggle();
+}
+
+MM.Command.Pan = Object.create(MM.Command, {
+	label: {value: "Pan the map"},
+	keys: {value: [
+		{keyCode: "W".charCodeAt(0), ctrlKey:false},
+		{keyCode: "A".charCodeAt(0), ctrlKey:false},
+		{keyCode: "S".charCodeAt(0), ctrlKey:false},
+		{keyCode: "D".charCodeAt(0), ctrlKey:false}
+	]},
+	chars: {value: []}
+});
+MM.Command.Pan.execute = function(e) {
+	var ch = String.fromCharCode(e.keyCode);
+	var index = this.chars.indexOf(ch);
+	if (index > -1) { return; }
+
+	if (!this.chars.length) {
+		window.addEventListener("keyup", this);
+		this.interval = setInterval(this._step.bind(this), 50);
+	}
+
+	this.chars.push(ch);
+	this._step();
+}
+
+MM.Command.Pan._step = function() {
+	var dirs = {
+		"W": [0, 1],
+		"A": [1, 0],
+		"S": [0, -1],
+		"D": [-1, 0]
+	}
+	var offset = [0, 0];
+
+	this.chars.forEach(function(ch) {
+		offset[0] += dirs[ch][0];
+		offset[1] += dirs[ch][1];
+	});
+
+	MM.App.map.moveBy(10*offset[0], 10*offset[1]);
+}
+
+MM.Command.Pan.handleEvent = function(e) {
+	var ch = String.fromCharCode(e.keyCode);
+	var index = this.chars.indexOf(ch);
+	if (index > -1) {
+		this.chars.splice(index, 1);
+		if (!this.chars.length) {
+			window.removeEventListener("keyup", this);
+			clearInterval(this.interval);
+		}
+	}
 }
