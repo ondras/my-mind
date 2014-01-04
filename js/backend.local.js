@@ -16,6 +16,14 @@ MM.Backend.Local.load = function(id) {
 	return localStorage.getItem(this.prefix + id);
 }
 
+MM.Backend.Local.remove = function(id) {
+	localStorage.removeItem(this.prefix + id);
+
+	var names = this.list();
+	delete names[id];
+	localStorage.setItem(this.prefix + "names", JSON.stringify(names));
+}
+
 MM.Backend.Local.list = function() {
 	try {
 		var data = localStorage.getItem(this.prefix + "names") || "{}";

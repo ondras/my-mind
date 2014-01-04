@@ -26,6 +26,7 @@ ul {
 
 .text {
 	position: relative;
+	text-align: center;
 }
 
 canvas {

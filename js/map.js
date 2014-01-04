@@ -7,7 +7,7 @@ MM.Map = function(options) {
 	this._root = null;
 	this._visible = false;
 	this._position = [0, 0];
-	this._id = btoa(Date.now() + "_" + Math.random());
+	this._id = MM.generateId();
 
 	var root = this.createItem().setText(o.root).setLayout(o.layout);
 	this.setRoot(root);

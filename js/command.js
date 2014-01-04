@@ -33,53 +33,6 @@ MM.Command.Redo.execute = function() {
 	MM.App.historyIndex++;
 }
 
-MM.Command.Edit = Object.create(MM.Command, {
-	label: {value: "Edit item"},
-	keys: {value: [
-		{keyCode: 32},
-		{keyCode: 113}
-	]}
-});
-MM.Command.Edit.execute = function() {
-	MM.App.current.startEditing();
-	MM.App.editing = true;
-}
-
-MM.Command.Finish = Object.create(MM.Command, {
-	keys: {value: [{keyCode: 13}]},
-	editMode: {value: true}
-});
-MM.Command.Finish.execute = function() {
-	MM.App.editing = false;
-	var text = MM.App.current.stopEditing();
-	var action = new MM.Action.SetText(MM.App.current, text);
-	MM.App.action(action);
-}
-
-MM.Command.Newline = Object.create(MM.Command, {
-	label: {value: "Line break"},
-	keys: {value: [
-		{keyCode: 13, altKey:true},
-		{keyCode: 13, ctrlKey:true}
-	]},
-	editMode: {value: true}
-});
-MM.Command.Newline.execute = function() {
-	var range = getSelection().getRangeAt(0);
-	var br = document.createElement("br");
-	range.insertNode(br);
-	range.setStartAfter(br);
-}
-
-MM.Command.Cancel = Object.create(MM.Command, {
-	editMode: {value: true},
-	keys: {value: [{keyCode: 27}]}
-});
-MM.Command.Cancel.execute = function() {
-	MM.App.editing = false;
-	MM.App.current.stopEditing();
-}
-
 MM.Command.InsertSibling = Object.create(MM.Command, {
 	label: {value: "Insert a sibling"},
 	keys: {value: [{keyCode: 13}]}

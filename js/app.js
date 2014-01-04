@@ -61,6 +61,12 @@ MM.App = {
 			case "ui-change":
 				this._syncPort();
 			break;
+
+			case "item-update":
+				if (this.map && publisher == this.map.getRoot()) {
+					document.title = this.map.getName() + " :: My Mind";
+				}
+			break;
 		}
 	},
 
@@ -112,6 +118,7 @@ MM.App = {
 		this._port.addEventListener("click", this);
 		window.addEventListener("resize", this);
 		MM.subscribe("ui-change", this);
+		MM.subscribe("item-update", this);
 
 		this._syncPort();
 	},

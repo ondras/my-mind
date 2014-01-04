@@ -55,6 +55,10 @@ MM.UI.Help.prototype._build = function() {
 	var t = this._node.querySelector(".editing");
 	this._buildRow(t, "Edit");
 	this._buildRow(t, "Newline");
+	this._buildRow(t, "Bold");
+	this._buildRow(t, "Italic");
+	this._buildRow(t, "Underline");
+	this._buildRow(t, "Strikethrough");
 
 	var t = this._node.querySelector(".other");
 	this._buildRow(t, "Undo", "Redo");

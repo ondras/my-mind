@@ -13,6 +13,7 @@
 		<script src="js/keyboard.js"></script>
 		<script src="js/action.js"></script>
 		<script src="js/command.js"></script>
+		<script src="js/command.edit.js"></script>
 		<script src="js/command.select.js"></script>
 		<script src="js/layout.js"></script>
 		<script src="js/layout.graph.js"></script>
@@ -120,6 +121,9 @@
 				<p data-for="save load">
 					<button class="go"></button><button class="cancel">Cancel</button>
 				</p>
+				<p data-for="load">
+					<button class="remove">Delete</button>
+				</p>
 			</div>
 
 			<div id="firebase">
@@ -133,6 +137,9 @@
 				</p>
 				<p data-for="save load">
 					<button class="go"></button><button class="cancel">Cancel</button>
+				</p>
+				<p data-for="load">
+					<button class="remove">Delete</button>
 				</p>
 			</div>
 
@@ -197,20 +204,18 @@
 
 TODO:
   shortterm:
+    - clipboard support
+    - doladit freemind layout, prejmenovat jej
+    - mup format
 
   longterm:
-    - razeni v localStorage/firebase listingu
-    - mazani v localStorage/firebase listingu
-    - clipboard support
-    - mup format
-    - circular layout
-    - wysiwyg
     - firebase realtime
     - dragdrop
     - yes/no
     - values, functions
     - (custom) icons
     - firebase auth
+    - url backend
 
   bugs:
     - commandy bez map hniji

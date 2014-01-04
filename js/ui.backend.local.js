@@ -6,6 +6,21 @@ MM.UI.Backend.Local.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
 	
 	this._list = this._node.querySelector(".list");
+	this._remove = this._node.querySelector(".remove");
+	this._remove.addEventListener("click", this);
+}
+
+MM.UI.Backend.Local.handleEvent = function(e) {
+	MM.UI.Backend.handleEvent.call(this, e);
+
+	switch (e.target) {
+		case this._remove:
+			var id = this._list.value;
+			if (!id) { break; } 
+			this._backend.remove(id);
+			this.show(this._mode);
+		break;
+	}
 }
 
 MM.UI.Backend.Local.show = function(mode) {
@@ -18,12 +33,13 @@ MM.UI.Backend.Local.show = function(mode) {
 		this._list.innerHTML = "";
 		if (Object.keys(list).length) {
 			this._go.disabled = false;
-			this._buildList(list);
+			this._remove.disabled = false;
+			this._buildList(list, this._list);
 		} else {
 			this._go.disabled = true;
+			this._remove.disabled = true;
 			var o = document.createElement("option");
-			o.disabled = true;
-			o.innerHTML = "No maps saved";
+			o.innerHTML = "(no maps saved)";
 			this._list.appendChild(o);
 		}
 	}
@@ -38,15 +54,6 @@ MM.UI.Backend.Local.getState = function() {
 		id: MM.App.map.getId()
 	};
 	return data;
-}
-
-MM.UI.Backend.Local._buildList = function(list) {
-	for (var id in list) {
-		var o = document.createElement("option");
-		o.value = id;
-		o.innerHTML = list[id];
-		this._list.appendChild(o);
-	}
 }
 
 MM.UI.Backend.Local.save = function() {

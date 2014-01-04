@@ -1,7 +1,7 @@
 MM.Shape.Underline = Object.create(MM.Shape, {
 	id: {value: "underline"},
 	label: {value: "Underline"},
-	VERTICAL_OFFSET: {value: 0.85}
+	VERTICAL_OFFSET: {value: -3}
 });
 
 MM.Shape.Underline.update = function(item) {
@@ -19,4 +19,9 @@ MM.Shape.Underline.update = function(item) {
 	ctx.moveTo(left, top);
 	ctx.lineTo(right, top);
 	ctx.stroke();
+}
+
+MM.Shape.Underline.getVerticalAnchor = function(item) {
+	var node = item.getDOM().content;
+	return node.offsetTop + node.offsetHeight + this.VERTICAL_OFFSET + 0.5;
 }

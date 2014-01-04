@@ -32,7 +32,5 @@ MM.Shape.getHorizontalAnchor = function(item) {
 
 MM.Shape.getVerticalAnchor = function(item) {
 	var node = item.getDOM().content;
-	var lines = (item.getText().match(/\n/g) || []).length + 1;
-	var line = node.offsetHeight/lines;
-	return Math.round(node.offsetTop + node.offsetHeight - (1-this.VERTICAL_OFFSET) * line) + 0.5;
+	return node.offsetTop + Math.round(node.offsetHeight * this.VERTICAL_OFFSET) + 0.5;
 }

@@ -8,11 +8,12 @@ MM.Item = function(map) {
 	this._autoShape = true;
 	this._color = null;
 	this._side = null; /* side preference */
+	this._id = MM.generateId();
 	this._oldText = "";
 
 	this._dom = {
 		node: document.createElement("li"),
-		content: document.createElement("span"),
+		content: document.createElement("div"),
 		children: document.createElement("ul"),
 		canvas: document.createElement("canvas")
 	}
@@ -30,7 +31,7 @@ MM.Item.fromJSON = function(data, map) {
 	var item = new this(map);
 	item.setText(data.text);
 	item.setSide(data.side || null);
-	item.setColor(data.color);
+	item.setColor(data.color || null);
 	item.setLayout(MM.Layout.fromJSON(data.layout));
 	item.setShape(MM.Shape.fromJSON(data.shape));
 	(data.children || []).forEach(function(child) {
@@ -226,6 +227,7 @@ MM.Item.prototype.startEditing = function() {
 	this._oldText = this.getText();
 	this._dom.content.contentEditable = true;
 	this._dom.content.focus();
+	document.execCommand("styleWithCSS", null, false);
 	return this;
 }
 

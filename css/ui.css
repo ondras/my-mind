@@ -1,12 +1,3 @@
-@font-face {
-	font-family: 'WebSymbolsLigaRegular';
-	src: url('font/websymbolsligaregular.eot');
-	src: url('font/websymbolsligaregular.eot?#iefix') format('embedded-opentype'),
-		url('font/websymbolsligaregular.woff') format('woff'),
-		url('font/websymbolsligaregular.ttf') format('truetype'),
-		url('font/websymbolsligaregular.svg#WebSymbolsRegular') format('svg');
-}
-
 .ui {
 	position: fixed;
 	right: 0;
@@ -16,6 +7,8 @@
 	width: 200px;
 	box-shadow: 0 0 2px 2px #666;
 	transition: all 250ms;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 
 .ui:not(.visible) {

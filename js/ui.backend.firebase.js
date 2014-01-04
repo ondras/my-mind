@@ -9,6 +9,9 @@ MM.UI.Backend.Firebase.init = function(select) {
 	this._list = this._node.querySelector(".list");
 	this._server = this._node.querySelector(".server");
 	this._server.value = localStorage.getItem(this._prefix + "server") || "my-mind";
+
+	this._remove = this._node.querySelector(".remove");
+	this._remove.addEventListener("click", this);
 	
 	MM.subscribe("firebase-list", this);
 }
@@ -31,29 +34,35 @@ MM.UI.Backend.Firebase.show = function(mode) {
 	this._sync();
 }
 
+MM.UI.Backend.Firebase.handleEvent = function(e) {
+	MM.UI.Backend.handleEvent.call(this, e);
+
+	switch (e.target) {
+		case this._remove:
+			var id = this._list.value;
+			if (!id) { break; }
+			MM.App.ui.setThrobber(true);
+			this._backend.remove(id).then(
+				function() { MM.App.ui.setThrobber(false); },
+				this._error.bind(this)
+			);
+		break;
+	}
+}
+
 MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 	switch (message) {
 		case "firebase-list":
 			this._list.innerHTML = "";
 			if (Object.keys(data).length) {
-				this._buildList(data);
+				this._buildList(data, this._list);
 			} else {
 				var o = document.createElement("option");
-				o.disabled = true;
-				o.innerHTML = "No maps saved";
+				o.innerHTML = "(no maps saved)";
 				this._list.appendChild(o);
 			}
 			this._sync();
 		break;
-	}
-}
-
-MM.UI.Backend.Firebase._buildList = function(list) {
-	for (var id in list) {
-		var o = document.createElement("option");
-		o.value = id;
-		o.innerHTML = list[id];
-		this._list.appendChild(o);
 	}
 }
 

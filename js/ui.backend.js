@@ -88,6 +88,24 @@ MM.UI.Backend._loadDone = function(json) {
 
 MM.UI.Backend._error = function(e) {
 	MM.App.ui.setThrobber(false);
-	alert(e.message);
+	alert("IO error: " + e.message);
 }
 
+MM.UI.Backend._buildList = function(list, select) {
+	var data = [];
+	
+	for (var id in list) {
+		data.push({id:id, name:list[id]});
+	}
+	
+	data.sort(function(a, b) {
+		return a.name.localeCompare(b.name);
+	});
+	
+	data.forEach(function(item) {
+		var o = document.createElement("option");
+		o.value = item.id;
+		o.innerHTML = item.name;
+		select.appendChild(o);
+	});
+}
