@@ -8,14 +8,6 @@ MM.Layout.getAll = function() {
 	return this.ALL;
 }
 
-MM.Layout.fromJSON = function(data) {
-	return this.getById(data);
-}
-
-MM.Layout.toJSON = function() {
-	return this.id;
-}
-
 /**
  * Re-draw an item and its children
  */

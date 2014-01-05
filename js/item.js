@@ -27,34 +27,41 @@ MM.Item = function(map) {
 MM.Item.COLOR = "#999";
 
 MM.Item.fromJSON = function(data, map) {
-	/* FIXME bez setteru, testovat pritomnost */
-	var item = new this(map);
-	item.setText(data.text);
-	item.setSide(data.side || null);
-	item.setColor(data.color || null);
-	item.setLayout(MM.Layout.fromJSON(data.layout));
-	item.setShape(MM.Shape.fromJSON(data.shape));
+	/* FIXME potrebujeme tovarnu? */
+	return new this(map).fromJSON(data);
+}
+
+MM.Item.prototype.fromJSON = function(data) {
+	/* FIXME bez setteru, testovat pritomnost? */
+	this.setText(data.text);
+	this.setSide(data.side || null);
+	this.setColor(data.color || null);
+	this.setLayout(MM.Layout.getById(data.layout));
+	this.setShape(MM.Shape.getById(data.shape));
 	(data.children || []).forEach(function(child) {
-		item.insertChild(MM.Item.fromJSON(child, map));
-	});
-	return item;
+		this.insertChild(MM.Item.fromJSON(child, this._map));
+	}, this);
+	return this;
 }
 
 MM.Item.prototype.toJSON = function() {
-	/* FIXME bez prazdnych */
 	var data = {
-		text: this.getText(),
-		side: this._side,
-		color: this._color,
-		layout: this._layout && this._layout.toJSON(),
-		shape: this._autoShape ? null : this._shape.toJSON(),
-		children: this._children.map(function(child) { return child.toJSON(); })
-	};
+		text: this.getText()
+	}
+	
+	if (this._side) { data.side = this._side; }
+	if (this._color) { data.color = this._color; }
+	if (this._layout) { data.layout = this._layout.id; }
+	if (!this._autoShape) { data.shape = this._shape.id; }
+	if (this._children.length) {
+		data.children = this._children.map(function(child) { return child.toJSON(); });
+	}
+
 	return data;
 }
 
 MM.Item.prototype.update = function(doNotRecurse) {
-	MM.publish("item-update", this);
+	MM.publish("item-change", this);
 	if (!this._map.isVisible()) { return; }
 
 	if (this._autoShape) { /* check for changed auto-shape */

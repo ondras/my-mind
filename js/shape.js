@@ -2,14 +2,6 @@ MM.Shape = Object.create(MM.Repo, {
 	VERTICAL_OFFSET: {value: 0.5},
 });
 
-MM.Shape.toJSON = function(data) {
-	return this.id;
-}
-
-MM.Shape.fromJSON = function(data) {
-	return this.getById(data);
-}
-
 MM.Shape.set = function(item) {
 	item.getDOM().node.classList.add("shape-"+this.id);
 	return this;

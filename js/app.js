@@ -63,7 +63,7 @@ MM.App = {
 				this._syncPort();
 			break;
 
-			case "item-update":
+			case "item-change":
 				if (this.map && publisher == this.map.getRoot()) {
 					document.title = this.map.getName() + " :: My Mind";
 				}
@@ -124,9 +124,11 @@ MM.App = {
 		this._port.addEventListener("click", this);
 		window.addEventListener("resize", this);
 		MM.subscribe("ui-change", this);
-		MM.subscribe("item-update", this);
+		MM.subscribe("item-change", this);
+		
 
 		this._syncPort();
+		this.setMap(new MM.Map());
 	},
 
 	_syncPort: function() {

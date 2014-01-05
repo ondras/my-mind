@@ -9,16 +9,17 @@ MM.Map = function(options) {
 	this._position = [0, 0];
 	this._id = MM.generateId();
 
-	var root = this.createItem().setText(o.root).setLayout(o.layout);
-	this.setRoot(root);
+	this._root = this.createItem().setText(o.root).setLayout(o.layout);
 }
 
-MM.Map.fromJSON = function(data) {
-	var map = new this();
-	if (data.id) { map._id = data.id; } /* FIXME */
-	var root = MM.Item.fromJSON(data.root, map);
-	map.setRoot(root);
-	return map;
+MM.Map.fromJSON = function(data) { /* fixme je nutna tovarni metoda? */
+	return new this().fromJSON(data);
+}
+
+MM.Map.prototype.fromJSON = function(data) {
+	if (data.id) { this._id = data.id; }
+	this._root = MM.Item.fromJSON(data.root, this);
+	return this;
 }
 
 MM.Map.prototype.toJSON = function() {
@@ -35,11 +36,6 @@ MM.Map.prototype.createItem = function() {
 
 MM.Map.prototype.isVisible = function() {
 	return this._visible;
-}
-
-MM.Map.prototype.setRoot = function(root) {
-	this._root = root;
-	return this;
 }
 
 MM.Map.prototype.getRoot = function() {

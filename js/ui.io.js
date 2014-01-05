@@ -48,7 +48,7 @@ MM.UI.IO.prototype.restore = function() {
 			return;
 		} catch (e) { }
 	}
-	
+
 	if (parts.map) { /* opened with a URL link */
 		var xhr = new XMLHttpRequest();
 		xhr.open("get", parts.map, true);

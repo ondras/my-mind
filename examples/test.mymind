@@ -1,10 +1,7 @@
 {
   "root": {
     "text": "This is <s>Sparta</s> Root",
-    "side": null,
-    "color": null,
     "layout": "map",
-    "shape": null,
     "children": [
       {
         "text": "right 1",
@@ -14,35 +11,16 @@
         "shape": "box",
         "children": [
           {
-            "text": "right 1.1",
-            "side": null,
-            "color": null,
-            "layout": null,
-            "shape": null,
-            "children": []
+            "text": "right 1.1"
           },
           {
-            "text": "right 1.2 zejo",
-            "side": null,
-            "color": null,
-            "layout": null,
-            "shape": null,
-            "children": []
+            "text": "right 1.2 zejo"
           },
           {
             "text": "right 1.3 very long",
-            "side": null,
-            "color": null,
-            "layout": null,
-            "shape": null,
             "children": [
               {
-                "text": "right 1.3.1",
-                "side": null,
-                "color": null,
-                "layout": null,
-                "shape": null,
-                "children": []
+                "text": "right 1.3.1"
               }
             ]
           }
@@ -51,59 +29,28 @@
       {
         "text": "left 1",
         "side": "left",
-        "color": null,
-        "layout": null,
-        "shape": null,
         "children": [
           {
-            "text": "left 1.1",
-            "side": null,
-            "color": null,
-            "layout": null,
-            "shape": null,
-            "children": []
+            "text": "left 1.1"
           },
           {
             "text": "left 1.2\nnewline jak cyp",
-            "side": null,
-            "color": null,
-            "layout": null,
-            "shape": null,
             "children": [
               {
-                "text": "left 1.2.1",
-                "side": null,
-                "color": null,
-                "layout": null,
-                "shape": null,
-                "children": []
+                "text": "left 1.2.1"
               }
             ]
           },
           {
             "text": "left 1.3",
-            "side": null,
-            "color": null,
-            "layout": null,
-            "shape": null,
             "children": [
               {
-                "text": "left 1.3.1",
-                "side": null,
-                "color": null,
-                "layout": null,
-                "shape": null,
-                "children": []
+                "text": "left 1.3.1"
               }
             ]
           },
           {
-            "text": "left 1.4",
-            "side": null,
-            "color": null,
-            "layout": null,
-            "shape": null,
-            "children": []
+            "text": "left 1.4"
           }
         ]
       },
@@ -111,41 +58,21 @@
         "text": "right 2",
         "side": "right",
         "color": "#f33",
-        "layout": null,
-        "shape": null,
         "children": [
           {
-            "text": "right 2.1",
-            "side": null,
-            "color": null,
-            "layout": null,
-            "shape": null,
-            "children": []
+            "text": "right 2.1"
           },
           {
-            "text": "right 2.2",
-            "side": null,
-            "color": null,
-            "layout": null,
-            "shape": null,
-            "children": []
+            "text": "right 2.2"
           }
         ]
       },
       {
         "text": "left 2 veri long k?",
         "side": "left",
-        "color": null,
-        "layout": null,
-        "shape": null,
         "children": [
           {
-            "text": "left 2.1",
-            "side": null,
-            "color": null,
-            "layout": null,
-            "shape": null,
-            "children": []
+            "text": "left 2.1"
           }
         ]
       }

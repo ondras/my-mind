@@ -9,7 +9,7 @@ MM.UI = function() {
 	this._shape = new MM.UI.Shape();
 	this._color = new MM.UI.Color();
 		
-	MM.subscribe("item-update", this);
+	MM.subscribe("item-change", this);
 	MM.subscribe("item-select", this);
 
 	this._toggleVisibility();
@@ -21,7 +21,7 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 			this._update();
 		break;
 
-		case "item-update":
+		case "item-change":
 			if (publisher == MM.App.current) { this._update(); }
 		break;
 	}
