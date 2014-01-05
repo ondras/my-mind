@@ -30,12 +30,12 @@ MM.UI.IO.prototype.restore = function() {
 	});
 
 	var backend = MM.UI.Backend.getById(parts.b);
-	if (backend) { 
+	if (backend) { /* saved backend info */
 		backend.setState(parts); 
 		return;
 	}
 
-	if (parts.state) {
+	if (parts.state) { /* opened from gdrive */
 		try {
 			var state = JSON.parse(parts.state);
 			if (state.action == "open") {
@@ -45,7 +45,21 @@ MM.UI.IO.prototype.restore = function() {
 				};
 				MM.UI.Backend.GDrive.setState(state);
 			}
+			return;
 		} catch (e) { }
+	}
+	
+	if (parts.map) { /* opened with a URL link */
+		var xhr = new XMLHttpRequest();
+		xhr.open("get", parts.map, true);
+		Promise.send(xhr).then(
+			function(xhr) {
+				var json = MM.Format.JSON.from(xhr.responseText);
+				var map = MM.Map.fromJSON(json);
+				MM.App.setMap(map);
+			}
+		);
+		return;
 	}
 }
 
