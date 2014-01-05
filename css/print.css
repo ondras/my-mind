@@ -1,0 +1,7 @@
+.ui, #toggle { 
+	display: none;
+}
+
+#port > .item {
+	position: static;
+}

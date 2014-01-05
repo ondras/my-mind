@@ -1,5 +1,6 @@
 @import url(ui.css);
 @import url(shape.css);
+@import url(print.css) print;
 
 html, body {
 	margin: 0;
