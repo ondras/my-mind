@@ -1,10 +1,10 @@
-MM.Layout.FreeMind = Object.create(MM.Layout.Graph, {
-	id: {value:"freemind"},
-	label: {value:"FreeMind"}
+MM.Layout.Map = Object.create(MM.Layout.Graph, {
+	id: {value:"map"},
+	label: {value:"Map"}
 });
-MM.Layout.ALL.push(MM.Layout.FreeMind);
+MM.Layout.ALL.push(MM.Layout.Map);
 
-MM.Layout.FreeMind.update = function(item) {
+MM.Layout.Map.update = function(item) {
 	if (item.getParent()) {
 		var side = this.getChildDirection(item);
 		var name = side.charAt(0).toUpperCase() + side.substring(1);
@@ -17,7 +17,7 @@ MM.Layout.FreeMind.update = function(item) {
 /**
  * @param {MM.Item} item Child node
  */
-MM.Layout.FreeMind.getChildDirection = function(item) {
+MM.Layout.Map.getChildDirection = function(item) {
 	while (item.getParent().getParent()) {
 		item = item.getParent();
 	}
@@ -40,7 +40,7 @@ MM.Layout.FreeMind.getChildDirection = function(item) {
 	return item.getSide();
 }
 
-MM.Layout.FreeMind.pickSibling = function(item, dir) {
+MM.Layout.Map.pickSibling = function(item, dir) {
 	var parent = item.getParent();
 	if (!parent) { return item; }
 
@@ -58,7 +58,7 @@ MM.Layout.FreeMind.pickSibling = function(item, dir) {
 	return children[index];
 }
 
-MM.Layout.FreeMind._layoutRoot = function(item) {
+MM.Layout.Map._layoutRoot = function(item) {
 	var dom = item.getDOM();
 
 	var children = item.getChildren();
@@ -101,7 +101,7 @@ MM.Layout.FreeMind._layoutRoot = function(item) {
 	this._drawRootConnectors(item, "right", childrenRight);
 }
 
-MM.Layout.FreeMind._drawRootConnectors = function(item, side, children) {
+MM.Layout.Map._drawRootConnectors = function(item, side, children) {
 	if (children.length == 0) { return; }
 
 	var dom = item.getDOM();

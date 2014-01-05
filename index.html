@@ -18,7 +18,7 @@
 		<script src="js/layout.js"></script>
 		<script src="js/layout.graph.js"></script>
 		<script src="js/layout.tree.js"></script>
-		<script src="js/layout.freemind.js"></script>
+		<script src="js/layout.map.js"></script>
 		<script src="js/shape.js"></script>
 		<script src="js/shape.underline.js"></script>
 		<script src="js/shape.box.js"></script>
@@ -171,7 +171,7 @@
 		var map = new MM.Map({root:"This is <s>Sparta</s> Root"});
 
 		var root = map.getRoot();
-		root.setLayout(MM.Layout.FreeMind);
+		root.setLayout(MM.Layout.Map);
 		
 		var r1 = root.insertChild().setText("right 1").setShape(MM.Shape.Box);
 		r1.setLayout(MM.Layout.Tree.Right);
@@ -204,8 +204,10 @@
 TODO:
   shortterm:
     - clipboard support
-    - doladit freemind layout, prejmenovat jej
+    - doladit freemind layout
     - mup format
+    - firebase auth
+    - url load
 
   longterm:
     - firebase realtime
@@ -213,8 +215,6 @@ TODO:
     - yes/no
     - values, functions
     - (custom) icons
-    - firebase auth
-    - url backend
 
   bugs:
     - commandy bez map hniji

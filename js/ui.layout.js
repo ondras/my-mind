@@ -1,7 +1,7 @@
 MM.UI.Layout = function() {
 	this._select = document.querySelector("#layout");
 
-	this._select.appendChild(MM.Layout.FreeMind.buildOption());
+	this._select.appendChild(MM.Layout.Map.buildOption());
 
 	var label = this._buildGroup("Graph");
 	label.appendChild(MM.Layout.Graph.Right.buildOption());
@@ -23,7 +23,7 @@ MM.UI.Layout.prototype.update = function() {
 	this._select.value = value;
 	
 	this._getOption("").disabled = !MM.App.current.getParent();
-	this._getOption(MM.Layout.FreeMind.id).disabled = !!MM.App.current.getParent();
+	this._getOption(MM.Layout.Map.id).disabled = !!MM.App.current.getParent();
 }
 
 MM.UI.Layout.prototype.handleEvent = function(e) {
