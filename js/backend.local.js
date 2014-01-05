@@ -13,7 +13,9 @@ MM.Backend.Local.save = function(data, id, name) {
 }
 
 MM.Backend.Local.load = function(id) {
-	return localStorage.getItem(this.prefix + id);
+	var data = localStorage.getItem(this.prefix + id);
+	if (!data) { throw new Error("There is no such saved map"); }
+	return data;
 }
 
 MM.Backend.Local.remove = function(id) {

@@ -42,7 +42,12 @@ MM.Backend.Firebase.load = function(id) {
 	var promise = new Promise();
 	
 	this.ref.child("data/" + id).once("value", function(snap) {
-		promise.fulfill(snap.val());
+		var data = snap.val();
+		if (data) {
+			promise.fulfill(data);
+		} else {
+			promise.reject(new Error("There is no such saved map"));
+		}
 	});
 	return promise;
 }

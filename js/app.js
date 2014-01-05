@@ -10,6 +10,7 @@ MM.App = {
 	io: null,
 	help: null,
 	_port: null,
+	_throbber: null,
 	_mouse: [0, 0],
 	_fontSize: 100,
 	
@@ -107,8 +108,13 @@ MM.App = {
 		} /* switch */
 	},
 	
+	setThrobber: function(visible) {
+		this._throbber.classList[visible ? "add" : "remove"]("visible");
+	},
+
 	init: function() {
 		this._port = document.querySelector("#port");
+		this._throbber = document.querySelector("#throbber");
 		this.ui = new MM.UI();
 		this.io = new MM.UI.IO();
 		this.help = new MM.UI.Help();
@@ -127,6 +133,7 @@ MM.App = {
 		this.portSize = [window.innerWidth - this.ui.getWidth(), window.innerHeight];
 		this._port.style.width = this.portSize[0] + "px";
 		this._port.style.height = this.portSize[1] + "px";
+		this._throbber.style.right = (20 + this.ui.getWidth())+ "px";
 		if (this.map) { this.map.ensureItemVisibility(this.current); }
 	}
 }

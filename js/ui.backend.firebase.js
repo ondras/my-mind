@@ -41,9 +41,9 @@ MM.UI.Backend.Firebase.handleEvent = function(e) {
 		case this._remove:
 			var id = this._list.value;
 			if (!id) { break; }
-			MM.App.ui.setThrobber(true);
+			MM.App.setThrobber(true);
 			this._backend.remove(id).then(
-				function() { MM.App.ui.setThrobber(false); },
+				function() { MM.App.setThrobber(false); },
 				this._error.bind(this)
 			);
 		break;
@@ -81,7 +81,7 @@ MM.UI.Backend.Firebase._action = function() {
 }
 
 MM.UI.Backend.Firebase.save = function() {
-	MM.App.ui.setThrobber(true);
+	MM.App.setThrobber(true);
 
 	var map = MM.App.map;
 	this._backend.save(map.toJSON(), map.getId(), map.getName()).then(
@@ -95,7 +95,7 @@ MM.UI.Backend.Firebase.load = function() {
 }
 
 MM.UI.Backend.Firebase._load = function(id) {
-	MM.App.ui.setThrobber(true);
+	MM.App.setThrobber(true);
 
 	this._backend.load(id).then(
 		this._loadDone.bind(this),

@@ -7,7 +7,6 @@
 	width: 200px;
 	box-shadow: 0 0 2px 2px #666;
 	transition: all 250ms;
-	overflow-x: hidden;
 	overflow-y: auto;
 }
 
@@ -133,17 +132,4 @@
 
 .ui#help table {
 	font-size: 80%;
-}
-
-.ui #throbber {
-	width: 50px;
-	height: 50px;
-	background-image: url(throbber.gif);
-	position: absolute;
-	right: 220px;
-	top: 20px;
-}
-
-.ui #throbber:not(.visible) {
-	opacity: 0;
 }

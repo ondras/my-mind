@@ -3,7 +3,7 @@ MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
 });
 
 MM.UI.Backend.GDrive.save = function() {
-	MM.App.ui.setThrobber(true);
+	MM.App.setThrobber(true);
 
 	var data = MM.Format.JSON.to(MM.App.map.toJSON());
 	var name = MM.App.map.getName() + "." + MM.Format.JSON.extension;
@@ -15,7 +15,7 @@ MM.UI.Backend.GDrive.save = function() {
 }
 
 MM.UI.Backend.GDrive.load = function() {
-	MM.App.ui.setThrobber(true);
+	MM.App.setThrobber(true);
 
 	this._backend.pick().then(
 		this._picked.bind(this),
@@ -24,10 +24,10 @@ MM.UI.Backend.GDrive.load = function() {
 }
 
 MM.UI.Backend.GDrive._picked = function(id) {
-	MM.App.ui.setThrobber(false);
+	MM.App.setThrobber(false);
 	if (!id) { return;  }
 
-	MM.App.ui.setThrobber(true);
+	MM.App.setThrobber(true);
 
 	this._backend.load(id).then(
 		this._loadDone.bind(this),

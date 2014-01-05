@@ -76,8 +76,8 @@ MM.UI.Backend.Local._load = function(id) {
 	try {
 		var data = this._backend.load(id);
 		var json = MM.Format.JSON.from(data);
+		this._loadDone(json);
 	} catch (e) {
 		this._error(e);
 	}
-	this._loadDone(json);
 }
