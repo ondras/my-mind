@@ -22,8 +22,8 @@ MM.UI.Layout.prototype.update = function() {
 	if (layout) { value = layout.id; }
 	this._select.value = value;
 	
-	this._getOption("").disabled = !MM.App.current.getParent();
-	this._getOption(MM.Layout.Map.id).disabled = !!MM.App.current.getParent();
+	this._getOption("").disabled = MM.App.current.isRoot();
+	this._getOption(MM.Layout.Map.id).disabled = !MM.App.current.isRoot();
 }
 
 MM.UI.Layout.prototype.handleEvent = function(e) {

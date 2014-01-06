@@ -9,7 +9,7 @@ MM.Map = function(options) {
 	this._position = [0, 0];
 	this._id = MM.generateId();
 
-	this._root = this.createItem().setText(o.root).setLayout(o.layout);
+	this._setRoot(new MM.Item().setText(o.root).setLayout(o.layout));
 }
 
 MM.Map.fromJSON = function(data) { /* fixme je nutna tovarni metoda? */
@@ -18,7 +18,7 @@ MM.Map.fromJSON = function(data) { /* fixme je nutna tovarni metoda? */
 
 MM.Map.prototype.fromJSON = function(data) {
 	if (data.id) { this._id = data.id; }
-	this._root = MM.Item.fromJSON(data.root, this);
+	this._setRoot(MM.Item.fromJSON(data.root));
 	return this;
 }
 
@@ -28,10 +28,6 @@ MM.Map.prototype.toJSON = function() {
 		id: this._id
 	};
 	return data;
-}
-
-MM.Map.prototype.createItem = function() {
-	return new MM.Item(this);
 }
 
 MM.Map.prototype.isVisible = function() {
@@ -114,6 +110,10 @@ MM.Map.prototype.ensureItemVisibility = function(item) {
 	}
 }
 
+MM.Map.prototype.getParent = function() {
+	return null;
+}
+
 MM.Map.prototype.getName = function() {
 	var name = this._root.getText();
 	return name.replace(/\n/g, "").replace(/<.*?>/g, "").trim();
@@ -180,3 +180,7 @@ MM.Map.prototype._moveTo = function(left, top) {
 	node.style.top = top + "px";
 }
 
+MM.Map.prototype._setRoot = function(item) {
+	this._root = item;
+	this._root.setParent(this);
+}

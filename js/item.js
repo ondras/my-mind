@@ -1,5 +1,4 @@
-MM.Item = function(map) {
-	this._map = map;
+MM.Item = function() {
 	this._parent = null;
 	this._children = [];
 
@@ -26,9 +25,9 @@ MM.Item = function(map) {
 
 MM.Item.COLOR = "#999";
 
-MM.Item.fromJSON = function(data, map) {
+MM.Item.fromJSON = function(data) {
 	/* FIXME potrebujeme tovarnu? */
-	return new this(map).fromJSON(data);
+	return new this().fromJSON(data);
 }
 
 MM.Item.prototype.fromJSON = function(data) {
@@ -39,7 +38,7 @@ MM.Item.prototype.fromJSON = function(data) {
 	this.setLayout(MM.Layout.getById(data.layout));
 	this.setShape(MM.Shape.getById(data.shape));
 	(data.children || []).forEach(function(child) {
-		this.insertChild(MM.Item.fromJSON(child, this._map));
+		this.insertChild(MM.Item.fromJSON(child));
 	}, this);
 	return this;
 }
@@ -62,7 +61,8 @@ MM.Item.prototype.toJSON = function() {
 
 MM.Item.prototype.update = function(doNotRecurse) {
 	MM.publish("item-change", this);
-	if (!this._map.isVisible()) { return; }
+	var map = this.getMap();
+	if (!map || !map.isVisible()) { return; }
 
 	if (this._autoShape) { /* check for changed auto-shape */
 		var autoShape = this._getAutoShape();
@@ -75,7 +75,7 @@ MM.Item.prototype.update = function(doNotRecurse) {
 
 	this.getLayout().update(this);
 	this.getShape().update(this);
-	if (this._parent && !doNotRecurse) { this._parent.update(); }
+	if (!this.isRoot() && !doNotRecurse) { this._parent.update(); }
 }
 
 MM.Item.prototype.updateSubtree = function(isSubChild) {
@@ -115,7 +115,7 @@ MM.Item.prototype.setColor = function(color) {
 }
 
 MM.Item.prototype.getColor = function() {
-	return this._color || (this._parent ? this._parent.getColor() : MM.Item.COLOR);
+	return this._color || (this._parent && !this.isRoot() ? this._parent.getColor() : MM.Item.COLOR);
 }
 
 MM.Item.prototype.getOwnColor = function() {
@@ -142,7 +142,7 @@ MM.Item.prototype.getShape = function() {
 	if (this._shape) { return this._shape; }
 	var depth = 0;
 	var node = this;
-	while (node.getParent()) {
+	while (!node.isRoot()) {
 		depth++;
 		node = node.getParent();
 	}
@@ -179,11 +179,20 @@ MM.Item.prototype.getDOM = function() {
 }
 
 MM.Item.prototype.getMap = function() {
-	return this._map;
+	var item = this._parent;
+	while (item) {
+		if (item instanceof MM.Map) { return item; }
+		item = item.getParent();
+	}
+	return null;
 }
 
 MM.Item.prototype.getParent = function() {
 	return this._parent;
+}
+
+MM.Item.prototype.isRoot = function() {
+	return (this._parent instanceof MM.Map);
 }
 
 MM.Item.prototype.setParent = function(parent) {
@@ -199,7 +208,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 
 	var newChild = false;
 	if (!child) { 
-		child = this._map.createItem(); 
+		child = new MM.Item();
 		newChild = true;
 	}
 	
@@ -250,7 +259,7 @@ MM.Item.prototype.stopEditing = function() {
 MM.Item.prototype._getAutoShape = function() {
 	var depth = 0;
 	var node = this;
-	while (node.getParent()) {
+	while (node && !node.isRoot()) { /* fixme proc se vola mimo strom? */
 		depth++;
 		node = node.getParent();
 	}

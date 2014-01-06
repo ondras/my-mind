@@ -5,12 +5,12 @@ MM.Layout.Map = Object.create(MM.Layout.Graph, {
 MM.Layout.ALL.push(MM.Layout.Map);
 
 MM.Layout.Map.update = function(item) {
-	if (item.getParent()) {
+	if (item.isRoot()) {
+		this._layoutRoot(item);
+	} else {
 		var side = this.getChildDirection(item);
 		var name = side.charAt(0).toUpperCase() + side.substring(1);
 		MM.Layout.Graph[name].update(item);
-	} else {
-		this._layoutRoot(item);
 	}
 }
 
@@ -18,11 +18,11 @@ MM.Layout.Map.update = function(item) {
  * @param {MM.Item} item Child node
  */
 MM.Layout.Map.getChildDirection = function(item) {
-	while (item.getParent().getParent()) {
+	while (!item.getParent().isRoot()) {
 		item = item.getParent();
 	}
-
 	/* item is now the sub-root node */
+
 	var side = item.getSide();
 	if (side) { return side; } /* FIXME test for left/right values? */
 
@@ -41,11 +41,11 @@ MM.Layout.Map.getChildDirection = function(item) {
 }
 
 MM.Layout.Map.pickSibling = function(item, dir) {
-	var parent = item.getParent();
-	if (!parent) { return item; }
+	if (item.isRoot()) { return item; }
 
+	var parent = item.getParent();
 	var children = parent.getChildren();
-	if (!parent.getParent()) {
+	if (parent.isRoot()) {
 		var side = this.getChildDirection(item);
 		children = children.filter(function(child) {
 			return (this.getChildDirection(child) == side);

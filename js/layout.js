@@ -42,10 +42,9 @@ MM.Layout.pick = function(item, dir) {
 		if (this.getChildDirection(child) == dir) { return child; }
 	}
 
-	var parent = item.getParent();
-	if (!parent) { return item; }
+	if (item.isRoot()) { return item; }
 	
-	var parentLayout = parent.getLayout();
+	var parentLayout = item.getParent().getLayout();
 	var thisChildDirection = parentLayout.getChildDirection(item);
 	if (thisChildDirection == dir) {
 		return item;
@@ -57,10 +56,9 @@ MM.Layout.pick = function(item, dir) {
 }
 
 MM.Layout.pickSibling = function(item, dir) {
-	var parent = item.getParent();
-	if (!parent) { return item; }
+	if (item.isRoot()) { return item; }
 
-	var children = parent.getChildren();
+	var children = item.getParent().getChildren();
 	var index = children.indexOf(item);
 	index += dir;
 	index = (index+children.length) % children.length;

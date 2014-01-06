@@ -27,7 +27,7 @@ MM.Command.SelectRoot = Object.create(MM.Command, {
 });
 MM.Command.SelectRoot.execute = function() {
 	var item = MM.App.current;
-	while (item.getParent()) { item = item.getParent(); }
+	while (!item.isRoot()) { item = item.getParent(); }
 	MM.App.select(item);
 }
 
@@ -36,7 +36,7 @@ MM.Command.SelectParent = Object.create(MM.Command, {
 	keys: {value: [{keyCode: 8}]}
 });
 MM.Command.SelectParent.execute = function() {
-	var item = MM.App.current;
-	MM.App.select(item.getParent() || item);
+	if (MM.App.current.isRoot()) { return; }
+	MM.App.select(MM.App.current.getParent());
 }
 

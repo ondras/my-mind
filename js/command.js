@@ -39,12 +39,12 @@ MM.Command.InsertSibling = Object.create(MM.Command, {
 });
 MM.Command.InsertSibling.execute = function() {
 	var item = MM.App.current;
-	var parent = item.getParent();
-	if (parent) {
+	if (item.isRoot()) {
+		var action = new MM.Action.InsertItem(item, item.getChildren().length);
+	} else {
+		var parent = item.getParent();
 		var index = parent.getChildren().indexOf(item);
 		var action = new MM.Action.InsertItem(parent, index+1);
-	} else {
-		var action = new MM.Action.InsertItem(item, item.getChildren().length);
 	}
 	MM.App.action(action);
 
@@ -68,7 +68,7 @@ MM.Command.Delete = Object.create(MM.Command, {
 	keys: {value: [{keyCode: 46}]}
 });
 MM.Command.Delete.isValid = function() {
-	return MM.Command.isValid.call(this) && MM.App.current.getParent();
+	return MM.Command.isValid.call(this) && !MM.App.current.isRoot();
 }
 MM.Command.Delete.execute = function() {
 	var action = new MM.Action.RemoveItem(MM.App.current);
@@ -84,7 +84,7 @@ MM.Command.Swap = Object.create(MM.Command, {
 });
 MM.Command.Swap.execute = function(e) {
 	var current = MM.App.current;
-	if (!current.getParent() || current.getParent().getChildren().length < 2) { return; }
+	if (current.isRoot() || current.getParent().getChildren().length < 2) { return; }
 
 	var diff = (e.keyCode == 33 ? -1 : 1);
 	var action = new MM.Action.Swap(MM.App.current, diff);
