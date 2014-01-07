@@ -1,10 +1,11 @@
 MM.Backend.GDrive = Object.create(MM.Backend, {
 	id: {value: "gdrive"},
 	label: {value: "Google Drive"},
-	scope: {value: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.install"},
+	scope: {value: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.install"},
 	clientId: {value: "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com"},
 	apiKey: {value: "AIzaSyCzu1qVxlgufneOYpBgDJXN6Z9SNVcHYWM"},
-	fileId: {value: null, writable: true}
+	fileId: {value: null, writable: true},
+	name: {value: "", writable: true}
 });
 
 MM.Backend.GDrive.reset = function() {
@@ -99,6 +100,7 @@ MM.Backend.GDrive._load = function(id) {
 
 	request.execute(function(response) {
 		if (response && response.downloadUrl) {
+			this.name = response.title;
 			var xhr = new XMLHttpRequest();
 			xhr.open("get", response.downloadUrl, true);
 			xhr.setRequestHeader("Authorization", "Bearer " + gapi.auth.getToken().access_token);
@@ -109,7 +111,7 @@ MM.Backend.GDrive._load = function(id) {
 		} else {
 			promise.reject(response && response.error || new Error("Failed to download file"));
 		}
-	});
+	}.bind(this));
 
 	return promise;
 }

@@ -1,6 +1,7 @@
 MM.Layout.Map = Object.create(MM.Layout.Graph, {
 	id: {value:"map"},
-	label: {value:"Map"}
+	label: {value:"Map"},
+	LINE_THICKNESS: {value:8}
 });
 MM.Layout.ALL.push(MM.Layout.Map);
 
@@ -111,18 +112,22 @@ MM.Layout.Map._drawRootConnectors = function(item, side, children) {
 
 	var x1 = dom.content.offsetLeft + dom.content.offsetWidth/2;
 	var y1 = item.getShape().getVerticalAnchor(item);
+	var half = this.LINE_THICKNESS/2;
 
 	for (var i=0;i<children.length;i++) {
 		var child = children[i];
 
 		var x2 = this._getChildAnchor(child, side);
 		var y2 = child.getShape().getVerticalAnchor(child) + child.getDOM().node.offsetTop;
+		var angle = Math.atan2(y2-y1, x2-x1) + Math.PI/2;
+		var dx = Math.cos(angle) * half;
+		var dy = Math.sin(angle) * half;
 
 		ctx.fillStyle = ctx.strokeStyle = child.getColor();
 		ctx.beginPath();
-		ctx.moveTo(x1-R, y1);
+		ctx.moveTo(x1-dx, y1-dy);
 		ctx.quadraticCurveTo((x2+x1)/2, y2, x2, y2);
-		ctx.quadraticCurveTo((x2+x1)/2, y2, x1+R, y1);
+		ctx.quadraticCurveTo((x2+x1)/2, y2, x1+dx, y1+dy);
 		ctx.fill();
 		ctx.stroke();
 	}

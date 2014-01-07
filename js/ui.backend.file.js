@@ -9,6 +9,7 @@ MM.UI.Backend.File.init = function(select) {
 	this._format.appendChild(MM.Format.JSON.buildOption());
 	this._format.appendChild(MM.Format.FreeMind.buildOption());
 	this._format.appendChild(MM.Format.MMA.buildOption());
+	this._format.appendChild(MM.Format.Mup.buildOption());
 	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
 	this._format.addEventListener("change", this);
 }
@@ -46,13 +47,7 @@ MM.UI.Backend.File.load = function() {
 
 MM.UI.Backend.File._loadDone = function(data) {
 	try {
-		var format = MM.Format.JSON;
-
-		if (this._backend.extension) {
-			format = MM.Format.getByProperty("extension", this._backend.extension);
-			/* FIXME nenalezena pripona */
-		}
-
+		var format = MM.Format.getByName(this._backend.name);
 		var json = format.from(data);
 	} catch (e) { 
 		this._error(e);

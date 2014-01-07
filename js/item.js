@@ -32,6 +32,7 @@ MM.Item.fromJSON = function(data) {
 
 MM.Item.prototype.fromJSON = function(data) {
 	/* FIXME bez setteru, testovat pritomnost? */
+	if (data.id) { this._id = data.id; }
 	this.setText(data.text);
 	this.setSide(data.side || null);
 	this.setColor(data.color || null);
@@ -45,6 +46,7 @@ MM.Item.prototype.fromJSON = function(data) {
 
 MM.Item.prototype.toJSON = function() {
 	var data = {
+		id: this._id,
 		text: this.getText()
 	}
 	
