@@ -26,21 +26,24 @@ MM.Item = function() {
 MM.Item.COLOR = "#999";
 
 MM.Item.fromJSON = function(data) {
-	/* FIXME potrebujeme tovarnu? */
 	return new this().fromJSON(data);
 }
 
+/**
+ * Only when creating a new item. To merge existing items, use .mergeWith().
+ */
 MM.Item.prototype.fromJSON = function(data) {
-	/* FIXME bez setteru, testovat pritomnost? */
-	if (data.id) { this._id = data.id; }
 	this.setText(data.text);
-	this.setSide(data.side || null);
-	this.setColor(data.color || null);
-	this.setLayout(MM.Layout.getById(data.layout));
-	this.setShape(MM.Shape.getById(data.shape));
+	if (data.id) { this._id = data.id; }
+	if (data.side) { this._side = data.side; }
+	if (data.color) { this._color = data.color; }
+	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
+	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
+
 	(data.children || []).forEach(function(child) {
 		this.insertChild(MM.Item.fromJSON(child));
 	}, this);
+
 	return this;
 }
 
@@ -64,7 +67,7 @@ MM.Item.prototype.toJSON = function() {
 MM.Item.prototype.update = function(doNotRecurse) {
 	MM.publish("item-change", this);
 	var map = this.getMap();
-	if (!map || !map.isVisible()) { return; }
+	if (!map || !map.isVisible()) { return this; }
 
 	if (this._autoShape) { /* check for changed auto-shape */
 		var autoShape = this._getAutoShape();
@@ -78,19 +81,20 @@ MM.Item.prototype.update = function(doNotRecurse) {
 	this.getLayout().update(this);
 	this.getShape().update(this);
 	if (!this.isRoot() && !doNotRecurse) { this._parent.update(); }
+
+	return this;
 }
 
 MM.Item.prototype.updateSubtree = function(isSubChild) {
 	this._children.forEach(function(child) {
 		child.updateSubtree(true);
 	});
-	this.update(isSubChild);
+	return this.update(isSubChild);
 }
 
 MM.Item.prototype.setText = function(text) {
 	this._dom.content.innerHTML = text.replace(/\n/g, "<br/>");
-	this.update();
-	return this;
+	return this.update();
 }
 
 MM.Item.prototype.getText = function() {
@@ -112,12 +116,11 @@ MM.Item.prototype.getChildren = function() {
 
 MM.Item.prototype.setColor = function(color) {
 	this._color = color;
-	this.updateSubtree();
-	return this;
+	return this.updateSubtree();
 }
 
 MM.Item.prototype.getColor = function() {
-	return this._color || (this._parent && !this.isRoot() ? this._parent.getColor() : MM.Item.COLOR);
+	return this._color || (this._parent && !this.isRoot() ? this._parent.getColor() : MM.Item.COLOR); /* FIXME to smrdi */
 }
 
 MM.Item.prototype.getOwnColor = function() {
@@ -134,25 +137,11 @@ MM.Item.prototype.getOwnLayout = function() {
 
 MM.Item.prototype.setLayout = function(layout) {
 	this._layout = layout;
-	this.updateSubtree();	
-	return this;
+	return this.updateSubtree();	
 }
 
 MM.Item.prototype.getShape = function() {
 	return this._shape;
-
-	if (this._shape) { return this._shape; }
-	var depth = 0;
-	var node = this;
-	while (!node.isRoot()) {
-		depth++;
-		node = node.getParent();
-	}
-	switch (depth) {
-		case 0: return MM.Shape.Ellipse;
-		case 1: return MM.Shape.Box;
-		default: return MM.Shape.Underline;
-	}
 }
 
 MM.Item.prototype.getOwnShape = function() {
@@ -171,9 +160,7 @@ MM.Item.prototype.setShape = function(shape) {
 	}
 
 	this._shape.set(this);
-	this.update();
-
-	return this;
+	return this.update();
 }
 
 MM.Item.prototype.getDOM = function() {
@@ -199,7 +186,7 @@ MM.Item.prototype.isRoot = function() {
 
 MM.Item.prototype.setParent = function(parent) {
 	this._parent = parent;
-	return this;
+	return this.updateSubtree();
 }
 
 MM.Item.prototype.insertChild = function(child, index) {
@@ -219,10 +206,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	this._dom.children.insertBefore(child.getDOM().node, next);
 	this._children.splice(index, 0, child);
 	
-	child.setParent(this);
-	child.updateSubtree();
-
-	return child;
+	return child.setParent(this);
 }
 
 MM.Item.prototype.removeChild = function(child) {
@@ -237,8 +221,7 @@ MM.Item.prototype.removeChild = function(child) {
 		this._dom.children.parentNode.removeChild(this._dom.children);
 	}
 	
-	this.update();
-	return child;
+	return this.update();
 }
 
 MM.Item.prototype.startEditing = function() {

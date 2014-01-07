@@ -12,7 +12,7 @@ MM.Map = function(options) {
 	this._setRoot(new MM.Item().setText(o.root).setLayout(o.layout));
 }
 
-MM.Map.fromJSON = function(data) { /* fixme je nutna tovarni metoda? */
+MM.Map.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
 

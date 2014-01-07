@@ -64,7 +64,7 @@ MM.App = {
 			break;
 
 			case "item-change":
-				if (this.map && publisher == this.map.getRoot()) {
+				if (this.map && publisher.isRoot() && publisher.getMap() == this.map) {
 					document.title = this.map.getName() + " :: My Mind";
 				}
 			break;
