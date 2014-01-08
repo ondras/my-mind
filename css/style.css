@@ -1,0 +1,54 @@
+@import url(ui.css);
+@import url(shape.css);
+@import url(print.css) print;
+
+html, body {
+	margin: 0;
+	font-family: sans-serif;
+	overflow: hidden;
+	height: 100%;
+}
+
+ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+#port {
+	background-color: #eed;
+	overflow: hidden;
+	font-size: 15px;
+}
+
+#throbber {
+	width: 50px;
+	height: 50px;
+	background-image: url(throbber.gif);
+	position: fixed;
+	top: 20px;
+}
+
+#throbber:not(.visible) {
+	opacity: 0;
+}
+
+
+.item {
+	position: absolute;
+}
+
+.item.cut {
+	opacity: 0.5;
+}
+
+.text {
+	position: relative;
+	text-align: center;
+}
+
+canvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+}

@@ -1,0 +1,43 @@
+.text {
+	min-width: 0.5em;
+	min-height: 1.3em;
+	line-height: 1.3em;
+	outline: none;
+	display: inline-block;
+	white-space: pre;
+}
+
+.shape-box > .text {
+	padding: 0.15em 0.4em;
+	background-color: #fff;
+	border: 1px solid #666;
+	border-radius: 3px;
+}
+
+.shape-ellipse > .text {
+	background-color: #fff;
+	border: 1px solid #666;
+	border-radius: 50%;
+	padding: 0.5em 1em;
+}
+
+/* current */
+
+.current > .text {
+	background-color: #ffb;
+}
+
+/* root */
+
+#port > .item > .text {
+	font-weight: bold;
+	border-width: 2px;
+	font-size: 140%;
+}
+
+/* 1st children */
+
+#port > .item > .children > .item > .text {
+	border-width: 2px;
+	font-size: 120%;
+}
