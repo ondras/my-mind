@@ -114,8 +114,18 @@
 	box-shadow: 0 0 2px 3px #ccf;
 }
 
+.ui ~ #toggle:after {
+	content: "◀";
+	font-weight: bold;
+	font-size: 30px;
+}
+
 .ui.visible ~ #toggle {
 	box-shadow: inset 0 0 2px 3px #ccf;
+}
+
+.ui.visible ~ #toggle:after {
+	content: "▶";
 }
 
 .ui#help {

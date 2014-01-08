@@ -116,7 +116,8 @@ MM.Command.Load.execute = function() {
 }
 
 MM.Command.Center = Object.create(MM.Command, {
-	label: {value: "Center map"}
+	label: {value: "Center map"},
+	keys: {value: [{keyCode: 35}]}
 });
 MM.Command.Center.execute = function() {
 	MM.App.map.center();
@@ -155,6 +156,14 @@ MM.Command.Help = Object.create(MM.Command, {
 });
 MM.Command.Help.execute = function() {
 	MM.App.help.toggle();
+}
+
+MM.Command.UI = Object.create(MM.Command, {
+	label: {value: "Show/hide UI"},
+	keys: {value: [{charCode: "*".charCodeAt(0)}]}
+});
+MM.Command.UI.execute = function() {
+	MM.App.ui.toggle();
 }
 
 MM.Command.Pan = Object.create(MM.Command, {

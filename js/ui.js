@@ -12,7 +12,7 @@ MM.UI = function() {
 	MM.subscribe("item-change", this);
 	MM.subscribe("item-select", this);
 
-	this._toggleVisibility();
+	this.toggle();
 }
 
 MM.UI.prototype.handleMessage = function(message, publisher) {
@@ -32,7 +32,7 @@ MM.UI.prototype.handleEvent = function(e) {
 	if (e.target.nodeName.toLowerCase() != "select") { e.target.blur(); }
 
 	if (e.target == this._toggle) {
-		this._toggleVisibility();
+		this.toggle();
 		return;
 	}
 	
@@ -42,7 +42,7 @@ MM.UI.prototype.handleEvent = function(e) {
 	MM.Command[command].execute();
 }
 
-MM.UI.prototype._toggleVisibility = function() {
+MM.UI.prototype.toggle = function() {
 	this._node.classList.toggle("visible");
 	MM.publish("ui-change", this);
 }

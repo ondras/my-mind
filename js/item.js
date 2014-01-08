@@ -132,7 +132,7 @@ MM.Item.prototype.setColor = function(color) {
 }
 
 MM.Item.prototype.getColor = function() {
-	return this._color || (this._parent && !this.isRoot() ? this._parent.getColor() : MM.Item.COLOR); /* FIXME to smrdi */
+	return this._color || (this.isRoot() ? MM.Item.COLOR : this._parent.getColor());
 }
 
 MM.Item.prototype.getOwnColor = function() {
@@ -256,7 +256,7 @@ MM.Item.prototype.stopEditing = function() {
 MM.Item.prototype._getAutoShape = function() {
 	var depth = 0;
 	var node = this;
-	while (node && !node.isRoot()) { /* fixme proc se vola mimo strom? */
+	while (!node.isRoot()) {
 		depth++;
 		node = node.getParent();
 	}

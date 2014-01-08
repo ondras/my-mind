@@ -163,7 +163,6 @@ MM.Backend.GDrive._connect = function() {
 }
 
 MM.Backend.GDrive._loadGapi = function() {
-	/* FIXME jen poprve */
 	var promise = new Promise();
 	if (window.gapi) { return promise.fulfill(); }
 	

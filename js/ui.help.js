@@ -6,6 +6,7 @@ MM.UI.Help = function() {
 		32: "Spacebar",
 		33: "PgUp",
 		34: "PgDown",
+		35: "End",
 		36: "Home",
 		37: "←",
 		38: "↑",
@@ -70,6 +71,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "SaveAs");
 	this._buildRow(t, "Load");
 	this._buildRow(t, "Help");
+	this._buildRow(t, "UI");
 }
 
 MM.UI.Help.prototype._buildRow = function(table, commandName) {

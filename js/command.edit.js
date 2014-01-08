@@ -11,7 +11,7 @@ MM.Command.Edit.execute = function() {
 }
 
 MM.Command.Finish = Object.create(MM.Command, {
-	keys: {value: [{keyCode: 13, altKey:false, ctrlKey:false}]},
+	keys: {value: [{keyCode: 13, altKey:false, ctrlKey:false, shiftKey:false}]},
 	editMode: {value: true}
 });
 MM.Command.Finish.execute = function() {
@@ -28,7 +28,7 @@ MM.Command.Finish.execute = function() {
 MM.Command.Newline = Object.create(MM.Command, {
 	label: {value: "Line break"},
 	keys: {value: [
-		{keyCode: 13, altKey:true},
+		{keyCode: 13, shiftKey:true},
 		{keyCode: 13, ctrlKey:true}
 	]},
 	editMode: {value: true}

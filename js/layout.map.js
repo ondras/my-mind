@@ -25,7 +25,7 @@ MM.Layout.Map.getChildDirection = function(item) {
 	/* item is now the sub-root node */
 
 	var side = item.getSide();
-	if (side) { return side; } /* FIXME test for left/right values? */
+	if (side) { return side; }
 
 	var counts = {left:0, right:0};
 	var children = item.getParent().getChildren();
