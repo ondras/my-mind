@@ -33,11 +33,7 @@ MM.App = {
 		this.historyIndex = 0;
 
 		this.map = map;
-		
-		if (this.map) {
-			this.map.show(this._port);
-			this.select(map.getRoot());
-		}
+		this.map.show(this._port);
 	},
 	
 	select: function(item) {
@@ -53,7 +49,7 @@ MM.App = {
 	adjustFontSize: function(diff) {
 		this._fontSize = Math.max(30, this._fontSize + 10*diff);
 		this._port.style.fontSize = this._fontSize + "%";
-		this.map.getRoot().updateSubtree();
+		this.map.update();
 		this.map.ensureItemVisibility(this.current);
 	},
 	
@@ -64,7 +60,7 @@ MM.App = {
 			break;
 
 			case "item-change":
-				if (this.map && publisher.isRoot() && publisher.getMap() == this.map) {
+				if (publisher.isRoot() && publisher.getMap() == this.map) {
 					document.title = this.map.getName() + " :: My Mind";
 				}
 			break;
@@ -78,13 +74,11 @@ MM.App = {
 			break;
 
 			case "click":
-				if (!this.map) { return; }
 				var item = this.map.getItemFor(e.target);
 				if (item) { this.select(item); }
 			break;
 			
 			case "mousedown":
-				if (!this.map) { return; }
 				var item = this.map.getItemFor(e.target);
 				if (item) { return; }
 				this._port.style.cursor = "move";
@@ -126,7 +120,6 @@ MM.App = {
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
 		
-
 		this._syncPort();
 		this.setMap(new MM.Map());
 	},

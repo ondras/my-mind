@@ -34,8 +34,9 @@ MM.Map.prototype.isVisible = function() {
 	return this._visible;
 }
 
-MM.Map.prototype.getRoot = function() {
-	return this._root;
+MM.Map.prototype.update = function() {
+	this._root.updateSubtree();
+	return this;
 }
 
 MM.Map.prototype.show = function(where) {
@@ -44,12 +45,15 @@ MM.Map.prototype.show = function(where) {
 	this._visible = true;
 	this._root.updateSubtree();
 	this.center();
+	MM.App.select(this._root);
+	return this;
 }
 
 MM.Map.prototype.hide = function() {
 	var node = this._root.getDOM().node;
 	node.parentNode.removeChild(node);
 	this._visible = false;
+	return this;
 }
 
 MM.Map.prototype.center = function() {
