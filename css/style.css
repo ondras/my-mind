@@ -1,4 +1,5 @@
 @import url(ui.css);
+@import url(item.css);
 @import url(shape.css);
 @import url(print.css) print;
 
@@ -31,24 +32,4 @@ ul {
 
 #throbber:not(.visible) {
 	opacity: 0;
-}
-
-
-.item {
-	position: absolute;
-}
-
-.item.cut {
-	opacity: 0.5;
-}
-
-.text {
-	position: relative;
-	text-align: center;
-}
-
-canvas {
-	position: absolute;
-	left: 0;
-	top: 0;
 }

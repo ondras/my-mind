@@ -169,7 +169,7 @@
 
 		<script>
 		MM.App.init();
-/*
+
 		var map = new MM.Map({root:"This is <s>Sparta</s> Root"});
 
 		var root = map.getRoot();
@@ -178,9 +178,10 @@
 		var r1 = root.insertChild().setText("right 1").setShape(MM.Shape.Box);
 		r1.setLayout(MM.Layout.Tree.Right);
 		r1.setColor("#33f");
-		r1.insertChild().setText("right 1.1");
-		r1.insertChild().setText("right 1.2 zejo");
-		r1.insertChild().setText("right 1.3 very long").insertChild().setText("right 1.3.1");
+		r1.insertChild().setText("right 1.1").setValue(1);
+		r1.insertChild().setText("right 1.2 zejo").setValue(2);
+		r1.insertChild().setText("right 1.3 very long").setValue(3).insertChild().setText("right 1.3.1");
+		r1.setValue("sum");
 
 		var l1 = root.insertChild().setText("left 1");
 		l1.insertChild().setText("left 1.1");
@@ -197,7 +198,7 @@
 		l2.insertChild().setText("left 2.1");
 
 		MM.App.setMap(map);
-*/
+
 		MM.App.io.restore();
 		</script>
 
@@ -208,6 +209,7 @@ TODO:
     - doladit map layout
     - firebase auth
     - values, functions
+    - hyperlinks
   
   longterm:
     - firebase realtime

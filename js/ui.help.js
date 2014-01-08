@@ -58,6 +58,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "Paste");
 
 	var t = this._node.querySelector(".editing");
+	this._buildRow(t, "Value");
 	this._buildRow(t, "Edit");
 	this._buildRow(t, "Newline");
 	this._buildRow(t, "Bold");

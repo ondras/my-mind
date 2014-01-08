@@ -89,3 +89,20 @@ MM.Command.Strikethrough = Object.create(MM.Command, {
 MM.Command.Strikethrough.execute = function() {
 	document.execCommand("strikeThrough", null, null);
 }
+
+MM.Command.Value = Object.create(MM.Command, {
+	label: {value: "Set value"},
+	keys: {value: [{charCode: "v".charCodeAt(0)}]}
+});
+MM.Command.Value.execute = function() {
+	var item = MM.App.current;
+	var oldValue = item.getValue();
+	var newValue = prompt("Set item value", oldValue);
+	if (newValue == null) { return; }
+
+	if (!newValue.length) { newValue = null; }
+
+	var numValue = parseFloat(newValue);
+	var action = new MM.Action.SetValue(item, isNaN(numValue) ? newValue : numValue);
+	MM.App.action(action);
+}

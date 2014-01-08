@@ -118,6 +118,10 @@ MM.Map.prototype.getParent = function() {
 	return null;
 }
 
+MM.Map.prototype.getRoot = function() {
+	return this._root;
+}
+
 MM.Map.prototype.getName = function() {
 	var name = this._root.getText();
 	return name.replace(/\n/g, "").replace(/<.*?>/g, "").trim();

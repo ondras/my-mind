@@ -1,0 +1,44 @@
+.item {
+	position: absolute;
+}
+
+.item.cut {
+	opacity: 0.5;
+}
+
+.content {
+	position: relative;
+	display: inline-block;
+	white-space: pre;
+}
+
+.content > * {
+	vertical-align: middle;
+}
+
+.text {
+	display: inline-block;
+	text-align: center;
+	min-width: 0.5em;
+	min-height: 1.3em;
+	line-height: 1.3em;
+	outline: none;
+}
+
+.value {
+	opacity: 0.8;
+}
+
+.value:not(:empty):before {
+	content: "(";
+}
+
+.value:not(:empty):after {
+	content: ") ";
+}
+
+canvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+}

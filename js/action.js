@@ -15,6 +15,19 @@ MM.Action.SetText.prototype.undo = function() {
 	this._item.setText(this._oldText);
 }
 
+MM.Action.SetValue = function(item, value) {
+	this._item = item;
+	this._value = value;
+	this._oldValue = item.getValue();
+}
+MM.Action.SetValue.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetValue.prototype.perform = function() {
+	this._item.setValue(this._value);
+}
+MM.Action.SetValue.prototype.undo = function() {
+	this._item.setValue(this._oldValue);
+}
+
 MM.Action.InsertNewItem = function(parent, index) {
 	this._parent = parent;
 	this._index = index;

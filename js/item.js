@@ -6,6 +6,8 @@ MM.Item = function() {
 	this._shape = null;
 	this._autoShape = true;
 	this._color = null;
+	this._value = null;
+	this._computedValue = 0;
 	this._side = null; /* side preference */
 	this._id = MM.generateId();
 	this._oldText = "";
@@ -13,14 +15,20 @@ MM.Item = function() {
 	this._dom = {
 		node: document.createElement("li"),
 		content: document.createElement("div"),
+		value: document.createElement("span"),
+		text: document.createElement("div"),
 		children: document.createElement("ul"),
 		canvas: document.createElement("canvas")
 	}
 	this._dom.node.classList.add("item");
-	this._dom.content.classList.add("text");
+	this._dom.content.classList.add("content");
+	this._dom.value.classList.add("value");
+	this._dom.text.classList.add("text");
 	this._dom.children.classList.add("children");
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
+	this._dom.content.appendChild(this._dom.value);
+	this._dom.content.appendChild(this._dom.text);
 }
 
 MM.Item.COLOR = "#999";
@@ -37,7 +45,9 @@ MM.Item.prototype.fromJSON = function(data) {
 	if (data.id) { this._id = data.id; }
 	if (data.side) { this._side = data.side; }
 	if (data.color) { this._color = data.color; }
+	if (data.value) { this._value = data.value; }
 	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
+	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 
 	(data.children || []).forEach(function(child) {
@@ -55,6 +65,7 @@ MM.Item.prototype.toJSON = function() {
 	
 	if (this._side) { data.side = this._side; }
 	if (this._color) { data.color = this._color; }
+	if (this._value) { data.value = this._value; }
 	if (this._layout) { data.layout = this._layout.id; }
 	if (!this._autoShape) { data.shape = this._shape.id; }
 	if (this._children.length) {
@@ -78,6 +89,7 @@ MM.Item.prototype.clone = function() {
 
 MM.Item.prototype.update = function(doNotRecurse) {
 	MM.publish("item-change", this);
+
 	var map = this.getMap();
 	if (!map || !map.isVisible()) { return this; }
 
@@ -89,7 +101,8 @@ MM.Item.prototype.update = function(doNotRecurse) {
 			this._shape.set(this);
 		}
 	}
-
+	
+	this._updateValue();
 	this.getLayout().update(this);
 	this.getShape().update(this);
 	if (!this.isRoot() && !doNotRecurse) { this._parent.update(); }
@@ -105,12 +118,25 @@ MM.Item.prototype.updateSubtree = function(isSubChild) {
 }
 
 MM.Item.prototype.setText = function(text) {
-	this._dom.content.innerHTML = text.replace(/\n/g, "<br/>");
+	this._dom.text.innerHTML = text.replace(/\n/g, "<br/>");
 	return this.update();
 }
 
 MM.Item.prototype.getText = function() {
-	return this._dom.content.innerHTML.replace(/<br\s*\/?>/g, "\n");
+	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
+}
+
+MM.Item.prototype.setValue = function(value) {
+	this._value = value;
+	return this.update();
+}
+
+MM.Item.prototype.getValue = function() {
+	return this._value;
+}
+
+MM.Item.prototype.getComputedValue = function() {
+	return this._computedValue;
 }
 
 MM.Item.prototype.setSide = function(side) {
@@ -238,17 +264,17 @@ MM.Item.prototype.removeChild = function(child) {
 
 MM.Item.prototype.startEditing = function() {
 	this._oldText = this.getText();
-	this._dom.content.contentEditable = true;
-	this._dom.content.focus();
+	this._dom.text.contentEditable = true;
+	this._dom.text.focus();
 	document.execCommand("styleWithCSS", null, false);
 	return this;
 }
 
 MM.Item.prototype.stopEditing = function() {
-	this._dom.content.blur();
-	this._dom.content.contentEditable = false;
-	var result = this._dom.content.innerHTML;
-	this._dom.content.innerHTML = this._oldText;
+	this._dom.text.blur();
+	this._dom.text.contentEditable = false;
+	var result = this._dom.text.innerHTML;
+	this._dom.text.innerHTML = this._oldText;
 	this._oldText = "";
 	return result;
 }
@@ -265,4 +291,49 @@ MM.Item.prototype._getAutoShape = function() {
 		case 1: return MM.Shape.Box;
 		default: return MM.Shape.Underline;
 	}
+}
+
+MM.Item.prototype._updateValue = function() {
+	if (typeof(this._value) == "number") {
+		this._computedValue = this._value;
+		this._dom.value.innerHTML = this._value;
+		return;
+	}
+	
+	var childValues = this._children.map(function(child) {
+		return child.getComputedValue();
+	});
+	
+	var result = 0;
+	switch (this._value) {
+		case "sum":
+			result = childValues.reduce(function(prev, cur) {
+				return prev+cur;
+			}, 0);
+		break;
+		
+		case "avg":
+			var sum = childValues.reduce(function(prev, cur) {
+				return prev+cur;
+			}, 0);
+			result = (childValues.length ? sum/childValues.length : 0);
+		break;
+		
+		case "max":
+			result = Math.max.apply(Math, childValues);
+		break;
+		
+		case "min":
+			result = Math.min.apply(Math, childValues);
+		break;
+		
+		default:
+			this._computedValue = 0;
+			this._dom.value.innerHTML = "";
+			return;
+		break;
+	}
+	
+	this._computedValue = result;
+	this._dom.value.innerHTML = (Math.round(result) == result ? result : result.toFixed(3));
 }
