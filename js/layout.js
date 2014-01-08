@@ -49,7 +49,7 @@ MM.Layout.pick = function(item, dir) {
 	if (thisChildDirection == dir) {
 		return item;
 	} else if (thisChildDirection == opposite[dir]) {
-		return parent;
+		return item.getParent();
 	} else {
 		return parentLayout.pickSibling(item, (dir == "left" || dir == "top" ? -1 : +1));
 	}

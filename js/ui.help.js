@@ -52,6 +52,10 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "Swap");
 	this._buildRow(t, "Delete");
 
+	this._buildRow(t, "Copy");
+	this._buildRow(t, "Cut");
+	this._buildRow(t, "Paste");
+
 	var t = this._node.querySelector(".editing");
 	this._buildRow(t, "Edit");
 	this._buildRow(t, "Newline");

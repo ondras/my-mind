@@ -15,17 +15,31 @@ MM.Action.SetText.prototype.undo = function() {
 	this._item.setText(this._oldText);
 }
 
-MM.Action.InsertItem = function(parent, index) {
+MM.Action.InsertNewItem = function(parent, index) {
 	this._parent = parent;
 	this._index = index;
 	this._item = new MM.Item();
 }
-MM.Action.InsertItem.prototype = Object.create(MM.Action.prototype);
-MM.Action.InsertItem.prototype.perform = function() {
+MM.Action.InsertNewItem.prototype = Object.create(MM.Action.prototype);
+MM.Action.InsertNewItem.prototype.perform = function() {
 	this._item = this._parent.insertChild(this._item, this._index);
 	MM.App.select(this._item);
 }
-MM.Action.InsertItem.prototype.undo = function() {
+MM.Action.InsertNewItem.prototype.undo = function() {
+	this._parent.removeChild(this._item);
+	MM.App.select(this._parent);
+}
+
+MM.Action.AppendItem = function(parent, item) {
+	this._parent = parent;
+	this._item = item;
+}
+MM.Action.AppendItem.prototype = Object.create(MM.Action.prototype);
+MM.Action.AppendItem.prototype.perform = function() {
+	this._parent.insertChild(this._item);
+	MM.App.select(this._item);
+}
+MM.Action.AppendItem.prototype.undo = function() {
 	this._parent.removeChild(this._item);
 	MM.App.select(this._parent);
 }
@@ -45,6 +59,24 @@ MM.Action.RemoveItem.prototype.undo = function() {
 	MM.App.select(this._item);
 }
 
+MM.Action.MoveItem = function(item, newParent) {
+	this._item = item;
+	this._newParent = newParent;
+	this._oldParent = item.getParent();
+	this._oldIndex = this._oldParent.getChildren().indexOf(item);
+}
+MM.Action.MoveItem.prototype = Object.create(MM.Action.prototype);
+MM.Action.MoveItem.prototype.perform = function() {
+	this._oldParent.removeChild(this._item);
+	this._newParent.insertChild(this._item);
+	MM.App.select(this._item);
+}
+MM.Action.MoveItem.prototype.undo = function() {
+	this._newParent.removeChild(this._item);
+	this._oldParent.insertChild(this._item, this._oldIndex);
+	MM.App.select(this._newParent);
+}
+
 MM.Action.Swap = function(item, diff) {
 	this._item = item;
 	this._parent = item.getParent();
@@ -53,7 +85,6 @@ MM.Action.Swap = function(item, diff) {
 	
 	this._sourceIndex = children.indexOf(this._item);
 	this._targetIndex = (this._sourceIndex + diff + children.length) % children.length;
-//	if (this._sourceIndex < this._targetIndex) { this._targetIndex--; }
 }
 MM.Action.Swap.prototype = Object.create(MM.Action.prototype);
 MM.Action.Swap.prototype.perform = function() {

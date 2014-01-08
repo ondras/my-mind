@@ -64,6 +64,18 @@ MM.Item.prototype.toJSON = function() {
 	return data;
 }
 
+MM.Item.prototype.clone = function() {
+	var data = this.toJSON();
+
+	var removeId = function(obj) {
+		delete obj.id;
+		obj.children && obj.children.forEach(removeId);
+	}
+	removeId(data);
+
+	return this.constructor.fromJSON(data);
+}
+
 MM.Item.prototype.update = function(doNotRecurse) {
 	MM.publish("item-change", this);
 	var map = this.getMap();

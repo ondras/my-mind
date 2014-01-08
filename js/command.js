@@ -40,11 +40,11 @@ MM.Command.InsertSibling = Object.create(MM.Command, {
 MM.Command.InsertSibling.execute = function() {
 	var item = MM.App.current;
 	if (item.isRoot()) {
-		var action = new MM.Action.InsertItem(item, item.getChildren().length);
+		var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
 	} else {
 		var parent = item.getParent();
 		var index = parent.getChildren().indexOf(item);
-		var action = new MM.Action.InsertItem(parent, index+1);
+		var action = new MM.Action.InsertNewItem(parent, index+1);
 	}
 	MM.App.action(action);
 
@@ -57,7 +57,7 @@ MM.Command.InsertChild = Object.create(MM.Command, {
 });
 MM.Command.InsertChild.execute = function() {
 	var item = MM.App.current;
-	var action = new MM.Action.InsertItem(item, item.getChildren().length);
+	var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
 	MM.App.action(action);	
 
 	MM.Command.Edit.execute();
@@ -208,4 +208,28 @@ MM.Command.Pan.handleEvent = function(e) {
 			clearInterval(this.interval);
 		}
 	}
+}
+
+MM.Command.Copy = Object.create(MM.Command, {
+	label: {value: "Copy"},
+	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:true}]}
+});
+MM.Command.Copy.execute = function() {
+	MM.Clipboard.copy(MM.App.current);
+}
+
+MM.Command.Cut = Object.create(MM.Command, {
+	label: {value: "Cut"},
+	keys: {value: [{charCode: "x".charCodeAt(0), ctrlKey:true}]}
+});
+MM.Command.Cut.execute = function() {
+	MM.Clipboard.cut(MM.App.current);
+}
+
+MM.Command.Paste = Object.create(MM.Command, {
+	label: {value: "Paste"},
+	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:true}]}
+});
+MM.Command.Paste.execute = function() {
+	MM.Clipboard.paste(MM.App.current);
 }
