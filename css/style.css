@@ -38,6 +38,10 @@ ul {
 	position: absolute;
 }
 
+.item.cut {
+	opacity: 0.5;
+}
+
 .text {
 	position: relative;
 	text-align: center;
