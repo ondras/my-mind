@@ -3,7 +3,7 @@ MM.Layout.Tree = Object.create(MM.Layout, {
 	childDirection: {value: ""}
 });
 
-MM.Layout.Tree.getChildDirection = function(item) {
+MM.Layout.Tree.getChildDirection = function(child) {
 	return this.childDirection;
 }
 

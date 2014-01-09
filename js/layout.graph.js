@@ -3,7 +3,7 @@ MM.Layout.Graph = Object.create(MM.Layout, {
 	childDirection: {value: ""}
 });
 
-MM.Layout.Graph.getChildDirection = function(item) {
+MM.Layout.Graph.getChildDirection = function(child) {
 	return this.childDirection;
 }
 
@@ -18,6 +18,8 @@ MM.Layout.Graph.create = function(direction, id, label) {
 }
 
 MM.Layout.Graph.update = function(item) {
+	MM.Layout.update.call(this, item);
+
 	this._layoutItem(item, this.childDirection);
 	if (this.childDirection == "left" || this.childDirection == "right") {
 		this._drawLinesHorizontal(item, this.childDirection);

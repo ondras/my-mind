@@ -73,7 +73,7 @@ MM.Map.prototype.moveBy = function(dx, dy) {
 
 MM.Map.prototype.getItemFor = function(node) {
 	var port = this._root.getDOM().node.parentNode;
-	while (node != port && !node.classList.contains("text")) {
+	while (node != port && !node.classList.contains("content")) {
 		node = node.parentNode;
 	}	
 	if (node == port) { return null; }

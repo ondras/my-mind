@@ -37,6 +37,7 @@
 		<script src="js/ui.js"></script>
 		<script src="js/ui.layout.js"></script>
 		<script src="js/ui.shape.js"></script>
+		<script src="js/ui.value.js"></script>
 		<script src="js/ui.color.js"></script>
 		<script src="js/ui.help.js"></script>
 		<script src="js/ui.io.js"></script>
@@ -77,6 +78,19 @@
 				<span>Shape</span>
 				<select id="shape">
 					<option value="">(Automatic)</option>
+				</select>
+			</p>
+			<p>
+				<span>Value</span>
+				<select id="value">
+					<option value="">(None)</option>
+					<option value="num">Number</option>
+					<optgroup label="Formula">
+						<option value="sum">Sum</option>
+						<option value="avg">Average</option>
+						<option value="min">Minimum</option>
+						<option value="max">Maximum</option>
+					</optgroup>
 				</select>
 			</p>
 			<p>

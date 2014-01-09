@@ -8,6 +8,7 @@ MM.UI = function() {
 	this._layout = new MM.UI.Layout();
 	this._shape = new MM.UI.Shape();
 	this._color = new MM.UI.Color();
+	this._value = new MM.UI.Value();
 		
 	MM.subscribe("item-change", this);
 	MM.subscribe("item-select", this);
@@ -55,4 +56,5 @@ MM.UI.prototype.getWidth = function() {
 MM.UI.prototype._update = function() {
 	this._layout.update();
 	this._shape.update();
+	this._value.update();
 }

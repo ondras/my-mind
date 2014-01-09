@@ -5,15 +5,18 @@
     "children": [
       {
         "text": "right 1",
+        "value": "sum",
         "side": "right",
         "color": "#33f",
         "layout": "tree-right",
         "shape": "box",
         "children": [
           {
+            "value": 1,
             "text": "right 1.1"
           },
           {
+            "value": 13,
             "text": "right 1.2 zejo"
           },
           {
@@ -28,6 +31,7 @@
       },
       {
         "text": "left 1",
+        "value": 3.14,
         "side": "left",
         "children": [
           {
