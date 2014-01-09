@@ -18,7 +18,11 @@ MM.Layout.Graph.create = function(direction, id, label) {
 }
 
 MM.Layout.Graph.update = function(item) {
-	MM.Layout.update.call(this, item);
+	var side = this.childDirection;
+	if (!item.isRoot()) {
+		side = item.getParent().getLayout().getChildDirection(item);
+	}
+	this._alignItem(item, side);
 
 	this._layoutItem(item, this.childDirection);
 	if (this.childDirection == "left" || this.childDirection == "right") {

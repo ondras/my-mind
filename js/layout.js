@@ -12,22 +12,6 @@ MM.Layout.getAll = function() {
  * Re-draw an item and its children
  */
 MM.Layout.update = function(item) {
-	var dom = item.getDOM();
-
-	if (item.isRoot()) { return; }
-
-	var side = item.getParent().getLayout().getChildDirection(item);
-	switch (side) {
-		case "left":
-			dom.content.appendChild(dom.text);
-			dom.content.appendChild(dom.value);
-		break;
-		case "right":
-			dom.content.appendChild(dom.value);
-			dom.content.appendChild(dom.text);
-		break;
-	}
-
 	return this;
 }
 
@@ -114,3 +98,17 @@ MM.Layout._computeChildrenBBox = function(children, childIndex) {
 	return bbox;
 }
 
+MM.Layout._alignItem = function(item, side) {
+	var dom = item.getDOM();
+
+	switch (side) {
+		case "left":
+			dom.content.appendChild(dom.text);
+			dom.content.appendChild(dom.value);
+		break;
+		case "right":
+			dom.content.appendChild(dom.value);
+			dom.content.appendChild(dom.text);
+		break;
+	}
+}

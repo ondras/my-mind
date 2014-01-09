@@ -18,6 +18,12 @@ MM.Layout.Tree.create = function(direction, id, label) {
 }
 
 MM.Layout.Tree.update = function(item) {
+	var side = this.childDirection;
+	if (!item.isRoot()) {
+		side = item.getParent().getLayout().getChildDirection(item);
+	}
+	this._alignItem(item, side);
+
 	this._layoutItem(item, this.childDirection);
 	this._anchorCanvas(item);
 	this._drawLines(item, this.childDirection);

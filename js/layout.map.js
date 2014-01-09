@@ -60,7 +60,7 @@ MM.Layout.Map.pickSibling = function(item, dir) {
 }
 
 MM.Layout.Map._layoutRoot = function(item) {
-	MM.Layout.update.call(this, item);
+	this._alignItem(item, "right");
 
 	var dom = item.getDOM();
 
