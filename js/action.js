@@ -95,9 +95,10 @@ MM.Action.Swap = function(item, diff) {
 	this._parent = item.getParent();
 
 	var children = this._parent.getChildren();
+	var sibling = this._parent.getLayout().pickSibling(this._item, diff);
 	
 	this._sourceIndex = children.indexOf(this._item);
-	this._targetIndex = (this._sourceIndex + diff + children.length) % children.length;
+	this._targetIndex = children.indexOf(sibling);
 }
 MM.Action.Swap.prototype = Object.create(MM.Action.prototype);
 MM.Action.Swap.prototype.perform = function() {
