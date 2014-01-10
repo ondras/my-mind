@@ -9,6 +9,7 @@ MM.UI = function() {
 	this._shape = new MM.UI.Shape();
 	this._color = new MM.UI.Color();
 	this._value = new MM.UI.Value();
+	this._status = new MM.UI.Status();
 		
 	MM.subscribe("item-change", this);
 	MM.subscribe("item-select", this);
@@ -57,4 +58,5 @@ MM.UI.prototype._update = function() {
 	this._layout.update();
 	this._shape.update();
 	this._value.update();
+	this._status.update();
 }

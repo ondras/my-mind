@@ -106,3 +106,36 @@ MM.Command.Value.execute = function() {
 	var action = new MM.Action.SetValue(item, isNaN(numValue) ? newValue : numValue);
 	MM.App.action(action);
 }
+
+MM.Command.Yes = Object.create(MM.Command, {
+	label: {value: "Yes"},
+	keys: {value: [{charCode: "y".charCodeAt(0)}]}
+});
+MM.Command.Yes.execute = function() {
+	var item = MM.App.current;
+	var status = (item.getStatus() == "yes" ? null : "yes");
+	var action = new MM.Action.SetStatus(item, status);
+	MM.App.action(action);
+}
+
+MM.Command.No = Object.create(MM.Command, {
+	label: {value: "No"},
+	keys: {value: [{charCode: "n".charCodeAt(0)}]}
+});
+MM.Command.No.execute = function() {
+	var item = MM.App.current;
+	var status = (item.getStatus() == "no" ? null : "no");
+	var action = new MM.Action.SetStatus(item, status);
+	MM.App.action(action);
+}
+
+MM.Command.Maybe = Object.create(MM.Command, {
+	label: {value: "Maybe"},
+	keys: {value: [{charCode: "m".charCodeAt(0)}]}
+});
+MM.Command.Maybe.execute = function() {
+	var item = MM.App.current;
+	var status = (item.getStatus() == "maybe" ? null : "maybe");
+	var action = new MM.Action.SetStatus(item, status);
+	MM.App.action(action);
+}

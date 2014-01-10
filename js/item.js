@@ -7,14 +7,20 @@ MM.Item = function() {
 	this._autoShape = true;
 	this._color = null;
 	this._value = null;
-	this._computedValue = 0;
+	this._status = null;
 	this._side = null; /* side preference */
 	this._id = MM.generateId();
 	this._oldText = "";
 
+	this._computed = {
+		value: 0,
+		status: null
+	}
+
 	this._dom = {
 		node: document.createElement("li"),
 		content: document.createElement("div"),
+		status: document.createElement("span"),
 		value: document.createElement("span"),
 		text: document.createElement("div"),
 		children: document.createElement("ul"),
@@ -22,13 +28,12 @@ MM.Item = function() {
 	}
 	this._dom.node.classList.add("item");
 	this._dom.content.classList.add("content");
+	this._dom.status.classList.add("status");
 	this._dom.value.classList.add("value");
 	this._dom.text.classList.add("text");
 	this._dom.children.classList.add("children");
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
-	this._dom.content.appendChild(this._dom.value);
-	this._dom.content.appendChild(this._dom.text);
 }
 
 MM.Item.COLOR = "#999";
@@ -46,6 +51,7 @@ MM.Item.prototype.fromJSON = function(data) {
 	if (data.side) { this._side = data.side; }
 	if (data.color) { this._color = data.color; }
 	if (data.value) { this._value = data.value; }
+	if (data.status) { this._status = data.status; }
 	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
 	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
@@ -66,6 +72,7 @@ MM.Item.prototype.toJSON = function() {
 	if (this._side) { data.side = this._side; }
 	if (this._color) { data.color = this._color; }
 	if (this._value) { data.value = this._value; }
+	if (this._status) { data.value = this._status; }
 	if (this._layout) { data.layout = this._layout.id; }
 	if (!this._autoShape) { data.shape = this._shape.id; }
 	if (this._children.length) {
@@ -102,6 +109,7 @@ MM.Item.prototype.update = function(doNotRecurse) {
 		}
 	}
 	
+	this._updateStatus();
 	this._updateValue();
 	this.getLayout().update(this);
 	this.getShape().update(this);
@@ -136,7 +144,20 @@ MM.Item.prototype.getValue = function() {
 }
 
 MM.Item.prototype.getComputedValue = function() {
-	return this._computedValue;
+	return this._computed.value;
+}
+
+MM.Item.prototype.setStatus = function(status) {
+	this._status = status;
+	return this.update();
+}
+
+MM.Item.prototype.getStatus = function() {
+	return this._status;
+}
+
+MM.Item.prototype.getComputedStatus = function() {
+	return this._computed.status;
 }
 
 MM.Item.prototype.setSide = function(side) {
@@ -293,9 +314,41 @@ MM.Item.prototype._getAutoShape = function() {
 	}
 }
 
+MM.Item.prototype._updateStatus = function() {
+	this._dom.status.className = "status";
+	this._dom.status.style.display = "";
+
+	var status = this._status;
+	if (this._status == "maybe") {
+		var childrenStatus = this._children.every(function(child) {
+			return (child.getComputedStatus() !== false);
+		});
+		status = (childrenStatus ? "yes" : "no");
+	}
+
+	switch (status) {
+		case "yes":
+			this._dom.status.classList.add("yes");
+			this._computed.status = true;
+		break;
+
+		case "no":
+			this._dom.status.classList.add("no");
+			this._computed.status = false;
+		break;
+
+		default:
+			this._computed.status = null;
+			this._dom.status.style.display = "none";
+		break;
+	}
+}
+
 MM.Item.prototype._updateValue = function() {
+	this._dom.value.style.display = "";
+
 	if (typeof(this._value) == "number") {
-		this._computedValue = this._value;
+		this._computed.value = this._value;
 		this._dom.value.innerHTML = this._value;
 		return;
 	}
@@ -328,12 +381,13 @@ MM.Item.prototype._updateValue = function() {
 		break;
 		
 		default:
-			this._computedValue = 0;
+			this._computed.value = 0;
 			this._dom.value.innerHTML = "";
+			this._dom.value.style.display = "none";
 			return;
 		break;
 	}
 	
-	this._computedValue = result;
+	this._computed.value = result;
 	this._dom.value.innerHTML = (Math.round(result) == result ? result : result.toFixed(3));
 }

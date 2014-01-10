@@ -1,6 +1,5 @@
 MM.UI.Value = function() {
 	this._select = document.querySelector("#value");
-	
 	this._select.addEventListener("change", this);
 }
 

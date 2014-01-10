@@ -38,6 +38,7 @@
 		<script src="js/ui.layout.js"></script>
 		<script src="js/ui.shape.js"></script>
 		<script src="js/ui.value.js"></script>
+		<script src="js/ui.status.js"></script>
 		<script src="js/ui.color.js"></script>
 		<script src="js/ui.help.js"></script>
 		<script src="js/ui.io.js"></script>
@@ -91,6 +92,15 @@
 						<option value="min">Minimum</option>
 						<option value="max">Maximum</option>
 					</optgroup>
+				</select>
+			</p>
+			<p>
+				<span>Status</span>
+				<select id="status">
+					<option value="">None</option>
+					<option value="yes">Yes</option>
+					<option value="no">No</option>
+					<option value="maybe">Auto</option>
 				</select>
 			</p>
 			<p>
@@ -221,7 +231,6 @@ TODO:
   shortterm:
     - firebase auth
     - hyperlinks
-    - yes/no
   
   longterm:
     - firebase realtime

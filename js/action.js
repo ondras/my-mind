@@ -2,32 +2,6 @@ MM.Action = function() {}
 MM.Action.prototype.perform = function() {}
 MM.Action.prototype.undo = function() {}
 
-MM.Action.SetText = function(item, text) {
-	this._item = item;
-	this._text = text;
-	this._oldText = item.getText();
-}
-MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
-MM.Action.SetText.prototype.perform = function() {
-	this._item.setText(this._text);
-}
-MM.Action.SetText.prototype.undo = function() {
-	this._item.setText(this._oldText);
-}
-
-MM.Action.SetValue = function(item, value) {
-	this._item = item;
-	this._value = value;
-	this._oldValue = item.getValue();
-}
-MM.Action.SetValue.prototype = Object.create(MM.Action.prototype);
-MM.Action.SetValue.prototype.perform = function() {
-	this._item.setValue(this._value);
-}
-MM.Action.SetValue.prototype.undo = function() {
-	this._item.setValue(this._oldValue);
-}
-
 MM.Action.InsertNewItem = function(parent, index) {
 	this._parent = parent;
 	this._index = index;
@@ -148,4 +122,43 @@ MM.Action.SetColor.prototype.perform = function() {
 }
 MM.Action.SetColor.prototype.undo = function() {
 	this._item.setColor(this._oldColor);
+}
+
+MM.Action.SetText = function(item, text) {
+	this._item = item;
+	this._text = text;
+	this._oldText = item.getText();
+}
+MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetText.prototype.perform = function() {
+	this._item.setText(this._text);
+}
+MM.Action.SetText.prototype.undo = function() {
+	this._item.setText(this._oldText);
+}
+
+MM.Action.SetValue = function(item, value) {
+	this._item = item;
+	this._value = value;
+	this._oldValue = item.getValue();
+}
+MM.Action.SetValue.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetValue.prototype.perform = function() {
+	this._item.setValue(this._value);
+}
+MM.Action.SetValue.prototype.undo = function() {
+	this._item.setValue(this._oldValue);
+}
+
+MM.Action.SetStatus = function(item, status) {
+	this._item = item;
+	this._status = status;
+	this._oldStatus = item.getStatus();
+}
+MM.Action.SetStatus.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetStatus.prototype.perform = function() {
+	this._item.setStatus(this._status);
+}
+MM.Action.SetStatus.prototype.undo = function() {
+	this._item.setStatus(this._oldStatus);
 }
