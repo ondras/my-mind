@@ -38,6 +38,17 @@ MM.Item = function() {
 
 MM.Item.COLOR = "#999";
 
+    /* RE explanation:
+     *          _________________________________________________________________________ One of the three possible variants
+     *           ____________________ scheme://x
+     *                                ___________________________ aa.bb.cc
+     *                                                            _______________________ aa.bb/
+     *                                                                                    ______ path, search
+     *                                                                                          __________________________ end with a non-forbidden char
+     *                                                                                                                    ______ end of word or end of string
+     */                                                                                                                           
+MM.Item.RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
+
 MM.Item.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
@@ -127,6 +138,7 @@ MM.Item.prototype.updateSubtree = function(isSubChild) {
 
 MM.Item.prototype.setText = function(text) {
 	this._dom.text.innerHTML = text.replace(/\n/g, "<br/>");
+	this._findLinks(this._dom.text);
 	return this.update();
 }
 
@@ -390,4 +402,41 @@ MM.Item.prototype._updateValue = function() {
 	
 	this._computed.value = result;
 	this._dom.value.innerHTML = (Math.round(result) == result ? result : result.toFixed(3));
+}
+
+MM.Item.prototype._findLinks = function(node) {
+
+	var children = [].slice.call(node.childNodes);
+	for (var i=0;i<children.length;i++) {
+		var child = children[i];
+		switch (child.nodeType) {
+			case 1: /* element */
+				if (child.nodeName.toLowerCase() == "a") { continue; }
+				this._findLinks(child);
+			break;
+			
+			case 3: /* text */
+				var result = child.nodeValue.match(this.constructor.RE);
+				if (result) {
+					var before = child.nodeValue.substring(0, result.index);
+					var after = child.nodeValue.substring(result.index + result[0].length);
+					var link = document.createElement("a");
+					link.innerHTML = link.href = result[0];
+					
+					if (before) {
+						node.insertBefore(document.createTextNode(before), child);
+					}
+
+					node.insertBefore(link, child);
+					
+					if (after) {
+						child.nodeValue = after;
+						i--; /* re-try with the aftertext */
+					} else {
+						node.removeChild(child);
+					}
+				}
+			break;
+		}
+	}
 }
