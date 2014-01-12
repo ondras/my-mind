@@ -46,16 +46,21 @@ MM.Action.RemoveItem.prototype.undo = function() {
 	MM.App.select(this._item);
 }
 
-MM.Action.MoveItem = function(item, newParent) {
+MM.Action.MoveItem = function(item, newParent, newIndex) {
 	this._item = item;
 	this._newParent = newParent;
+	this._newIndex = (arguments.length < 3 ? null : newIndex);
 	this._oldParent = item.getParent();
 	this._oldIndex = this._oldParent.getChildren().indexOf(item);
 }
 MM.Action.MoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.MoveItem.prototype.perform = function() {
 	this._oldParent.removeChild(this._item);
-	this._newParent.insertChild(this._item);
+	if (this._newIndex === null) {
+		this._newParent.insertChild(this._item);
+	} else {
+		this._newParent.insertChild(this._item, this._newIndex);
+	}
 	MM.App.select(this._item);
 }
 MM.Action.MoveItem.prototype.undo = function() {

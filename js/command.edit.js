@@ -92,7 +92,7 @@ MM.Command.Strikethrough.execute = function() {
 
 MM.Command.Value = Object.create(MM.Command, {
 	label: {value: "Set value"},
-	keys: {value: [{charCode: "v".charCodeAt(0)}]}
+	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false}]}
 });
 MM.Command.Value.execute = function() {
 	var item = MM.App.current;
@@ -109,7 +109,7 @@ MM.Command.Value.execute = function() {
 
 MM.Command.Yes = Object.create(MM.Command, {
 	label: {value: "Yes"},
-	keys: {value: [{charCode: "y".charCodeAt(0)}]}
+	keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey:false}]}
 });
 MM.Command.Yes.execute = function() {
 	var item = MM.App.current;
@@ -120,7 +120,7 @@ MM.Command.Yes.execute = function() {
 
 MM.Command.No = Object.create(MM.Command, {
 	label: {value: "No"},
-	keys: {value: [{charCode: "n".charCodeAt(0)}]}
+	keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:false}]}
 });
 MM.Command.No.execute = function() {
 	var item = MM.App.current;
@@ -131,7 +131,7 @@ MM.Command.No.execute = function() {
 
 MM.Command.Maybe = Object.create(MM.Command, {
 	label: {value: "Maybe"},
-	keys: {value: [{charCode: "m".charCodeAt(0)}]}
+	keys: {value: [{charCode: "m".charCodeAt(0), ctrlKey:false}]}
 });
 MM.Command.Maybe.execute = function() {
 	var item = MM.App.current;

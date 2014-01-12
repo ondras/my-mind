@@ -33,3 +33,8 @@ ul {
 #throbber:not(.visible) {
 	opacity: 0;
 }
+
+.ghost {
+	position: absolute !important; /* to prevent collision with .content */
+	opacity: 0.5;
+}

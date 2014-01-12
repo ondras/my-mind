@@ -71,6 +71,32 @@ MM.Map.prototype.moveBy = function(dx, dy) {
 	return this._moveTo(this._position[0]+dx, this._position[1]+dy);
 }
 
+MM.Map.prototype.getClosestItem = function(x, y) {
+	var all = [];
+
+	var scan = function(item) {
+		var rect = item.getDOM().content.getBoundingClientRect();
+		var dx = rect.left + rect.width/2 - x;
+		var dy = rect.top + rect.height/2 - y;
+		all.push({
+			item: item,
+			dx: dx,
+			dy: dy
+		});
+		item.getChildren().forEach(scan);
+	}
+	
+	scan(this._root);
+	
+	all.sort(function(a, b) {
+		var da = a.dx*a.dx + a.dy*a.dy;
+		var db = b.dx*b.dx + b.dy*b.dy;
+		return da-db;
+	});
+	
+	return all[0];
+}
+
 MM.Map.prototype.getItemFor = function(node) {
 	var port = this._root.getDOM().node.parentNode;
 	while (node != port && !node.classList.contains("content")) {

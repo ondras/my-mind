@@ -11,7 +11,12 @@ MM.App = {
 	help: null,
 	_port: null,
 	_throbber: null,
-	_mouse: [0, 0],
+	_drag: {
+		mouse: [0, 0],
+		pos: [0, 0],
+		item: null,
+		ghost: null
+	},
 	_fontSize: 100,
 	
 	action: function(action) {
@@ -79,25 +84,57 @@ MM.App = {
 			break;
 			
 			case "mousedown":
-				var item = this.map.getItemFor(e.target);
-				if (item) { return; }
+				e.preventDefault();
 				this._port.style.cursor = "move";
 				this._port.addEventListener("mousemove", this);
 				this._port.addEventListener("mouseup", this);
-				this._mouse[0] = e.clientX;
-				this._mouse[1] = e.clientY;
+				this._drag.mouse[0] = e.clientX;
+				this._drag.mouse[1] = e.clientY;
+
+				var item = this.map.getItemFor(e.target);
+				if (item && !item.isRoot()) { 
+					this._drag.item = item;
+					var content = item.getDOM().content;
+					this._drag.ghost = content.cloneNode(true);
+					this._drag.ghost.classList.add("ghost");
+					this._drag.pos[0] = content.offsetLeft;
+					this._drag.pos[1] = content.offsetTop;
+					this._drag.ghost.style.left = this._drag.pos[0] + "px";
+					this._drag.ghost.style.top = this._drag.pos[1] + "px";
+					content.parentNode.appendChild(this._drag.ghost);
+				}
 			break;
 			
 			case "mousemove":
-				this.map.moveBy(e.clientX-this._mouse[0], e.clientY-this._mouse[1]);
-				this._mouse[0] = e.clientX;
-				this._mouse[1] = e.clientY;
+				var dx = e.clientX - this._drag.mouse[0];
+				var dy = e.clientY - this._drag.mouse[1];
+				this._drag.mouse[0] = e.clientX;
+				this._drag.mouse[1] = e.clientY;
+				if (this._drag.item) {
+					this._drag.pos[0] += dx;
+					this._drag.pos[1] += dy;
+					this._drag.ghost.style.left = this._drag.pos[0] + "px";
+					this._drag.ghost.style.top = this._drag.pos[1] + "px";
+				} else {
+					this.map.moveBy(dx, dy);
+				}
 			break;
 			
 			case "mouseup":
 				this._port.style.cursor = "";
 				this._port.removeEventListener("mousemove", this);
 				this._port.removeEventListener("mouseup", this);
+				
+				if (this._drag.item) {
+					var rect = this._drag.ghost.getBoundingClientRect();
+					this._drag.ghost.parentNode.removeChild(this._drag.ghost);
+					
+					var nearest = this.map.getClosestItem(rect.left + rect.width/2, rect.top + rect.height/2);
+					this._finishDragDrop(this._drag.item, nearest);
+
+					this._drag.item = null;
+					this._drag.ghost = null;
+				}
 			break;
 		} /* switch */
 	},
@@ -130,5 +167,38 @@ MM.App = {
 		this._port.style.height = this.portSize[1] + "px";
 		this._throbber.style.right = (20 + this.ui.getWidth())+ "px";
 		if (this.map) { this.map.ensureItemVisibility(this.current); }
+	},
+	
+	_finishDragDrop: function(item, nearest) {
+		var target = nearest.item;
+		var tmp = target;
+		while (!tmp.isRoot()) {
+			if (tmp == item) { return; } /* drop on a child or self */
+			tmp = tmp.getParent();
+		}
+		
+ 		var w1 = item.getDOM().content.offsetWidth;
+		var w2 = target.getDOM().content.offsetWidth;
+		var w = Math.max(w1, w2);
+		var h1 = item.getDOM().content.offsetHeight;
+		var h2 = target.getDOM().content.offsetHeight;
+		var h = Math.max(h1, h2);
+		if (target.isRoot()) { /* append here */
+			var action = new MM.Action.MoveItem(item, target);
+		} else if (Math.abs(nearest.dx) < w && Math.abs(nearest.dy) < h) { /* append here */
+			var action = new MM.Action.MoveItem(item, target);
+		} else {
+//			debugger;
+			var dir = target.getParent().getLayout().getChildDirection(target);
+			var diff = -1 * (dir == "top" || dir == "bottom" ? nearest.dx : nearest.dy);
+			
+			var index = target.getParent().getChildren().indexOf(target);
+			var targetIndex = index + (diff > 0 ? 1 : 0);
+			var action = new MM.Action.MoveItem(item, target.getParent(), targetIndex);
+			/* FIXME side + side in action */
+			
+		}
+		this.action(action);
+		
 	}
 }
