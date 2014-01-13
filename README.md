@@ -5,7 +5,7 @@ My Mind is a web application for creating and managing Mind maps. It is free to 
 
 * Official web page
 * Sample mind map showcasing many features
-* [Documentation(wiki)
+* [Documentation](wiki)
 
 My Mind is being actively developed. Do you want to participate?
 
