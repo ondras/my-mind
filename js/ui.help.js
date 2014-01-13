@@ -88,8 +88,8 @@ MM.UI.Help.prototype._buildRow = function(table, commandName) {
 		keys = keys.concat(command.keys.map(this._formatKey, this));
 	}
 
-	row.insertCell().innerHTML = labels.join("/");
-	row.insertCell().innerHTML = keys.join("/");
+	row.insertCell(-1).innerHTML = labels.join("/");
+	row.insertCell(-1).innerHTML = keys.join("/");
 
 }
 
