@@ -34,8 +34,9 @@ MM.Map.prototype.isVisible = function() {
 	return this._visible;
 }
 
-MM.Map.prototype.getRoot = function() {
-	return this._root;
+MM.Map.prototype.update = function() {
+	this._root.updateSubtree();
+	return this;
 }
 
 MM.Map.prototype.show = function(where) {
@@ -44,12 +45,15 @@ MM.Map.prototype.show = function(where) {
 	this._visible = true;
 	this._root.updateSubtree();
 	this.center();
+	MM.App.select(this._root);
+	return this;
 }
 
 MM.Map.prototype.hide = function() {
 	var node = this._root.getDOM().node;
 	node.parentNode.removeChild(node);
 	this._visible = false;
+	return this;
 }
 
 MM.Map.prototype.center = function() {
@@ -67,9 +71,35 @@ MM.Map.prototype.moveBy = function(dx, dy) {
 	return this._moveTo(this._position[0]+dx, this._position[1]+dy);
 }
 
+MM.Map.prototype.getClosestItem = function(x, y) {
+	var all = [];
+
+	var scan = function(item) {
+		var rect = item.getDOM().content.getBoundingClientRect();
+		var dx = rect.left + rect.width/2 - x;
+		var dy = rect.top + rect.height/2 - y;
+		all.push({
+			item: item,
+			dx: dx,
+			dy: dy
+		});
+		item.getChildren().forEach(scan);
+	}
+	
+	scan(this._root);
+	
+	all.sort(function(a, b) {
+		var da = a.dx*a.dx + a.dy*a.dy;
+		var db = b.dx*b.dx + b.dy*b.dy;
+		return da-db;
+	});
+	
+	return all[0];
+}
+
 MM.Map.prototype.getItemFor = function(node) {
 	var port = this._root.getDOM().node.parentNode;
-	while (node != port && !node.classList.contains("text")) {
+	while (node != port && !node.classList.contains("content")) {
 		node = node.parentNode;
 	}	
 	if (node == port) { return null; }
@@ -112,6 +142,10 @@ MM.Map.prototype.ensureItemVisibility = function(item) {
 
 MM.Map.prototype.getParent = function() {
 	return null;
+}
+
+MM.Map.prototype.getRoot = function() {
+	return this._root;
 }
 
 MM.Map.prototype.getName = function() {

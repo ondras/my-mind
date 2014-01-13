@@ -3,7 +3,7 @@ MM.Layout.Graph = Object.create(MM.Layout, {
 	childDirection: {value: ""}
 });
 
-MM.Layout.Graph.getChildDirection = function(item) {
+MM.Layout.Graph.getChildDirection = function(child) {
 	return this.childDirection;
 }
 
@@ -18,6 +18,12 @@ MM.Layout.Graph.create = function(direction, id, label) {
 }
 
 MM.Layout.Graph.update = function(item) {
+	var side = this.childDirection;
+	if (!item.isRoot()) {
+		side = item.getParent().getLayout().getChildDirection(item);
+	}
+	this._alignItem(item, side);
+
 	this._layoutItem(item, this.childDirection);
 	if (this.childDirection == "left" || this.childDirection == "right") {
 		this._drawLinesHorizontal(item, this.childDirection);
@@ -120,38 +126,36 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	var y1 = item.getShape().getVerticalAnchor(item);
 	if (side == "left") {
 		var x1 = dom.content.offsetLeft + 0.5;
-		var x2 = x1 - width;
 	} else {
 		var x1 = dom.content.offsetWidth + dom.content.offsetLeft + 0.5;
-		var x2 = x1 + width;
 	}
 
 	if (children.length == 1) {
 		var child = children[0];
 		var y2 = child.getShape().getVerticalAnchor(child) + child.getDOM().node.offsetTop;
-		var width = 2*R;
-	} else {
-		var y2 = y1;
-		var width = R;
+		var x2 = this._getChildAnchor(child, side);
+		ctx.beginPath();
+		ctx.moveTo(x1, y1);
+		ctx.bezierCurveTo((x1+x2)/2, y1, (x1+x2)/2, y2, x2, y2);
+		ctx.stroke();
+		return;
 	}
 
 	if (side == "left") {
-		var x2 = x1 - width;
+		var x2 = x1 - R;
 	} else {
-		var x2 = x1 + width;
+		var x2 = x1 + R;
 	}
 
 	ctx.beginPath();
 	ctx.moveTo(x1, y1);
-	ctx.lineTo(x2, y2);
+	ctx.lineTo(x2, y1);
 	ctx.stroke();
-
-	if (children.length == 1) { return; }
 
 	/* rounded connectors */
 	var c1 = children[0];
 	var c2 = children[children.length-1];
-	var offset = dom.content.offsetWidth + width;
+	var offset = dom.content.offsetWidth + R;
 	var x = x2;
 
 	var y1 = c1.getShape().getVerticalAnchor(c1) + c1.getDOM().node.offsetTop;

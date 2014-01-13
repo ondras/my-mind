@@ -11,7 +11,7 @@ MM.Command.Edit.execute = function() {
 }
 
 MM.Command.Finish = Object.create(MM.Command, {
-	keys: {value: [{keyCode: 13, altKey:false, ctrlKey:false}]},
+	keys: {value: [{keyCode: 13, altKey:false, ctrlKey:false, shiftKey:false}]},
 	editMode: {value: true}
 });
 MM.Command.Finish.execute = function() {
@@ -28,7 +28,7 @@ MM.Command.Finish.execute = function() {
 MM.Command.Newline = Object.create(MM.Command, {
 	label: {value: "Line break"},
 	keys: {value: [
-		{keyCode: 13, altKey:true},
+		{keyCode: 13, shiftKey:true},
 		{keyCode: 13, ctrlKey:true}
 	]},
 	editMode: {value: true}
@@ -88,4 +88,54 @@ MM.Command.Strikethrough = Object.create(MM.Command, {
 });
 MM.Command.Strikethrough.execute = function() {
 	document.execCommand("strikeThrough", null, null);
+}
+
+MM.Command.Value = Object.create(MM.Command, {
+	label: {value: "Set value"},
+	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false}]}
+});
+MM.Command.Value.execute = function() {
+	var item = MM.App.current;
+	var oldValue = item.getValue();
+	var newValue = prompt("Set item value", oldValue);
+	if (newValue == null) { return; }
+
+	if (!newValue.length) { newValue = null; }
+
+	var numValue = parseFloat(newValue);
+	var action = new MM.Action.SetValue(item, isNaN(numValue) ? newValue : numValue);
+	MM.App.action(action);
+}
+
+MM.Command.Yes = Object.create(MM.Command, {
+	label: {value: "Yes"},
+	keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey:false}]}
+});
+MM.Command.Yes.execute = function() {
+	var item = MM.App.current;
+	var status = (item.getStatus() == "yes" ? null : "yes");
+	var action = new MM.Action.SetStatus(item, status);
+	MM.App.action(action);
+}
+
+MM.Command.No = Object.create(MM.Command, {
+	label: {value: "No"},
+	keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:false}]}
+});
+MM.Command.No.execute = function() {
+	var item = MM.App.current;
+	var status = (item.getStatus() == "no" ? null : "no");
+	var action = new MM.Action.SetStatus(item, status);
+	MM.App.action(action);
+}
+
+MM.Command.Maybe = Object.create(MM.Command, {
+	label: {value: "Maybe"},
+	keys: {value: [{charCode: "m".charCodeAt(0), ctrlKey:false}]}
+});
+MM.Command.Maybe.execute = function() {
+	var item = MM.App.current;
+	var status = (item.getStatus() == "maybe" ? null : "maybe");
+	var action = new MM.Action.SetStatus(item, status);
+	MM.App.action(action);
 }

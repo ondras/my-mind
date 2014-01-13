@@ -6,6 +6,7 @@ MM.UI.Help = function() {
 		32: "Spacebar",
 		33: "PgUp",
 		34: "PgDown",
+		35: "End",
 		36: "Home",
 		37: "←",
 		38: "↑",
@@ -57,6 +58,8 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "Paste");
 
 	var t = this._node.querySelector(".editing");
+	this._buildRow(t, "Value");
+	this._buildRow(t, "Yes", "No", "Maybe");
 	this._buildRow(t, "Edit");
 	this._buildRow(t, "Newline");
 	this._buildRow(t, "Bold");
@@ -70,6 +73,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "SaveAs");
 	this._buildRow(t, "Load");
 	this._buildRow(t, "Help");
+	this._buildRow(t, "UI");
 }
 
 MM.UI.Help.prototype._buildRow = function(table, commandName) {
@@ -84,8 +88,8 @@ MM.UI.Help.prototype._buildRow = function(table, commandName) {
 		keys = keys.concat(command.keys.map(this._formatKey, this));
 	}
 
-	row.insertCell().innerHTML = labels.join(" / ");
-	row.insertCell().innerHTML = keys.join(" / ");
+	row.insertCell().innerHTML = labels.join("/");
+	row.insertCell().innerHTML = keys.join("/");
 
 }
 

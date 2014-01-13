@@ -46,6 +46,7 @@ MM.Format.FreeMind._serializeItem = function(doc, json) {
 MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
 	elm.setAttribute("TEXT", json.text);
+	elm.setAttribute("ID", json.id);
 
 	if (json.side) { elm.setAttribute("POSITION", json.side); }
 	if (json.shape == "box") { elm.setAttribute("STYLE", "bubble"); }
@@ -69,7 +70,8 @@ MM.Format.FreeMind._parseNode = function(node, parent) {
 MM.Format.FreeMind._parseAttributes = function(node, parent) {
 	var json = {
 		children: [],
-		text: node.getAttribute("TEXT") || ""
+		text: node.getAttribute("TEXT") || "",
+		id: node.getAttribute("ID")
 	};
 
 	var position = node.getAttribute("POSITION");

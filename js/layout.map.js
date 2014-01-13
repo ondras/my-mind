@@ -16,19 +16,19 @@ MM.Layout.Map.update = function(item) {
 }
 
 /**
- * @param {MM.Item} item Child node
+ * @param {MM.Item} child Child node
  */
-MM.Layout.Map.getChildDirection = function(item) {
-	while (!item.getParent().isRoot()) {
-		item = item.getParent();
+MM.Layout.Map.getChildDirection = function(child) {
+	while (!child.getParent().isRoot()) {
+		child = child.getParent();
 	}
-	/* item is now the sub-root node */
+	/* child is now the sub-root node */
 
-	var side = item.getSide();
-	if (side) { return side; } /* FIXME test for left/right values? */
+	var side = child.getSide();
+	if (side) { return side; }
 
 	var counts = {left:0, right:0};
-	var children = item.getParent().getChildren();
+	var children = child.getParent().getChildren();
 	for (var i=0;i<children.length;i++) {
 		var side = children[i].getSide();
 		if (!side) {
@@ -38,7 +38,7 @@ MM.Layout.Map.getChildDirection = function(item) {
 		counts[side]++;
 	}
 
-	return item.getSide();
+	return child.getSide();
 }
 
 MM.Layout.Map.pickSibling = function(item, dir) {
@@ -60,6 +60,8 @@ MM.Layout.Map.pickSibling = function(item, dir) {
 }
 
 MM.Layout.Map._layoutRoot = function(item) {
+	this._alignItem(item, "right");
+
 	var dom = item.getDOM();
 
 	var children = item.getChildren();

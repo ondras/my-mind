@@ -1,20 +1,11 @@
-.text {
-	min-width: 0.5em;
-	min-height: 1.3em;
-	line-height: 1.3em;
-	outline: none;
-	display: inline-block;
-	white-space: pre;
-}
-
-.shape-box > .text {
+.shape-box > .content {
 	padding: 0.15em 0.4em;
 	background-color: #fff;
 	border: 1px solid #666;
 	border-radius: 3px;
 }
 
-.shape-ellipse > .text {
+.shape-ellipse > .content {
 	background-color: #fff;
 	border: 1px solid #666;
 	border-radius: 50%;
@@ -23,13 +14,13 @@
 
 /* current */
 
-.current > .text {
+.current > .content {
 	background-color: #ffb;
 }
 
 /* root */
 
-#port > .item > .text {
+#port > .item > .content {
 	font-weight: bold;
 	border-width: 2px;
 	font-size: 140%;
@@ -37,7 +28,7 @@
 
 /* 1st children */
 
-#port > .item > .children > .item > .text {
+#port > .item > .children > .item > .content {
 	border-width: 2px;
 	font-size: 120%;
 }

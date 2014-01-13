@@ -1,0 +1,67 @@
+.item {
+	position: absolute;
+}
+
+.item.cut {
+	opacity: 0.5;
+}
+
+.content {
+	position: relative;
+	display: inline-block;
+	white-space: pre;
+}
+
+.content > * {
+	vertical-align: middle;
+}
+
+.text {
+	display: inline-block;
+	text-align: center;
+	min-width: 0.5em;
+	min-height: 1.3em;
+	line-height: 1.3em;
+	outline: none;
+}
+
+.value, .status {
+	margin-right: 0.1em;
+}
+
+.text ~ .value, .text ~ .status {
+	margin-left: 0.1em;
+	margin-right: 0;
+}
+
+.value {
+	opacity: 0.7;
+}
+
+.value:not(:empty):before {
+	content: "(";
+}
+
+.value:not(:empty):after {
+	content: ")";
+}
+
+.status {
+	font-size: 150%;
+}
+
+.status.yes:after {
+	content: "✔";
+	color: #0f0;
+}
+
+.status.no:after {
+	content: "✘";
+	color: #f00;
+}
+
+canvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+}

@@ -1,4 +1,5 @@
 @import url(ui.css);
+@import url(item.css);
 @import url(shape.css);
 @import url(print.css) print;
 
@@ -33,22 +34,7 @@ ul {
 	opacity: 0;
 }
 
-
-.item {
-	position: absolute;
-}
-
-.item.cut {
+.ghost {
+	position: absolute !important; /* to prevent collision with .content */
 	opacity: 0.5;
-}
-
-.text {
-	position: relative;
-	text-align: center;
-}
-
-canvas {
-	position: absolute;
-	left: 0;
-	top: 0;
 }

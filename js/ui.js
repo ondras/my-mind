@@ -8,11 +8,13 @@ MM.UI = function() {
 	this._layout = new MM.UI.Layout();
 	this._shape = new MM.UI.Shape();
 	this._color = new MM.UI.Color();
+	this._value = new MM.UI.Value();
+	this._status = new MM.UI.Status();
 		
 	MM.subscribe("item-change", this);
 	MM.subscribe("item-select", this);
 
-	this._toggleVisibility();
+	this.toggle();
 }
 
 MM.UI.prototype.handleMessage = function(message, publisher) {
@@ -32,7 +34,7 @@ MM.UI.prototype.handleEvent = function(e) {
 	if (e.target.nodeName.toLowerCase() != "select") { e.target.blur(); }
 
 	if (e.target == this._toggle) {
-		this._toggleVisibility();
+		this.toggle();
 		return;
 	}
 	
@@ -42,7 +44,7 @@ MM.UI.prototype.handleEvent = function(e) {
 	MM.Command[command].execute();
 }
 
-MM.UI.prototype._toggleVisibility = function() {
+MM.UI.prototype.toggle = function() {
 	this._node.classList.toggle("visible");
 	MM.publish("ui-change", this);
 }
@@ -55,4 +57,6 @@ MM.UI.prototype.getWidth = function() {
 MM.UI.prototype._update = function() {
 	this._layout.update();
 	this._shape.update();
+	this._value.update();
+	this._status.update();
 }

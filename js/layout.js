@@ -15,15 +15,10 @@ MM.Layout.update = function(item) {
 	return this;
 }
 
-MM.Layout.set = function(item) {
-	return this;
-}
-
-MM.Layout.unset = function(item) {
-	return this;
-}
-
-MM.Layout.getChildDirection = function(item) {
+/**
+ * @param {MM.Item} child Child node (its parent uses this layout)
+ */
+MM.Layout.getChildDirection = function(child) {
 	return "";
 }
 
@@ -103,3 +98,19 @@ MM.Layout._computeChildrenBBox = function(children, childIndex) {
 	return bbox;
 }
 
+MM.Layout._alignItem = function(item, side) {
+	var dom = item.getDOM();
+
+	switch (side) {
+		case "left":
+			dom.content.appendChild(dom.text);
+			dom.content.appendChild(dom.value);
+			dom.content.appendChild(dom.status);
+		break;
+		case "right":
+			dom.content.appendChild(dom.status);
+			dom.content.appendChild(dom.value);
+			dom.content.appendChild(dom.text);
+		break;
+	}
+}
