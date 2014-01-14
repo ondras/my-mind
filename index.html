@@ -49,6 +49,7 @@
 		<script src="js/ui.backend.gdrive.js"></script>
 		<script src="js/app.js"></script>
 		<script src="https://cdn.firebase.com/v0/firebase.js"></script>
+		<script src="https://cdn.firebase.com/v0/firebase-simple-login.js"></script>
 		<link rel="stylesheet" href="css/style.css" />
 	</head>
 	<body>
@@ -158,6 +159,16 @@
 					<span>Server</span>
 					<input type="text" class="server" />
 				</p>
+				<p data-for="save load">
+					<span>Auth</span>
+					<select class="auth">
+						<option value="">(None)</option>
+						<option value="facebook">Facebook</option>
+						<option value="twitter">Twitter</option>
+						<option value="github">GitHub</option>
+						<option value="persona">Persona</option>
+					</select>
+				</p>
 				<p data-for="load">
 					<span>Saved maps</span>
 					<select class="list"></select>
@@ -231,7 +242,6 @@
 <!--
 TODO:
   shortterm:
-    - firebase auth
     - docka (github wiki)
   
   longterm:

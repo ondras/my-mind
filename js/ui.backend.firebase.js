@@ -10,15 +10,21 @@ MM.UI.Backend.Firebase.init = function(select) {
 	this._server = this._node.querySelector(".server");
 	this._server.value = localStorage.getItem(this._prefix + "server") || "my-mind";
 
+	this._auth = this._node.querySelector(".auth");
+	this._auth.value = localStorage.getItem(this._prefix + "auth") || "";
+
 	this._remove = this._node.querySelector(".remove");
 	this._remove.addEventListener("click", this);
-	
+
+	this._go.disabled = false;
 	MM.subscribe("firebase-list", this);
 }
 
 MM.UI.Backend.Firebase.setState = function(data) {
-	this._backend.connect(data.s);
-	this._load(data.id);
+	this._connect(data.s, data.a).then(
+		this._load.bind(this, data.id),
+		this._error.bind(this)
+	)
 }
 
 MM.UI.Backend.Firebase.getState = function() {
@@ -26,6 +32,7 @@ MM.UI.Backend.Firebase.getState = function() {
 		id: MM.App.map.getId(),
 		s: this._server.value
 	};
+	if (this._auth.value) { data.a = this._auth.value; }
 	return data;
 }
 
@@ -68,12 +75,7 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 
 MM.UI.Backend.Firebase._action = function() {
 	if (!this._online) {
-		localStorage.setItem(this._prefix + "server", this._server.value);
-		this._go.disabled = true;
-		this._backend.connect(this._server.value).then(
-			this._connected.bind(this),
-			this._error.bind(this)
-		);
+		this._connect(this._server.value, this._auth.value);
 		return;
 	}
 	
@@ -103,7 +105,33 @@ MM.UI.Backend.Firebase._load = function(id) {
 	);
 }
 
+MM.UI.Backend.Firebase._connect = function(server, auth) {
+	var promise = new Promise();
+
+	this._server.value = server;
+	this._auth.value = auth;
+	this._server.disabled = true;
+	this._auth.disabled = true;
+
+	localStorage.setItem(this._prefix + "server", server);
+	localStorage.setItem(this._prefix + "auth", auth || "");
+
+	this._go.disabled = true;
+	MM.App.setThrobber(true);
+
+	this._backend.connect(server, auth).then(
+		function() {
+			this._connected();
+			promise.fulfill();
+		}.bind(this),
+		promise.reject.bind(promise)
+	);
+
+	return promise;
+}
+
 MM.UI.Backend.Firebase._connected = function() {
+	MM.App.setThrobber(false);
 	this._online = true;
 	this._sync();
 }
