@@ -44,6 +44,8 @@ MM.UI.IO.prototype.restore = function() {
 					id: state.ids[0]
 				};
 				MM.UI.Backend.GDrive.setState(state);
+			} else {
+				history.replaceState(null, "", ".");
 			}
 			return;
 		} catch (e) { }
