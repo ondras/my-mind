@@ -46,15 +46,18 @@ MM.Action.RemoveItem.prototype.undo = function() {
 	MM.App.select(this._item);
 }
 
-MM.Action.MoveItem = function(item, newParent, newIndex) {
+MM.Action.MoveItem = function(item, newParent, newIndex, newSide) {
 	this._item = item;
 	this._newParent = newParent;
 	this._newIndex = (arguments.length < 3 ? null : newIndex);
+	this._newSide = newSide || "";
 	this._oldParent = item.getParent();
 	this._oldIndex = this._oldParent.getChildren().indexOf(item);
+	this._oldSide = item.getSide();
 }
 MM.Action.MoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.MoveItem.prototype.perform = function() {
+	this._item.setSide(this._newSide);
 	if (this._newIndex === null) {
 		this._newParent.insertChild(this._item);
 	} else {
@@ -63,6 +66,7 @@ MM.Action.MoveItem.prototype.perform = function() {
 	MM.App.select(this._item);
 }
 MM.Action.MoveItem.prototype.undo = function() {
+	this._item.setSide(this._oldSide);
 	this._oldParent.insertChild(this._item, this._oldIndex);
 	MM.App.select(this._newParent);
 }
