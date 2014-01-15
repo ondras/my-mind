@@ -4,20 +4,20 @@ MM.Backend.Firebase = Object.create(MM.Backend, {
 	ref: {value:null, writable:true}
 });
 
-MM.Backend.Firebase.connect = function(server) {
-	var promise = new Promise();
-	
+MM.Backend.Firebase.connect = function(server, auth) {
 	this.ref = new Firebase("https://" + server + ".firebaseio.com/");
-	
-	this.ref.child(".info/connected").once("value", function(snap) {
-		promise.fulfill();
-	});
 	
 	this.ref.child("names").on("value", function(snap) {
 		MM.publish("firebase-list", this, snap.val() || {});
 	});
-	
-	return promise;
+
+	if (auth) {
+		return this._login(auth);
+	} else {
+		var promise = new Promise();
+		promise.fulfill();
+		return promise;
+	}
 }
 
 MM.Backend.Firebase.save = function(data, id, name) {
@@ -67,6 +67,21 @@ MM.Backend.Firebase.remove = function(id) {
 	} catch (e) {
 		promise.reject(e);
 	}
+
+	return promise;
+}
+
+MM.Backend.Firebase._login = function(type) {
+	var promise = new Promise();
+
+	var auth = new FirebaseSimpleLogin(this.ref, function(error, user) {
+		if (error) {
+			promise.reject(error);
+		} else if (user) {
+			promise.fulfill(user);
+		}
+	});
+	auth.login(type);
 
 	return promise;
 }

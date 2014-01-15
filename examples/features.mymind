@@ -1,0 +1,190 @@
+{
+  "root": {
+    "id": "ujfdpxoz",
+    "text": "My Mind\nFeatures",
+    "layout": "map",
+    "children": [
+      {
+        "id": "cmetfpcz",
+        "text": "Basic features",
+        "side": "right",
+        "color": "#e33",
+        "children": [
+          {
+            "id": "oufzmqvy",
+            "text": "Node selection, manipulation"
+          },
+          {
+            "id": "hsthllrc",
+            "text": "<b>Rich</b> <i>text</i> <strike>editing</strike>"
+          },
+          {
+            "id": "spnaifjx",
+            "text": "Auto-linking"
+          },
+          {
+            "id": "meeftorp",
+            "text": "Colors"
+          },
+          {
+            "id": "pphsgpvu",
+            "text": "Zooming"
+          },
+          {
+            "id": "avzourxv",
+            "text": "Shapes"
+          },
+          {
+            "id": "bhszysqp",
+            "text": "Full keyboard control"
+          }
+        ]
+      },
+      {
+        "id": "nkrfhzwg",
+        "text": "I/O",
+        "side": "left",
+        "color": "#3e3",
+        "children": [
+          {
+            "id": "fpbtygky",
+            "text": "Multiple backends",
+            "children": [
+              {
+                "id": "ezwvmtko",
+                "text": "Local storage"
+              },
+              {
+                "id": "sczzbjgf",
+                "text": "Local filesystem"
+              },
+              {
+                "id": "megldbuw",
+                "text": "Firebase"
+              },
+              {
+                "id": "rmxmrpum",
+                "text": "Google Drive"
+              }
+            ]
+          },
+          {
+            "id": "bmatbsiz",
+            "text": "Multiple file formats",
+            "children": [
+              {
+                "id": "lyzyawpn",
+                "text": "Native"
+              },
+              {
+                "id": "chfwbjrp",
+                "text": "Freemind"
+              },
+              {
+                "id": "vhsldewc",
+                "text": "Mind Architect"
+              },
+              {
+                "id": "whmzheiy",
+                "text": "MindMup"
+              }
+            ]
+          },
+          {
+            "id": "hjialeal",
+            "text": "Permalinks"
+          }
+        ]
+      },
+      {
+        "id": "scoyihcg",
+        "text": "Advanced features",
+        "side": "right",
+        "color": "#33e",
+        "children": [
+          {
+            "id": "bvfjpmrm",
+            "text": "Numerical node values",
+            "value": "sum",
+            "children": [
+              {
+                "id": "fppldjcr",
+                "text": "Constant values",
+                "value": 3.14
+              },
+              {
+                "id": "lhqwyqwq",
+                "text": "Functions",
+                "value": 42
+              }
+            ]
+          },
+          {
+            "id": "pjqwdjad",
+            "text": "Bool node statuses",
+            "value": "maybe",
+            "status": "maybe",
+            "children": [
+              {
+                "id": "jsrxnhgy",
+                "text": "Yes/No",
+                "value": "yes",
+                "status": "no"
+              },
+              {
+                "id": "oqzwbzvf",
+                "text": "Auto-propagation to parent",
+                "value": "no",
+                "status": "maybe"
+              }
+            ]
+          },
+          {
+            "id": "adqojbln",
+            "text": "Variable layouts",
+            "layout": "tree-right",
+            "children": [
+              {
+                "id": "uglsvbbi",
+                "text": "Map"
+              },
+              {
+                "id": "mvqxmutu",
+                "text": "Graph"
+              },
+              {
+                "id": "uonrboqe",
+                "text": "Tree"
+              }
+            ]
+          },
+          {
+            "id": "rsruxymh",
+            "text": "Infinite undo/redo"
+          }
+        ]
+      },
+      {
+        "id": "rbahwqul",
+        "text": "Planned features",
+        "side": "left",
+        "color": "#d3d",
+        "children": [
+          {
+            "id": "krsvhker",
+            "text": "Realtime sync (Firebase)"
+          },
+          {
+            "id": "vcmxdsvj",
+            "text": "Custom styles"
+          },
+          {
+            "id": "bsddmwik",
+            "text": "Custom icons"
+          }
+        ]
+      }
+    ]
+  },
+  "id": "dwqxduay"
+}
