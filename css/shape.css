@@ -15,7 +15,7 @@
 /* current */
 
 .current > .content {
-	background-color: #ffb;
+	background-color: rgba(255, 255, 187, 0.8);
 }
 
 /* root */
