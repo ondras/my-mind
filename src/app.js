@@ -84,6 +84,11 @@ MM.App = {
 				if (item) { this.select(item); }
 			break;
 			
+			case "dblclick":
+				var item = this.map.getItemFor(e.target);
+				if (item) { MM.Command.Edit.execute(); }
+			break;
+			
 			case "mousedown":
 				e.preventDefault();
 				this._port.addEventListener("mousemove", this);
@@ -159,6 +164,7 @@ MM.App = {
 
 		this._port.addEventListener("mousedown", this);
 		this._port.addEventListener("click", this);
+		this._port.addEventListener("dblclick", this);
 		window.addEventListener("resize", this);
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);

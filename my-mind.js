@@ -826,6 +826,8 @@ MM.Map.prototype.getItemFor = function(node) {
 }
 
 MM.Map.prototype.ensureItemVisibility = function(item) {
+	var padding = 10;
+
 	var node = item.getDOM().content;
 	var itemRect = node.getBoundingClientRect();
 	var root = this._root.getDOM().node;
@@ -833,14 +835,14 @@ MM.Map.prototype.ensureItemVisibility = function(item) {
 
 	var delta = [0, 0];
 
-	var dx = parentRect.left-itemRect.left;
+	var dx = parentRect.left-itemRect.left+padding;
 	if (dx > 0) { delta[0] = dx; }
-	var dx = parentRect.right-itemRect.right;
+	var dx = parentRect.right-itemRect.right-padding;
 	if (dx < 0) { delta[0] = dx; }
 
-	var dy = parentRect.top-itemRect.top;
+	var dy = parentRect.top-itemRect.top+padding;
 	if (dy > 0) { delta[1] = dy; }
-	var dy = parentRect.bottom-itemRect.bottom;
+	var dy = parentRect.bottom-itemRect.bottom-padding;
 	if (dy < 0) { delta[1] = dy; }
 
 	if (delta[0] || delta[1]) {
@@ -3899,6 +3901,11 @@ MM.App = {
 				if (item) { this.select(item); }
 			break;
 			
+			case "dblclick":
+				var item = this.map.getItemFor(e.target);
+				if (item) { MM.Command.Edit.execute(); }
+			break;
+			
 			case "mousedown":
 				e.preventDefault();
 				this._port.addEventListener("mousemove", this);
@@ -3974,6 +3981,7 @@ MM.App = {
 
 		this._port.addEventListener("mousedown", this);
 		this._port.addEventListener("click", this);
+		this._port.addEventListener("dblclick", this);
 		window.addEventListener("resize", this);
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
