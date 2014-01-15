@@ -157,6 +157,10 @@
                 "text": "Tree"
               }
             ]
+          },
+          {
+            "id": "rsruxymh",
+            "text": "Infinite undo/redo"
           }
         ]
       },

@@ -3855,6 +3855,7 @@ MM.App = {
 	},
 	
 	select: function(item) {
+		document.activeElement.blur();
 		if (this.current) {
 			this.current.getDOM().node.classList.remove("current");
 		}
