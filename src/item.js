@@ -83,7 +83,7 @@ MM.Item.prototype.toJSON = function() {
 	if (this._side) { data.side = this._side; }
 	if (this._color) { data.color = this._color; }
 	if (this._value) { data.value = this._value; }
-	if (this._status) { data.value = this._status; }
+	if (this._status) { data.status = this._status; }
 	if (this._layout) { data.layout = this._layout.id; }
 	if (!this._autoShape) { data.shape = this._shape.id; }
 	if (this._children.length) {

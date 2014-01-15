@@ -11,6 +11,7 @@ MM.UI.Color = function() {
 }
 
 MM.UI.Color.prototype.handleEvent = function(e) {
+	e.preventDefault();
 	if (!e.target.hasAttribute("data-color")) { return; }
 	
 	var color = e.target.getAttribute("data-color") || null;
