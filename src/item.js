@@ -261,11 +261,7 @@ MM.Item.prototype.setParent = function(parent) {
 }
 
 MM.Item.prototype.insertChild = function(child, index) {
-	if (arguments.length < 2) { index = this._children.length; }
-	if (!this._children.length) {
-		this._dom.node.appendChild(this._dom.children);
-	}
-
+	/* Create or remove child as necessary. This must be done before computing the index (inserting own child) */
 	var newChild = false;
 	if (!child) { 
 		child = new MM.Item();
@@ -273,6 +269,12 @@ MM.Item.prototype.insertChild = function(child, index) {
 	} else if (child.getParent()) {
 		child.getParent().removeChild(child);
 	}
+
+	if (!this._children.length) {
+		this._dom.node.appendChild(this._dom.children);
+	}
+
+	if (arguments.length < 2) { index = this._children.length; }
 	
 	var next = null;
 	if (index < this._children.length) { next = this._children[index].getDOM().node; }
