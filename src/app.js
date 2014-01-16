@@ -42,7 +42,11 @@ MM.App = {
 	},
 	
 	select: function(item) {
-		document.activeElement.blur();
+		if (item == this.current) { return; }
+
+		if (this.editing) { MM.Command.Finish.execute(); }
+
+		document.activeElement.blur(); /* blur the UI panel FIXME only if activeElement is in the UI? */
 		if (this.current) {
 			this.current.getDOM().node.classList.remove("current");
 		}
@@ -90,7 +94,6 @@ MM.App = {
 			break;
 			
 			case "mousedown":
-				if (this.editing) { return; }
 				e.preventDefault();
 				this._port.addEventListener("mousemove", this);
 				this._port.addEventListener("mouseup", this);
