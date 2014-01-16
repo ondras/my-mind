@@ -90,6 +90,7 @@ MM.App = {
 			break;
 			
 			case "mousedown":
+				if (this.editing) { return; }
 				e.preventDefault();
 				this._port.addEventListener("mousemove", this);
 				this._port.addEventListener("mouseup", this);
