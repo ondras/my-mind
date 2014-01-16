@@ -36,7 +36,7 @@ MM.Format.FreeMind.from = function(data) {
 MM.Format.FreeMind._serializeItem = function(doc, json) {
 	var elm = this._serializeAttributes(doc, json);
 
-	json.children.forEach(function(child) {
+	(json.children || []).forEach(function(child) {
 		elm.appendChild(this._serializeItem(doc, child));
 	}, this);
 
