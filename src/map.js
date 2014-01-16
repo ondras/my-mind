@@ -118,6 +118,8 @@ MM.Map.prototype.getItemFor = function(node) {
 }
 
 MM.Map.prototype.ensureItemVisibility = function(item) {
+	var padding = 10;
+
 	var node = item.getDOM().content;
 	var itemRect = node.getBoundingClientRect();
 	var root = this._root.getDOM().node;
@@ -125,14 +127,14 @@ MM.Map.prototype.ensureItemVisibility = function(item) {
 
 	var delta = [0, 0];
 
-	var dx = parentRect.left-itemRect.left;
+	var dx = parentRect.left-itemRect.left+padding;
 	if (dx > 0) { delta[0] = dx; }
-	var dx = parentRect.right-itemRect.right;
+	var dx = parentRect.right-itemRect.right-padding;
 	if (dx < 0) { delta[0] = dx; }
 
-	var dy = parentRect.top-itemRect.top;
+	var dy = parentRect.top-itemRect.top+padding;
 	if (dy > 0) { delta[1] = dy; }
-	var dy = parentRect.bottom-itemRect.bottom;
+	var dy = parentRect.bottom-itemRect.bottom-padding;
 	if (dy < 0) { delta[1] = dy; }
 
 	if (delta[0] || delta[1]) {

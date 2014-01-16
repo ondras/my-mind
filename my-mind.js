@@ -523,11 +523,7 @@ MM.Item.prototype.setParent = function(parent) {
 }
 
 MM.Item.prototype.insertChild = function(child, index) {
-	if (arguments.length < 2) { index = this._children.length; }
-	if (!this._children.length) {
-		this._dom.node.appendChild(this._dom.children);
-	}
-
+	/* Create or remove child as necessary. This must be done before computing the index (inserting own child) */
 	var newChild = false;
 	if (!child) { 
 		child = new MM.Item();
@@ -535,6 +531,12 @@ MM.Item.prototype.insertChild = function(child, index) {
 	} else if (child.getParent()) {
 		child.getParent().removeChild(child);
 	}
+
+	if (!this._children.length) {
+		this._dom.node.appendChild(this._dom.children);
+	}
+
+	if (arguments.length < 2) { index = this._children.length; }
 	
 	var next = null;
 	if (index < this._children.length) { next = this._children[index].getDOM().node; }
@@ -824,6 +826,8 @@ MM.Map.prototype.getItemFor = function(node) {
 }
 
 MM.Map.prototype.ensureItemVisibility = function(item) {
+	var padding = 10;
+
 	var node = item.getDOM().content;
 	var itemRect = node.getBoundingClientRect();
 	var root = this._root.getDOM().node;
@@ -831,14 +835,14 @@ MM.Map.prototype.ensureItemVisibility = function(item) {
 
 	var delta = [0, 0];
 
-	var dx = parentRect.left-itemRect.left;
+	var dx = parentRect.left-itemRect.left+padding;
 	if (dx > 0) { delta[0] = dx; }
-	var dx = parentRect.right-itemRect.right;
+	var dx = parentRect.right-itemRect.right-padding;
 	if (dx < 0) { delta[0] = dx; }
 
-	var dy = parentRect.top-itemRect.top;
+	var dy = parentRect.top-itemRect.top+padding;
 	if (dy > 0) { delta[1] = dy; }
-	var dy = parentRect.bottom-itemRect.bottom;
+	var dy = parentRect.bottom-itemRect.bottom-padding;
 	if (dy < 0) { delta[1] = dy; }
 
 	if (delta[0] || delta[1]) {
@@ -2358,7 +2362,7 @@ MM.Format.FreeMind.from = function(data) {
 MM.Format.FreeMind._serializeItem = function(doc, json) {
 	var elm = this._serializeAttributes(doc, json);
 
-	json.children.forEach(function(child) {
+	(json.children || []).forEach(function(child) {
 		elm.appendChild(this._serializeItem(doc, child));
 	}, this);
 
@@ -3855,7 +3859,11 @@ MM.App = {
 	},
 	
 	select: function(item) {
-		document.activeElement.blur();
+		if (item == this.current) { return; }
+
+		if (this.editing) { MM.Command.Finish.execute(); }
+
+		document.activeElement.blur(); /* blur the UI panel FIXME only if activeElement is in the UI? */
 		if (this.current) {
 			this.current.getDOM().node.classList.remove("current");
 		}
@@ -3895,6 +3903,11 @@ MM.App = {
 			case "click":
 				var item = this.map.getItemFor(e.target);
 				if (item) { this.select(item); }
+			break;
+			
+			case "dblclick":
+				var item = this.map.getItemFor(e.target);
+				if (item) { MM.Command.Edit.execute(); }
 			break;
 			
 			case "mousedown":
@@ -3972,6 +3985,7 @@ MM.App = {
 
 		this._port.addEventListener("mousedown", this);
 		this._port.addEventListener("click", this);
+		this._port.addEventListener("dblclick", this);
 		window.addEventListener("resize", this);
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
