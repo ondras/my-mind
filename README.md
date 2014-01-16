@@ -12,4 +12,4 @@ My Mind is being actively developed. Do you want to participate?
 * Found a bug? [Open an issue.](https://github.com/ondras/my-mind/issues)
 * Not sure how to do stuff? [Check the docs.](https://github.com/ondras/my-mind/wiki)
 * Have a feature request? [Open an issue.]((https://github.com/ondras/my-mind/issues)
-* Have an improvement? [Submit a pull request.](https://github.com/ondras/my-mind/pull)s
+* Have an improvement? [Submit a pull request.](https://github.com/ondras/my-mind/pulls)
