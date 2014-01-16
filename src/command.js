@@ -52,7 +52,7 @@ MM.Command.InsertSibling.execute = function() {
 }
 
 MM.Command.InsertChild = Object.create(MM.Command, {
-: {value: "Insert a child"},
+	label: {value: "Insert a child"},
 	keys: {value: [{keyCode: 45}]}
 });
 MM.Command.InsertChild.execute = function() {
