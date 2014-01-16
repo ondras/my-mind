@@ -3911,13 +3911,15 @@ MM.App = {
 			break;
 			
 			case "mousedown":
+				var item = this.map.getItemFor(e.target);
+				if (item == this.current && this.editing) { return; }
+
 				e.preventDefault();
 				this._port.addEventListener("mousemove", this);
 				this._port.addEventListener("mouseup", this);
 				this._drag.mouse[0] = e.clientX;
 				this._drag.mouse[1] = e.clientY;
 
-				var item = this.map.getItemFor(e.target);
 				if (item && !item.isRoot()) { 
 					this._drag.item = item;
 				} else {
