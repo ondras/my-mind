@@ -37,4 +37,5 @@ ul {
 .ghost {
 	position: absolute !important; /* to prevent collision with .content */
 	opacity: 0.5;
+	z-index: 1;
 }

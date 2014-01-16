@@ -100,11 +100,10 @@ MM.Mouse._endDrag = function(e) {
 	if (this._mode == "pan") { return; } /* no cleanup after panning */
 
 	if (this._ghost) {
-		var rect = this._ghost.getBoundingClientRect();
+		var state = this._computeDragState();
+		this._finishDragDrop(state);
+
 		this._ghost.parentNode.removeChild(this._ghost);
-		
-		var nearest = MM.App.map.getClosestItem(rect.left + rect.width/2, rect.top + rect.height/2);
-		this._finishDragDrop(nearest);
 		this._ghost = null;
 	}
 
@@ -125,13 +124,48 @@ MM.Mouse._moveGhost = function(dx, dy) {
 	this._pos[1] += dy;
 	this._ghost.style.left = this._pos[0] + "px";
 	this._ghost.style.top = this._pos[1] + "px";
+
+	var state = this._computeDragState();
 }
 
-MM.Mouse._finishDragDrop = function(nearest) {
-	var target = nearest.item;
+MM.Mouse._finishDragDrop = function(state) {
+	var target = state.item;
+	switch (state.result) {
+		case "append":
+			var action = new MM.Action.MoveItem(this._item, target);
+		break;
+
+		case "sibling":
+			var index = target.getParent().getChildren().indexOf(target);
+			var targetIndex = index + (state.direction == "right" || state.direction == "bottom" ? 1 : 0);
+			var action = new MM.Action.MoveItem(this._item, target.getParent(), targetIndex, target.getSide());
+		break;
+
+		default:
+			return;
+		break;
+	}
+
+	MM.App.action(action);
+}
+
+/**
+ * Compute a state object for a drag: current result (""/"append"/"sibling"), parent/sibling, direction
+ */
+MM.Mouse._computeDragState = function() {
+	var rect = this._ghost.getBoundingClientRect();
+	var closest = MM.App.map.getClosestItem(rect.left + rect.width/2, rect.top + rect.height/2);
+	var target = closest.item;
+
+	var state = {
+		result: "",
+		item: target,
+		direction: ""
+	}
+
 	var tmp = target;
 	while (!tmp.isRoot()) {
-		if (tmp == this._item) { return; } /* drop on a child or self */
+		if (tmp == this._item) { return state; } /* drop on a child or self */
 		tmp = tmp.getParent();
 	}
 	
@@ -141,18 +175,22 @@ MM.Mouse._finishDragDrop = function(nearest) {
 	var h1 = this._item.getDOM().content.offsetHeight;
 	var h2 = target.getDOM().content.offsetHeight;
 	var h = Math.max(h1, h2);
+
 	if (target.isRoot()) { /* append here */
-		var action = new MM.Action.MoveItem(this._item, target);
-	} else if (Math.abs(nearest.dx) < w && Math.abs(nearest.dy) < h) { /* append here */
-		var action = new MM.Action.MoveItem(this._item, target);
+		state.result = "append";
+	} else if (Math.abs(closest.dx) < w && Math.abs(closest.dy) < h) { /* append here */
+		state.result = "append";
 	} else {
-		var dir = target.getParent().getLayout().getChildDirection(target);
-		var diff = -1 * (dir == "top" || dir == "bottom" ? nearest.dx : nearest.dy);
-		
-		var index = target.getParent().getChildren().indexOf(target);
-		var targetIndex = index + (diff > 0 ? 1 : 0);
-		var action = new MM.Action.MoveItem(this._item, target.getParent(), targetIndex, target.getSide());
+		state.result = "sibling";
+		var childDirection = target.getParent().getLayout().getChildDirection(target);
+		var diff = -1 * (childDirection == "top" || childDirection == "bottom" ? closest.dx : closest.dy);
+
+		if (childDirection == "left" || childDirection == "right") {
+			state.direction = (closest.dy < 0 ? "bottom" : "top");
+		} else {
+			state.direction = (closest.dx < 0 ? "right" : "left");
+		}
 	}
 
-	MM.App.action(action);
+	return state;
 }
