@@ -169,10 +169,10 @@ MM.Command.UI.execute = function() {
 MM.Command.Pan = Object.create(MM.Command, {
 	label: {value: "Pan the map"},
 	keys: {value: [
-		{keyCode: "W".charCodeAt(0), ctrlKey:false},
-		{keyCode: "A".charCodeAt(0), ctrlKey:false},
-		{keyCode: "S".charCodeAt(0), ctrlKey:false},
-		{keyCode: "D".charCodeAt(0), ctrlKey:false}
+		{keyCode: "W".charCodeAt(0), ctrlKey:false, altKey:false},
+		{keyCode: "A".charCodeAt(0), ctrlKey:false, altKey:false},
+		{keyCode: "S".charCodeAt(0), ctrlKey:false, altKey:false},
+		{keyCode: "D".charCodeAt(0), ctrlKey:false, altKey:false}
 	]},
 	chars: {value: []}
 });
