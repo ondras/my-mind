@@ -1,7 +1,8 @@
 MM.Format.FreeMind = Object.create(MM.Format, {
 	id: {value: "freemind"},
 	label: {value: "FreeMind"},
-	extension: {value: "mm"}
+	extension: {value: "mm"},
+	mime: {value: "application/xml"}
 });
 
 MM.Format.FreeMind.to = function(data) { 
