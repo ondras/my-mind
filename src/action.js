@@ -170,3 +170,18 @@ MM.Action.SetStatus.prototype.perform = function() {
 MM.Action.SetStatus.prototype.undo = function() {
 	this._item.setStatus(this._oldStatus);
 }
+
+MM.Action.SetSide = function(item, side) {
+	this._item = item;
+	this._side = side;
+	this._oldSide = item.getSide();
+}
+MM.Action.SetSide.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetSide.prototype.perform = function() {
+	this._item.setSide(this._side);
+	this._item.getMap().update();
+}
+MM.Action.SetStatus.prototype.undo = function() {
+	this._item.setSide(this._oldSide);
+	this._item.getMap().update();
+}

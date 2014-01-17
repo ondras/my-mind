@@ -1136,6 +1136,21 @@ MM.Action.SetStatus.prototype.perform = function() {
 MM.Action.SetStatus.prototype.undo = function() {
 	this._item.setStatus(this._oldStatus);
 }
+
+MM.Action.SetSide = function(item, side) {
+	this._item = item;
+	this._side = side;
+	this._oldSide = item.getSide();
+}
+MM.Action.SetSide.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetSide.prototype.perform = function() {
+	this._item.setSide(this._side);
+	this._item.getMap().update();
+}
+MM.Action.SetStatus.prototype.undo = function() {
+	this._item.setSide(this._oldSide);
+	this._item.getMap().update();
+}
 MM.Clipboard = {
 	_data: null,
 	_mode: ""
@@ -1277,16 +1292,32 @@ MM.Command.Delete.execute = function() {
 MM.Command.Swap = Object.create(MM.Command, {
 	label: {value: "Swap sibling"},
 	keys: {value: [
-		{keyCode: 33},
-		{keyCode: 34},
+		{keyCode: 38, ctrlKey:true},
+		{keyCode: 40, ctrlKey:true},
 	]}
 });
 MM.Command.Swap.execute = function(e) {
 	var current = MM.App.current;
 	if (current.isRoot() || current.getParent().getChildren().length < 2) { return; }
 
-	var diff = (e.keyCode == 33 ? -1 : 1);
+	var diff = (e.keyCode == 38 ? -1 : 1);
 	var action = new MM.Action.Swap(MM.App.current, diff);
+	MM.App.action(action);	
+}
+
+MM.Command.Side = Object.create(MM.Command, {
+	label: {value: "Change side"},
+	keys: {value: [
+		{keyCode: 37, ctrlKey:true},
+		{keyCode: 39, ctrlKey:true},
+	]}
+});
+MM.Command.Side.execute = function(e) {
+	var current = MM.App.current;
+	if (current.isRoot() || !current.getParent().isRoot()) { return; }
+
+	var side = (e.keyCode == 37 ? "left" : "right");
+	var action = new MM.Action.SetSide(MM.App.current, side);
 	MM.App.action(action);	
 }
 
@@ -1585,10 +1616,10 @@ MM.Command.Maybe.execute = function() {
 MM.Command.Select = Object.create(MM.Command, {
 	label: {value: "Move selection"},
 	keys: {value: [
-		{keyCode: 38},
-		{keyCode: 37},
-		{keyCode: 40},
-		{keyCode: 39}
+		{keyCode: 38, ctrlKey:false},
+		{keyCode: 37, ctrlKey:false},
+		{keyCode: 40, ctrlKey:false},
+		{keyCode: 39, ctrlKey:false}
 	]} 
 });
 MM.Command.Select.execute = function(e) {
@@ -3164,6 +3195,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "InsertSibling");
 	this._buildRow(t, "InsertChild");
 	this._buildRow(t, "Swap");
+	this._buildRow(t, "Side");
 	this._buildRow(t, "Delete");
 
 	this._buildRow(t, "Copy");

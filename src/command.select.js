@@ -1,10 +1,10 @@
 MM.Command.Select = Object.create(MM.Command, {
 	label: {value: "Move selection"},
 	keys: {value: [
-		{keyCode: 38},
-		{keyCode: 37},
-		{keyCode: 40},
-		{keyCode: 39}
+		{keyCode: 38, ctrlKey:false},
+		{keyCode: 37, ctrlKey:false},
+		{keyCode: 40, ctrlKey:false},
+		{keyCode: 39, ctrlKey:false}
 	]} 
 });
 MM.Command.Select.execute = function(e) {
