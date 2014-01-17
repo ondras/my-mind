@@ -10,6 +10,7 @@
 	position: relative;
 	display: inline-block;
 	white-space: pre;
+	cursor: pointer;
 }
 
 .content > * {
