@@ -12,15 +12,16 @@ MM.Backend.GDrive.reset = function() {
 	this.fileId = null;
 }
 
-MM.Backend.GDrive.save = function(data, name) {
+MM.Backend.GDrive.save = function(data, name, mime) {
+	console.log(data, name, mime);
 	return this._connect().then(
 		function() {
-			return this._send(data, name);
+			return this._send(data, name, mime);
 		}.bind(this)
 	);
 }
 
-MM.Backend.GDrive._send = function(data, name) {
+MM.Backend.GDrive._send = function(data, name, mime) {
 	var promise = new Promise();
 	var path = "/upload/drive/v2/files";
 	var method = "POST";
@@ -33,7 +34,7 @@ MM.Backend.GDrive._send = function(data, name) {
 		path: path,
 		method: method,
 		headers: {
-			"Content-Type": "application/json"
+			"Content-Type": mime
 		},
 		body: data
 	});

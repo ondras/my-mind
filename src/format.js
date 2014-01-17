@@ -1,5 +1,6 @@
 MM.Format = Object.create(MM.Repo, {
-	extension: {value:""}
+	extension: {value:""},
+	mime: {value:"text/plain"}
 });
 
 MM.Format.getByName = function(name) {

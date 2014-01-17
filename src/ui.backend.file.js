@@ -4,14 +4,13 @@ MM.UI.Backend.File = Object.create(MM.UI.Backend, {
 
 MM.UI.Backend.File.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
-	
+
 	this._format = this._node.querySelector(".format");
 	this._format.appendChild(MM.Format.JSON.buildOption());
 	this._format.appendChild(MM.Format.FreeMind.buildOption());
 	this._format.appendChild(MM.Format.MMA.buildOption());
 	this._format.appendChild(MM.Format.Mup.buildOption());
 	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
-	this._format.addEventListener("change", this);
 }
 
 MM.UI.Backend.File.show = function(mode) {

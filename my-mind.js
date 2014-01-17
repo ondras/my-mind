@@ -2331,7 +2331,8 @@ MM.Shape.Ellipse = Object.create(MM.Shape, {
 	label: {value: "Ellipse"}
 });
 MM.Format = Object.create(MM.Repo, {
-	extension: {value:""}
+	extension: {value:""},
+	mime: {value:"text/plain"}
 });
 
 MM.Format.getByName = function(name) {
@@ -2350,7 +2351,8 @@ MM.Format.from = function(data) {}
 MM.Format.JSON = Object.create(MM.Format, {
 	id: {value: "json"},
 	label: {value: "Native (JSON)"},
-	extension: {value: "mymind"}
+	extension: {value: "mymind"},
+	mime: {value: "application/json"}
 });
 
 MM.Format.JSON.to = function(data) { 
@@ -2363,7 +2365,8 @@ MM.Format.JSON.from = function(data) {
 MM.Format.FreeMind = Object.create(MM.Format, {
 	id: {value: "freemind"},
 	label: {value: "FreeMind"},
-	extension: {value: "mm"}
+	extension: {value: "mm"},
+	mime: {value: "application/xml"}
 });
 
 MM.Format.FreeMind.to = function(data) { 
@@ -2451,7 +2454,8 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 MM.Format.MMA = Object.create(MM.Format.FreeMind, {
 	id: {value: "mma"},
 	label: {value: "Mind Map Architect"},
-	extension: {value: "mma"}
+	extension: {value: "mma"},
+	mime: {value: "application/xml"}
 });
 
 MM.Format.MMA._parseAttributes = function(node, parent) {
@@ -2501,7 +2505,8 @@ MM.Format.MMA._serializeAttributes = function(doc, json) {
 MM.Format.Mup = Object.create(MM.Format, {
 	id: {value: "mup"},
 	label: {value: "MindMup"},
-	extension: {value: "mup"}
+	extension: {value: "mup"},
+	mime: {value: "application/json"}
 });
 
 MM.Format.Mup.to = function(data) {
@@ -2770,15 +2775,16 @@ MM.Backend.GDrive.reset = function() {
 	this.fileId = null;
 }
 
-MM.Backend.GDrive.save = function(data, name) {
+MM.Backend.GDrive.save = function(data, name, mime) {
+	console.log(data, name, mime);
 	return this._connect().then(
 		function() {
-			return this._send(data, name);
+			return this._send(data, name, mime);
 		}.bind(this)
 	);
 }
 
-MM.Backend.GDrive._send = function(data, name) {
+MM.Backend.GDrive._send = function(data, name, mime) {
 	var promise = new Promise();
 	var path = "/upload/drive/v2/files";
 	var method = "POST";
@@ -2791,7 +2797,7 @@ MM.Backend.GDrive._send = function(data, name) {
 		path: path,
 		method: method,
 		headers: {
-			"Content-Type": "application/json"
+			"Content-Type": mime
 		},
 		body: data
 	});
@@ -3512,14 +3518,13 @@ MM.UI.Backend.File = Object.create(MM.UI.Backend, {
 
 MM.UI.Backend.File.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
-	
+
 	this._format = this._node.querySelector(".format");
 	this._format.appendChild(MM.Format.JSON.buildOption());
 	this._format.appendChild(MM.Format.FreeMind.buildOption());
 	this._format.appendChild(MM.Format.MMA.buildOption());
 	this._format.appendChild(MM.Format.Mup.buildOption());
 	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
-	this._format.addEventListener("change", this);
 }
 
 MM.UI.Backend.File.show = function(mode) {
@@ -3799,13 +3804,26 @@ MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
 	id: {value: "gdrive"}
 });
 
+MM.UI.Backend.GDrive.init = function(select) {
+	MM.UI.Backend.init.call(this, select);
+
+	this._format = this._node.querySelector(".format");
+	this._format.appendChild(MM.Format.JSON.buildOption());
+	this._format.appendChild(MM.Format.FreeMind.buildOption());
+	this._format.appendChild(MM.Format.MMA.buildOption());
+	this._format.appendChild(MM.Format.Mup.buildOption());
+	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
+}
+
 MM.UI.Backend.GDrive.save = function() {
 	MM.App.setThrobber(true);
 
-	var data = MM.Format.JSON.to(MM.App.map.toJSON());
-	var name = MM.App.map.getName() + "." + MM.Format.JSON.extension;
+	var format = MM.Format.getById(this._format.value);
+	var json = MM.App.map.toJSON();
+	var data = format.to(json);
+	var name = MM.App.map.getName() + "." + format.extension;
 	
-	this._backend.save(data, name).then(
+	this._backend.save(data, name, format.mime).then(
 		this._saveDone.bind(this),
 		this._error.bind(this)
 	);

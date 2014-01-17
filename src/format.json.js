@@ -1,7 +1,8 @@
 MM.Format.JSON = Object.create(MM.Format, {
 	id: {value: "json"},
 	label: {value: "Native (JSON)"},
-	extension: {value: "mymind"}
+	extension: {value: "mymind"},
+	mime: {value: "application/json"}
 });
 
 MM.Format.JSON.to = function(data) { 
