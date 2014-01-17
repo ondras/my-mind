@@ -1318,7 +1318,7 @@ MM.Command.Side.execute = function(e) {
 
 	var side = (e.keyCode == 37 ? "left" : "right");
 	var action = new MM.Action.SetSide(MM.App.current, side);
-	MM.App.action(action);	
+	MM.App.action(action);
 }
 
 MM.Command.Save = Object.create(MM.Command, {
@@ -3859,7 +3859,8 @@ MM.Mouse = {
 	_pos: [0, 0], /* ghost pos */
 	_mode: "",
 	_item: null,
-	_ghost: null
+	_ghost: null,
+	_oldDragState: null
 }
 
 MM.Mouse.init = function(port) {
@@ -3939,6 +3940,8 @@ MM.Mouse._processDrag = function(e) {
 				this._buildGhost(dx, dy); 
 			}
 			this._moveGhost(dx, dy);
+			var state = this._computeDragState();
+			this._visualizeDragState(state);
 		break;
 
 		case "pan":
@@ -3984,6 +3987,8 @@ MM.Mouse._moveGhost = function(dx, dy) {
 }
 
 MM.Mouse._finishDragDrop = function(state) {
+	this._visualizeDragState(null);
+
 	var target = state.item;
 	switch (state.result) {
 		case "append":
@@ -4048,6 +4053,37 @@ MM.Mouse._computeDragState = function() {
 	}
 
 	return state;
+}
+
+MM.Mouse._visualizeDragState = function(state) {
+	if (this._oldState && state && this._oldState.item == state.item && this._oldState.result == state.result) { return; } /* nothing changed */
+
+	if (this._oldDragState) { /* remove old vis */
+		var item = this._oldDragState.item;
+		var node = item.getDOM().content;
+		node.style.boxShadow = "";
+	}
+
+	this._oldDragState = state;
+
+	if (state) { /* show new vis */
+		var item = state.item;
+		var node = item.getDOM().content;
+
+		var x = 0;
+		var y = 0;
+		var offset = 5;
+		if (state.result == "sibling") {
+			if (state.direction == "left") { x = -1; }
+			if (state.direction == "right") { x = +1; }
+			if (state.direction == "top") { y = -1; }
+			if (state.direction == "bottom") { y = +1; }
+		}
+		var spread = (x || y ? -2 : 2);
+		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
+	}
+
+
 }
 MM.App = {
 	keyboard: null,
