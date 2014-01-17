@@ -51,6 +51,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "InsertSibling");
 	this._buildRow(t, "InsertChild");
 	this._buildRow(t, "Swap");
+	this._buildRow(t, "Side");
 	this._buildRow(t, "Delete");
 
 	this._buildRow(t, "Copy");

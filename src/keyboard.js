@@ -1,9 +1,10 @@
-MM.Keyboard = function() {
+MM.Keyboard = {};
+MM.Keyboard.init = function() {
 	window.addEventListener("keydown", this);
 	window.addEventListener("keypress", this);
 }
 
-MM.Keyboard.prototype.handleEvent = function(e) {
+MM.Keyboard.handleEvent = function(e) {
 	var node = document.activeElement;
 	while (node != document) {
 		if (node.classList.contains("ui")) { return; }
@@ -25,7 +26,7 @@ MM.Keyboard.prototype.handleEvent = function(e) {
 	}
 }
 
-MM.Keyboard.prototype._keyOK = function(key, e) {
+MM.Keyboard._keyOK = function(key, e) {
 	if ("keyCode" in key && e.type != "keydown") { return false; }
 	if ("charCode" in key && e.type != "keypress") { return false; }
 	for (var p in key) {

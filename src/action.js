@@ -132,13 +132,17 @@ MM.Action.SetText = function(item, text) {
 	this._item = item;
 	this._text = text;
 	this._oldText = item.getText();
+	this._oldValue = item.getValue(); /* adjusting text can also modify value! */
 }
 MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetText.prototype.perform = function() {
 	this._item.setText(this._text);
+	var numText = Number(this._text);
+	if (numText == this._text) { this._item.setValue(numText); }
 }
 MM.Action.SetText.prototype.undo = function() {
 	this._item.setText(this._oldText);
+	this._item.setValue(this._oldValue);
 }
 
 MM.Action.SetValue = function(item, value) {
@@ -165,4 +169,19 @@ MM.Action.SetStatus.prototype.perform = function() {
 }
 MM.Action.SetStatus.prototype.undo = function() {
 	this._item.setStatus(this._oldStatus);
+}
+
+MM.Action.SetSide = function(item, side) {
+	this._item = item;
+	this._side = side;
+	this._oldSide = item.getSide();
+}
+MM.Action.SetSide.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetSide.prototype.perform = function() {
+	this._item.setSide(this._side);
+	this._item.getMap().update();
+}
+MM.Action.SetStatus.prototype.undo = function() {
+	this._item.setSide(this._oldSide);
+	this._item.getMap().update();
 }

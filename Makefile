@@ -41,6 +41,7 @@ SOURCES =	src/mm.js \
 			src/ui.backend.local.js \
 			src/ui.backend.firebase.js \
 			src/ui.backend.gdrive.js \
+			src/mouse.js \
 			src/app.js
 
 .PHONY: all push clean

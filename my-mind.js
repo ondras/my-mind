@@ -928,12 +928,13 @@ MM.Map.prototype._setRoot = function(item) {
 	this._root = item;
 	this._root.setParent(this);
 }
-MM.Keyboard = function() {
+MM.Keyboard = {};
+MM.Keyboard.init = function() {
 	window.addEventListener("keydown", this);
 	window.addEventListener("keypress", this);
 }
 
-MM.Keyboard.prototype.handleEvent = function(e) {
+MM.Keyboard.handleEvent = function(e) {
 	var node = document.activeElement;
 	while (node != document) {
 		if (node.classList.contains("ui")) { return; }
@@ -955,7 +956,7 @@ MM.Keyboard.prototype.handleEvent = function(e) {
 	}
 }
 
-MM.Keyboard.prototype._keyOK = function(key, e) {
+MM.Keyboard._keyOK = function(key, e) {
 	if ("keyCode" in key && e.type != "keydown") { return false; }
 	if ("charCode" in key && e.type != "keypress") { return false; }
 	for (var p in key) {
@@ -1097,13 +1098,17 @@ MM.Action.SetText = function(item, text) {
 	this._item = item;
 	this._text = text;
 	this._oldText = item.getText();
+	this._oldValue = item.getValue(); /* adjusting text can also modify value! */
 }
 MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetText.prototype.perform = function() {
 	this._item.setText(this._text);
+	var numText = Number(this._text);
+	if (numText == this._text) { this._item.setValue(numText); }
 }
 MM.Action.SetText.prototype.undo = function() {
 	this._item.setText(this._oldText);
+	this._item.setValue(this._oldValue);
 }
 
 MM.Action.SetValue = function(item, value) {
@@ -1130,6 +1135,21 @@ MM.Action.SetStatus.prototype.perform = function() {
 }
 MM.Action.SetStatus.prototype.undo = function() {
 	this._item.setStatus(this._oldStatus);
+}
+
+MM.Action.SetSide = function(item, side) {
+	this._item = item;
+	this._side = side;
+	this._oldSide = item.getSide();
+}
+MM.Action.SetSide.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetSide.prototype.perform = function() {
+	this._item.setSide(this._side);
+	this._item.getMap().update();
+}
+MM.Action.SetStatus.prototype.undo = function() {
+	this._item.setSide(this._oldSide);
+	this._item.getMap().update();
 }
 MM.Clipboard = {
 	_data: null,
@@ -1272,17 +1292,33 @@ MM.Command.Delete.execute = function() {
 MM.Command.Swap = Object.create(MM.Command, {
 	label: {value: "Swap sibling"},
 	keys: {value: [
-		{keyCode: 33},
-		{keyCode: 34},
+		{keyCode: 38, ctrlKey:true},
+		{keyCode: 40, ctrlKey:true},
 	]}
 });
 MM.Command.Swap.execute = function(e) {
 	var current = MM.App.current;
 	if (current.isRoot() || current.getParent().getChildren().length < 2) { return; }
 
-	var diff = (e.keyCode == 33 ? -1 : 1);
+	var diff = (e.keyCode == 38 ? -1 : 1);
 	var action = new MM.Action.Swap(MM.App.current, diff);
 	MM.App.action(action);	
+}
+
+MM.Command.Side = Object.create(MM.Command, {
+	label: {value: "Change side"},
+	keys: {value: [
+		{keyCode: 37, ctrlKey:true},
+		{keyCode: 39, ctrlKey:true},
+	]}
+});
+MM.Command.Side.execute = function(e) {
+	var current = MM.App.current;
+	if (current.isRoot() || !current.getParent().isRoot()) { return; }
+
+	var side = (e.keyCode == 37 ? "left" : "right");
+	var action = new MM.Action.SetSide(MM.App.current, side);
+	MM.App.action(action);
 }
 
 MM.Command.Save = Object.create(MM.Command, {
@@ -1580,10 +1616,10 @@ MM.Command.Maybe.execute = function() {
 MM.Command.Select = Object.create(MM.Command, {
 	label: {value: "Move selection"},
 	keys: {value: [
-		{keyCode: 38},
-		{keyCode: 37},
-		{keyCode: 40},
-		{keyCode: 39}
+		{keyCode: 38, ctrlKey:false},
+		{keyCode: 37, ctrlKey:false},
+		{keyCode: 40, ctrlKey:false},
+		{keyCode: 39, ctrlKey:false}
 	]} 
 });
 MM.Command.Select.execute = function(e) {
@@ -2941,6 +2977,7 @@ MM.UI = function() {
 MM.UI.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
 		case "item-select":
+			document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
 			this._update();
 		break;
 
@@ -3158,6 +3195,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "InsertSibling");
 	this._buildRow(t, "InsertChild");
 	this._buildRow(t, "Swap");
+	this._buildRow(t, "Side");
 	this._buildRow(t, "Delete");
 
 	this._buildRow(t, "Copy");
@@ -3815,6 +3853,238 @@ MM.UI.Backend.GDrive._loadDone = function(data) {
 
 	MM.UI.Backend._loadDone.call(this, json);
 }
+MM.Mouse = {
+	_port: null,
+	_cursor: [0, 0],
+	_pos: [0, 0], /* ghost pos */
+	_mode: "",
+	_item: null,
+	_ghost: null,
+	_oldDragState: null
+}
+
+MM.Mouse.init = function(port) {
+	this._port = port;
+	this._port.addEventListener("mousedown", this);
+	this._port.addEventListener("click", this);
+	this._port.addEventListener("dblclick", this);
+	this._port.addEventListener("wheel", this);
+	this._port.addEventListener("mousewheel", this);
+}
+
+MM.Mouse.handleEvent = function(e) {
+	switch (e.type) {
+		case "click":
+			var item = MM.App.map.getItemFor(e.target);
+			if (item) { MM.App.select(item); }
+		break;
+		
+		case "dblclick":
+			var item = MM.App.map.getItemFor(e.target);
+			if (item) { MM.Command.Edit.execute(); }
+		break;
+		
+		case "mousedown":
+			var item = MM.App.map.getItemFor(e.target);
+			if (item == MM.App.current && MM.App.editing) { return; }
+
+			this._startDrag(e, item);
+		break;
+		
+		case "mousemove":
+			this._processDrag(e);
+		break;
+		
+		case "mouseup":
+			this._endDrag(e);
+		break;
+
+		case "wheel":
+		case "mousewheel":
+			var dir = 1;
+			if (e.wheelDelta && e.wheelDelta < 0) { dir = -1; }
+			if (e.deltaY && e.deltaY > 0) { dir = -1; }
+			MM.App.adjustFontSize(dir);
+		break;
+	}
+}
+
+MM.Mouse._startDrag = function(e, item) {
+	e.preventDefault();
+
+	this._port.addEventListener("mousemove", this);
+	this._port.addEventListener("mouseup", this);
+
+	this._cursor[0] = e.clientX;
+	this._cursor[1] = e.clientY;
+
+	if (item && !item.isRoot()) { 
+		this._mode = "drag";
+		this._item = item;
+	} else {
+		this._mode = "pan";
+		this._port.style.cursor = "move";
+	}
+}
+
+MM.Mouse._processDrag = function(e) {
+	var dx = e.clientX - this._cursor[0];
+	var dy = e.clientY - this._cursor[1];
+	this._cursor[0] = e.clientX;
+	this._cursor[1] = e.clientY;
+
+	switch (this._mode) {
+		case "drag":
+			if (!this._ghost) { 
+				this._port.style.cursor = "move";
+				this._buildGhost(dx, dy); 
+			}
+			this._moveGhost(dx, dy);
+			var state = this._computeDragState();
+			this._visualizeDragState(state);
+		break;
+
+		case "pan":
+			MM.App.map.moveBy(dx, dy);
+		break;
+	}
+}
+
+MM.Mouse._endDrag = function(e) {
+	this._port.style.cursor = "";
+	this._port.removeEventListener("mousemove", this);
+	this._port.removeEventListener("mouseup", this);
+
+	if (this._mode == "pan") { return; } /* no cleanup after panning */
+
+	if (this._ghost) {
+		var state = this._computeDragState();
+		this._finishDragDrop(state);
+
+		this._ghost.parentNode.removeChild(this._ghost);
+		this._ghost = null;
+	}
+
+	this._item = null;
+}
+
+MM.Mouse._buildGhost = function() {
+	var content = this._item.getDOM().content;
+	this._ghost = content.cloneNode(true);
+	this._ghost.classList.add("ghost");
+	this._pos[0] = content.offsetLeft;
+	this._pos[1] = content.offsetTop;
+	content.parentNode.appendChild(this._ghost);
+}
+
+MM.Mouse._moveGhost = function(dx, dy) {
+	this._pos[0] += dx;
+	this._pos[1] += dy;
+	this._ghost.style.left = this._pos[0] + "px";
+	this._ghost.style.top = this._pos[1] + "px";
+
+	var state = this._computeDragState();
+}
+
+MM.Mouse._finishDragDrop = function(state) {
+	this._visualizeDragState(null);
+
+	var target = state.item;
+	switch (state.result) {
+		case "append":
+			var action = new MM.Action.MoveItem(this._item, target);
+		break;
+
+		case "sibling":
+			var index = target.getParent().getChildren().indexOf(target);
+			var targetIndex = index + (state.direction == "right" || state.direction == "bottom" ? 1 : 0);
+			var action = new MM.Action.MoveItem(this._item, target.getParent(), targetIndex, target.getSide());
+		break;
+
+		default:
+			return;
+		break;
+	}
+
+	MM.App.action(action);
+}
+
+/**
+ * Compute a state object for a drag: current result (""/"append"/"sibling"), parent/sibling, direction
+ */
+MM.Mouse._computeDragState = function() {
+	var rect = this._ghost.getBoundingClientRect();
+	var closest = MM.App.map.getClosestItem(rect.left + rect.width/2, rect.top + rect.height/2);
+	var target = closest.item;
+
+	var state = {
+		result: "",
+		item: target,
+		direction: ""
+	}
+
+	var tmp = target;
+	while (!tmp.isRoot()) {
+		if (tmp == this._item) { return state; } /* drop on a child or self */
+		tmp = tmp.getParent();
+	}
+	
+	var w1 = this._item.getDOM().content.offsetWidth;
+	var w2 = target.getDOM().content.offsetWidth;
+	var w = Math.max(w1, w2);
+	var h1 = this._item.getDOM().content.offsetHeight;
+	var h2 = target.getDOM().content.offsetHeight;
+	var h = Math.max(h1, h2);
+
+	if (target.isRoot()) { /* append here */
+		state.result = "append";
+	} else if (Math.abs(closest.dx) < w && Math.abs(closest.dy) < h) { /* append here */
+		state.result = "append";
+	} else {
+		state.result = "sibling";
+		var childDirection = target.getParent().getLayout().getChildDirection(target);
+		var diff = -1 * (childDirection == "top" || childDirection == "bottom" ? closest.dx : closest.dy);
+
+		if (childDirection == "left" || childDirection == "right") {
+			state.direction = (closest.dy < 0 ? "bottom" : "top");
+		} else {
+			state.direction = (closest.dx < 0 ? "right" : "left");
+		}
+	}
+
+	return state;
+}
+
+MM.Mouse._visualizeDragState = function(state) {
+	if (this._oldState && state && this._oldState.item == state.item && this._oldState.result == state.result) { return; } /* nothing changed */
+
+	if (this._oldDragState) { /* remove old vis */
+		var item = this._oldDragState.item;
+		var node = item.getDOM().content;
+		node.style.boxShadow = "";
+	}
+
+	this._oldDragState = state;
+
+	if (state) { /* show new vis */
+		var item = state.item;
+		var node = item.getDOM().content;
+
+		var x = 0;
+		var y = 0;
+		var offset = 5;
+		if (state.result == "sibling") {
+			if (state.direction == "left") { x = -1; }
+			if (state.direction == "right") { x = +1; }
+			if (state.direction == "top") { y = -1; }
+			if (state.direction == "bottom") { y = +1; }
+		}
+		var spread = (x || y ? -2 : 2);
+		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
+	}
+
+
+}
 MM.App = {
 	keyboard: null,
 	current: null,
@@ -3829,7 +4099,6 @@ MM.App = {
 	_port: null,
 	_throbber: null,
 	_drag: {
-		mouse: [0, 0],
 		pos: [0, 0],
 		item: null,
 		ghost: null
@@ -3863,7 +4132,6 @@ MM.App = {
 
 		if (this.editing) { MM.Command.Finish.execute(); }
 
-		document.activeElement.blur(); /* blur the UI panel FIXME only if activeElement is in the UI? */
 		if (this.current) {
 			this.current.getDOM().node.classList.remove("current");
 		}
@@ -3899,78 +4167,7 @@ MM.App = {
 			case "resize":
 				this._syncPort();
 			break;
-
-			case "click":
-				var item = this.map.getItemFor(e.target);
-				if (item) { this.select(item); }
-			break;
-			
-			case "dblclick":
-				var item = this.map.getItemFor(e.target);
-				if (item) { MM.Command.Edit.execute(); }
-			break;
-			
-			case "mousedown":
-				var item = this.map.getItemFor(e.target);
-				if (item == this.current && this.editing) { return; }
-
-				e.preventDefault();
-				this._port.addEventListener("mousemove", this);
-				this._port.addEventListener("mouseup", this);
-				this._drag.mouse[0] = e.clientX;
-				this._drag.mouse[1] = e.clientY;
-
-				if (item && !item.isRoot()) { 
-					this._drag.item = item;
-				} else {
-					this._port.style.cursor = "move";
-				}
-			break;
-			
-			case "mousemove":
-				var dx = e.clientX - this._drag.mouse[0];
-				var dy = e.clientY - this._drag.mouse[1];
-				this._drag.mouse[0] = e.clientX;
-				this._drag.mouse[1] = e.clientY;
-				if (this._drag.item) {
-					if (this._drag.ghost) {
-						this._drag.pos[0] += dx;
-						this._drag.pos[1] += dy;
-						this._drag.ghost.style.left = this._drag.pos[0] + "px";
-						this._drag.ghost.style.top = this._drag.pos[1] + "px";
-					} else {
-						var content = this._drag.item.getDOM().content;
-						this._drag.ghost = content.cloneNode(true);
-						this._drag.ghost.classList.add("ghost");
-						this._drag.pos[0] = content.offsetLeft + dx;
-						this._drag.pos[1] = content.offsetTop + dy;
-						this._drag.ghost.style.left = this._drag.pos[0] + "px";
-						this._drag.ghost.style.top = this._drag.pos[1] + "px";
-						content.parentNode.appendChild(this._drag.ghost);
-						this._port.style.cursor = "move";
-					}
-				} else {
-					this.map.moveBy(dx, dy);
-				}
-			break;
-			
-			case "mouseup":
-				this._port.style.cursor = "";
-				this._port.removeEventListener("mousemove", this);
-				this._port.removeEventListener("mouseup", this);
-				
-				if (this._drag.ghost) {
-					var rect = this._drag.ghost.getBoundingClientRect();
-					this._drag.ghost.parentNode.removeChild(this._drag.ghost);
-					
-					var nearest = this.map.getClosestItem(rect.left + rect.width/2, rect.top + rect.height/2);
-					this._finishDragDrop(this._drag.item, nearest);
-				}
-
-				this._drag.item = null;
-				this._drag.ghost = null;
-			break;
-		} /* switch */
+		}
 	},
 	
 	setThrobber: function(visible) {
@@ -3983,11 +4180,10 @@ MM.App = {
 		this.ui = new MM.UI();
 		this.io = new MM.UI.IO();
 		this.help = new MM.UI.Help();
-		this.keyboard = new MM.Keyboard();
 
-		this._port.addEventListener("mousedown", this);
-		this._port.addEventListener("click", this);
-		this._port.addEventListener("dblclick", this);
+		MM.Keyboard.init();
+		MM.Mouse.init(this._port);
+
 		window.addEventListener("resize", this);
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
@@ -4002,35 +4198,5 @@ MM.App = {
 		this._port.style.height = this.portSize[1] + "px";
 		this._throbber.style.right = (20 + this.ui.getWidth())+ "px";
 		if (this.map) { this.map.ensureItemVisibility(this.current); }
-	},
-	
-	_finishDragDrop: function(item, nearest) {
-		var target = nearest.item;
-		var tmp = target;
-		while (!tmp.isRoot()) {
-			if (tmp == item) { return; } /* drop on a child or self */
-			tmp = tmp.getParent();
-		}
-		
-		var w1 = item.getDOM().content.offsetWidth;
-		var w2 = target.getDOM().content.offsetWidth;
-		var w = Math.max(w1, w2);
-		var h1 = item.getDOM().content.offsetHeight;
-		var h2 = target.getDOM().content.offsetHeight;
-		var h = Math.max(h1, h2);
-		if (target.isRoot()) { /* append here */
-			var action = new MM.Action.MoveItem(item, target);
-		} else if (Math.abs(nearest.dx) < w && Math.abs(nearest.dy) < h) { /* append here */
-			var action = new MM.Action.MoveItem(item, target);
-		} else {
-			var dir = target.getParent().getLayout().getChildDirection(target);
-			var diff = -1 * (dir == "top" || dir == "bottom" ? nearest.dx : nearest.dy);
-			
-			var index = target.getParent().getChildren().indexOf(target);
-			var targetIndex = index + (diff > 0 ? 1 : 0);
-			var action = new MM.Action.MoveItem(item, target.getParent(), targetIndex, target.getSide());
-		}
-		this.action(action);
-		
 	}
 }
