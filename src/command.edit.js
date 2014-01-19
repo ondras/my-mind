@@ -54,41 +54,46 @@ MM.Command.Cancel.execute = function() {
 	}
 }
 
-MM.Command.Bold = Object.create(MM.Command, {
-	editMode: {value: true},
+MM.Command.Style = Object.create(MM.Command, {
+	editMode: {value: null},
+	command: {value: ""}
+});
+
+MM.Command.Style.execute = function() {
+	if (MM.App.editing) {
+		document.execCommand(this.command, null, null);
+	} else {
+		MM.Command.Edit.execute();
+		var range = getSelection().getRangeAt(0);
+		range.selectNodeContents(MM.App.current.getDOM().text);
+		this.execute();
+		MM.Command.Finish.execute();
+	}
+}
+
+MM.Command.Bold = Object.create(MM.Command.Style, {
+	command: {value: "bold"},
 	label: {value: "Bold"},
 	keys: {value: [{charCode: "b".charCodeAt(0), ctrlKey:true}]}
 });
-MM.Command.Bold.execute = function() {
-	document.execCommand("bold", null, null);
-}
 
-MM.Command.Underline = Object.create(MM.Command, {
-	editMode: {value: true},
+MM.Command.Underline = Object.create(MM.Command.Style, {
+	command: {value: "underline"},
 	label: {value: "Underline"},
 	keys: {value: [{charCode: "u".charCodeAt(0), ctrlKey:true}]}
 });
-MM.Command.Underline.execute = function() {
-	document.execCommand("underline", null, null);
-}
 
-MM.Command.Italic = Object.create(MM.Command, {
-	editMode: {value: true},
+MM.Command.Italic = Object.create(MM.Command.Style, {
+	command: {value: "italic"},
 	label: {value: "Italic"},
 	keys: {value: [{charCode: "i".charCodeAt(0), ctrlKey:true}]}
 });
-MM.Command.Italic.execute = function() {
-	document.execCommand("italic", null, null);
-}
 
-MM.Command.Strikethrough = Object.create(MM.Command, {
-	editMode: {value: true},
+MM.Command.Strikethrough = Object.create(MM.Command.Style, {
+	command: {value: "strikeThrough"},
 	label: {value: "Strike-through"},
 	keys: {value: [{charCode: "s".charCodeAt(0), ctrlKey:true}]}
 });
-MM.Command.Strikethrough.execute = function() {
-	document.execCommand("strikeThrough", null, null);
-}
 
 MM.Command.Value = Object.create(MM.Command, {
 	label: {value: "Set value"},
