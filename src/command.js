@@ -5,7 +5,7 @@ MM.Command = Object.create(MM.Repo, {
 });
 
 MM.Command.isValid = function() {
-	return (this.editMode == MM.App.editing);
+	return (this.editMode === null || this.editMode == MM.App.editing);
 }
 MM.Command.execute = function() {}
 
