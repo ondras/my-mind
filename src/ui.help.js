@@ -103,6 +103,6 @@ MM.UI.Help.prototype._formatKey = function(key) {
 		var ch = String.fromCharCode(key.charCode);
 		str += this._map[ch] || ch.toUpperCase(); 
 	}
-	if (key.keyCode) { str += this._map[key.keyCode] || key.keyCode; }
+	if (key.keyCode) { str += this._map[key.keyCode] || String.fromCharCode(key.keyCode); }
 	return str;
 }
