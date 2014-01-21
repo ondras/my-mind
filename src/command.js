@@ -53,7 +53,10 @@ MM.Command.InsertSibling.execute = function() {
 
 MM.Command.InsertChild = Object.create(MM.Command, {
 	label: {value: "Insert a child"},
-	keys: {value: [{keyCode: 45}]}
+	keys: {value: [
+		{keyCode: 9},
+		{keyCode: 45}
+	]}
 });
 MM.Command.InsertChild.execute = function() {
 	var item = MM.App.current;

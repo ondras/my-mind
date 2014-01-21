@@ -1267,7 +1267,10 @@ MM.Command.InsertSibling.execute = function() {
 
 MM.Command.InsertChild = Object.create(MM.Command, {
 	label: {value: "Insert a child"},
-	keys: {value: [{keyCode: 45}]}
+	keys: {value: [
+		{keyCode: 9},
+		{keyCode: 45}
+	]}
 });
 MM.Command.InsertChild.execute = function() {
 	var item = MM.App.current;
@@ -3160,6 +3163,7 @@ MM.UI.Help = function() {
 	this._node = document.querySelector("#help");
 	this._map = {
 		8: "Backspace",
+		9: "Tab",
 		13: "↩",
 		32: "Spacebar",
 		33: "PgUp",
