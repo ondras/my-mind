@@ -11,7 +11,7 @@ MM.Command.execute = function() {}
 
 MM.Command.Undo = Object.create(MM.Command, {
 	label: {value: "Undo"},
-	keys: {value: [{charCode: "z".charCodeAt(0), ctrlKey: true}]}
+	keys: {value: [{keyCode: "Z".charCodeAt(0), ctrlKey: true}]}
 });
 MM.Command.Undo.isValid = function() {
 	return MM.Command.isValid.call(this) && !!MM.App.historyIndex;
@@ -23,7 +23,7 @@ MM.Command.Undo.execute = function() {
 
 MM.Command.Redo = Object.create(MM.Command, {
 	label: {value: "Redo"},
-	keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey: true}]},
+	keys: {value: [{keyCode: "Y".charCodeAt(0), ctrlKey: true}]},
 });
 MM.Command.Redo.isValid = function() {
 	return (MM.Command.isValid.call(this) && MM.App.historyIndex != MM.App.history.length);
@@ -109,7 +109,7 @@ MM.Command.Side.execute = function(e) {
 
 MM.Command.Save = Object.create(MM.Command, {
 	label: {value: "Save map"},
-	keys: {value: [{charCode: "s".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:false}]}
 });
 MM.Command.Save.execute = function() {
 	MM.App.io.quickSave();
@@ -117,7 +117,7 @@ MM.Command.Save.execute = function() {
 
 MM.Command.SaveAs = Object.create(MM.Command, {
 	label: {value: "Save as&hellip;"},
-	keys: {value: [{charCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}]}
+	keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}]}
 });
 MM.Command.SaveAs.execute = function() {
 	MM.App.io.show("save");
@@ -125,7 +125,7 @@ MM.Command.SaveAs.execute = function() {
 
 MM.Command.Load = Object.create(MM.Command, {
 	label: {value: "Load map"},
-	keys: {value: [{charCode: "o".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "O".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Load.execute = function() {
 	MM.App.io.show("load");
@@ -141,7 +141,7 @@ MM.Command.Center.execute = function() {
 
 MM.Command.New = Object.create(MM.Command, {
 	label: {value: "New map"},
-	keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "N".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.New.execute = function() {
 	if (!confirm("Throw away your current map and start a new one?")) { return; }
@@ -237,7 +237,7 @@ MM.Command.Pan.handleEvent = function(e) {
 
 MM.Command.Copy = Object.create(MM.Command, {
 	label: {value: "Copy"},
-	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "C".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Copy.execute = function() {
 	MM.Clipboard.copy(MM.App.current);
@@ -245,7 +245,7 @@ MM.Command.Copy.execute = function() {
 
 MM.Command.Cut = Object.create(MM.Command, {
 	label: {value: "Cut"},
-	keys: {value: [{charCode: "x".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "X".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Cut.execute = function() {
 	MM.Clipboard.cut(MM.App.current);
@@ -253,7 +253,7 @@ MM.Command.Cut.execute = function() {
 
 MM.Command.Paste = Object.create(MM.Command, {
 	label: {value: "Paste"},
-	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "V".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);

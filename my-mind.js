@@ -1225,7 +1225,7 @@ MM.Command.execute = function() {}
 
 MM.Command.Undo = Object.create(MM.Command, {
 	label: {value: "Undo"},
-	keys: {value: [{charCode: "z".charCodeAt(0), ctrlKey: true}]}
+	keys: {value: [{keyCode: "Z".charCodeAt(0), ctrlKey: true}]}
 });
 MM.Command.Undo.isValid = function() {
 	return MM.Command.isValid.call(this) && !!MM.App.historyIndex;
@@ -1237,7 +1237,7 @@ MM.Command.Undo.execute = function() {
 
 MM.Command.Redo = Object.create(MM.Command, {
 	label: {value: "Redo"},
-	keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey: true}]},
+	keys: {value: [{keyCode: "Y".charCodeAt(0), ctrlKey: true}]},
 });
 MM.Command.Redo.isValid = function() {
 	return (MM.Command.isValid.call(this) && MM.App.historyIndex != MM.App.history.length);
@@ -1323,7 +1323,7 @@ MM.Command.Side.execute = function(e) {
 
 MM.Command.Save = Object.create(MM.Command, {
 	label: {value: "Save map"},
-	keys: {value: [{charCode: "s".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:false}]}
 });
 MM.Command.Save.execute = function() {
 	MM.App.io.quickSave();
@@ -1331,7 +1331,7 @@ MM.Command.Save.execute = function() {
 
 MM.Command.SaveAs = Object.create(MM.Command, {
 	label: {value: "Save as&hellip;"},
-	keys: {value: [{charCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}]}
+	keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}]}
 });
 MM.Command.SaveAs.execute = function() {
 	MM.App.io.show("save");
@@ -1339,7 +1339,7 @@ MM.Command.SaveAs.execute = function() {
 
 MM.Command.Load = Object.create(MM.Command, {
 	label: {value: "Load map"},
-	keys: {value: [{charCode: "o".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "O".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Load.execute = function() {
 	MM.App.io.show("load");
@@ -1355,7 +1355,7 @@ MM.Command.Center.execute = function() {
 
 MM.Command.New = Object.create(MM.Command, {
 	label: {value: "New map"},
-	keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "N".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.New.execute = function() {
 	if (!confirm("Throw away your current map and start a new one?")) { return; }
@@ -1451,7 +1451,7 @@ MM.Command.Pan.handleEvent = function(e) {
 
 MM.Command.Copy = Object.create(MM.Command, {
 	label: {value: "Copy"},
-	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "C".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Copy.execute = function() {
 	MM.Clipboard.copy(MM.App.current);
@@ -1459,7 +1459,7 @@ MM.Command.Copy.execute = function() {
 
 MM.Command.Cut = Object.create(MM.Command, {
 	label: {value: "Cut"},
-	keys: {value: [{charCode: "x".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "X".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Cut.execute = function() {
 	MM.Clipboard.cut(MM.App.current);
@@ -1467,7 +1467,7 @@ MM.Command.Cut.execute = function() {
 
 MM.Command.Paste = Object.create(MM.Command, {
 	label: {value: "Paste"},
-	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "V".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);
@@ -1538,8 +1538,11 @@ MM.Command.Style.execute = function() {
 		document.execCommand(this.command, null, null);
 	} else {
 		MM.Command.Edit.execute();
-		var range = getSelection().getRangeAt(0);
+		var selection = getSelection();
+		var range = selection.getRangeAt(0);
 		range.selectNodeContents(MM.App.current.getDOM().text);
+		selection.removeAllRanges();
+		selection.addRange(range);
 		this.execute();
 		MM.Command.Finish.execute();
 	}
@@ -1548,25 +1551,25 @@ MM.Command.Style.execute = function() {
 MM.Command.Bold = Object.create(MM.Command.Style, {
 	command: {value: "bold"},
 	label: {value: "Bold"},
-	keys: {value: [{charCode: "b".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "B".charCodeAt(0), ctrlKey:true}]}
 });
 
 MM.Command.Underline = Object.create(MM.Command.Style, {
 	command: {value: "underline"},
 	label: {value: "Underline"},
-	keys: {value: [{charCode: "u".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "U".charCodeAt(0), ctrlKey:true}]}
 });
 
 MM.Command.Italic = Object.create(MM.Command.Style, {
 	command: {value: "italic"},
 	label: {value: "Italic"},
-	keys: {value: [{charCode: "i".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "I".charCodeAt(0), ctrlKey:true}]}
 });
 
 MM.Command.Strikethrough = Object.create(MM.Command.Style, {
 	command: {value: "strikeThrough"},
 	label: {value: "Strike-through"},
-	keys: {value: [{charCode: "s".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true}]}
 });
 
 MM.Command.Value = Object.create(MM.Command, {
@@ -3258,7 +3261,7 @@ MM.UI.Help.prototype._formatKey = function(key) {
 		var ch = String.fromCharCode(key.charCode);
 		str += this._map[ch] || ch.toUpperCase(); 
 	}
-	if (key.keyCode) { str += this._map[key.keyCode] || key.keyCode; }
+	if (key.keyCode) { str += this._map[key.keyCode] || String.fromCharCode(key.keyCode); }
 	return str;
 }
 MM.UI.IO = function() {

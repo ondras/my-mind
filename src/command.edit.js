@@ -64,8 +64,11 @@ MM.Command.Style.execute = function() {
 		document.execCommand(this.command, null, null);
 	} else {
 		MM.Command.Edit.execute();
-		var range = getSelection().getRangeAt(0);
+		var selection = getSelection();
+		var range = selection.getRangeAt(0);
 		range.selectNodeContents(MM.App.current.getDOM().text);
+		selection.removeAllRanges();
+		selection.addRange(range);
 		this.execute();
 		MM.Command.Finish.execute();
 	}
@@ -74,25 +77,25 @@ MM.Command.Style.execute = function() {
 MM.Command.Bold = Object.create(MM.Command.Style, {
 	command: {value: "bold"},
 	label: {value: "Bold"},
-	keys: {value: [{charCode: "b".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "B".charCodeAt(0), ctrlKey:true}]}
 });
 
 MM.Command.Underline = Object.create(MM.Command.Style, {
 	command: {value: "underline"},
 	label: {value: "Underline"},
-	keys: {value: [{charCode: "u".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "U".charCodeAt(0), ctrlKey:true}]}
 });
 
 MM.Command.Italic = Object.create(MM.Command.Style, {
 	command: {value: "italic"},
 	label: {value: "Italic"},
-	keys: {value: [{charCode: "i".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "I".charCodeAt(0), ctrlKey:true}]}
 });
 
 MM.Command.Strikethrough = Object.create(MM.Command.Style, {
 	command: {value: "strikeThrough"},
 	label: {value: "Strike-through"},
-	keys: {value: [{charCode: "s".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true}]}
 });
 
 MM.Command.Value = Object.create(MM.Command, {
