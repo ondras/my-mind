@@ -1,3 +1,15 @@
+/* Import Web font */
+@import url(http://fonts.googleapis.com/css?family=Lato);
+
+
+.ui body {
+  font-family: "Lato", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.72222;
+  color: #34495e;
+  background-color: #ffffff;
+}
+
 .ui {
 	position: fixed;
 	right: 0;
@@ -8,6 +20,7 @@
 	box-shadow: 0 0 2px 2px #666;
 	transition: all 250ms;
 	overflow-y: auto;
+	font-family: 'Lato', sans-serif;
 }
 
 .ui:not(.visible) {
@@ -16,7 +29,7 @@
 }
 
 .ui h3 {
-	background-color: #999;
+	background-color: #34495e;
 	color: #fff;
 	padding: 0.2em 0;
 	margin: 0;
@@ -25,17 +38,55 @@
 }
 
 .ui button, .ui select, .ui input, #toggle {
-	padding: 3px;
-	background-color: transparent;
-	border: 1px solid #ccf;
+	color:#000;
+	border: none;
+	font-size: 13px;
+	font-weight: normal;
+	line-height: 1.4;
 	border-radius: 4px;
-	-moz-box-sizing: border-box;
-	box-sizing: border-box;
-	transition: all 250ms;
+	padding: 10px 15px;
+	-webkit-font-smoothing: subpixel-antialiased;
+	-webkit-transition: border .25s linear, color .25s linear, background-color .25s linear;
+	transition: border .25s linear, color .25s linear, background-color .25s linear;
+	font-family: 'Lato', sans-serif;
+}
+
+.ui .primary{
+	color: #ffffff;
+	background-color: #1abc9c;
+}
+
+.ui .info{
+	color: #ffffff;
+	background-color: #3498db;
+}
+
+.ui .success{
+	color: #ffffff;
+	background-color: #2ecc71;
+}
+
+.ui .primary:hover{
+	background-color: #48c9b0;
+	border-color: #48c9b0;
+	color: #ffffff;
+}
+
+.ui .info:hover{
+	color: #ffffff;
+	background-color: #5dade2;
+	border-color: #5dade2;
+}
+
+.ui .success:hover{
+	color: #ffffff;
+	background-color: #58d68d;
+	border-color: #58d68d;
 }
 
 .ui button:hover, .ui select:hover, .ui input:hover, .ui :focus, #toggle:hover {
-	border-color: #33f;
+	outline: none;
+	color: #000;
 }
 
 .ui button, #toggle {
