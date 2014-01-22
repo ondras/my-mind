@@ -38,6 +38,7 @@ MM.Command.Newline.execute = function() {
 	var br = document.createElement("br");
 	range.insertNode(br);
 	range.setStartAfter(br);
+	MM.App.current.updateSubtree();
 }
 
 MM.Command.Cancel = Object.create(MM.Command, {

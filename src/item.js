@@ -32,6 +32,7 @@ MM.Item = function() {
 	this._dom.value.classList.add("value");
 	this._dom.text.classList.add("text");
 	this._dom.children.classList.add("children");
+	this._dom.content.appendChild(this._dom.text); /* status+value are appended in layout */
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
 }
@@ -304,16 +305,34 @@ MM.Item.prototype.startEditing = function() {
 	this._dom.text.contentEditable = true;
 	this._dom.text.focus();
 	document.execCommand("styleWithCSS", null, false);
+
+	this._dom.text.addEventListener("input", this);
+	this._dom.text.addEventListener("keydown", this);
 	return this;
 }
 
 MM.Item.prototype.stopEditing = function() {
+	this._dom.text.removeEventListener("input", this);
+	this._dom.text.removeEventListener("keydown", this);
+
 	this._dom.text.blur();
 	this._dom.text.contentEditable = false;
 	var result = this._dom.text.innerHTML;
 	this._dom.text.innerHTML = this._oldText;
 	this._oldText = "";
 	return result;
+}
+
+MM.Item.prototype.handleEvent = function(e) {
+	switch (e.type) {
+		case "input":
+			this.updateSubtree();
+		break;
+
+		case "keydown":
+			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
+		break;
+	}
 }
 
 MM.Item.prototype._getAutoShape = function() {
