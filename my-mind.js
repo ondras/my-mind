@@ -3398,7 +3398,9 @@ MM.UI.IO.prototype._setCurrentBackend = function(backend) {
 	
 	if (backend) { localStorage.setItem(this._prefix + "backend", backend.id); }
 	this._currentBackend = backend;
-	this._updateURL();
+	try {
+		this._updateURL(); /* fails when on file:/// */
+	} catch (e) {}
 }
 
 MM.UI.IO.prototype._updateURL = function() {
