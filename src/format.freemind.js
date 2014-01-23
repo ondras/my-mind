@@ -93,7 +93,6 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 				var body = child.querySelector("body > *");
 				if (body) {
 					var serializer = new XMLSerializer();
-					window.xxx = serializer.serializeToString(body);
 					json.text = serializer.serializeToString(body).trim();
 				}
 			break;
