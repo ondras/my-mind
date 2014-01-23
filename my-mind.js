@@ -955,7 +955,7 @@ MM.Keyboard.init = function() {
 
 MM.Keyboard.handleEvent = function(e) {
 	var node = document.activeElement;
-	while (node != document) {
+	while (node && node != document) {
 		if (node.classList.contains("ui")) { return; }
 		node = node.parentNode;
 	}
@@ -1287,7 +1287,7 @@ MM.Command.InsertSibling.execute = function() {
 MM.Command.InsertChild = Object.create(MM.Command, {
 	label: {value: "Insert a child"},
 	keys: {value: [
-		{keyCode: 9},
+		{keyCode: 9, ctrlKey:false},
 		{keyCode: 45}
 	]}
 });
@@ -2478,6 +2478,25 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 		json.shape = parent.shape;
 	}
 
+	var children = node.children;
+	for (var i=0;i<children.length;i++) {
+		var child = children[i];
+		switch (child.nodeName.toLowerCase()) {
+			case "richcontent":
+				var body = child.querySelector("body > *");
+				if (body) {
+					var serializer = new XMLSerializer();
+					json.text = serializer.serializeToString(body).trim();
+				}
+			break;
+
+			case "font":
+				if (child.getAttribute("ITALIC") == "true") { json.text = "<i>" + json.text + "</i>"; }
+				if (child.getAttribute("BOLD") == "true") { json.text = "<b>" + json.text + "</b>"; }
+			break;
+		}
+	}
+
 	return json;
 }
 MM.Format.MMA = Object.create(MM.Format.FreeMind, {
@@ -3012,7 +3031,7 @@ MM.UI = function() {
 MM.UI.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
 		case "item-select":
-			document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
+			document.activeElement && document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
 			this._update();
 		break;
 
@@ -3378,7 +3397,7 @@ MM.UI.IO.prototype.show = function(mode) {
 
 MM.UI.IO.prototype.hide = function() {
 	this._node.classList.remove("visible");
-	document.activeElement.blur();
+	document.activeElement && document.activeElement.blur();
 	window.removeEventListener("keydown", this);
 }
 

@@ -90,7 +90,7 @@ MM.UI.IO.prototype.show = function(mode) {
 
 MM.UI.IO.prototype.hide = function() {
 	this._node.classList.remove("visible");
-	document.activeElement.blur();
+	document.activeElement && document.activeElement.blur();
 	window.removeEventListener("keydown", this);
 }
 

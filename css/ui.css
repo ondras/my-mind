@@ -6,7 +6,6 @@
 	background-color: #fff;
 	width: 200px;
 	box-shadow: 0 0 2px 2px #666;
-	transition: all 250ms;
 	overflow-y: auto;
 }
 
@@ -16,7 +15,7 @@
 }
 
 .ui h3 {
-	background-color: #999;
+	background-color: #34495e;
 	color: #fff;
 	padding: 0.2em 0;
 	margin: 0;
@@ -25,18 +24,37 @@
 }
 
 .ui button, .ui select, .ui input, #toggle {
-	padding: 3px;
-	background-color: transparent;
-	border: 1px solid #ccf;
+	color: #000;
+	border: none;
+	font-size: 13px;
+	line-height: 1.4;
 	border-radius: 4px;
-	-moz-box-sizing: border-box;
-	box-sizing: border-box;
-	transition: all 250ms;
+	padding: 10px;
+	-webkit-font-smoothing: subpixel-antialiased;
+	transition: all 250ms linear;
 }
 
 .ui button:hover, .ui select:hover, .ui input:hover, .ui :focus, #toggle:hover {
-	border-color: #33f;
+	color: #000;
+	opacity: 0.8;
 }
+
+.ui:not([id]) button {
+	color: #fff;
+}
+
+.ui:not([id]) p:nth-of-type(1) button {
+	background-color: #1abc9c;
+}
+
+.ui:not([id]) p:nth-of-type(2) button {
+	background-color: #3498db;
+}
+
+.ui:not([id]) p:nth-of-type(3) button {
+	background-color: #2ecc71;
+}
+
 
 .ui button, #toggle {
 	cursor: pointer;
@@ -119,7 +137,7 @@
 	right: 10px;
 	width: 32px;
 	height: 32px;
-	line-height: 18px;
+	line-height: 12px;
 	margin: auto;
 	border-radius: 50%;
 	box-shadow: 0 0 2px 3px #ccf;

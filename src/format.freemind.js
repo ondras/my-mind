@@ -85,5 +85,24 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 		json.shape = parent.shape;
 	}
 
+	var children = node.children;
+	for (var i=0;i<children.length;i++) {
+		var child = children[i];
+		switch (child.nodeName.toLowerCase()) {
+			case "richcontent":
+				var body = child.querySelector("body > *");
+				if (body) {
+					var serializer = new XMLSerializer();
+					json.text = serializer.serializeToString(body).trim();
+				}
+			break;
+
+			case "font":
+				if (child.getAttribute("ITALIC") == "true") { json.text = "<i>" + json.text + "</i>"; }
+				if (child.getAttribute("BOLD") == "true") { json.text = "<b>" + json.text + "</b>"; }
+			break;
+		}
+	}
+
 	return json;
 }

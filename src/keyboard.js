@@ -6,7 +6,7 @@ MM.Keyboard.init = function() {
 
 MM.Keyboard.handleEvent = function(e) {
 	var node = document.activeElement;
-	while (node != document) {
+	while (node && node != document) {
 		if (node.classList.contains("ui")) { return; }
 		node = node.parentNode;
 	}
