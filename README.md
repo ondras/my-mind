@@ -10,6 +10,7 @@ New to Mind maps? They are useful, aesthetic and cool! Read more about these spe
 * [Official web page](http://my-mind.github.io/)
 * [Sample mind map](http://my-mind.github.io/?map=examples/features.mymind) showcasing many features
 * [Documentation](https://github.com/ondras/my-mind/wiki)
+* <a target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=3340079"><img src="https://www.paypal.com/en_GB/i/btn/btn_donate_LG.gif" alt="PayPal" title="PayPal" /></a>
 
 My Mind is being actively developed. Do you want to participate?
 
