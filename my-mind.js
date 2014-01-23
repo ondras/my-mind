@@ -2451,12 +2451,16 @@ MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 MM.Format.FreeMind._parseNode = function(node, parent) {
 	var json = this._parseAttributes(node, parent);
 
-	for (var i=0;i<node.childNodes.length;i++) {
-		var child = node.childNodes[i];
-		if (child.nodeName.toLowerCase() == "node") {
-			json.children.push(this._parseNode(child, json));
-		}
-	}
+    if (node.nodeName.toLowerCase() == "node" && !json.text.length) {
+        json.text = node.textContent.trim().replace(/[\t\n\r ]+/g, " ");
+    } else {
+        for (var i=0;i<node.childNodes.length;i++) {
+            var child = node.childNodes[i];
+            if (child.nodeName.toLowerCase() == "node") {
+                json.children.push(this._parseNode(child, json));
+            }
+        }
+    }
 
 	return json;
 }
