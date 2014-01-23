@@ -4236,6 +4236,11 @@ MM.App = {
 			case "resize":
 				this._syncPort();
 			break;
+
+			case "beforeunload":
+				e.preventDefault();
+				return "";
+			break;
 		}
 	},
 	
@@ -4254,6 +4259,7 @@ MM.App = {
 		MM.Mouse.init(this._port);
 
 		window.addEventListener("resize", this);
+		window.addEventListener("beforeunload", this);
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
 		
