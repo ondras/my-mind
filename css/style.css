@@ -5,7 +5,7 @@
 @import url(print.css) print;
 
 * {
-	font-family: source sans pro;
+	font-family: source sans pro, sans-serif;
 }
 
 html, body {

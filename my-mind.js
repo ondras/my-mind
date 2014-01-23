@@ -955,7 +955,7 @@ MM.Keyboard.init = function() {
 
 MM.Keyboard.handleEvent = function(e) {
 	var node = document.activeElement;
-	while (node != document) {
+	while (node && node != document) {
 		if (node.classList.contains("ui")) { return; }
 		node = node.parentNode;
 	}
@@ -3031,7 +3031,7 @@ MM.UI = function() {
 MM.UI.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
 		case "item-select":
-			document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
+			document.activeElement && document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
 			this._update();
 		break;
 
@@ -3397,7 +3397,7 @@ MM.UI.IO.prototype.show = function(mode) {
 
 MM.UI.IO.prototype.hide = function() {
 	this._node.classList.remove("visible");
-	document.activeElement.blur();
+	document.activeElement && document.activeElement.blur();
 	window.removeEventListener("keydown", this);
 }
 
