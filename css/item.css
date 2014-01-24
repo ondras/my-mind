@@ -49,6 +49,7 @@
 
 .status {
 	font-size: 150%;
+	line-height: 0.8;
 }
 
 .status.yes:after {
