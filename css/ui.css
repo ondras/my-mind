@@ -19,6 +19,22 @@
 	text-align: center;
 }
 
+.btn-row button{
+	color: #fff;
+}
+
+.btn-row-1 button {
+	background-color: #1abc9c;
+}
+
+.btn-row-2 button {
+	background-color: #3498db;
+}
+
+.btn-row-3 button {
+	background-color: #2ecc71;
+}
+
 .ui:not(.visible) {
 	-webkit-transform: translate(100%, 0);
 	transform: translate(100%, 0);
@@ -56,18 +72,6 @@
 
 .ui:not([id]) button {
 	color: #fff;
-}
-
-.btn-row-1 button {
-	background-color: #1abc9c;
-}
-
-.btn-row-2 button {
-	background-color: #3498db;
-}
-
-.btn-row-3 button {
-	background-color: #2ecc71;
 }
 
 .ui button, #toggle {
