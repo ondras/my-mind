@@ -20,7 +20,6 @@ MM.UI = function() {
 MM.UI.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
 		case "item-select":
-			document.activeElement && document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
 			this._update();
 		break;
 
