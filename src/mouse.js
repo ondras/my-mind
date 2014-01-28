@@ -33,6 +33,7 @@ MM.Mouse.handleEvent = function(e) {
 			var item = MM.App.map.getItemFor(e.target);
 			if (item == MM.App.current && MM.App.editing) { return; }
 
+			document.activeElement && document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
 			this._startDrag(e, item);
 		break;
 		
@@ -55,8 +56,7 @@ MM.Mouse.handleEvent = function(e) {
 }
 
 MM.Mouse._startDrag = function(e, item) {
-	e.preventDefault();
-
+	e.preventDefault(); /* no selections allowed */
 	this._port.addEventListener("mousemove", this);
 	this._port.addEventListener("mouseup", this);
 
