@@ -31,26 +31,29 @@ var page = require("webpage").create();
 page.onAlert = function(msg) { console.log(msg); }
 page.open(url, function() {
 	page.evaluate(function(dataSource, data) {
+		/* switch to print mode */
+		document.querySelector("link[media~=print]").media = "all"; 
+		
+		/* auto-size the viewport */
+		var port = document.querySelector("#port");
+		port.style.width = port.style.height = "";
+		
+		/* inject special css to fix the missing font issue */
 		var style = document.createElement("style");
-		var css = document.createTextNode(".ui, #toggle { display: none; }");
+		var css = document.createTextNode(".status { font-family: dejavu sans, source sans pro, sans-serif; }");
 		style.appendChild(css);
 		document.body.appendChild(style);
-		
-		var format = MM.Format.getByName(dataSource);
-		var json = format.from(data);
-		var map = MM.Map.fromJSON(json);
-		MM.App.setMap(map);
 
-		var node = document.querySelector("li");
-		var width = node.offsetWidth;
+		/* load the map, if necessary */
+		if (dataSource) {
+			var format = MM.Format.getByName(dataSource);
+			var json = format.from(data);
+			var map = MM.Map.fromJSON(json);
+			MM.App.setMap(map);
+		}
 
-
-		var parent = node.parentNode;
-		node.style.position = "static";
-		parent.style.width = "";
-		parent.style.height = "";
-		
-		document.body.offsetWidth; /* to force reflow/repaint */
+		/* force reflow/repaint */
+		document.body.offsetWidth;
 	}, dataSource, data);
 
 	page.render(output);
