@@ -31,25 +31,15 @@ var page = require("webpage").create();
 page.onAlert = function(msg) { console.log(msg); }
 page.open(url, function() {
 	page.evaluate(function(dataSource, data) {
-		var style = document.createElement("style");
-		var css = document.createTextNode(".ui, #toggle { display: none; }");
-		style.appendChild(css);
-		document.body.appendChild(style);
-		
+		document.querySelector("link[media~=print]").media = "all"; /* switch to print mode */
+		var port = document.querySelector("#port");
+		port.style.width = port.style.height = "";
+
 		var format = MM.Format.getByName(dataSource);
 		var json = format.from(data);
 		var map = MM.Map.fromJSON(json);
 		MM.App.setMap(map);
 
-		var node = document.querySelector("li");
-		var width = node.offsetWidth;
-
-
-		var parent = node.parentNode;
-		node.style.position = "static";
-		parent.style.width = "";
-		parent.style.height = "";
-		
 		document.body.offsetWidth; /* to force reflow/repaint */
 	}, dataSource, data);
 
