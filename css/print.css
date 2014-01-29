@@ -2,6 +2,11 @@
 	display: none;
 }
 
+#port {
+	width: auto;
+	height: auto;
+}
+
 #port > .item {
 	position: static;
 }
