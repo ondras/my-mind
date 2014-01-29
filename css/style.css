@@ -2,7 +2,6 @@
 @import url(ui.css);
 @import url(item.css);
 @import url(shape.css);
-@import url(print.css) print;
 
 * {
 	font-family: source sans pro, sans-serif;
