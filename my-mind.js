@@ -2683,6 +2683,34 @@ MM.Backend.Local.list = function() {
 		return {};
 	}
 }
+MM.Backend.Image = Object.create(MM.Backend, {
+	id: {value: "image"},
+	label: {value: "Image"},
+	url: {value:"", writable:true}
+});
+
+MM.Backend.Image.save = function(data, name) {
+	var form = document.createElement("form");
+	form.action = this.url;
+	form.method = "post";
+	form.target = "_blank";
+
+	var input = document.createElement("input");
+	input.type = "hidden";
+	input.name = "data";
+	input.value = data;
+	form.appendChild(input);
+
+	var input = document.createElement("input");
+	input.type = "hidden";
+	input.name = "name";
+	input.value = name;
+	form.appendChild(input);
+
+	document.body.appendChild(form);
+	form.submit();
+	form.parentNode.removeChild(form);
+}
 MM.Backend.File = Object.create(MM.Backend, {
 	id: {value: "file"},
 	label: {value: "File"},
@@ -3313,7 +3341,7 @@ MM.UI.IO = function() {
 	this._backend = this._node.querySelector("#backend");
 	this._currentBackend = null;
 	this._backends = {};
-	var ids = ["local", "firebase", "gdrive", "file"];
+	var ids = ["local", "firebase", "gdrive", "file", "image"];
 	ids.forEach(function(id) {
 		var ui = MM.UI.Backend.getById(id);
 		ui.init(this._backend);
@@ -3618,6 +3646,19 @@ MM.UI.Backend.File._loadDone = function(data) {
 
 	MM.UI.Backend._loadDone.call(this, json);
 }
+MM.UI.Backend.Image = Object.create(MM.UI.Backend, {
+	id: {value: "image"}
+});
+
+MM.UI.Backend.Image.save = function() {
+	var name = MM.App.map.getName();
+	var json = MM.App.map.toJSON();
+	var data = MM.Format.JSON.to(json);
+
+	this._backend.save(data, name);
+}
+
+MM.UI.Backend.Image.load = null;
 MM.UI.Backend.Local = Object.create(MM.UI.Backend, {
 	id: {value: "local"}
 });
