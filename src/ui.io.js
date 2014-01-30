@@ -7,7 +7,7 @@ MM.UI.IO = function() {
 	this._backend = this._node.querySelector("#backend");
 	this._currentBackend = null;
 	this._backends = {};
-	var ids = ["local", "firebase", "gdrive", "file"];
+	var ids = ["local", "firebase", "gdrive", "file", "image"];
 	ids.forEach(function(id) {
 		var ui = MM.UI.Backend.getById(id);
 		ui.init(this._backend);
