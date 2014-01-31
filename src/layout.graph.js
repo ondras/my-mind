@@ -155,8 +155,8 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	/* rounded connectors */
 	var c1 = children[0];
 	var c2 = children[children.length-1];
-	var offset = dom.content.offsetWidth + R;
-	var x = x2;
+ 	var x = x2;
+ 	var xx = x + (side == "left" ? -R : R);
 
 	var y1 = c1.getShape().getVerticalAnchor(c1) + c1.getDOM().node.offsetTop;
 	var y2 = c2.getShape().getVerticalAnchor(c2) + c2.getDOM().node.offsetTop;
@@ -165,9 +165,10 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 
 	ctx.beginPath();
 	ctx.moveTo(x1, y1);
+	ctx.lineTo(xx, y1)
 	ctx.arcTo(x, y1, x, y1+R, R);
 	ctx.lineTo(x, y2-R);
-	ctx.arcTo(x, y2, x2, y2, R);
+	ctx.arcTo(x, y2, xx, y2, R);
 	ctx.lineTo(x2, y2);
 
 	for (var i=1; i<children.length-1; i++) {
