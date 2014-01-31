@@ -12,7 +12,7 @@
 		<link rel="stylesheet" href="css/style.css" />
 		<link rel="stylesheet" href="css/print.css" media="print" />
 	</head>
-	<body>
+	<body onload="init()">
 		<ul id="port"></ul>
 		<div id="throbber"></div>
 
@@ -175,9 +175,11 @@
 		</div>
 
 		<script>
-			MM.App.init();
-			MM.App.io.restore();
-			MM.Backend.Image.url = "http://bespin.cz/~ondras/my-mind-image/";
+			var init = function() {
+				MM.App.init();
+				MM.App.io.restore();
+				MM.Backend.Image.url = "http://bespin.cz/~ondras/my-mind-image/";
+			}
 		</script>
 
 		<script>
