@@ -7,7 +7,7 @@ MM.UI.IO = function() {
 	this._backend = this._node.querySelector("#backend");
 	this._currentBackend = null;
 	this._backends = {};
-	var ids = ["local", "firebase", "gdrive", "file", "image"];
+	var ids = ["local", "firebase", "gdrive", "file", "webdav", "image"];
 	ids.forEach(function(id) {
 		var ui = MM.UI.Backend.getById(id);
 		ui.init(this._backend);
@@ -28,6 +28,9 @@ MM.UI.IO.prototype.restore = function() {
 		var keyvalue = item.split("=");
 		parts[decodeURIComponent(keyvalue[0])] = decodeURIComponent(keyvalue[1]);
 	});
+
+	/* just URL means webdav backend */
+	if ("url" in parts && !("b" in parts)) { parts.b = "webdav"; }
 
 	var backend = MM.UI.Backend.getById(parts.b);
 	if (backend) { /* saved backend info */
