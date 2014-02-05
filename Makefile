@@ -25,6 +25,7 @@ SOURCES =	src/mm.js \
 			src/format.mup.js \
 			src/backend.js \
 			src/backend.local.js \
+			src/backend.webdav.js \
 			src/backend.image.js \
 			src/backend.file.js \
 			src/backend.firebase.js \
@@ -39,6 +40,7 @@ SOURCES =	src/mm.js \
 			src/ui.io.js \
 			src/ui.backend.js \
 			src/ui.backend.file.js \
+			src/ui.backend.webdav.js \
 			src/ui.backend.image.js \
 			src/ui.backend.local.js \
 			src/ui.backend.firebase.js \

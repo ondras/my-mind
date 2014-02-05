@@ -2684,6 +2684,32 @@ MM.Backend.Local.list = function() {
 		return {};
 	}
 }
+MM.Backend.WebDAV = Object.create(MM.Backend, {
+	id: {value: "webdav"},
+	label: {value: "Generic WebDAV"}
+});
+
+MM.Backend.WebDAV.save = function(data, url) {
+	return this._request("post", url, data);
+}
+
+MM.Backend.WebDAV.load = function(url) {
+	return this._request("get", url);
+}
+
+MM.Backend.WebDAV._request = function(method, url, data) {
+	var xhr = new XMLHttpRequest();
+	xhr.open(method, url, true);
+	
+	var promise = new Promise();
+	
+	Promise.send(xhr, data).then(
+		function(xhr) { promise.fulfill(xhr.responseText); },
+		function(xhr) { promise.reject(new Error("HTTP/" + xhr.status + "\n\n" + xhr.responseText)); }
+	);
+	
+	return promise;
+}
 MM.Backend.Image = Object.create(MM.Backend, {
 	id: {value: "image"},
 	label: {value: "Image"},
@@ -3342,7 +3368,7 @@ MM.UI.IO = function() {
 	this._backend = this._node.querySelector("#backend");
 	this._currentBackend = null;
 	this._backends = {};
-	var ids = ["local", "firebase", "gdrive", "file", "image"];
+	var ids = ["local", "firebase", "gdrive", "file", "webdav", "image"];
 	ids.forEach(function(id) {
 		var ui = MM.UI.Backend.getById(id);
 		ui.init(this._backend);
@@ -3363,6 +3389,12 @@ MM.UI.IO.prototype.restore = function() {
 		var keyvalue = item.split("=");
 		parts[decodeURIComponent(keyvalue[0])] = decodeURIComponent(keyvalue[1]);
 	});
+	
+	/* backwards compatibility */
+	if ("map" in parts) { parts.url = parts.map; }
+
+	/* just URL means webdav backend */
+	if ("url" in parts && !("b" in parts)) { parts.b = "webdav"; }
 
 	var backend = MM.UI.Backend.getById(parts.b);
 	if (backend) { /* saved backend info */
@@ -3384,19 +3416,6 @@ MM.UI.IO.prototype.restore = function() {
 			}
 			return;
 		} catch (e) { }
-	}
-
-	if (parts.map) { /* opened with a URL link */
-		var xhr = new XMLHttpRequest();
-		xhr.open("get", parts.map, true);
-		Promise.send(xhr).then(
-			function(xhr) {
-				var json = MM.Format.JSON.from(xhr.responseText);
-				var map = MM.Map.fromJSON(json);
-				MM.App.setMap(map);
-			}
-		);
-		return;
 	}
 }
 
@@ -3473,7 +3492,6 @@ MM.UI.IO.prototype._updateURL = function() {
 	if (!data) {
 		history.replaceState(null, "", ".");
 	} else {
-		data.b = this._currentBackend.id;
 		var arr = Object.keys(data).map(function(key) {
 			return encodeURIComponent(key)+"="+encodeURIComponent(data[key]);
 		});
@@ -3647,6 +3665,77 @@ MM.UI.Backend.File._loadDone = function(data) {
 
 	MM.UI.Backend._loadDone.call(this, json);
 }
+MM.UI.Backend.WebDAV = Object.create(MM.UI.Backend, {
+	id: {value: "webdav"}
+});
+
+MM.UI.Backend.WebDAV.init = function(select) {
+	MM.UI.Backend.init.call(this, select);
+
+	this._url = this._node.querySelector(".url");
+	this._url.value = localStorage.getItem(this._prefix + "url") || "";
+	
+	this._current = "";
+}
+
+MM.UI.Backend.WebDAV.getState = function() {
+	var data = {
+		url: this._current
+	};
+	return data;
+}
+
+MM.UI.Backend.WebDAV.setState = function(data) {
+	this._load(data.url);
+}
+
+MM.UI.Backend.WebDAV.save = function() {
+	MM.App.setThrobber(true);
+
+	var map = MM.App.map;
+	var url = this._url.value;
+	localStorage.setItem(this._prefix + "url", url);
+
+	if (url.charCodeAt(url.length-1) != "/") { url += "/"; }
+	url += map.getName() + "." + MM.Format.JSON.extension;
+
+	this._current = url;
+	var json = map.toJSON();
+	var data = MM.Format.JSON.to(json);
+
+	this._backend.save(data, url).then(
+		this._saveDone.bind(this),
+		this._error.bind(this)
+	);
+}
+
+MM.UI.Backend.WebDAV.load = function() {
+	this._load(this._url.value);
+}
+
+MM.UI.Backend.WebDAV._load = function(url) {
+	this._current = url;
+	MM.App.setThrobber(true);
+
+	var lastIndex = url.lastIndexOf("/");
+	this._url.value = url.substring(0, lastIndex);
+	localStorage.setItem(this._prefix + "url", this._url.value);
+
+	this._backend.load(url).then(
+		this._loadDone.bind(this),
+		this._error.bind(this)
+	);
+}
+
+MM.UI.Backend.WebDAV._loadDone = function(data) {
+	try {
+		var json = MM.Format.JSON.from(data);
+	} catch (e) { 
+		this._error(e);
+	}
+
+	MM.UI.Backend._loadDone.call(this, json);
+}
 MM.UI.Backend.Image = Object.create(MM.UI.Backend, {
 	id: {value: "image"}
 });
@@ -3713,6 +3802,7 @@ MM.UI.Backend.Local.setState = function(data) {
 
 MM.UI.Backend.Local.getState = function() {
 	var data = {
+		b: this.id,
 		id: MM.App.map.getId()
 	};
 	return data;
@@ -3775,6 +3865,7 @@ MM.UI.Backend.Firebase.setState = function(data) {
 MM.UI.Backend.Firebase.getState = function() {
 	var data = {
 		id: MM.App.map.getId(),
+		b: this.id,
 		s: this._server.value
 	};
 	if (this._auth.value) { data.a = this._auth.value; }
@@ -3948,6 +4039,7 @@ MM.UI.Backend.GDrive.setState = function(data) {
 
 MM.UI.Backend.GDrive.getState = function() {
 	var data = {
+		b: this.id,
 		id: this._backend.fileId
 	};
 	return data;

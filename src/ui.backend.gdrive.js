@@ -54,6 +54,7 @@ MM.UI.Backend.GDrive.setState = function(data) {
 
 MM.UI.Backend.GDrive.getState = function() {
 	var data = {
+		b: this.id,
 		id: this._backend.fileId
 	};
 	return data;
