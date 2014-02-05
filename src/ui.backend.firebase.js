@@ -30,6 +30,7 @@ MM.UI.Backend.Firebase.setState = function(data) {
 MM.UI.Backend.Firebase.getState = function() {
 	var data = {
 		id: MM.App.map.getId(),
+		b: this.id,
 		s: this._server.value
 	};
 	if (this._auth.value) { data.a = this._auth.value; }

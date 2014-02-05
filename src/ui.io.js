@@ -28,6 +28,9 @@ MM.UI.IO.prototype.restore = function() {
 		var keyvalue = item.split("=");
 		parts[decodeURIComponent(keyvalue[0])] = decodeURIComponent(keyvalue[1]);
 	});
+	
+	/* backwards compatibility */
+	if ("map" in parts) { parts.url = parts.map; }
 
 	/* just URL means webdav backend */
 	if ("url" in parts && !("b" in parts)) { parts.b = "webdav"; }
@@ -52,19 +55,6 @@ MM.UI.IO.prototype.restore = function() {
 			}
 			return;
 		} catch (e) { }
-	}
-
-	if (parts.map) { /* opened with a URL link */
-		var xhr = new XMLHttpRequest();
-		xhr.open("get", parts.map, true);
-		Promise.send(xhr).then(
-			function(xhr) {
-				var json = MM.Format.JSON.from(xhr.responseText);
-				var map = MM.Map.fromJSON(json);
-				MM.App.setMap(map);
-			}
-		);
-		return;
 	}
 }
 
@@ -141,7 +131,6 @@ MM.UI.IO.prototype._updateURL = function() {
 	if (!data) {
 		history.replaceState(null, "", ".");
 	} else {
-		data.b = this._currentBackend.id;
 		var arr = Object.keys(data).map(function(key) {
 			return encodeURIComponent(key)+"="+encodeURIComponent(data[key]);
 		});

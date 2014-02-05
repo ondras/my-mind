@@ -51,6 +51,7 @@ MM.UI.Backend.Local.setState = function(data) {
 
 MM.UI.Backend.Local.getState = function() {
 	var data = {
+		b: this.id,
 		id: MM.App.map.getId()
 	};
 	return data;

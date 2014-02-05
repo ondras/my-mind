@@ -1,6 +1,6 @@
 MM.Backend.WebDAV = Object.create(MM.Backend, {
 	id: {value: "webdav"},
-	label: {value: "WebDAV"}
+	label: {value: "Generic WebDAV"}
 });
 
 MM.Backend.WebDAV.save = function(data, url) {
@@ -14,5 +14,13 @@ MM.Backend.WebDAV.load = function(url) {
 MM.Backend.WebDAV._request = function(method, url, data) {
 	var xhr = new XMLHttpRequest();
 	xhr.open(method, url, true);
-	return Promise.send(xhr, data);
+	
+	var promise = new Promise();
+	
+	Promise.send(xhr, data).then(
+		function(xhr) { promise.fulfill(xhr.responseText); },
+		function(xhr) { promise.reject(new Error("HTTP/" + xhr.status + "\n\n" + xhr.responseText)); }
+	);
+	
+	return promise;
 }
