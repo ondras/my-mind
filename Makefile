@@ -5,6 +5,7 @@ SOURCES =	src/mm.js \
 			src/item.js \
 			src/map.js \
 			src/keyboard.js \
+			src/tip.js \
 			src/action.js \
 			src/clipboard.js \
 			src/command.js \

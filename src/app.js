@@ -99,6 +99,7 @@ MM.App = {
 		this.io = new MM.UI.IO();
 		this.help = new MM.UI.Help();
 
+		MM.Tip.init();
 		MM.Keyboard.init();
 		MM.Mouse.init(this._port);
 
