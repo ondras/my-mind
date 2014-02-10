@@ -983,6 +983,34 @@ MM.Keyboard._keyOK = function(key, e) {
 	}
 	return true;
 }
+MM.Tip = {
+	_node: null,
+
+	handleEvent: function() {
+		this._hide();
+	},
+
+	handleMessage: function() {
+		this._hide();
+	},
+
+	init: function() {
+		this._node = document.querySelector("#tip");
+		this._node.addEventListener("click", this);
+
+		MM.subscribe("command-child", this);
+		MM.subscribe("command-sibling", this);
+	},
+
+	_hide: function() {
+		MM.unsubscribe("command-child", this);
+		MM.unsubscribe("command-sibling", this);
+
+		this._node.removeEventListener("click", this);
+		this._node.classList.add("hidden");
+		this._node = null;
+	}
+}
 MM.Action = function() {}
 MM.Action.prototype.perform = function() {}
 MM.Action.prototype.undo = function() {}
@@ -1282,6 +1310,8 @@ MM.Command.InsertSibling.execute = function() {
 	MM.App.action(action);
 
 	MM.Command.Edit.execute();
+
+	MM.publish("command-sibling");
 }
 
 MM.Command.InsertChild = Object.create(MM.Command, {
@@ -1297,6 +1327,8 @@ MM.Command.InsertChild.execute = function() {
 	MM.App.action(action);	
 
 	MM.Command.Edit.execute();
+
+	MM.publish("command-child");
 }
 
 MM.Command.Delete = Object.create(MM.Command, {
@@ -4389,6 +4421,7 @@ MM.App = {
 		this.io = new MM.UI.IO();
 		this.help = new MM.UI.Help();
 
+		MM.Tip.init();
 		MM.Keyboard.init();
 		MM.Mouse.init(this._port);
 

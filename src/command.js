@@ -49,6 +49,8 @@ MM.Command.InsertSibling.execute = function() {
 	MM.App.action(action);
 
 	MM.Command.Edit.execute();
+
+	MM.publish("command-sibling");
 }
 
 MM.Command.InsertChild = Object.create(MM.Command, {
@@ -64,6 +66,8 @@ MM.Command.InsertChild.execute = function() {
 	MM.App.action(action);	
 
 	MM.Command.Edit.execute();
+
+	MM.publish("command-child");
 }
 
 MM.Command.Delete = Object.create(MM.Command, {

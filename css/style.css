@@ -41,3 +41,18 @@ ul {
 	opacity: 0.5;
 	z-index: 1;
 }
+
+#tip {
+	position: fixed;
+	left: 10px;
+	bottom: 5px;
+	transition: all 500ms;
+}
+
+#tip:before {
+	content: "Tip: ";
+}
+
+#tip.hidden {
+	opacity: 0;
+}
