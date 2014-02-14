@@ -6,7 +6,7 @@
 	opacity: 0.5;
 }
 
-.item.collapsed .children {
+.item.collapsed .children, .item.collapsed canvas {
 	display: none;
 }
 
@@ -70,4 +70,29 @@ canvas {
 	position: absolute;
 	left: 0;
 	top: 0;
+}
+
+.toggle {
+	position: absolute;
+	width: 15px;
+	height: 15px;
+	line-height: 15px;
+	cursor: pointer;
+	border-radius: 50%;
+	background-color: #88f;
+	text-align: center;
+	font-weight: bold;
+	font-family: sans-serif;
+}
+
+.toggle:before {
+	content: "−";
+}
+
+.collapsed > .toggle:before {
+	content: "+";
+}
+
+:not(.current):not(.collapsed) > .toggle {
+	display: none;
 }

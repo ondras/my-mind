@@ -287,6 +287,7 @@ MM.Item = function() {
 		value: document.createElement("span"),
 		text: document.createElement("div"),
 		children: document.createElement("ul"),
+		toggle: document.createElement("div"),
 		canvas: document.createElement("canvas")
 	}
 	this._dom.node.classList.add("item");
@@ -294,10 +295,15 @@ MM.Item = function() {
 	this._dom.status.classList.add("status");
 	this._dom.value.classList.add("value");
 	this._dom.text.classList.add("text");
+	this._dom.toggle.classList.add("toggle");
 	this._dom.children.classList.add("children");
+
 	this._dom.content.appendChild(this._dom.text); /* status+value are appended in layout */
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
+	/* toggle+children are appended when children exist */
+
+	this._dom.toggle.addEventListener("click", this);
 }
 
 MM.Item.COLOR = "#999";
@@ -555,6 +561,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	}
 
 	if (!this._children.length) {
+		this._dom.node.appendChild(this._dom.toggle);
 		this._dom.node.appendChild(this._dom.children);
 	}
 
@@ -577,6 +584,7 @@ MM.Item.prototype.removeChild = function(child) {
 	child.setParent(null);
 	
 	if (!this._children.length) {
+		this._dom.toggle.parentNode.removeChild(this._dom.toggle);
 		this._dom.children.parentNode.removeChild(this._dom.children);
 	}
 	
@@ -614,6 +622,11 @@ MM.Item.prototype.handleEvent = function(e) {
 
 		case "keydown":
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
+		break;
+
+		case "click":
+			if (this._collapsed) { this.expand(); } else { this.collapse(); }
+			MM.App.select(this);
 		break;
 	}
 }
@@ -1550,6 +1563,16 @@ MM.Command.Paste = Object.create(MM.Command, {
 MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);
 }
+
+MM.Command.CollapseExpand = Object.create(MM.Command, {
+	label: {value: "Collapse/Expand"},
+	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false}]}
+});
+MM.Command.CollapseExpand.execute = function() {
+	var item = MM.App.current;
+	if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
+	MM.App.map.ensureItemVisibility(item);
+}
 MM.Command.Edit = Object.create(MM.Command, {
 	label: {value: "Edit item"},
 	keys: {value: [
@@ -1886,14 +1909,10 @@ MM.Layout.Graph.update = function(item) {
 
 	this._layoutItem(item, this.childDirection);
 
-	if (item.isCollapsed()) {
-
+	if (this.childDirection == "left" || this.childDirection == "right") {
+		this._drawLinesHorizontal(item, this.childDirection);
 	} else {
-		if (this.childDirection == "left" || this.childDirection == "right") {
-			this._drawLinesHorizontal(item, this.childDirection);
-		} else {
-			this._drawLinesVertical(item, this.childDirection);
-		}
+		this._drawLinesVertical(item, this.childDirection);
 	}
 
 	return this;
@@ -1920,7 +1939,7 @@ MM.Layout.Graph._layoutItem = function(item, rankDirection) {
 	var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
 
 	/* children size */
-	var bbox = this._computeChildrenBBox(item.isCollapsed() ? [] : item.getChildren(), childIndex);
+	var bbox = this._computeChildrenBBox(item.getChildren(), childIndex);
 
 	/* node size */
 	var rankSize = contentSize[rankIndex];
@@ -1933,7 +1952,7 @@ MM.Layout.Graph._layoutItem = function(item, rankDirection) {
 	if (rankDirection == "right") { offset[0] = contentSize[0] + this.SPACING_RANK; }
 	if (rankDirection == "bottom") { offset[1] = contentSize[1] + this.SPACING_RANK; }
 	offset[childIndex] = Math.round((childSize - bbox[childIndex])/2);
-	this._layoutChildren(item.isCollapsed() ? [] : item.getChildren(), rankDirection, offset, bbox);
+	this._layoutChildren(item.getChildren(), rankDirection, offset, bbox);
 
 	/* label position */
 	var labelPos = 0;
@@ -3370,6 +3389,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "SelectParent");
 	this._buildRow(t, "Center");
 	this._buildRow(t, "ZoomIn", "ZoomOut");
+	this._buildRow(t, "CollapseExpand");
 
 	var t = this._node.querySelector(".manipulation");
 	this._buildRow(t, "InsertSibling");

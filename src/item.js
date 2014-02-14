@@ -25,6 +25,7 @@ MM.Item = function() {
 		value: document.createElement("span"),
 		text: document.createElement("div"),
 		children: document.createElement("ul"),
+		toggle: document.createElement("div"),
 		canvas: document.createElement("canvas")
 	}
 	this._dom.node.classList.add("item");
@@ -32,10 +33,15 @@ MM.Item = function() {
 	this._dom.status.classList.add("status");
 	this._dom.value.classList.add("value");
 	this._dom.text.classList.add("text");
+	this._dom.toggle.classList.add("toggle");
 	this._dom.children.classList.add("children");
+
 	this._dom.content.appendChild(this._dom.text); /* status+value are appended in layout */
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
+	/* toggle+children are appended when children exist */
+
+	this._dom.toggle.addEventListener("click", this);
 }
 
 MM.Item.COLOR = "#999";
@@ -293,6 +299,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	}
 
 	if (!this._children.length) {
+		this._dom.node.appendChild(this._dom.toggle);
 		this._dom.node.appendChild(this._dom.children);
 	}
 
@@ -315,6 +322,7 @@ MM.Item.prototype.removeChild = function(child) {
 	child.setParent(null);
 	
 	if (!this._children.length) {
+		this._dom.toggle.parentNode.removeChild(this._dom.toggle);
 		this._dom.children.parentNode.removeChild(this._dom.children);
 	}
 	
@@ -352,6 +360,11 @@ MM.Item.prototype.handleEvent = function(e) {
 
 		case "keydown":
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
+		break;
+
+		case "click":
+			if (this._collapsed) { this.expand(); } else { this.collapse(); }
+			MM.App.select(this);
 		break;
 	}
 }
