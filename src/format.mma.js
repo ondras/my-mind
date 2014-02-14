@@ -12,6 +12,8 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 		shape: "box"
 	};
 
+	if (node.getAttribute("expand") == "false") { json.collapsed = true; }
+
 	var direction = node.getAttribute("direction");
 	if (direction == "0") { json.side = "left"; }
 	if (direction == "1") { json.side = "right"; }
@@ -37,6 +39,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 MM.Format.MMA._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
 	elm.setAttribute("title", json.text);
+	elm.setAttribute("expand", json.collapsed ? "false" : "true");
 
 	if (json.side) { elm.setAttribute("direction", json.side == "left" ? "0" : "1"); }
 	if (json.color) {

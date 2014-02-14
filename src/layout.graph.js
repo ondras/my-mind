@@ -25,11 +25,17 @@ MM.Layout.Graph.update = function(item) {
 	this._alignItem(item, side);
 
 	this._layoutItem(item, this.childDirection);
-	if (this.childDirection == "left" || this.childDirection == "right") {
-		this._drawLinesHorizontal(item, this.childDirection);
+
+	if (item.isCollapsed()) {
+
 	} else {
-		this._drawLinesVertical(item, this.childDirection);
+		if (this.childDirection == "left" || this.childDirection == "right") {
+			this._drawLinesHorizontal(item, this.childDirection);
+		} else {
+			this._drawLinesVertical(item, this.childDirection);
+		}
 	}
+
 	return this;
 }
 
@@ -54,7 +60,7 @@ MM.Layout.Graph._layoutItem = function(item, rankDirection) {
 	var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
 
 	/* children size */
-	var bbox = this._computeChildrenBBox(item.getChildren(), childIndex);
+	var bbox = this._computeChildrenBBox(item.isCollapsed() ? [] : item.getChildren(), childIndex);
 
 	/* node size */
 	var rankSize = contentSize[rankIndex];
@@ -67,7 +73,7 @@ MM.Layout.Graph._layoutItem = function(item, rankDirection) {
 	if (rankDirection == "right") { offset[0] = contentSize[0] + this.SPACING_RANK; }
 	if (rankDirection == "bottom") { offset[1] = contentSize[1] + this.SPACING_RANK; }
 	offset[childIndex] = Math.round((childSize - bbox[childIndex])/2);
-	this._layoutChildren(item.getChildren(), rankDirection, offset, bbox);
+	this._layoutChildren(item.isCollapsed() ? [] : item.getChildren(), rankDirection, offset, bbox);
 
 	/* label position */
 	var labelPos = 0;

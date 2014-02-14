@@ -6,6 +6,10 @@
 	opacity: 0.5;
 }
 
+.item.collapsed .children {
+	display: none;
+}
+
 .content {
 	position: relative;
 	display: inline-block;

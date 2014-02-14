@@ -31,10 +31,12 @@ MM.Layout.pick = function(item, dir) {
 	}
 	
 	/* direction for a child */
-	var children = item.getChildren();
-	for (var i=0;i<children.length;i++) {
-		var child = children[i];
-		if (this.getChildDirection(child) == dir) { return child; }
+	if (!item.isCollapsed()) {
+		var children = item.getChildren();
+		for (var i=0;i<children.length;i++) {
+			var child = children[i];
+			if (this.getChildDirection(child) == dir) { return child; }
+		}
 	}
 
 	if (item.isRoot()) { return item; }

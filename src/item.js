@@ -1,6 +1,7 @@
 MM.Item = function() {
 	this._parent = null;
 	this._children = [];
+	this._collapsed = false;
 
 	this._layout = null;
 	this._shape = null;
@@ -64,8 +65,8 @@ MM.Item.prototype.fromJSON = function(data) {
 	if (data.color) { this._color = data.color; }
 	if (data.value) { this._value = data.value; }
 	if (data.status) { this._status = data.status; }
+	if (data.collapsed) { this.collapse(); }
 	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
-	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 
 	(data.children || []).forEach(function(child) {
@@ -87,6 +88,7 @@ MM.Item.prototype.toJSON = function() {
 	if (this._status) { data.status = this._status; }
 	if (this._layout) { data.layout = this._layout.id; }
 	if (!this._autoShape) { data.shape = this._shape.id; }
+	if (this._collapsed) { data.collapsed = 1; }
 	if (this._children.length) {
 		data.children = this._children.map(function(child) { return child.toJSON(); });
 	}
@@ -123,6 +125,9 @@ MM.Item.prototype.update = function(doNotRecurse) {
 	
 	this._updateStatus();
 	this._updateValue();
+
+	this._dom.node.classList[this._collapsed ? "add" : "remove"]("collapsed");
+
 	this.getLayout().update(this);
 	this.getShape().update(this);
 	if (!this.isRoot() && !doNotRecurse) { this._parent.update(); }
@@ -145,6 +150,22 @@ MM.Item.prototype.setText = function(text) {
 
 MM.Item.prototype.getText = function() {
 	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
+}
+
+MM.Item.prototype.collapse = function() {
+	if (this._collapsed) { return; }
+	this._collapsed = true;
+	return this.update();
+}
+
+MM.Item.prototype.expand = function() {
+	if (!this._collapsed) { return; }
+	this._collapsed = false;
+	return this.update();
+}
+
+MM.Item.prototype.isCollapsed = function() {
+	return this._collapsed;
 }
 
 MM.Item.prototype.setValue = function(value) {

@@ -263,6 +263,7 @@ MM.Repo = {
 MM.Item = function() {
 	this._parent = null;
 	this._children = [];
+	this._collapsed = false;
 
 	this._layout = null;
 	this._shape = null;
@@ -326,8 +327,8 @@ MM.Item.prototype.fromJSON = function(data) {
 	if (data.color) { this._color = data.color; }
 	if (data.value) { this._value = data.value; }
 	if (data.status) { this._status = data.status; }
+	if (data.collapsed) { this.collapse(); }
 	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
-	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 
 	(data.children || []).forEach(function(child) {
@@ -349,6 +350,7 @@ MM.Item.prototype.toJSON = function() {
 	if (this._status) { data.status = this._status; }
 	if (this._layout) { data.layout = this._layout.id; }
 	if (!this._autoShape) { data.shape = this._shape.id; }
+	if (this._collapsed) { data.collapsed = 1; }
 	if (this._children.length) {
 		data.children = this._children.map(function(child) { return child.toJSON(); });
 	}
@@ -385,6 +387,9 @@ MM.Item.prototype.update = function(doNotRecurse) {
 	
 	this._updateStatus();
 	this._updateValue();
+
+	this._dom.node.classList[this._collapsed ? "add" : "remove"]("collapsed");
+
 	this.getLayout().update(this);
 	this.getShape().update(this);
 	if (!this.isRoot() && !doNotRecurse) { this._parent.update(); }
@@ -407,6 +412,22 @@ MM.Item.prototype.setText = function(text) {
 
 MM.Item.prototype.getText = function() {
 	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
+}
+
+MM.Item.prototype.collapse = function() {
+	if (this._collapsed) { return; }
+	this._collapsed = true;
+	return this.update();
+}
+
+MM.Item.prototype.expand = function() {
+	if (!this._collapsed) { return; }
+	this._collapsed = false;
+	return this.update();
+}
+
+MM.Item.prototype.isCollapsed = function() {
+	return this._collapsed;
 }
 
 MM.Item.prototype.setValue = function(value) {
@@ -810,7 +831,7 @@ MM.Map.prototype.getClosestItem = function(x, y) {
 			dx: dx,
 			dy: dy
 		});
-		item.getChildren().forEach(scan);
+		if (!item.isCollapsed()) { item.getChildren().forEach(scan); }
 	}
 	
 	scan(this._root);
@@ -901,9 +922,11 @@ MM.Map.prototype.pick = function(item, direction) {
 }
 
 MM.Map.prototype._getPickCandidates = function(currentRect, item, direction, candidates) {
-	item.getChildren().forEach(function(child) {
-		this._getPickCandidates(currentRect, child, direction, candidates);
-	}, this);
+	if (!item.isCollapsed()) {
+		item.getChildren().forEach(function(child) {
+			this._getPickCandidates(currentRect, child, direction, candidates);
+		}, this);
+	}
 
 	var node = item.getDOM().content;
 	var rect = node.getBoundingClientRect();
@@ -1022,6 +1045,7 @@ MM.Action.InsertNewItem = function(parent, index) {
 }
 MM.Action.InsertNewItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.InsertNewItem.prototype.perform = function() {
+	this._parent.expand(); /* FIXME remember? */
 	this._item = this._parent.insertChild(this._item, this._index);
 	MM.App.select(this._item);
 }
@@ -1751,10 +1775,12 @@ MM.Layout.pick = function(item, dir) {
 	}
 	
 	/* direction for a child */
-	var children = item.getChildren();
-	for (var i=0;i<children.length;i++) {
-		var child = children[i];
-		if (this.getChildDirection(child) == dir) { return child; }
+	if (!item.isCollapsed()) {
+		var children = item.getChildren();
+		for (var i=0;i<children.length;i++) {
+			var child = children[i];
+			if (this.getChildDirection(child) == dir) { return child; }
+		}
 	}
 
 	if (item.isRoot()) { return item; }
@@ -1859,11 +1885,17 @@ MM.Layout.Graph.update = function(item) {
 	this._alignItem(item, side);
 
 	this._layoutItem(item, this.childDirection);
-	if (this.childDirection == "left" || this.childDirection == "right") {
-		this._drawLinesHorizontal(item, this.childDirection);
+
+	if (item.isCollapsed()) {
+
 	} else {
-		this._drawLinesVertical(item, this.childDirection);
+		if (this.childDirection == "left" || this.childDirection == "right") {
+			this._drawLinesHorizontal(item, this.childDirection);
+		} else {
+			this._drawLinesVertical(item, this.childDirection);
+		}
 	}
+
 	return this;
 }
 
@@ -1888,7 +1920,7 @@ MM.Layout.Graph._layoutItem = function(item, rankDirection) {
 	var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
 
 	/* children size */
-	var bbox = this._computeChildrenBBox(item.getChildren(), childIndex);
+	var bbox = this._computeChildrenBBox(item.isCollapsed() ? [] : item.getChildren(), childIndex);
 
 	/* node size */
 	var rankSize = contentSize[rankIndex];
@@ -1901,7 +1933,7 @@ MM.Layout.Graph._layoutItem = function(item, rankDirection) {
 	if (rankDirection == "right") { offset[0] = contentSize[0] + this.SPACING_RANK; }
 	if (rankDirection == "bottom") { offset[1] = contentSize[1] + this.SPACING_RANK; }
 	offset[childIndex] = Math.round((childSize - bbox[childIndex])/2);
-	this._layoutChildren(item.getChildren(), rankDirection, offset, bbox);
+	this._layoutChildren(item.isCollapsed() ? [] : item.getChildren(), rankDirection, offset, bbox);
 
 	/* label position */
 	var labelPos = 0;
@@ -2477,6 +2509,7 @@ MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 
 	if (json.side) { elm.setAttribute("POSITION", json.side); }
 	if (json.shape == "box") { elm.setAttribute("STYLE", "bubble"); }
+	if (json.collapsed) { elm.setAttribute("FOLDED", "true"); }
 
 	return elm;
 }
@@ -2510,6 +2543,8 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 	} else {
 		json.shape = parent.shape;
 	}
+
+	if (node.getAttribute("FOLDED") == "true") { json.collapsed = true; }
 
 	var children = node.children;
 	for (var i=0;i<children.length;i++) {
@@ -2546,6 +2581,8 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 		shape: "box"
 	};
 
+	if (node.getAttribute("expand") == "false") { json.collapsed = true; }
+
 	var direction = node.getAttribute("direction");
 	if (direction == "0") { json.side = "left"; }
 	if (direction == "1") { json.side = "right"; }
@@ -2571,6 +2608,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 MM.Format.MMA._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
 	elm.setAttribute("title", json.text);
+	elm.setAttribute("expand", json.collapsed ? "false" : "true");
 
 	if (json.side) { elm.setAttribute("direction", json.side == "left" ? "0" : "1"); }
 	if (json.color) {

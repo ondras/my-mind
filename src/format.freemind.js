@@ -51,6 +51,7 @@ MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 
 	if (json.side) { elm.setAttribute("POSITION", json.side); }
 	if (json.shape == "box") { elm.setAttribute("STYLE", "bubble"); }
+	if (json.collapsed) { elm.setAttribute("FOLDED", "true"); }
 
 	return elm;
 }
@@ -84,6 +85,8 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 	} else {
 		json.shape = parent.shape;
 	}
+
+	if (node.getAttribute("FOLDED") == "true") { json.collapsed = true; }
 
 	var children = node.children;
 	for (var i=0;i<children.length;i++) {
