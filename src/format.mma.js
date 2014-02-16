@@ -12,7 +12,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 		shape: "box"
 	};
 
-	if (node.getAttribute("expand") == "false") { json.collapsed = true; }
+	if (node.getAttribute("expand") == "false") { json.collapsed = 1; }
 
 	var direction = node.getAttribute("direction");
 	if (direction == "0") { json.side = "left"; }

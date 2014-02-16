@@ -2602,7 +2602,7 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 		json.shape = parent.shape;
 	}
 
-	if (node.getAttribute("FOLDED") == "true") { json.collapsed = true; }
+	if (node.getAttribute("FOLDED") == "true") { json.collapsed = 1; }
 
 	var children = node.children;
 	for (var i=0;i<children.length;i++) {
@@ -2639,7 +2639,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 		shape: "box"
 	};
 
-	if (node.getAttribute("expand") == "false") { json.collapsed = true; }
+	if (node.getAttribute("expand") == "false") { json.collapsed = 1; }
 
 	var direction = node.getAttribute("direction");
 	if (direction == "0") { json.side = "left"; }
@@ -2714,6 +2714,10 @@ MM.Format.Mup._MupToMM = function(item) {
 		json.color = item.attr.style.background;
 	}
 
+	if (item.attr && item.attr.collapsed) {
+		json.collapsed = 1;
+	}
+
 	if (item.ideas) {
 		var data = [];
 		for (var key in item.ideas) {
@@ -2739,10 +2743,14 @@ MM.Format.Mup._MupToMM = function(item) {
 MM.Format.Mup._MMtoMup = function(item, side) {
 	var result = {
 		id: item.id,
-		title: item.text
+		title: item.text,
+		attr: {}
 	}
 	if (item.color) {
-		result.attr = {style:{background:item.color}};
+		result.attr.style = {background:item.color};
+	}
+	if (item.collapsed) {
+		result.attr.collapsed = true;
 	}
 
 	if (item.children) {

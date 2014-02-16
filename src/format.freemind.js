@@ -86,7 +86,7 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 		json.shape = parent.shape;
 	}
 
-	if (node.getAttribute("FOLDED") == "true") { json.collapsed = true; }
+	if (node.getAttribute("FOLDED") == "true") { json.collapsed = 1; }
 
 	var children = node.children;
 	for (var i=0;i<children.length;i++) {
