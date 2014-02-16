@@ -71,6 +71,37 @@ MM.Layout._anchorCanvas = function(item) {
 	dom.canvas.height = dom.node.offsetHeight;
 }
 
+MM.Layout._anchorToggle = function(item, x, y, side) {
+	var node = item.getDOM().toggle;
+	var w = node.offsetWidth;
+	var h = node.offsetHeight;
+	var l = x;
+	var t = y;
+
+	switch (side) {
+		case "left":
+			t -= h/2;
+			l -= w;
+		break;
+
+		case "right":
+			t -= h/2;
+		break;
+		
+		case "top":
+			l -= w/2;
+			t -= h;
+		break;
+
+		case "bottom":
+			l -= w/2;
+		break;
+	}
+	
+	node.style.left = Math.round(l) + "px";
+	node.style.top = Math.round(t) + "px";
+}
+
 MM.Layout._getChildAnchor = function(item, side) {
 	var dom = item.getDOM();
 	if (side == "left" || side == "right") {

@@ -82,18 +82,20 @@ MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox)
 }
 
 MM.Layout.Tree._drawLines = function(item, side) {
-	var children = item.getChildren();
-	if (children.length == 0) { return; }
-
 	var dom = item.getDOM();
 	var canvas = dom.canvas;
-	var ctx = canvas.getContext("2d");
-	ctx.strokeStyle = item.getColor();
 
 	var R = this.SPACING_RANK/4;
 	var x = (side == "left" ? canvas.width - 2*R : 2*R) + 0.5;
-	var y1 = item.getShape().getVerticalAnchor(item);
+	this._anchorToggle(item, x, dom.content.offsetHeight, "bottom");
 
+	var children = item.getChildren();
+	if (children.length == 0 || item.isCollapsed()) { return; }
+
+	var ctx = canvas.getContext("2d");
+	ctx.strokeStyle = item.getColor();
+
+	var y1 = item.getShape().getVerticalAnchor(item);
 	var last = children[children.length-1];
 	var y2 = last.getShape().getVerticalAnchor(last) + last.getDOM().node.offsetTop;
 

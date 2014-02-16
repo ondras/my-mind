@@ -429,7 +429,8 @@ MM.Item.prototype.collapse = function() {
 MM.Item.prototype.expand = function() {
 	if (!this._collapsed) { return; }
 	this._collapsed = false;
-	return this.update();
+	this.update();
+	return this.updateSubtree();
 }
 
 MM.Item.prototype.isCollapsed = function() {
@@ -1564,11 +1565,11 @@ MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);
 }
 
-MM.Command.CollapseExpand = Object.create(MM.Command, {
-	label: {value: "Collapse/Expand"},
-	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false}]}
+MM.Command.Fold = Object.create(MM.Command, {
+	label: {value: "Fold/Unfold"},
+	keys: {value: [{charCode: "f".charCodeAt(0), ctrlKey:false}]}
 });
-MM.Command.CollapseExpand.execute = function() {
+MM.Command.Fold.execute = function() {
 	var item = MM.App.current;
 	if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
 	MM.App.map.ensureItemVisibility(item);
@@ -1838,6 +1839,37 @@ MM.Layout._anchorCanvas = function(item) {
 	dom.canvas.height = dom.node.offsetHeight;
 }
 
+MM.Layout._anchorToggle = function(item, x, y, side) {
+	var node = item.getDOM().toggle;
+	var w = node.offsetWidth;
+	var h = node.offsetHeight;
+	var l = x;
+	var t = y;
+
+	switch (side) {
+		case "left":
+			t -= h/2;
+			l -= w;
+		break;
+
+		case "right":
+			t -= h/2;
+		break;
+		
+		case "top":
+			l -= w/2;
+			t -= h;
+		break;
+
+		case "bottom":
+			l -= w/2;
+		break;
+	}
+	
+	node.style.left = Math.round(l) + "px";
+	node.style.top = Math.round(t) + "px";
+}
+
 MM.Layout._getChildAnchor = function(item, side) {
 	var dom = item.getDOM();
 	if (side == "left" || side == "right") {
@@ -2010,10 +2042,12 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	/* first part */
 	var y1 = item.getShape().getVerticalAnchor(item);
 	if (side == "left") {
-		var x1 = dom.content.offsetLeft + 0.5;
+		var x1 = dom.content.offsetLeft - 0.5;
 	} else {
 		var x1 = dom.content.offsetWidth + dom.content.offsetLeft + 0.5;
 	}
+	
+	this._anchorToggle(item, x1, y1, side);
 
 	if (children.length == 1) {
 		var child = children[0];
@@ -2082,15 +2116,18 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 	if (side == "top") {
 		var y1 = canvas.height - dom.content.offsetHeight;
 		var y2 = y1 - height;
+		this._anchorToggle(item, x, y1, side);
 	} else {
 		var y1 = item.getShape().getVerticalAnchor(item);
 		var y2 = dom.content.offsetHeight + height;
+		this._anchorToggle(item, x, dom.content.offsetHeight, side);
 	}
 
 	ctx.beginPath();
 	ctx.moveTo(x, y1);
 	ctx.lineTo(x, y2);
 	ctx.stroke();
+
 
 	if (children.length == 1) { return; }
 
@@ -2209,18 +2246,20 @@ MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox)
 }
 
 MM.Layout.Tree._drawLines = function(item, side) {
-	var children = item.getChildren();
-	if (children.length == 0) { return; }
-
 	var dom = item.getDOM();
 	var canvas = dom.canvas;
-	var ctx = canvas.getContext("2d");
-	ctx.strokeStyle = item.getColor();
 
 	var R = this.SPACING_RANK/4;
 	var x = (side == "left" ? canvas.width - 2*R : 2*R) + 0.5;
-	var y1 = item.getShape().getVerticalAnchor(item);
+	this._anchorToggle(item, x, dom.content.offsetHeight, "bottom");
 
+	var children = item.getChildren();
+	if (children.length == 0 || item.isCollapsed()) { return; }
+
+	var ctx = canvas.getContext("2d");
+	ctx.strokeStyle = item.getColor();
+
+	var y1 = item.getShape().getVerticalAnchor(item);
 	var last = children[children.length-1];
 	var y2 = last.getShape().getVerticalAnchor(last) + last.getDOM().node.offsetTop;
 
@@ -3389,7 +3428,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "SelectParent");
 	this._buildRow(t, "Center");
 	this._buildRow(t, "ZoomIn", "ZoomOut");
-	this._buildRow(t, "CollapseExpand");
+	this._buildRow(t, "Fold");
 
 	var t = this._node.querySelector(".manipulation");
 	this._buildRow(t, "InsertSibling");

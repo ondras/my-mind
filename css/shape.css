@@ -26,6 +26,10 @@
 	font-size: 140%;
 }
 
+#port > .item > .toggle {
+	display: none;
+}
+
 /* 1st children */
 
 #port > .item > .children > .item > .content {

@@ -266,11 +266,11 @@ MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);
 }
 
-MM.Command.CollapseExpand = Object.create(MM.Command, {
-	label: {value: "Collapse/Expand"},
-	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false}]}
+MM.Command.Fold = Object.create(MM.Command, {
+	label: {value: "Fold/Unfold"},
+	keys: {value: [{charCode: "f".charCodeAt(0), ctrlKey:false}]}
 });
-MM.Command.CollapseExpand.execute = function() {
+MM.Command.Fold.execute = function() {
 	var item = MM.App.current;
 	if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
 	MM.App.map.ensureItemVisibility(item);

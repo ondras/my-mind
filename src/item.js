@@ -167,7 +167,8 @@ MM.Item.prototype.collapse = function() {
 MM.Item.prototype.expand = function() {
 	if (!this._collapsed) { return; }
 	this._collapsed = false;
-	return this.update();
+	this.update();
+	return this.updateSubtree();
 }
 
 MM.Item.prototype.isCollapsed = function() {
