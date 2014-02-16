@@ -25,11 +25,13 @@ MM.Layout.Graph.update = function(item) {
 	this._alignItem(item, side);
 
 	this._layoutItem(item, this.childDirection);
+
 	if (this.childDirection == "left" || this.childDirection == "right") {
 		this._drawLinesHorizontal(item, this.childDirection);
 	} else {
 		this._drawLinesVertical(item, this.childDirection);
 	}
+
 	return this;
 }
 
@@ -125,10 +127,12 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	/* first part */
 	var y1 = item.getShape().getVerticalAnchor(item);
 	if (side == "left") {
-		var x1 = dom.content.offsetLeft + 0.5;
+		var x1 = dom.content.offsetLeft - 0.5;
 	} else {
 		var x1 = dom.content.offsetWidth + dom.content.offsetLeft + 0.5;
 	}
+	
+	this._anchorToggle(item, x1, y1, side);
 
 	if (children.length == 1) {
 		var child = children[0];
@@ -197,15 +201,18 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 	if (side == "top") {
 		var y1 = canvas.height - dom.content.offsetHeight;
 		var y2 = y1 - height;
+		this._anchorToggle(item, x, y1, side);
 	} else {
 		var y1 = item.getShape().getVerticalAnchor(item);
 		var y2 = dom.content.offsetHeight + height;
+		this._anchorToggle(item, x, dom.content.offsetHeight, side);
 	}
 
 	ctx.beginPath();
 	ctx.moveTo(x, y1);
 	ctx.lineTo(x, y2);
 	ctx.stroke();
+
 
 	if (children.length == 1) { return; }
 

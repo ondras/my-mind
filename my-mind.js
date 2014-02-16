@@ -263,6 +263,7 @@ MM.Repo = {
 MM.Item = function() {
 	this._parent = null;
 	this._children = [];
+	this._collapsed = false;
 
 	this._layout = null;
 	this._shape = null;
@@ -286,6 +287,7 @@ MM.Item = function() {
 		value: document.createElement("span"),
 		text: document.createElement("div"),
 		children: document.createElement("ul"),
+		toggle: document.createElement("div"),
 		canvas: document.createElement("canvas")
 	}
 	this._dom.node.classList.add("item");
@@ -293,10 +295,15 @@ MM.Item = function() {
 	this._dom.status.classList.add("status");
 	this._dom.value.classList.add("value");
 	this._dom.text.classList.add("text");
+	this._dom.toggle.classList.add("toggle");
 	this._dom.children.classList.add("children");
+
 	this._dom.content.appendChild(this._dom.text); /* status+value are appended in layout */
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
+	/* toggle+children are appended when children exist */
+
+	this._dom.toggle.addEventListener("click", this);
 }
 
 MM.Item.COLOR = "#999";
@@ -326,8 +333,8 @@ MM.Item.prototype.fromJSON = function(data) {
 	if (data.color) { this._color = data.color; }
 	if (data.value) { this._value = data.value; }
 	if (data.status) { this._status = data.status; }
+	if (data.collapsed) { this.collapse(); }
 	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
-	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 
 	(data.children || []).forEach(function(child) {
@@ -349,6 +356,7 @@ MM.Item.prototype.toJSON = function() {
 	if (this._status) { data.status = this._status; }
 	if (this._layout) { data.layout = this._layout.id; }
 	if (!this._autoShape) { data.shape = this._shape.id; }
+	if (this._collapsed) { data.collapsed = 1; }
 	if (this._children.length) {
 		data.children = this._children.map(function(child) { return child.toJSON(); });
 	}
@@ -385,6 +393,9 @@ MM.Item.prototype.update = function(doNotRecurse) {
 	
 	this._updateStatus();
 	this._updateValue();
+
+	this._dom.node.classList[this._collapsed ? "add" : "remove"]("collapsed");
+
 	this.getLayout().update(this);
 	this.getShape().update(this);
 	if (!this.isRoot() && !doNotRecurse) { this._parent.update(); }
@@ -407,6 +418,23 @@ MM.Item.prototype.setText = function(text) {
 
 MM.Item.prototype.getText = function() {
 	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
+}
+
+MM.Item.prototype.collapse = function() {
+	if (this._collapsed) { return; }
+	this._collapsed = true;
+	return this.update();
+}
+
+MM.Item.prototype.expand = function() {
+	if (!this._collapsed) { return; }
+	this._collapsed = false;
+	this.update();
+	return this.updateSubtree();
+}
+
+MM.Item.prototype.isCollapsed = function() {
+	return this._collapsed;
 }
 
 MM.Item.prototype.setValue = function(value) {
@@ -534,6 +562,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	}
 
 	if (!this._children.length) {
+		this._dom.node.appendChild(this._dom.toggle);
 		this._dom.node.appendChild(this._dom.children);
 	}
 
@@ -556,6 +585,7 @@ MM.Item.prototype.removeChild = function(child) {
 	child.setParent(null);
 	
 	if (!this._children.length) {
+		this._dom.toggle.parentNode.removeChild(this._dom.toggle);
 		this._dom.children.parentNode.removeChild(this._dom.children);
 	}
 	
@@ -593,6 +623,11 @@ MM.Item.prototype.handleEvent = function(e) {
 
 		case "keydown":
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
+		break;
+
+		case "click":
+			if (this._collapsed) { this.expand(); } else { this.collapse(); }
+			MM.App.select(this);
 		break;
 	}
 }
@@ -810,7 +845,7 @@ MM.Map.prototype.getClosestItem = function(x, y) {
 			dx: dx,
 			dy: dy
 		});
-		item.getChildren().forEach(scan);
+		if (!item.isCollapsed()) { item.getChildren().forEach(scan); }
 	}
 	
 	scan(this._root);
@@ -901,9 +936,11 @@ MM.Map.prototype.pick = function(item, direction) {
 }
 
 MM.Map.prototype._getPickCandidates = function(currentRect, item, direction, candidates) {
-	item.getChildren().forEach(function(child) {
-		this._getPickCandidates(currentRect, child, direction, candidates);
-	}, this);
+	if (!item.isCollapsed()) {
+		item.getChildren().forEach(function(child) {
+			this._getPickCandidates(currentRect, child, direction, candidates);
+		}, this);
+	}
 
 	var node = item.getDOM().content;
 	var rect = node.getBoundingClientRect();
@@ -1022,6 +1059,7 @@ MM.Action.InsertNewItem = function(parent, index) {
 }
 MM.Action.InsertNewItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.InsertNewItem.prototype.perform = function() {
+	this._parent.expand(); /* FIXME remember? */
 	this._item = this._parent.insertChild(this._item, this._index);
 	MM.App.select(this._item);
 }
@@ -1526,6 +1564,16 @@ MM.Command.Paste = Object.create(MM.Command, {
 MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);
 }
+
+MM.Command.Fold = Object.create(MM.Command, {
+	label: {value: "Fold/Unfold"},
+	keys: {value: [{charCode: "f".charCodeAt(0), ctrlKey:false}]}
+});
+MM.Command.Fold.execute = function() {
+	var item = MM.App.current;
+	if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
+	MM.App.map.ensureItemVisibility(item);
+}
 MM.Command.Edit = Object.create(MM.Command, {
 	label: {value: "Edit item"},
 	keys: {value: [
@@ -1751,10 +1799,12 @@ MM.Layout.pick = function(item, dir) {
 	}
 	
 	/* direction for a child */
-	var children = item.getChildren();
-	for (var i=0;i<children.length;i++) {
-		var child = children[i];
-		if (this.getChildDirection(child) == dir) { return child; }
+	if (!item.isCollapsed()) {
+		var children = item.getChildren();
+		for (var i=0;i<children.length;i++) {
+			var child = children[i];
+			if (this.getChildDirection(child) == dir) { return child; }
+		}
 	}
 
 	if (item.isRoot()) { return item; }
@@ -1787,6 +1837,37 @@ MM.Layout._anchorCanvas = function(item) {
 	var dom = item.getDOM();
 	dom.canvas.width = dom.node.offsetWidth;
 	dom.canvas.height = dom.node.offsetHeight;
+}
+
+MM.Layout._anchorToggle = function(item, x, y, side) {
+	var node = item.getDOM().toggle;
+	var w = node.offsetWidth;
+	var h = node.offsetHeight;
+	var l = x;
+	var t = y;
+
+	switch (side) {
+		case "left":
+			t -= h/2;
+			l -= w;
+		break;
+
+		case "right":
+			t -= h/2;
+		break;
+		
+		case "top":
+			l -= w/2;
+			t -= h;
+		break;
+
+		case "bottom":
+			l -= w/2;
+		break;
+	}
+	
+	node.style.left = Math.round(l) + "px";
+	node.style.top = Math.round(t) + "px";
 }
 
 MM.Layout._getChildAnchor = function(item, side) {
@@ -1859,11 +1940,13 @@ MM.Layout.Graph.update = function(item) {
 	this._alignItem(item, side);
 
 	this._layoutItem(item, this.childDirection);
+
 	if (this.childDirection == "left" || this.childDirection == "right") {
 		this._drawLinesHorizontal(item, this.childDirection);
 	} else {
 		this._drawLinesVertical(item, this.childDirection);
 	}
+
 	return this;
 }
 
@@ -1959,10 +2042,12 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	/* first part */
 	var y1 = item.getShape().getVerticalAnchor(item);
 	if (side == "left") {
-		var x1 = dom.content.offsetLeft + 0.5;
+		var x1 = dom.content.offsetLeft - 0.5;
 	} else {
 		var x1 = dom.content.offsetWidth + dom.content.offsetLeft + 0.5;
 	}
+	
+	this._anchorToggle(item, x1, y1, side);
 
 	if (children.length == 1) {
 		var child = children[0];
@@ -2031,15 +2116,18 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 	if (side == "top") {
 		var y1 = canvas.height - dom.content.offsetHeight;
 		var y2 = y1 - height;
+		this._anchorToggle(item, x, y1, side);
 	} else {
 		var y1 = item.getShape().getVerticalAnchor(item);
 		var y2 = dom.content.offsetHeight + height;
+		this._anchorToggle(item, x, dom.content.offsetHeight, side);
 	}
 
 	ctx.beginPath();
 	ctx.moveTo(x, y1);
 	ctx.lineTo(x, y2);
 	ctx.stroke();
+
 
 	if (children.length == 1) { return; }
 
@@ -2158,18 +2246,20 @@ MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox)
 }
 
 MM.Layout.Tree._drawLines = function(item, side) {
-	var children = item.getChildren();
-	if (children.length == 0) { return; }
-
 	var dom = item.getDOM();
 	var canvas = dom.canvas;
-	var ctx = canvas.getContext("2d");
-	ctx.strokeStyle = item.getColor();
 
 	var R = this.SPACING_RANK/4;
 	var x = (side == "left" ? canvas.width - 2*R : 2*R) + 0.5;
-	var y1 = item.getShape().getVerticalAnchor(item);
+	this._anchorToggle(item, x, dom.content.offsetHeight, "bottom");
 
+	var children = item.getChildren();
+	if (children.length == 0 || item.isCollapsed()) { return; }
+
+	var ctx = canvas.getContext("2d");
+	ctx.strokeStyle = item.getColor();
+
+	var y1 = item.getShape().getVerticalAnchor(item);
 	var last = children[children.length-1];
 	var y2 = last.getShape().getVerticalAnchor(last) + last.getDOM().node.offsetTop;
 
@@ -2299,7 +2389,7 @@ MM.Layout.Map._layoutRoot = function(item) {
 }
 
 MM.Layout.Map._drawRootConnectors = function(item, side, children) {
-	if (children.length == 0) { return; }
+	if (children.length == 0 || item.isCollapsed()) { return; }
 
 	var dom = item.getDOM();
 	var canvas = dom.canvas;
@@ -2477,6 +2567,7 @@ MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 
 	if (json.side) { elm.setAttribute("POSITION", json.side); }
 	if (json.shape == "box") { elm.setAttribute("STYLE", "bubble"); }
+	if (json.collapsed) { elm.setAttribute("FOLDED", "true"); }
 
 	return elm;
 }
@@ -2510,6 +2601,8 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 	} else {
 		json.shape = parent.shape;
 	}
+
+	if (node.getAttribute("FOLDED") == "true") { json.collapsed = 1; }
 
 	var children = node.children;
 	for (var i=0;i<children.length;i++) {
@@ -2546,6 +2639,8 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 		shape: "box"
 	};
 
+	if (node.getAttribute("expand") == "false") { json.collapsed = 1; }
+
 	var direction = node.getAttribute("direction");
 	if (direction == "0") { json.side = "left"; }
 	if (direction == "1") { json.side = "right"; }
@@ -2571,6 +2666,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 MM.Format.MMA._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
 	elm.setAttribute("title", json.text);
+	elm.setAttribute("expand", json.collapsed ? "false" : "true");
 
 	if (json.side) { elm.setAttribute("direction", json.side == "left" ? "0" : "1"); }
 	if (json.color) {
@@ -2618,6 +2714,10 @@ MM.Format.Mup._MupToMM = function(item) {
 		json.color = item.attr.style.background;
 	}
 
+	if (item.attr && item.attr.collapsed) {
+		json.collapsed = 1;
+	}
+
 	if (item.ideas) {
 		var data = [];
 		for (var key in item.ideas) {
@@ -2643,10 +2743,14 @@ MM.Format.Mup._MupToMM = function(item) {
 MM.Format.Mup._MMtoMup = function(item, side) {
 	var result = {
 		id: item.id,
-		title: item.text
+		title: item.text,
+		attr: {}
 	}
 	if (item.color) {
-		result.attr = {style:{background:item.color}};
+		result.attr.style = {background:item.color};
+	}
+	if (item.collapsed) {
+		result.attr.collapsed = true;
 	}
 
 	if (item.children) {
@@ -3332,6 +3436,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "SelectParent");
 	this._buildRow(t, "Center");
 	this._buildRow(t, "ZoomIn", "ZoomOut");
+	this._buildRow(t, "Fold");
 
 	var t = this._node.querySelector(".manipulation");
 	this._buildRow(t, "InsertSibling");

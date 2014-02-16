@@ -83,7 +83,7 @@ MM.Map.prototype.getClosestItem = function(x, y) {
 			dx: dx,
 			dy: dy
 		});
-		item.getChildren().forEach(scan);
+		if (!item.isCollapsed()) { item.getChildren().forEach(scan); }
 	}
 	
 	scan(this._root);
@@ -174,9 +174,11 @@ MM.Map.prototype.pick = function(item, direction) {
 }
 
 MM.Map.prototype._getPickCandidates = function(currentRect, item, direction, candidates) {
-	item.getChildren().forEach(function(child) {
-		this._getPickCandidates(currentRect, child, direction, candidates);
-	}, this);
+	if (!item.isCollapsed()) {
+		item.getChildren().forEach(function(child) {
+			this._getPickCandidates(currentRect, child, direction, candidates);
+		}, this);
+	}
 
 	var node = item.getDOM().content;
 	var rect = node.getBoundingClientRect();

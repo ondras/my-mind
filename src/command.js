@@ -265,3 +265,13 @@ MM.Command.Paste = Object.create(MM.Command, {
 MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);
 }
+
+MM.Command.Fold = Object.create(MM.Command, {
+	label: {value: "Fold/Unfold"},
+	keys: {value: [{charCode: "f".charCodeAt(0), ctrlKey:false}]}
+});
+MM.Command.Fold.execute = function() {
+	var item = MM.App.current;
+	if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
+	MM.App.map.ensureItemVisibility(item);
+}

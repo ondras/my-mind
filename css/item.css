@@ -6,6 +6,10 @@
 	opacity: 0.5;
 }
 
+.item.collapsed .children {
+	display: none;
+}
+
 .content {
 	position: relative;
 	display: inline-block;
@@ -66,4 +70,37 @@ canvas {
 	position: absolute;
 	left: 0;
 	top: 0;
+}
+
+.toggle {
+	position: absolute;
+	width: 12px;
+	height: 12px;
+	line-height: 12px;
+	cursor: pointer;
+	border-radius: 50%;
+	border: 1px solid #00f;
+	background-color: #88f;
+	text-align: center;
+	font-weight: bold;
+	font-family: sans-serif;
+	color: #fff;
+	opacity: 0.7;
+}
+
+.toggle:hover {
+	opacity: 1;
+}
+
+.toggle:before {
+	content: "−";
+}
+
+.collapsed > .toggle:before {
+	content: "+";
+}
+
+:not(.current):not(.collapsed) > .toggle {
+	/* NOT display:none - we need to have non-zero dimensions for layouting */
+	visibility: hidden;
 }

@@ -105,7 +105,7 @@ MM.Layout.Map._layoutRoot = function(item) {
 }
 
 MM.Layout.Map._drawRootConnectors = function(item, side, children) {
-	if (children.length == 0) { return; }
+	if (children.length == 0 || item.isCollapsed()) { return; }
 
 	var dom = item.getDOM();
 	var canvas = dom.canvas;

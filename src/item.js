@@ -1,6 +1,7 @@
 MM.Item = function() {
 	this._parent = null;
 	this._children = [];
+	this._collapsed = false;
 
 	this._layout = null;
 	this._shape = null;
@@ -24,6 +25,7 @@ MM.Item = function() {
 		value: document.createElement("span"),
 		text: document.createElement("div"),
 		children: document.createElement("ul"),
+		toggle: document.createElement("div"),
 		canvas: document.createElement("canvas")
 	}
 	this._dom.node.classList.add("item");
@@ -31,10 +33,15 @@ MM.Item = function() {
 	this._dom.status.classList.add("status");
 	this._dom.value.classList.add("value");
 	this._dom.text.classList.add("text");
+	this._dom.toggle.classList.add("toggle");
 	this._dom.children.classList.add("children");
+
 	this._dom.content.appendChild(this._dom.text); /* status+value are appended in layout */
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
+	/* toggle+children are appended when children exist */
+
+	this._dom.toggle.addEventListener("click", this);
 }
 
 MM.Item.COLOR = "#999";
@@ -64,8 +71,8 @@ MM.Item.prototype.fromJSON = function(data) {
 	if (data.color) { this._color = data.color; }
 	if (data.value) { this._value = data.value; }
 	if (data.status) { this._status = data.status; }
+	if (data.collapsed) { this.collapse(); }
 	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
-	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 
 	(data.children || []).forEach(function(child) {
@@ -87,6 +94,7 @@ MM.Item.prototype.toJSON = function() {
 	if (this._status) { data.status = this._status; }
 	if (this._layout) { data.layout = this._layout.id; }
 	if (!this._autoShape) { data.shape = this._shape.id; }
+	if (this._collapsed) { data.collapsed = 1; }
 	if (this._children.length) {
 		data.children = this._children.map(function(child) { return child.toJSON(); });
 	}
@@ -123,6 +131,9 @@ MM.Item.prototype.update = function(doNotRecurse) {
 	
 	this._updateStatus();
 	this._updateValue();
+
+	this._dom.node.classList[this._collapsed ? "add" : "remove"]("collapsed");
+
 	this.getLayout().update(this);
 	this.getShape().update(this);
 	if (!this.isRoot() && !doNotRecurse) { this._parent.update(); }
@@ -145,6 +156,23 @@ MM.Item.prototype.setText = function(text) {
 
 MM.Item.prototype.getText = function() {
 	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
+}
+
+MM.Item.prototype.collapse = function() {
+	if (this._collapsed) { return; }
+	this._collapsed = true;
+	return this.update();
+}
+
+MM.Item.prototype.expand = function() {
+	if (!this._collapsed) { return; }
+	this._collapsed = false;
+	this.update();
+	return this.updateSubtree();
+}
+
+MM.Item.prototype.isCollapsed = function() {
+	return this._collapsed;
 }
 
 MM.Item.prototype.setValue = function(value) {
@@ -272,6 +300,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	}
 
 	if (!this._children.length) {
+		this._dom.node.appendChild(this._dom.toggle);
 		this._dom.node.appendChild(this._dom.children);
 	}
 
@@ -294,6 +323,7 @@ MM.Item.prototype.removeChild = function(child) {
 	child.setParent(null);
 	
 	if (!this._children.length) {
+		this._dom.toggle.parentNode.removeChild(this._dom.toggle);
 		this._dom.children.parentNode.removeChild(this._dom.children);
 	}
 	
@@ -331,6 +361,11 @@ MM.Item.prototype.handleEvent = function(e) {
 
 		case "keydown":
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
+		break;
+
+		case "click":
+			if (this._collapsed) { this.expand(); } else { this.collapse(); }
+			MM.App.select(this);
 		break;
 	}
 }
