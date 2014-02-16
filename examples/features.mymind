@@ -37,6 +37,21 @@
           {
             "id": "bhszysqp",
             "text": "Full keyboard control"
+          },
+          {
+            "id": "zcrefcfz",
+            "text": "Folding\n",
+            "collapsed": 1,
+            "children": [
+              {
+                "id": "znuvtncs",
+                "text": "Collapsing"
+              },
+              {
+                "id": "dbbxxzzs",
+                "text": "Expanding"
+              }
+            ]
           }
         ]
       },
