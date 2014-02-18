@@ -62,7 +62,7 @@ MM.UI.Backend.GDrive.getState = function() {
 
 MM.UI.Backend.GDrive._loadDone = function(data) {
 	try {
-		var format = MM.Format.getByName(this._backend.name);
+		var format = MM.Format.getByName(this._backend.name) || MM.Format.JSON;
 		var json = format.from(data);
 	} catch (e) { 
 		this._error(e);
