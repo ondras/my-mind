@@ -1,8 +1,7 @@
 MM.Format.Mup = Object.create(MM.Format, {
 	id: {value: "mup"},
 	label: {value: "MindMup"},
-	extension: {value: "mup"},
-	mime: {value: "application/json"}
+	extension: {value: "mup"}
 });
 
 MM.Format.Mup.to = function(data) {

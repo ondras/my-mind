@@ -2426,18 +2426,18 @@ MM.Shape.Ellipse = Object.create(MM.Shape, {
 });
 MM.Format = Object.create(MM.Repo, {
 	extension: {value:""},
-	mime: {value:"text/plain"}
+	mime: {value:""}
 });
 
 MM.Format.getByName = function(name) {
 	var index = name.lastIndexOf(".");
-	var result = MM.Format.JSON;
-	if (index > -1) { 
-		var extension = name.substring(index+1).toLowerCase(); 
-		var format = this.getByProperty("extension", extension);
-		if (format) { result = format; }
-	}
-	return result;
+	if (index == -1) { return null; }
+	var extension = name.substring(index+1).toLowerCase(); 
+	return this.getByProperty("extension", extension);
+}
+
+MM.Format.getByMime = function(mime) {
+	return this.getByProperty("mime", mime);
 }
 
 MM.Format.to = function(data) {}
@@ -2446,7 +2446,7 @@ MM.Format.JSON = Object.create(MM.Format, {
 	id: {value: "json"},
 	label: {value: "Native (JSON)"},
 	extension: {value: "mymind"},
-	mime: {value: "application/json"}
+	mime: {value: "application/vnd.mymind+json"}
 });
 
 MM.Format.JSON.to = function(data) { 
@@ -2460,7 +2460,7 @@ MM.Format.FreeMind = Object.create(MM.Format, {
 	id: {value: "freemind"},
 	label: {value: "FreeMind"},
 	extension: {value: "mm"},
-	mime: {value: "application/xml"}
+	mime: {value: "application/x-freemind"}
 });
 
 MM.Format.FreeMind.to = function(data) { 
@@ -2570,8 +2570,7 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 MM.Format.MMA = Object.create(MM.Format.FreeMind, {
 	id: {value: "mma"},
 	label: {value: "Mind Map Architect"},
-	extension: {value: "mma"},
-	mime: {value: "application/xml"}
+	extension: {value: "mma"}
 });
 
 MM.Format.MMA._parseAttributes = function(node, parent) {
@@ -2624,8 +2623,7 @@ MM.Format.MMA._serializeAttributes = function(doc, json) {
 MM.Format.Mup = Object.create(MM.Format, {
 	id: {value: "mup"},
 	label: {value: "MindMup"},
-	extension: {value: "mup"},
-	mime: {value: "application/json"}
+	extension: {value: "mup"}
 });
 
 MM.Format.Mup.to = function(data) {
@@ -3066,7 +3064,7 @@ MM.Backend.GDrive._pick = function() {
 	var token = gapi.auth.getToken();
 
 	var view = new google.picker.DocsView(google.picker.ViewId.DOCS)
-//		.setMimeTypes("application/json")
+//		.setMimeTypes("application/json") FIXME
 		.setMode(google.picker.DocsViewMode.LIST);
 
 	var picker = new google.picker.PickerBuilder()
@@ -3728,7 +3726,7 @@ MM.UI.Backend.File.load = function() {
 
 MM.UI.Backend.File._loadDone = function(data) {
 	try {
-		var format = MM.Format.getByName(this._backend.name);
+		var format = MM.Format.getByName(this._backend.name) || MM.Format.JSON;
 		var json = format.from(data);
 	} catch (e) { 
 		this._error(e);
@@ -4118,7 +4116,7 @@ MM.UI.Backend.GDrive.getState = function() {
 
 MM.UI.Backend.GDrive._loadDone = function(data) {
 	try {
-		var format = MM.Format.getByName(this._backend.name);
+		var format = MM.Format.getByName(this._backend.name) || MM.Format.JSON;
 		var json = format.from(data);
 	} catch (e) { 
 		this._error(e);

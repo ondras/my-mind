@@ -129,7 +129,7 @@ MM.Backend.GDrive._pick = function() {
 	var token = gapi.auth.getToken();
 
 	var view = new google.picker.DocsView(google.picker.ViewId.DOCS)
-//		.setMimeTypes("application/json")
+//		.setMimeTypes("application/json") FIXME
 		.setMode(google.picker.DocsViewMode.LIST);
 
 	var picker = new google.picker.PickerBuilder()

@@ -1,8 +1,7 @@
 MM.Format.MMA = Object.create(MM.Format.FreeMind, {
 	id: {value: "mma"},
 	label: {value: "Mind Map Architect"},
-	extension: {value: "mma"},
-	mime: {value: "application/xml"}
+	extension: {value: "mma"}
 });
 
 MM.Format.MMA._parseAttributes = function(node, parent) {
