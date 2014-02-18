@@ -19,9 +19,16 @@ MM.UI.Backend.GDrive.save = function() {
 	var format = MM.Format.getById(this._format.value);
 	var json = MM.App.map.toJSON();
 	var data = format.to(json);
-	var name = MM.App.map.getName() + "." + format.extension;
+	var name = MM.App.map.getName();
+	var mime = "text/plain";
 	
-	this._backend.save(data, name, format.mime).then(
+	if (format.mime) {
+		mime = format.mime;
+	} else {
+		name += "." + format.extension;
+	}
+	
+	this._backend.save(data, name, mime).then(
 		this._saveDone.bind(this),
 		this._error.bind(this)
 	);

@@ -3128,9 +3128,14 @@ MM.Backend.GDrive._pick = function() {
 	var promise = new Promise();
 
 	var token = gapi.auth.getToken();
+	var formats = MM.Format.getAll();
+	var mimeTypes = ["application/json; charset=UTF-8", "application/json"];
+	formats.forEach(function(format) {
+		if (format.mime) { mimeTypes.unshift(format.mime); }
+	});
 
 	var view = new google.picker.DocsView(google.picker.ViewId.DOCS)
-//		.setMimeTypes("application/json") FIXME
+		.setMimeTypes(mimeTypes.join(","))
 		.setMode(google.picker.DocsViewMode.LIST);
 
 	var picker = new google.picker.PickerBuilder()

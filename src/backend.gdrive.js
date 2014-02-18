@@ -13,7 +13,6 @@ MM.Backend.GDrive.reset = function() {
 }
 
 MM.Backend.GDrive.save = function(data, name, mime) {
-	console.log(data, name, mime);
 	return this._connect().then(
 		function() {
 			return this._send(data, name, mime);
@@ -22,6 +21,38 @@ MM.Backend.GDrive.save = function(data, name, mime) {
 }
 
 MM.Backend.GDrive._send = function(data, name, mime) {
+/*
+	var	googleId = toGoogleFileId(mapId),
+deferred = jQuery.Deferred(),
+boundary = '-------314159265358979323846',
+delimiter = '\r\n--' + boundary + '\r\n',
+closeDelim = '\r\n--' + boundary + '--',
+contentType = paramContentType || defaultContentType,
+metadata = {
+'title': fileName,
+'mimeType': contentType
+},
+multipartRequestBody =
+delimiter +
+'Content-Type: application/json\r\n\r\n' +
+JSON.stringify(metadata) +
+delimiter +
+'Content-Type: ' + contentType + '\r\n' +
+'\r\n' +
+contentToSave +
+closeDelim,
+request = gapi.client.request({
+'path': '/upload/drive/v2/files' + (googleId ? '/' + googleId : ''),
+'method': (googleId ? 'PUT' : 'POST'),
+'params': {'uploadType': 'multipart', 'useContentAsIndexableText': (contentToSave.length < 131072)}, 
+'headers': {
+'Content-Type': 'multipart/mixed; boundary=\'' + boundary + '\''
+},
+'body': multipartRequestBody
+});
+
+*/
+
 	var promise = new Promise();
 	var path = "/upload/drive/v2/files";
 	var method = "POST";
@@ -127,9 +158,14 @@ MM.Backend.GDrive._pick = function() {
 	var promise = new Promise();
 
 	var token = gapi.auth.getToken();
+	var formats = MM.Format.getAll();
+	var mimeTypes = ["application/json; charset=UTF-8", "application/json"];
+	formats.forEach(function(format) {
+		if (format.mime) { mimeTypes.unshift(format.mime); }
+	});
 
 	var view = new google.picker.DocsView(google.picker.ViewId.DOCS)
-//		.setMimeTypes("application/json") FIXME
+		.setMimeTypes(mimeTypes.join(","))
 		.setMode(google.picker.DocsViewMode.LIST);
 
 	var picker = new google.picker.PickerBuilder()
