@@ -44,7 +44,7 @@ closeDelim,
 request = gapi.client.request({
 'path': '/upload/drive/v2/files' + (googleId ? '/' + googleId : ''),
 'method': (googleId ? 'PUT' : 'POST'),
-'params': {'uploadType': 'multipart', 'useContentAsIndexableText': (contentToSave.length < 131072)}, 
+'params': {'uploadType': 'multipart',
 'headers': {
 'Content-Type': 'multipart/mixed; boundary=\'' + boundary + '\''
 },
