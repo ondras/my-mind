@@ -1,7 +1,6 @@
 MM.Backend.File = Object.create(MM.Backend, {
 	id: {value: "file"},
 	label: {value: "File"},
-	name: {value:"", writable:true},
 	input: {value:document.createElement("input")}
 });
 
@@ -26,10 +25,8 @@ MM.Backend.File.load = function() {
 		var file = e.target.files[0];
 		if (!file) { return; }
 
-		this.name = file.name;
-
 		var reader = new FileReader();
-		reader.onload = function() { promise.fulfill(reader.result); }
+		reader.onload = function() { promise.fulfill({data:reader.result, name:file.name}); }
 		reader.onerror = function() { promise.reject(reader.error); }
 		reader.readAsText(file);
 	}.bind(this);

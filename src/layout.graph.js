@@ -133,6 +133,7 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	}
 	
 	this._anchorToggle(item, x1, y1, side);
+	if (item.isCollapsed()) { return; }
 
 	if (children.length == 1) {
 		var child = children[0];
