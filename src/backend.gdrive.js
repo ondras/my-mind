@@ -4,8 +4,7 @@ MM.Backend.GDrive = Object.create(MM.Backend, {
 	scope: {value: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.install"},
 	clientId: {value: "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com"},
 	apiKey: {value: "AIzaSyCzu1qVxlgufneOYpBgDJXN6Z9SNVcHYWM"},
-	fileId: {value: null, writable: true},
-	name: {value: "", writable: true}
+	fileId: {value: null, writable: true}
 });
 
 MM.Backend.GDrive.reset = function() {
@@ -21,39 +20,8 @@ MM.Backend.GDrive.save = function(data, name, mime) {
 }
 
 MM.Backend.GDrive._send = function(data, name, mime) {
-/*
-	var	googleId = toGoogleFileId(mapId),
-deferred = jQuery.Deferred(),
-boundary = '-------314159265358979323846',
-delimiter = '\r\n--' + boundary + '\r\n',
-closeDelim = '\r\n--' + boundary + '--',
-contentType = paramContentType || defaultContentType,
-metadata = {
-'title': fileName,
-'mimeType': contentType
-},
-multipartRequestBody =
-delimiter +
-'Content-Type: application/json\r\n\r\n' +
-JSON.stringify(metadata) +
-delimiter +
-'Content-Type: ' + contentType + '\r\n' +
-'\r\n' +
-contentToSave +
-closeDelim,
-request = gapi.client.request({
-'path': '/upload/drive/v2/files' + (googleId ? '/' + googleId : ''),
-'method': (googleId ? 'PUT' : 'POST'),
-'params': {'uploadType': 'multipart',
-'headers': {
-'Content-Type': 'multipart/mixed; boundary=\'' + boundary + '\''
-},
-'body': multipartRequestBody
-});
-
-*/
-
 	var promise = new Promise();
+
 	var path = "/upload/drive/v2/files";
 	var method = "POST";
 	if (this.fileId) {
@@ -61,13 +29,25 @@ request = gapi.client.request({
 		method = "PUT";
 	}
 
+	var boundary = "b" + Math.random();
+	var delimiter = "--" + boundary;
+	var body = [
+		delimiter,
+		"Content-Type: application/json", "",
+		JSON.stringify({title:name}),
+		delimiter,
+		"Content-Type: " + mime, "",
+		data,
+		delimiter + "--"
+	].join("\r\n");
+
 	var request = gapi.client.request({
 		path: path,
 		method: method,
 		headers: {
-			"Content-Type": mime
+			"Content-Type": "multipart/mixed; boundary='" + boundary + "'"
 		},
-		body: data
+		body: body
 	});
 
 	request.execute(function(response) {
@@ -77,39 +57,9 @@ request = gapi.client.request({
 			promise.reject(response.error);
 		} else {
 			this.fileId = response.id;
-			this._sendMetadata(name).then(
-				promise.fulfill.bind(promise),
-				promise.reject.bind(promise)
-			);
+			promise.fulfill();
 		}
 	}.bind(this));
-	
-	return promise;
-}
-
-MM.Backend.GDrive._sendMetadata = function(name) {
-	var promise = new Promise();
-
-	var data = {
-		title: name
-	}
-
-	var request = gapi.client.request({
-		path: "/drive/v2/files/" + this.fileId,
-		method: "PUT",
-		headers: {
-			"Content-Type": "application/json"
-		},
-		body: JSON.stringify(data)
-	});
-
-	request.execute(function(response) {
-		if (response) {
-			promise.fulfill();
-		} else {
-			promise.reject(new Error("Failed to upload to Google Drive"));
-		}
-	});
 	
 	return promise;
 }
@@ -132,12 +82,11 @@ MM.Backend.GDrive._load = function(id) {
 
 	request.execute(function(response) {
 		if (response && response.downloadUrl) {
-			this.name = response.title;
 			var xhr = new XMLHttpRequest();
 			xhr.open("get", response.downloadUrl, true);
 			xhr.setRequestHeader("Authorization", "Bearer " + gapi.auth.getToken().access_token);
 			Promise.send(xhr).then(
-				function(xhr) { promise.fulfill(xhr.responseText); },
+				function(xhr) { promise.fulfill({data:xhr.responseText, name:response.title, mime:response.mimeType}); },
 				function(xhr) { promise.reject(xhr.responseText); }
 			);
 		} else {

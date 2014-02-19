@@ -70,6 +70,22 @@ Promise.prototype.reject = function(value) {
 	return this;
 }
 
+/**
+ * Pass this promise's resolved value to another promise
+ * @param {Promise} promise
+ */
+Promise.prototype.chain = function(promise) {
+	return this.then(promise.fulfill.bind(promise), promise.reject.bind(promise));
+}
+
+/**
+ * @param {function} onRejected To be called once this promise gets rejected
+ * @returns {Promise}
+ */
+Promise.prototype["catch"] = function(onRejected) {
+	return this.then(null, onRejected);
+}
+
 Promise.prototype._processQueue = function() {
 	while (this._thenPromises.length) {
 		var onFulfilled = this._cb.fulfilled.shift();

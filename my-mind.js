@@ -102,6 +102,22 @@ Promise.prototype.reject = function(value) {
 	return this;
 }
 
+/**
+ * Pass this promise's resolved value to another promise
+ * @param {Promise} promise
+ */
+Promise.prototype.chain = function(promise) {
+	return this.then(promise.fulfill.bind(promise), promise.reject.bind(promise));
+}
+
+/**
+ * @param {function} onRejected To be called once this promise gets rejected
+ * @returns {Promise}
+ */
+Promise.prototype["catch"] = function(onRejected) {
+	return this.then(null, onRejected);
+}
+
 Promise.prototype._processQueue = function() {
 	while (this._thenPromises.length) {
 		var onFulfilled = this._cb.fulfilled.shift();
@@ -2048,6 +2064,7 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	}
 	
 	this._anchorToggle(item, x1, y1, side);
+	if (item.isCollapsed()) { return; }
 
 	if (children.length == 1) {
 		var child = children[0];
@@ -2876,7 +2893,6 @@ MM.Backend.Image.save = function(data, name) {
 MM.Backend.File = Object.create(MM.Backend, {
 	id: {value: "file"},
 	label: {value: "File"},
-	name: {value:"", writable:true},
 	input: {value:document.createElement("input")}
 });
 
@@ -2901,10 +2917,8 @@ MM.Backend.File.load = function() {
 		var file = e.target.files[0];
 		if (!file) { return; }
 
-		this.name = file.name;
-
 		var reader = new FileReader();
-		reader.onload = function() { promise.fulfill(reader.result); }
+		reader.onload = function() { promise.fulfill({data:reader.result, name:file.name}); }
 		reader.onerror = function() { promise.reject(reader.error); }
 		reader.readAsText(file);
 	}.bind(this);
@@ -3005,8 +3019,7 @@ MM.Backend.GDrive = Object.create(MM.Backend, {
 	scope: {value: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.install"},
 	clientId: {value: "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com"},
 	apiKey: {value: "AIzaSyCzu1qVxlgufneOYpBgDJXN6Z9SNVcHYWM"},
-	fileId: {value: null, writable: true},
-	name: {value: "", writable: true}
+	fileId: {value: null, writable: true}
 });
 
 MM.Backend.GDrive.reset = function() {
@@ -3014,7 +3027,6 @@ MM.Backend.GDrive.reset = function() {
 }
 
 MM.Backend.GDrive.save = function(data, name, mime) {
-	console.log(data, name, mime);
 	return this._connect().then(
 		function() {
 			return this._send(data, name, mime);
@@ -3024,6 +3036,7 @@ MM.Backend.GDrive.save = function(data, name, mime) {
 
 MM.Backend.GDrive._send = function(data, name, mime) {
 	var promise = new Promise();
+
 	var path = "/upload/drive/v2/files";
 	var method = "POST";
 	if (this.fileId) {
@@ -3031,13 +3044,25 @@ MM.Backend.GDrive._send = function(data, name, mime) {
 		method = "PUT";
 	}
 
+	var boundary = "b" + Math.random();
+	var delimiter = "--" + boundary;
+	var body = [
+		delimiter,
+		"Content-Type: application/json", "",
+		JSON.stringify({title:name}),
+		delimiter,
+		"Content-Type: " + mime, "",
+		data,
+		delimiter + "--"
+	].join("\r\n");
+
 	var request = gapi.client.request({
 		path: path,
 		method: method,
 		headers: {
-			"Content-Type": mime
+			"Content-Type": "multipart/mixed; boundary='" + boundary + "'"
 		},
-		body: data
+		body: body
 	});
 
 	request.execute(function(response) {
@@ -3047,39 +3072,9 @@ MM.Backend.GDrive._send = function(data, name, mime) {
 			promise.reject(response.error);
 		} else {
 			this.fileId = response.id;
-			this._sendMetadata(name).then(
-				promise.fulfill.bind(promise),
-				promise.reject.bind(promise)
-			);
+			promise.fulfill();
 		}
 	}.bind(this));
-	
-	return promise;
-}
-
-MM.Backend.GDrive._sendMetadata = function(name) {
-	var promise = new Promise();
-
-	var data = {
-		title: name
-	}
-
-	var request = gapi.client.request({
-		path: "/drive/v2/files/" + this.fileId,
-		method: "PUT",
-		headers: {
-			"Content-Type": "application/json"
-		},
-		body: JSON.stringify(data)
-	});
-
-	request.execute(function(response) {
-		if (response) {
-			promise.fulfill();
-		} else {
-			promise.reject(new Error("Failed to upload to Google Drive"));
-		}
-	});
 	
 	return promise;
 }
@@ -3102,12 +3097,11 @@ MM.Backend.GDrive._load = function(id) {
 
 	request.execute(function(response) {
 		if (response && response.downloadUrl) {
-			this.name = response.title;
 			var xhr = new XMLHttpRequest();
 			xhr.open("get", response.downloadUrl, true);
 			xhr.setRequestHeader("Authorization", "Bearer " + gapi.auth.getToken().access_token);
 			Promise.send(xhr).then(
-				function(xhr) { promise.fulfill(xhr.responseText); },
+				function(xhr) { promise.fulfill({data:xhr.responseText, name:response.title, mime:response.mimeType}); },
 				function(xhr) { promise.reject(xhr.responseText); }
 			);
 		} else {
@@ -3798,8 +3792,8 @@ MM.UI.Backend.File.load = function() {
 
 MM.UI.Backend.File._loadDone = function(data) {
 	try {
-		var format = MM.Format.getByName(this._backend.name) || MM.Format.JSON;
-		var json = format.from(data);
+		var format = MM.Format.getByName(data.name) || MM.Format.JSON;
+		var json = format.from(data.data);
 	} catch (e) { 
 		this._error(e);
 	}
@@ -4145,9 +4139,16 @@ MM.UI.Backend.GDrive.save = function() {
 	var format = MM.Format.getById(this._format.value);
 	var json = MM.App.map.toJSON();
 	var data = format.to(json);
-	var name = MM.App.map.getName() + "." + format.extension;
+	var name = MM.App.map.getName();
+	var mime = "text/plain";
 	
-	this._backend.save(data, name, format.mime).then(
+	if (format.mime) {
+		mime = format.mime;
+	} else {
+		name += "." + format.extension;
+	}
+
+	this._backend.save(data, name, mime).then(
 		this._saveDone.bind(this),
 		this._error.bind(this)
 	);
@@ -4188,8 +4189,8 @@ MM.UI.Backend.GDrive.getState = function() {
 
 MM.UI.Backend.GDrive._loadDone = function(data) {
 	try {
-		var format = MM.Format.getByName(this._backend.name) || MM.Format.JSON;
-		var json = format.from(data);
+		var format = MM.Format.getByMime(data.mime) || MM.Format.getByName(data.name) || MM.Format.JSON;
+		var json = format.from(data.data);
 	} catch (e) { 
 		this._error(e);
 	}

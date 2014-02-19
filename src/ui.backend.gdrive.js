@@ -27,7 +27,7 @@ MM.UI.Backend.GDrive.save = function() {
 	} else {
 		name += "." + format.extension;
 	}
-	
+
 	this._backend.save(data, name, mime).then(
 		this._saveDone.bind(this),
 		this._error.bind(this)
@@ -69,8 +69,8 @@ MM.UI.Backend.GDrive.getState = function() {
 
 MM.UI.Backend.GDrive._loadDone = function(data) {
 	try {
-		var format = MM.Format.getByName(this._backend.name) || MM.Format.JSON;
-		var json = format.from(data);
+		var format = MM.Format.getByMime(data.mime) || MM.Format.getByName(data.name) || MM.Format.JSON;
+		var json = format.from(data.data);
 	} catch (e) { 
 		this._error(e);
 	}
