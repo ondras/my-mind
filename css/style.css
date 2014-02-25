@@ -44,6 +44,7 @@ ul {
 
 #tip {
 	position: fixed;
+	z-index: 1;
 	left: 10px;
 	bottom: 5px;
 	transition: all 500ms;
