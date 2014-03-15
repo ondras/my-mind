@@ -1,0 +1,319 @@
+{
+  "root": {
+    "id": "sheygacu",
+    "text": "Goldfish",
+    "color": "#dd3",
+    "layout": "map",
+    "children": [
+      {
+        "id": "kfngatre",
+        "text": "Features",
+        "side": "right",
+        "color": "#33e",
+        "children": [
+          {
+            "id": "hezoljkn",
+            "text": "Intro -&gt; Help -&gt; Start\n"
+          },
+          {
+            "id": "glaohwpl",
+            "text": "Overview (lake)",
+            "children": [
+              {
+                "id": "chqmjvzp",
+                "text": "Fishermen (N)\n",
+                "children": [
+                  {
+                    "id": "nxfgqrwl",
+                    "text": "Give quests"
+                  }
+                ]
+              },
+              {
+                "id": "evzhkrow",
+                "text": "Entrypoints to lower levels (&gt;=N)\n"
+              }
+            ]
+          },
+          {
+            "id": "jrqftayt",
+            "text": "Underwater levels\n",
+            "children": [
+              {
+                "id": "fichfrtx",
+                "text": "Monsters, items"
+              },
+              {
+                "id": "dlhyzqwo",
+                "text": "Varying difficulty"
+              },
+              {
+                "id": "vjcypond",
+                "text": "Zero or one quest item"
+              }
+            ]
+          },
+          {
+            "id": "stldqdyw",
+            "text": "Inventory",
+            "children": [
+              {
+                "id": "dpafyynf",
+                "text": "Quest items"
+              },
+              {
+                "id": "rhxoqrtq",
+                "text": "Scales (4x)\n"
+              },
+              {
+                "id": "jtyyebeu",
+                "text": "Jaws"
+              },
+              {
+                "id": "mrgvgqhg",
+                "text": "Fins (3x)\n",
+                "children": [
+                  {
+                    "id": "phmfetac",
+                    "text": "Dorsal"
+                  },
+                  {
+                    "id": "bpuoocrh",
+                    "text": "Tail"
+                  },
+                  {
+                    "id": "rgqvjydf",
+                    "text": "Pelvic"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "qzhzwyde",
+            "text": "Stats",
+            "children": [
+              {
+                "id": "atllgdzd",
+                "text": "HP"
+              },
+              {
+                "id": "prjjrcka",
+                "text": "Oxygen"
+              },
+              {
+                "id": "pjeotwwp",
+                "text": "Fin speed"
+              },
+              {
+                "id": "bmraiefn",
+                "text": "Jaw strength"
+              },
+              {
+                "id": "bebiavsj",
+                "text": "Scale durability"
+              },
+              {
+                "id": "vlsibhay",
+                "text": "Sight range\n"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dfdtaxct",
+        "text": "Implementation",
+        "side": "left",
+        "color": "#e33",
+        "children": [
+          {
+            "id": "ypmagbhv",
+            "text": "Intro?",
+            "status": "yes"
+          },
+          {
+            "id": "fuwfnzkd",
+            "text": "Maps",
+            "children": [
+              {
+                "id": "wfckcutl",
+                "text": "Main ROT.Display",
+                "children": [
+                  {
+                    "id": "qfonakwo",
+                    "text": "What size?\n",
+                    "status": "yes",
+                    "children": [
+                      {
+                        "id": "nrwvtxec",
+                        "text": "100x30 or 90x30\n"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "vesipqjs",
+                "text": "Cellular generated",
+                "children": [
+                  {
+                    "id": "vjvogtcv",
+                    "text": "Reachability by floodfill\n",
+                    "status": "yes"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "eywhleww",
+            "text": "Inventory",
+            "children": [
+              {
+                "id": "qgzuxfej",
+                "text": "Separate ROT.Display",
+                "status": "yes"
+              },
+              {
+                "id": "sppiblje",
+                "text": "Located right of the map",
+                "status": "no"
+              }
+            ]
+          },
+          {
+            "id": "jsmeecoj",
+            "text": "Text buffer",
+            "children": [
+              {
+                "id": "kuntzdrj",
+                "text": "Located above the map"
+              },
+              {
+                "id": "vyvogjqt",
+                "text": "Open full buffer into new window",
+                "status": "no"
+              }
+            ]
+          },
+          {
+            "id": "zvbrzznk",
+            "text": "Status",
+            "children": [
+              {
+                "id": "edtsekaz",
+                "text": "Located below the map\n"
+              }
+            ]
+          },
+          {
+            "id": "ntlgriad",
+            "text": "Quest pane\n",
+            "status": "yes"
+          },
+          {
+            "id": "mgrcxfik",
+            "text": "Help pane"
+          },
+          {
+            "id": "sbosdobn",
+            "text": "Hosted via GitHub pages: <a href=\"http://ondras.github.io/goldfish/\">http://ondras.github.io/goldfish/</a>\n"
+          }
+        ]
+      },
+      {
+        "id": "knlxtfao",
+        "text": "Quests",
+        "side": "right",
+        "color": "#3e3",
+        "collapsed": 1,
+        "children": [
+          {
+            "id": "dbperpuo",
+            "text": "World peace"
+          },
+          {
+            "id": "jzuefouc",
+            "text": "AIDS cure"
+          },
+          {
+            "id": "lvwotnsb",
+            "text": "One billion dollars"
+          },
+          {
+            "id": "zokvscsu",
+            "text": "Beautiful wife"
+          },
+          {
+            "id": "rqlbzpoi",
+            "text": "Cadillac Escalade"
+          },
+          {
+            "id": "cexpxhyh",
+            "text": "14 inch manhood"
+          },
+          {
+            "id": "kiihqqxu",
+            "text": "Hiccup cure"
+          },
+          {
+            "id": "gqfxeubd",
+            "text": "Bitcoin"
+          },
+          {
+            "id": "qaqdfgil",
+            "text": "Lifelong vivid.com membership"
+          },
+          {
+            "id": "ozyzgbqm",
+            "text": "Courage"
+          },
+          {
+            "id": "xulpobdt",
+            "text": "...and many more.\n"
+          }
+        ]
+      },
+      {
+        "id": "lkgwxhge",
+        "text": "Gameplay",
+        "side": "left",
+        "color": "#fa3",
+        "children": [
+          {
+            "id": "gtpilfdr",
+            "text": "Pick a fisherman\n",
+            "value": 1
+          },
+          {
+            "id": "usccqxac",
+            "text": "Receive a quest/wish\n",
+            "value": 2
+          },
+          {
+            "id": "jspbuuel",
+            "text": "Dive and seek a quest item",
+            "value": 3
+          },
+          {
+            "id": "iqhzswzx",
+            "text": "Return the item, earn respect\n",
+            "value": 4
+          },
+          {
+            "id": "uziljucd",
+            "text": "Repeat until all fishermen are happy\n",
+            "value": 5
+          },
+          {
+            "id": "lwfkjfgm",
+            "text": "Score based on turn count\n",
+            "status": "yes"
+          }
+        ]
+      }
+    ]
+  },
+  "id": "uymquxvd"
+}
