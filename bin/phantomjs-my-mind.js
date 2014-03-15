@@ -46,7 +46,7 @@ page.open(url, function() {
 
 		/* load the map, if necessary */
 		if (dataSource) {
-			var format = MM.Format.getByName(dataSource);
+			var format = MM.Format.getByName(dataSource) || MM.Format.JSON;
 			var json = format.from(data);
 			var map = MM.Map.fromJSON(json);
 			MM.App.setMap(map);
