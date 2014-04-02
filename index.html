@@ -20,31 +20,31 @@
 
 		<div class="ui">
 			<h3>Map</h3>
-			<p>
+			<div class="ui-row btn-row btn-row-1">
 				<button data-command="New">New</button><button data-command="Load">Load</button>
-			</p>
-			<p>
+			</div>
+			<div class="ui-row btn-row btn-row-2">
 				<button data-command="Save">Save</button><button data-command="SaveAs">Save As</button>
-			</p>
-			<p>
+			</div>
+			<div class="ui-row btn-row btn-row-3">
 				<button data-command="Center">Center</button><button data-command="Help">Help</button>
-			</p>
+			</div>
 
 			<h3>Item</h3>
 
-			<p>
-				<span>Layout</span>
+			<div class="ui-row">
+				<label for="layout">Layout</label>
 				<select id="layout">
 					<option value="">(Inherit)</option>
 				</select>
-			</p>
-			<p>
-				<span>Shape</span>
+			</div>
+			<div class="ui-row">
+				<label for="shape">Shape</label>
 				<select id="shape">
 					<option value="">(Automatic)</option>
 				</select>
-			</p>
-			<p>
+			</div>
+			<div class="ui-row">
 				<span>Value</span>
 				<select id="value">
 					<option value="">(None)</option>
@@ -56,30 +56,30 @@
 						<option value="max">Maximum</option>
 					</optgroup>
 				</select>
-			</p>
-			<p>
-				<span>Status</span>
+			</div>
+			<div class="ui-row">
+				<label for="status">Status</label>
 				<select id="status">
 					<option value="">None</option>
 					<option value="yes">Yes</option>
 					<option value="no">No</option>
 					<option value="maybe">Auto</option>
 				</select>
-			</p>
-			<p>
-				<span>Color</span>
+			</div>
+			<div class="ui-row">
+				<label>Color</label>
 				<span id="color">
-					<a data-color="" title="Inherit" href="#"></a>
-					<a data-color="#000" title="Black" href="#"></a>
-					<a data-color="#e33" title="Red" href="#"></a>
-					<a data-color="#3e3" title="Green" href="#"></a>
-					<a data-color="#33e" title="Blue" href="#"></a>
-					<a data-color="#dd3" title="Yellow" href="#"></a>
-					<a data-color="#3dd" title="Cyan" href="#"></a>
-					<a data-color="#d3d" title="Magenta" href="#"></a>
-					<a data-color="#fa3" title="Orange" href="#"></a>
+					<a data-color="" title="Inherit" href="#!"></a>
+					<a data-color="#000" title="Black" href="#!"></a>
+					<a data-color="#e33" title="Red" href="#!"></a>
+					<a data-color="#3e3" title="Green" href="#!"></a>
+					<a data-color="#33e" title="Blue" href="#!"></a>
+					<a data-color="#dd3" title="Yellow" href="#!"></a>
+					<a data-color="#3dd" title="Cyan" href="#!"></a>
+					<a data-color="#d3d" title="Magenta" href="#!"></a>
+					<a data-color="#fa3" title="Orange" href="#!"></a>
 				</span>
-			</p>
+			</div>
 
 			<a id="github" target="_blank" href="https://github.com/ondras/my-mind" title="GitHub project page"><img src="github.png" alt="GitHub project page" /></a>
 		</div>
@@ -88,19 +88,19 @@
 
 		<div id="io" class="ui">
 			<h3></h3>
-			<p>
-				<span>Storage</span>
+			<div class="ui-row">
+				<label for="backend">Storage</label>
 				<select id="backend"></select>
-			</p>
-			
+			</div>
+
 			<div id="file">
-				<p data-for="save">
-					<span>Format</span>
-					<select class="format"></select>
-				</p>
-				<p data-for="save load">
+				<div class="ui-row" data-for="save">
+					<label for="save-format">Format</label>
+					<select class="format" id="save-format"></select>
+				</div>
+				<div class="ui-row btn-row btn-row-1" data-for="save load">
 					<button class="go"></button><button class="cancel">Cancel</button>
-				</p>
+				</div>
 			</div>
 
 			<div id="image">
@@ -110,43 +110,43 @@
 			</div>
 
 			<div id="local">
-				<p data-for="load">
+				<div data-for="load">
 					<span>Saved maps</span>
 					<select class="list"></select>
-				</p>
-				<p data-for="save load">
+				</div>
+				<div class="btn-row ui-row btn-row-1" data-for="save load">
 					<button class="go"></button><button class="cancel">Cancel</button>
-				</p>
-				<p data-for="load">
+				</div>
+				<div class="ui-row btn-row btn-row-2" data-for="load">
 					<button class="remove">Delete</button>
-				</p>
+				</div>
 			</div>
 
 			<div id="firebase">
-				<p data-for="save load">
-					<span>Server</span>
-					<input type="text" class="server" />
-				</p>
-				<p data-for="save load">
-					<span>Auth</span>
-					<select class="auth">
+				<div class="ui-row" data-for="save load">
+					<label for="server-input">Server</label>
+					<input type="text" class="server" id="server-input" />
+				</div>
+				<div class="ui-row" data-for="save load">
+					<label for="social-auth">Auth</label>
+					<select class="auth" id="social-auth">
 						<option value="">(None)</option>
 						<option value="facebook">Facebook</option>
 						<option value="twitter">Twitter</option>
 						<option value="github">GitHub</option>
 						<option value="persona">Persona</option>
 					</select>
-				</p>
-				<p data-for="load">
-					<span>Saved maps</span>
-					<select class="list"></select>
-				</p>
-				<p data-for="save load">
+				</div>
+				<div class="ui-row" data-for="load">
+					<label for="saved-maps">Saved maps</label>
+					<select class="list" id="saved-maps"></select>
+				</div>
+				<div class="ui-row btn-row btn-row-1" data-for="save load">
 					<button class="go"></button><button class="cancel">Cancel</button>
-				</p>
-				<p data-for="load">
+				</div>
+				<div class="ui-row btn-row btn-row-2" data-for="load">
 					<button class="remove">Delete</button>
-				</p>
+				</div>
 			</div>
 
 			<div id="webdav">
@@ -160,13 +160,13 @@
 			</div>
 
 			<div id="gdrive">
-				<p data-for="save">
-					<span>Format</span>
-					<select class="format"></select>
-				</p>
-				<p data-for="save load">
+				<div class="ui-row" data-for="save">
+					<label id="save-format">Format</label>
+					<select class="format" id="save-format"></select>
+				</div>
+				<div class="ui-row btn-row btn-row-3" data-for="save load">
 					<button class="go"></button><button class="cancel">Cancel</button>
-				</p>
+				</div>
 			</div>
 		</div>
 

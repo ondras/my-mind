@@ -1,3 +1,9 @@
+.ui * {
+	       -moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+}
+
 .ui {
 	position: fixed;
 	right: 0;
@@ -7,6 +13,26 @@
 	width: 200px;
 	box-shadow: 0 0 2px 2px #666;
 	overflow-y: auto;
+}
+
+.btn-row {
+	text-align: center;
+}
+
+.btn-row button{
+	color: #fff;
+}
+
+.btn-row-1 button {
+	background-color: #1abc9c;
+}
+
+.btn-row-2 button {
+	background-color: #3498db;
+}
+
+.btn-row-3 button {
+	background-color: #2ecc71;
 }
 
 .ui:not(.visible) {
@@ -29,9 +55,14 @@
 	font-size: 13px;
 	line-height: 1.4;
 	border-radius: 4px;
-	padding: 10px;
+	padding: 8px;
 	-webkit-font-smoothing: subpixel-antialiased;
 	transition: all 250ms linear;
+}
+
+.ui select {
+	border: 1px solid #ccc;
+	padding: 4px;
 }
 
 .ui button:hover, .ui select:hover, .ui input:hover, .ui :focus, #toggle:hover {
@@ -43,27 +74,13 @@
 	color: #fff;
 }
 
-.ui:not([id]) p:nth-of-type(1) button {
-	background-color: #1abc9c;
-}
-
-.ui:not([id]) p:nth-of-type(2) button {
-	background-color: #3498db;
-}
-
-.ui:not([id]) p:nth-of-type(3) button {
-	background-color: #2ecc71;
-}
-
-
 .ui button, #toggle {
 	cursor: pointer;
-	text-align: center;
 	width: 82px;
 }
 
 .ui select, .ui input, .ui #color {
-	width: 168px;
+	width: 100%;
 }
 
 .ui button:first-child {
@@ -74,8 +91,13 @@
 	font-weight: bold;
 }
 
-.ui p {
-	margin: 8px 16px;
+.ui p, .ui-row {
+	margin: 0;
+	padding: 8px;
+}
+
+.btn-row-2 {
+	padding: 0 8px;
 }
 
 .ui table {
