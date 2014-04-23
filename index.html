@@ -19,18 +19,13 @@
 		<div id="throbber"></div>
 
 		<div class="ui">
-			<h3>Map</h3>
+			<h3>My Mind</h3>
 			<p>
-				<button data-command="New">New</button><button data-command="Load">Load</button>
+				<button data-command="New" title="New"><img src="icons/new.png" alt="New" /></button>
+				<button data-command="Load" title="Open"><img src="icons/open.png" alt="Open" /></button>
+				<button data-command="Save" title="Save"><img src="icons/save.png" alt="Save" /></button>
+				<button data-command="SaveAs" title="Save as"><img src="icons/save-as.png" alt="Save as" /></button>
 			</p>
-			<p>
-				<button data-command="Save">Save</button><button data-command="SaveAs">Save As</button>
-			</p>
-			<p>
-				<button data-command="Center">Center</button><button data-command="Help">Help</button>
-			</p>
-
-			<h3>Item</h3>
 
 			<p>
 				<span>Layout</span>
@@ -82,9 +77,10 @@
 			</p>
 
 			<a id="github" target="_blank" href="https://github.com/ondras/my-mind" title="GitHub project page"><img src="github.png" alt="GitHub project page" /></a>
+			<button id="toggle" title="Toggle UI"></button>
+			<button data-command="Help" title="Help"><img src="icons/help.png" alt="Help" /></button>
 		</div>
 
-		<button id="toggle" title="Toggle UI"></button>
 
 		<div id="io" class="ui">
 			<h3></h3>

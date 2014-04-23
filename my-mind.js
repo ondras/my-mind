@@ -1542,7 +1542,7 @@ MM.Command.Pan._step = function() {
 		offset[1] += dirs[ch][1];
 	});
 
-	MM.App.map.moveBy(10*offset[0], 10*offset[1]);
+	MM.App.map.moveBy(15*offset[0], 15*offset[1]);
 }
 
 MM.Command.Pan.handleEvent = function(e) {
@@ -3202,8 +3202,7 @@ MM.UI = function() {
 	this._node = document.querySelector(".ui");
 	this._node.addEventListener("click", this);
 	
-	this._toggle = document.querySelector("#toggle");
-	this._toggle.addEventListener("click", this);
+	this._toggle = this._node.querySelector("#toggle");
 
 	this._layout = new MM.UI.Layout();
 	this._shape = new MM.UI.Shape();
@@ -3238,10 +3237,15 @@ MM.UI.prototype.handleEvent = function(e) {
 		return;
 	}
 	
-	var command = e.target.getAttribute("data-command");
-	if (!command) { return; }
-
-	MM.Command[command].execute();
+	var node = e.target;
+	while (node != document) {
+		var command = node.getAttribute("data-command");
+		if (command) {
+			MM.Command[command].execute();
+			return;
+		}
+		node = node.parentNode;
+	}
 }
 
 MM.UI.prototype.toggle = function() {
