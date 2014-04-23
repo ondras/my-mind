@@ -1542,7 +1542,7 @@ MM.Command.Pan._step = function() {
 		offset[1] += dirs[ch][1];
 	});
 
-	MM.App.map.moveBy(10*offset[0], 10*offset[1]);
+	MM.App.map.moveBy(15*offset[0], 15*offset[1]);
 }
 
 MM.Command.Pan.handleEvent = function(e) {

@@ -1,3 +1,7 @@
+button:not(:disabled) {
+	cursor: pointer;
+}
+
 .ui {
 	position: fixed;
 	right: 0;
@@ -24,7 +28,7 @@
 	text-align: center;
 }
 
-.ui button, .ui select, .ui input {
+.ui select, .ui input {
 	color: #000;
 	border: none;
 	font-size: 13px;
@@ -35,47 +39,42 @@
 	transition: all 250ms linear;
 }
 
-.ui p button:hover, .ui p select:hover, .ui p input:hover, .ui p :focus {
+.ui select:hover, .ui input:hover {
 	opacity: 0.8;
-}
-
-.ui:not([id]) p button {
-	color: #fff;
-}
-
-.ui:not([id]) p:nth-of-type(1) button {
-	background-color: #1abc9c;
-}
-
-.ui:not([id]) p:nth-of-type(2) button {
-	background-color: #3498db;
-}
-
-.ui:not([id]) p:nth-of-type(3) button {
-	background-color: #2ecc71;
-}
-
-
-.ui button {
-	cursor: pointer;
-	text-align: center;
-	width: 82px;
 }
 
 .ui select, .ui input, .ui #color {
 	width: 168px;
 }
 
-.ui button:first-child {
-	margin-right: 4px;
-}
-
-.ui button.go {
+.ui .go {
 	font-weight: bold;
 }
 
 .ui p {
 	margin: 8px 16px;
+}
+
+.ui:not([id]) button {
+	border: none;
+	padding: 0;
+	margin: 0 4px;
+	background-color: transparent;
+	width: 32px;
+}
+
+.ui button:first-child {
+	margin-left: 0;
+}
+
+.ui button:last-child {
+	margin-right: 0;
+}
+
+.ui button[data-command=Help] {
+	position: absolute;
+	left: -50px;
+	top: 5px;
 }
 
 .ui table {
@@ -134,13 +133,14 @@
 .ui #toggle {
 	z-index: 999;
 	position: absolute;
-	left: -22px;
+	left: -23px;
 	top: 48%;
-	width: 36px;
-	height: 36px;
+	width: 35px;
+	height: 35px;
 	padding: 0 0 0 2px;
 	text-align: left;
 
+	border: none;
 	background-color: #fff;
 	box-shadow: -3px 0 2px 0px #666;
 
