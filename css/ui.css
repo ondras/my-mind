@@ -24,23 +24,24 @@ button:not(:disabled) {
 	color: #fff;
 	padding: 0.2em 0;
 	margin: 0;
-	text-transform: uppercase;
+	text-transform: capitalize;
 	text-align: center;
 }
 
 .ui select, .ui input {
-	color: #000;
-	border: none;
+	background-color: transparent;
+	border: 1px solid rgba(50, 70, 90, 0.5);
 	font-size: 13px;
-	line-height: 1.4;
 	border-radius: 4px;
-	padding: 10px;
+	padding: 4px;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
 	-webkit-font-smoothing: subpixel-antialiased;
 	transition: all 250ms linear;
 }
 
-.ui select:hover, .ui input:hover {
-	opacity: 0.8;
+.ui select:hover, .ui input:hover, .ui select:focus, .ui input:focus {
+	border-color: rgba(50, 70, 90, 1);
 }
 
 .ui select, .ui input, .ui #color {
@@ -64,11 +65,11 @@ button:not(:disabled) {
 }
 
 .ui button:first-child {
-	margin-left: 0;
+	margin-left: 0 !important;
 }
 
 .ui button:last-child {
-	margin-right: 0;
+	margin-right: 0 !important;
 }
 
 .ui button[data-command=Help] {
@@ -173,4 +174,16 @@ button:not(:disabled) {
 
 .ui#help table {
 	font-size: 80%;
+}
+
+.ui#io button {
+	width: 45%;
+}
+
+.ui#io button:nth-child(odd) {
+	float: left;
+}
+
+.ui#io button:nth-child(even) {
+	float: right;
 }

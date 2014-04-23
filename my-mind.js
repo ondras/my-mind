@@ -3237,10 +3237,15 @@ MM.UI.prototype.handleEvent = function(e) {
 		return;
 	}
 	
-	var command = e.target.getAttribute("data-command");
-	if (!command) { return; }
-
-	MM.Command[command].execute();
+	var node = e.target;
+	while (node != document) {
+		var command = node.getAttribute("data-command");
+		if (command) {
+			MM.Command[command].execute();
+			return;
+		}
+		node = node.parentNode;
+	}
 }
 
 MM.UI.prototype.toggle = function() {
