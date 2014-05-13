@@ -57,3 +57,14 @@ ul {
 #tip.hidden {
 	opacity: 0;
 }
+
+#menu {
+	position: absolute;
+	z-index: 1;
+}
+
+#menu button {
+	display: block;
+	background-color: #fff;
+	border: none;
+}

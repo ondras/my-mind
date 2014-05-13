@@ -1313,6 +1313,49 @@ MM.Clipboard._endCut = function() {
 	this._data = null;
 	this._mode = "";
 }
+MM.Menu = {
+	_dom: {},
+	_port: null,
+	
+	open: function(x, y) {
+		this._dom.node.style.left = x+"px";
+		this._dom.node.style.top = y+"px";
+		this._dom.node.style.display = "";
+	},
+	
+	close: function() {
+		this._dom.node.style.display = "none";
+	},
+	
+	handleEvent: function(e) {
+		if (e.currentTarget != this._dom.node) {
+			this.close();
+			return;
+		}
+		
+		e.stopPropagation();
+		
+		var command = e.target.getAttribute("data-command");
+		if (!command) { return; }
+		MM.Command[command].execute();
+	},
+	
+	init: function(port) {
+		this._port = port;
+		this._dom.node = document.querySelector("#menu");
+		this._port.appendChild(this._dom.node);
+		var buttons = this._dom.node.querySelectorAll("[data-command]");
+		[].slice.call(buttons).forEach(function(button) {
+			button.innerHTML = MM.Command[button.getAttribute("data-command")].label;
+		});
+		
+		this._port.addEventListener("mousedown", this);
+		this._dom.node.addEventListener("mousedown", this);
+		
+		this.close();
+	}
+}
+
 MM.Command = Object.create(MM.Repo, {
 	keys: {value: []},
 	editMode: {value: false},
@@ -4218,6 +4261,7 @@ MM.Mouse.init = function(port) {
 	this._port.addEventListener("dblclick", this);
 	this._port.addEventListener("wheel", this);
 	this._port.addEventListener("mousewheel", this);
+	this._port.addEventListener("contextmenu", this);
 }
 
 MM.Mouse.handleEvent = function(e) {
@@ -4230,6 +4274,15 @@ MM.Mouse.handleEvent = function(e) {
 		case "dblclick":
 			var item = MM.App.map.getItemFor(e.target);
 			if (item) { MM.Command.Edit.execute(); }
+		break;
+		
+		case "contextmenu":
+			var item = MM.App.map.getItemFor(e.target);
+			if (item) {
+				e.preventDefault();
+				MM.App.select(item);
+				MM.Menu.open(e.clientX, e.clientY);
+			}
 		break;
 		
 		case "mousedown":
@@ -4430,8 +4483,6 @@ MM.Mouse._visualizeDragState = function(state) {
 		var spread = (x || y ? -2 : 2);
 		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
 	}
-
-
 }
 MM.App = {
 	keyboard: null,
@@ -4536,6 +4587,7 @@ MM.App = {
 
 		MM.Tip.init();
 		MM.Keyboard.init();
+		MM.Menu.init(this._port);
 		MM.Mouse.init(this._port);
 
 		window.addEventListener("resize", this);
