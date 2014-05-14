@@ -10,6 +10,7 @@ MM.Mouse = {
 
 MM.Mouse.init = function(port) {
 	this._port = port;
+	this._port.addEventListener("touchstart", this);
 	this._port.addEventListener("mousedown", this);
 	this._port.addEventListener("click", this);
 	this._port.addEventListener("dblclick", this);
@@ -39,6 +40,10 @@ MM.Mouse.handleEvent = function(e) {
 			}
 		break;
 		
+		case "touchstart":
+			if (e.touches.length > 1) { return; }
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
 		case "mousedown":
 			var item = MM.App.map.getItemFor(e.target);
 			if (item == MM.App.current && MM.App.editing) { return; }
@@ -47,10 +52,14 @@ MM.Mouse.handleEvent = function(e) {
 			this._startDrag(e, item);
 		break;
 		
+		case "touchmove":
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
 		case "mousemove":
 			this._processDrag(e);
 		break;
 		
+		case "touchend":
 		case "mouseup":
 			this._endDrag(e);
 		break;
@@ -66,9 +75,15 @@ MM.Mouse.handleEvent = function(e) {
 }
 
 MM.Mouse._startDrag = function(e, item) {
-	e.preventDefault(); /* no selections allowed */
-	this._port.addEventListener("mousemove", this);
-	this._port.addEventListener("mouseup", this);
+
+	if (e.type == "mousedown") {
+		e.preventDefault(); /* no selections allowed. only for mouse; preventing touchstart would prevent Safari from emulating clicks */
+		this._port.addEventListener("mousemove", this);
+		this._port.addEventListener("mouseup", this);
+	} else {
+		this._port.addEventListener("touchmove", this);
+		this._port.addEventListener("touchend", this);
+	}
 
 	this._cursor[0] = e.clientX;
 	this._cursor[1] = e.clientY;
@@ -83,6 +98,7 @@ MM.Mouse._startDrag = function(e, item) {
 }
 
 MM.Mouse._processDrag = function(e) {
+	e.preventDefault();
 	var dx = e.clientX - this._cursor[0];
 	var dy = e.clientY - this._cursor[1];
 	this._cursor[0] = e.clientX;

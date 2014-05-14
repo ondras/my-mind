@@ -2,12 +2,12 @@
 <html>
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0" />
 		<title>My Mind</title>
 		<link rel="icon" href="favicon.ico" />
 		<script src="my-mind.js"></script>
-		<xscript src="https://cdn.firebase.com/v0/firebase.js"></script>
-		<xscript src="https://cdn.firebase.com/v0/firebase-simple-login.js"></script>
+		<script src="https://cdn.firebase.com/v0/firebase.js"></script>
+		<script src="https://cdn.firebase.com/v0/firebase-simple-login.js"></script>
 		<link rel="stylesheet" href="css/font.css" />
 		<link rel="stylesheet" href="css/style.css" />
 		<link rel="stylesheet" href="css/print.css" media="print" />
@@ -201,8 +201,10 @@
 		</script>
 
 		<script>
+			window.onload = function() {
 			MM.App.init();
 			MM.App.io.restore();
+			}
 		</script>
 <!--
 TODO:

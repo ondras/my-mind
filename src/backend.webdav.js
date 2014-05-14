@@ -22,6 +22,6 @@ MM.Backend.WebDAV._request = function(method, url, data) {
 		function(xhr) { promise.fulfill(xhr.responseText); },
 		function(xhr) { promise.reject(new Error("HTTP/" + xhr.status + "\n\n" + xhr.responseText)); }
 	);
-	
+
 	return promise;
 }

@@ -1,4 +1,14 @@
 /* My Mind web app: all source files combined. */
+if (!Function.prototype.bind) {
+	Function.prototype.bind = function(thisObj) {
+		var fn = this;
+		var args = Array.prototype.slice.call(arguments, 1);
+		return function() {
+			return fn.apply(thisObj, args.concat(Array.prototype.slice.call(arguments)));
+		}
+	}
+};
+
 var MM = {
 	_subscribers: {},
 	
@@ -319,6 +329,7 @@ MM.Item = function() {
 	this._dom.node.appendChild(this._dom.content);
 	/* toggle+children are appended when children exist */
 
+	this._dom.toggle.addEventListener("touchstart", this);
 	this._dom.toggle.addEventListener("click", this);
 }
 
@@ -647,6 +658,7 @@ MM.Item.prototype.handleEvent = function(e) {
 			MM.Command.Finish.execute();
 		break;
 
+		case "touchstart":
 		case "click":
 			if (this._collapsed) { this.expand(); } else { this.collapse(); }
 			MM.App.select(this);
@@ -2923,7 +2935,7 @@ MM.Backend.WebDAV._request = function(method, url, data) {
 		function(xhr) { promise.fulfill(xhr.responseText); },
 		function(xhr) { promise.reject(new Error("HTTP/" + xhr.status + "\n\n" + xhr.responseText)); }
 	);
-	
+
 	return promise;
 }
 MM.Backend.Image = Object.create(MM.Backend, {
@@ -3673,7 +3685,7 @@ MM.UI.IO.prototype.handleEvent = function(e) {
 
 MM.UI.IO.prototype._syncBackend = function() {
 	var all = this._node.querySelectorAll("div[id]");
-	[].concat.apply([], all).forEach(function(node) { node.style.display = "none"; });
+	[].slice.apply(all).forEach(function(node) { node.style.display = "none"; });
 	
 	this._node.querySelector("#" + this._backend.value).style.display = "";
 	
@@ -4277,6 +4289,7 @@ MM.Mouse = {
 
 MM.Mouse.init = function(port) {
 	this._port = port;
+	this._port.addEventListener("touchstart", this);
 	this._port.addEventListener("mousedown", this);
 	this._port.addEventListener("click", this);
 	this._port.addEventListener("dblclick", this);
@@ -4306,6 +4319,10 @@ MM.Mouse.handleEvent = function(e) {
 			}
 		break;
 		
+		case "touchstart":
+			if (e.touches.length > 1) { return; }
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
 		case "mousedown":
 			var item = MM.App.map.getItemFor(e.target);
 			if (item == MM.App.current && MM.App.editing) { return; }
@@ -4314,10 +4331,14 @@ MM.Mouse.handleEvent = function(e) {
 			this._startDrag(e, item);
 		break;
 		
+		case "touchmove":
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
 		case "mousemove":
 			this._processDrag(e);
 		break;
 		
+		case "touchend":
 		case "mouseup":
 			this._endDrag(e);
 		break;
@@ -4333,9 +4354,15 @@ MM.Mouse.handleEvent = function(e) {
 }
 
 MM.Mouse._startDrag = function(e, item) {
-	e.preventDefault(); /* no selections allowed */
-	this._port.addEventListener("mousemove", this);
-	this._port.addEventListener("mouseup", this);
+
+	if (e.type == "mousedown") {
+		e.preventDefault(); /* no selections allowed. only for mouse; preventing touchstart would prevent Safari from emulating clicks */
+		this._port.addEventListener("mousemove", this);
+		this._port.addEventListener("mouseup", this);
+	} else {
+		this._port.addEventListener("touchmove", this);
+		this._port.addEventListener("touchend", this);
+	}
 
 	this._cursor[0] = e.clientX;
 	this._cursor[1] = e.clientY;
@@ -4350,6 +4377,7 @@ MM.Mouse._startDrag = function(e, item) {
 }
 
 MM.Mouse._processDrag = function(e) {
+	e.preventDefault();
 	var dx = e.clientX - this._cursor[0];
 	var dy = e.clientY - this._cursor[1];
 	this._cursor[0] = e.clientX;
