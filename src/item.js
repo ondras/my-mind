@@ -338,12 +338,14 @@ MM.Item.prototype.startEditing = function() {
 
 	this._dom.text.addEventListener("input", this);
 	this._dom.text.addEventListener("keydown", this);
+	this._dom.text.addEventListener("blur", this);
 	return this;
 }
 
 MM.Item.prototype.stopEditing = function() {
 	this._dom.text.removeEventListener("input", this);
 	this._dom.text.removeEventListener("keydown", this);
+	this._dom.text.removeEventListener("blur", this);
 
 	this._dom.text.blur();
 	this._dom.text.contentEditable = false;
@@ -361,6 +363,10 @@ MM.Item.prototype.handleEvent = function(e) {
 
 		case "keydown":
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
+		break;
+
+		case "blur":
+			MM.Command.Finish.execute();
 		break;
 
 		case "click":

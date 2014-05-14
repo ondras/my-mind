@@ -8,6 +8,7 @@ SOURCES =	src/mm.js \
 			src/tip.js \
 			src/action.js \
 			src/clipboard.js \
+			src/menu.js \
 			src/command.js \
 			src/command.edit.js \
 			src/command.select.js \

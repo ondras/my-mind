@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0" />
 		<title>My Mind</title>
 		<link rel="icon" href="favicon.ico" />
 		<script src="my-mind.js"></script>
@@ -12,11 +12,10 @@
 		<link rel="stylesheet" href="css/style.css" />
 		<link rel="stylesheet" href="css/print.css" media="print" />
 	</head>
-	<body onload="init()">
+	<body>
 		<ul id="port">
 			<div id="tip">Press ‘Tab’ to Insert Child, ‘Enter’ to Insert Sibling Node. For more tips/news, follow <a href="https://twitter.com/my_mind_app" target="_blank">@my_mind_app</a>.</div>
 		</ul>
-		<div id="throbber"></div>
 
 		<div class="ui">
 			<h3>My Mind</h3>
@@ -79,6 +78,8 @@
 			<a id="github" target="_blank" href="https://github.com/ondras/my-mind" title="GitHub project page"><img src="github.png" alt="GitHub project page" /></a>
 			<button id="toggle" title="Toggle UI"></button>
 			<button data-command="Help" title="Help"><img src="icons/help.png" alt="Help" /></button>
+
+			<div id="throbber"></div>
 		</div>
 
 
@@ -181,14 +182,19 @@
 			<p><span>Other</span></p>
 			<table class="other"></table>
 		</div>
-
-		<script>
-			var init = function() {
-				MM.App.init();
-				MM.App.io.restore();
-				MM.Backend.Image.url = "http://bespin.cz/~ondras/my-mind-image/";
-			}
-		</script>
+		
+		<div id="menu">
+			<button data-command="InsertChild"></button>
+			<button data-command="InsertSibling"></button>
+			<button data-command="Delete"></button>
+			<span></span>
+			<button data-command="Edit"></button>
+			<button data-command="Value"></button>
+			<span></span>
+			<button data-command="Undo"></button>
+			<button data-command="Redo"></button>
+			<button data-command="Center"></button>
+		</div>
 
 		<script>
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -199,6 +205,13 @@
 			ga('send', 'pageview');
 		</script>
 
+		<script>
+			window.onload = function() {
+				MM.App.init();
+				MM.App.io.restore();
+				MM.Backend.Image.url = "http://bespin.cz/~ondras/my-mind-image/";
+			}
+		</script>
 <!--
 TODO:
   shortterm:

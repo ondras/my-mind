@@ -1,6 +1,7 @@
 @import url(ui.css);
 @import url(item.css);
 @import url(shape.css);
+@import url(menu.css);
 
 * {
 	font-family: source sans pro, sans-serif;
@@ -10,6 +11,12 @@ html, body {
 	margin: 0;
 	overflow: hidden;
 	height: 100%;
+	background-color: #eed;
+	-webkit-user-select: none; /* no magnifier on hold */
+}
+
+[contenteditable] { /* allow for editable items */
+	-webkit-user-select: auto;
 }
 
 ul {
@@ -19,17 +26,17 @@ ul {
 }
 
 #port {
-	background-color: #eed;
 	overflow: hidden;
 	font-size: 15px;
 }
 
 #throbber {
+	position: absolute;
+	top: 50px;
+	left: -60px;
 	width: 50px;
 	height: 50px;
 	background-image: url(throbber.gif);
-	position: fixed;
-	top: 20px;
 }
 
 #throbber:not(.visible) {

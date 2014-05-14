@@ -101,6 +101,7 @@ MM.App = {
 
 		MM.Tip.init();
 		MM.Keyboard.init();
+		MM.Menu.init(this._port);
 		MM.Mouse.init(this._port);
 
 		window.addEventListener("resize", this);

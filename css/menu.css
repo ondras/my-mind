@@ -1,0 +1,29 @@
+#menu {
+	position: absolute;
+	z-index: 1;
+	border: 1px solid #666;
+	background-color: #fff;	
+	box-shadow: 0 0 2px 1px #666;
+}
+
+#menu button {
+	display: block;
+	background-color: transparent;
+	border: none;
+	margin: 0;
+	padding: 3px 6px;
+	font-size: 15px;
+	width: 130px;
+	text-align: left;
+}
+
+#menu button:hover {
+	font-weight: bold;
+}
+
+#menu span {
+	display: block;
+	border-top: 1px solid #666;
+	margin-top: 4px;
+	padding-top: 4px;
+}
