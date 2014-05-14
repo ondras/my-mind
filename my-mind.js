@@ -1,4 +1,14 @@
 /* My Mind web app: all source files combined. */
+if (!Function.prototype.bind) {
+	Function.prototype.bind = function(thisObj) {
+		var fn = this;
+		var args = Array.prototype.slice.call(arguments, 1);
+		return function() {
+			return fn.apply(thisObj, args.concat(Array.prototype.slice.call(arguments)));
+		}
+	}
+};
+
 var MM = {
 	_subscribers: {},
 	
@@ -616,12 +626,14 @@ MM.Item.prototype.startEditing = function() {
 
 	this._dom.text.addEventListener("input", this);
 	this._dom.text.addEventListener("keydown", this);
+	this._dom.text.addEventListener("blur", this);
 	return this;
 }
 
 MM.Item.prototype.stopEditing = function() {
 	this._dom.text.removeEventListener("input", this);
 	this._dom.text.removeEventListener("keydown", this);
+	this._dom.text.removeEventListener("blur", this);
 
 	this._dom.text.blur();
 	this._dom.text.contentEditable = false;
@@ -639,6 +651,10 @@ MM.Item.prototype.handleEvent = function(e) {
 
 		case "keydown":
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
+		break;
+
+		case "blur":
+			MM.Command.Finish.execute();
 		break;
 
 		case "click":
@@ -1313,6 +1329,63 @@ MM.Clipboard._endCut = function() {
 	this._data = null;
 	this._mode = "";
 }
+MM.Menu = {
+	_dom: {},
+	_port: null,
+	
+	open: function(x, y) {
+		this._dom.node.style.display = "";
+		var w = this._dom.node.offsetWidth;
+		var h = this._dom.node.offsetHeight;
+
+		var left = x;
+		var top = y;
+
+		if (left > this._port.offsetWidth / 2) { left -= w; }
+		if (top > this._port.offsetHeight / 2) { top -= h; }
+
+		this._dom.node.style.left = left+"px";
+		this._dom.node.style.top = top+"px";
+	},
+	
+	close: function() {
+		this._dom.node.style.display = "none";
+	},
+	
+	handleEvent: function(e) {
+		if (e.currentTarget != this._dom.node) {
+			this.close();
+			return;
+		}
+		
+		e.stopPropagation(); /* no dragdrop, no blur of activeElement */
+		e.preventDefault(); /* we do not want to focus the button */
+		
+		var command = e.target.getAttribute("data-command");
+		if (!command) { return; }
+
+		command = MM.Command[command];
+		if (!command.isValid()) { return; }
+
+		command.execute();
+		this.close();
+	},
+	
+	init: function(port) {
+		this._port = port;
+		this._dom.node = document.querySelector("#menu");
+		var buttons = this._dom.node.querySelectorAll("[data-command]");
+		[].slice.call(buttons).forEach(function(button) {
+			button.innerHTML = MM.Command[button.getAttribute("data-command")].label;
+		});
+		
+		this._port.addEventListener("mousedown", this);
+		this._dom.node.addEventListener("mousedown", this);
+		
+		this.close();
+	}
+}
+
 MM.Command = Object.create(MM.Repo, {
 	keys: {value: []},
 	editMode: {value: false},
@@ -2859,7 +2932,7 @@ MM.Backend.WebDAV._request = function(method, url, data) {
 		function(xhr) { promise.fulfill(xhr.responseText); },
 		function(xhr) { promise.reject(new Error("HTTP/" + xhr.status + "\n\n" + xhr.responseText)); }
 	);
-	
+
 	return promise;
 }
 MM.Backend.Image = Object.create(MM.Backend, {
@@ -3609,7 +3682,7 @@ MM.UI.IO.prototype.handleEvent = function(e) {
 
 MM.UI.IO.prototype._syncBackend = function() {
 	var all = this._node.querySelectorAll("div[id]");
-	[].concat.apply([], all).forEach(function(node) { node.style.display = "none"; });
+	[].slice.apply(all).forEach(function(node) { node.style.display = "none"; });
 	
 	this._node.querySelector("#" + this._backend.value).style.display = "";
 	
@@ -4202,22 +4275,26 @@ MM.UI.Backend.GDrive._loadDone = function(data) {
 	MM.UI.Backend._loadDone.call(this, json);
 }
 MM.Mouse = {
+	TOUCH_DELAY: 500,
 	_port: null,
 	_cursor: [0, 0],
 	_pos: [0, 0], /* ghost pos */
 	_mode: "",
 	_item: null,
 	_ghost: null,
-	_oldDragState: null
+	_oldDragState: null,
+	_touchTimeout: null
 }
 
 MM.Mouse.init = function(port) {
 	this._port = port;
+	this._port.addEventListener("touchstart", this);
 	this._port.addEventListener("mousedown", this);
 	this._port.addEventListener("click", this);
 	this._port.addEventListener("dblclick", this);
 	this._port.addEventListener("wheel", this);
 	this._port.addEventListener("mousewheel", this);
+	this._port.addEventListener("contextmenu", this);
 }
 
 MM.Mouse.handleEvent = function(e) {
@@ -4232,20 +4309,48 @@ MM.Mouse.handleEvent = function(e) {
 			if (item) { MM.Command.Edit.execute(); }
 		break;
 		
+		case "contextmenu":
+			this._endDrag();
+
+			var item = MM.App.map.getItemFor(e.target);
+			if (item) {	MM.App.select(item); }
+
+			e.preventDefault();
+			MM.Menu.open(e.clientX, e.clientY);
+		break;
+
+		case "touchstart":
+			if (e.touches.length > 1) { return; }
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
 		case "mousedown":
 			var item = MM.App.map.getItemFor(e.target);
-			if (item == MM.App.current && MM.App.editing) { return; }
 
-			document.activeElement && document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
+			if (e.type == "touchstart") { /* context menu here, after we have the item */
+				this._touchTimeout = setTimeout(function() { 
+					item && MM.App.select(item);
+					MM.Menu.open(e.clientX, e.clientY);
+				}, this.TOUCH_DELAY);
+			}
+
+			if (item == MM.App.current && MM.App.editing) { return; }
+			document.activeElement && document.activeElement.blur();
 			this._startDrag(e, item);
 		break;
 		
+		case "touchmove":
+			if (e.touches.length > 1) { return; }
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
+			clearTimeout(this._touchTimeout);
 		case "mousemove":
 			this._processDrag(e);
 		break;
 		
+		case "touchend":
+			clearTimeout(this._touchTimeout);
 		case "mouseup":
-			this._endDrag(e);
+			this._endDrag();
 		break;
 
 		case "wheel":
@@ -4259,9 +4364,15 @@ MM.Mouse.handleEvent = function(e) {
 }
 
 MM.Mouse._startDrag = function(e, item) {
-	e.preventDefault(); /* no selections allowed */
-	this._port.addEventListener("mousemove", this);
-	this._port.addEventListener("mouseup", this);
+
+	if (e.type == "mousedown") {
+		e.preventDefault(); /* no selections allowed. only for mouse; preventing touchstart would prevent Safari from emulating clicks */
+		this._port.addEventListener("mousemove", this);
+		this._port.addEventListener("mouseup", this);
+	} else {
+		this._port.addEventListener("touchmove", this);
+		this._port.addEventListener("touchend", this);
+	}
 
 	this._cursor[0] = e.clientX;
 	this._cursor[1] = e.clientY;
@@ -4276,6 +4387,7 @@ MM.Mouse._startDrag = function(e, item) {
 }
 
 MM.Mouse._processDrag = function(e) {
+	e.preventDefault();
 	var dx = e.clientX - this._cursor[0];
 	var dy = e.clientY - this._cursor[1];
 	this._cursor[0] = e.clientX;
@@ -4298,7 +4410,7 @@ MM.Mouse._processDrag = function(e) {
 	}
 }
 
-MM.Mouse._endDrag = function(e) {
+MM.Mouse._endDrag = function() {
 	this._port.style.cursor = "";
 	this._port.removeEventListener("mousemove", this);
 	this._port.removeEventListener("mouseup", this);
@@ -4430,8 +4542,6 @@ MM.Mouse._visualizeDragState = function(state) {
 		var spread = (x || y ? -2 : 2);
 		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
 	}
-
-
 }
 MM.App = {
 	keyboard: null,
@@ -4536,6 +4646,7 @@ MM.App = {
 
 		MM.Tip.init();
 		MM.Keyboard.init();
+		MM.Menu.init(this._port);
 		MM.Mouse.init(this._port);
 
 		window.addEventListener("resize", this);
