@@ -1,11 +1,13 @@
 MM.Mouse = {
+	TOUCH_DELAY: 500,
 	_port: null,
 	_cursor: [0, 0],
 	_pos: [0, 0], /* ghost pos */
 	_mode: "",
 	_item: null,
 	_ghost: null,
-	_oldDragState: null
+	_oldDragState: null,
+	_touchTimeout: null
 }
 
 MM.Mouse.init = function(port) {
@@ -32,36 +34,47 @@ MM.Mouse.handleEvent = function(e) {
 		break;
 		
 		case "contextmenu":
+			this._endDrag();
+
 			var item = MM.App.map.getItemFor(e.target);
-			if (item) {
-				e.preventDefault();
-				MM.App.select(item);
-				MM.Menu.open(e.clientX, e.clientY);
-			}
+			if (item) {	MM.App.select(item); }
+
+			e.preventDefault();
+			MM.Menu.open(e.clientX, e.clientY);
 		break;
-		
+
 		case "touchstart":
 			if (e.touches.length > 1) { return; }
 			e.clientX = e.touches[0].clientX;
 			e.clientY = e.touches[0].clientY;
 		case "mousedown":
 			var item = MM.App.map.getItemFor(e.target);
-			if (item == MM.App.current && MM.App.editing) { return; }
 
+			if (e.type == "touchstart") { /* context menu here, after we have the item */
+				this._touchTimeout = setTimeout(function() { 
+					item && MM.App.select(item);
+					MM.Menu.open(e.clientX, e.clientY);
+				}, this.TOUCH_DELAY);
+			}
+
+			if (item == MM.App.current && MM.App.editing) { return; }
 			document.activeElement && document.activeElement.blur();
 			this._startDrag(e, item);
 		break;
 		
 		case "touchmove":
+			if (e.touches.length > 1) { return; }
 			e.clientX = e.touches[0].clientX;
 			e.clientY = e.touches[0].clientY;
+			clearTimeout(this._touchTimeout);
 		case "mousemove":
 			this._processDrag(e);
 		break;
 		
 		case "touchend":
+			clearTimeout(this._touchTimeout);
 		case "mouseup":
-			this._endDrag(e);
+			this._endDrag();
 		break;
 
 		case "wheel":
@@ -121,7 +134,7 @@ MM.Mouse._processDrag = function(e) {
 	}
 }
 
-MM.Mouse._endDrag = function(e) {
+MM.Mouse._endDrag = function() {
 	this._port.style.cursor = "";
 	this._port.removeEventListener("mousemove", this);
 	this._port.removeEventListener("mouseup", this);

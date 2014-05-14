@@ -16,7 +16,6 @@
 		<ul id="port">
 			<div id="tip">Press ‘Tab’ to Insert Child, ‘Enter’ to Insert Sibling Node. For more tips/news, follow <a href="https://twitter.com/my_mind_app" target="_blank">@my_mind_app</a>.</div>
 		</ul>
-		<div id="throbber"></div>
 
 		<div class="ui">
 			<h3>My Mind</h3>
@@ -79,6 +78,8 @@
 			<a id="github" target="_blank" href="https://github.com/ondras/my-mind" title="GitHub project page"><img src="github.png" alt="GitHub project page" /></a>
 			<button id="toggle" title="Toggle UI"></button>
 			<button data-command="Help" title="Help"><img src="icons/help.png" alt="Help" /></button>
+
+			<div id="throbber"></div>
 		</div>
 
 
@@ -189,6 +190,10 @@
 			<span></span>
 			<button data-command="Edit"></button>
 			<button data-command="Value"></button>
+			<span></span>
+			<button data-command="Undo"></button>
+			<button data-command="Redo"></button>
+			<button data-command="Center"></button>
 		</div>
 
 		<script>
@@ -202,8 +207,8 @@
 
 		<script>
 			window.onload = function() {
-			MM.App.init();
-			MM.App.io.restore();
+				MM.App.init();
+				MM.App.io.restore();
 			}
 		</script>
 <!--

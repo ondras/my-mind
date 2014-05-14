@@ -3,6 +3,7 @@
 	z-index: 1;
 	border: 1px solid #666;
 	background-color: #fff;	
+	box-shadow: 0 0 2px 1px #666;
 }
 
 #menu button {
@@ -11,7 +12,9 @@
 	border: none;
 	margin: 0;
 	padding: 3px 6px;
-	width: 120px;
+	font-size: 15px;
+	width: 130px;
+	text-align: left;
 }
 
 #menu button:hover {

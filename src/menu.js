@@ -43,7 +43,6 @@ MM.Menu = {
 	init: function(port) {
 		this._port = port;
 		this._dom.node = document.querySelector("#menu");
-		this._port.appendChild(this._dom.node);
 		var buttons = this._dom.node.querySelectorAll("[data-command]");
 		[].slice.call(buttons).forEach(function(button) {
 			button.innerHTML = MM.Command[button.getAttribute("data-command")].label;

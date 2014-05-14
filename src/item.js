@@ -41,7 +41,6 @@ MM.Item = function() {
 	this._dom.node.appendChild(this._dom.content);
 	/* toggle+children are appended when children exist */
 
-	this._dom.toggle.addEventListener("touchstart", this);
 	this._dom.toggle.addEventListener("click", this);
 }
 
@@ -370,7 +369,6 @@ MM.Item.prototype.handleEvent = function(e) {
 			MM.Command.Finish.execute();
 		break;
 
-		case "touchstart":
 		case "click":
 			if (this._collapsed) { this.expand(); } else { this.collapse(); }
 			MM.App.select(this);
