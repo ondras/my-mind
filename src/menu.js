@@ -3,9 +3,18 @@ MM.Menu = {
 	_port: null,
 	
 	open: function(x, y) {
-		this._dom.node.style.left = x+"px";
-		this._dom.node.style.top = y+"px";
 		this._dom.node.style.display = "";
+		var w = this._dom.node.offsetWidth;
+		var h = this._dom.node.offsetHeight;
+
+		var left = x;
+		var top = y;
+
+		if (left > this._port.offsetWidth / 2) { left -= w; }
+		if (top > this._port.offsetHeight / 2) { top -= h; }
+
+		this._dom.node.style.left = left+"px";
+		this._dom.node.style.top = top+"px";
 	},
 	
 	close: function() {
@@ -18,11 +27,17 @@ MM.Menu = {
 			return;
 		}
 		
-		e.stopPropagation();
+		e.stopPropagation(); /* no dragdrop, no blur of activeElement */
+		e.preventDefault(); /* we do not want to focus the button */
 		
 		var command = e.target.getAttribute("data-command");
 		if (!command) { return; }
-		MM.Command[command].execute();
+
+		command = MM.Command[command];
+		if (!command.isValid()) { return; }
+
+		command.execute();
+		this.close();
 	},
 	
 	init: function(port) {

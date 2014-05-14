@@ -1,6 +1,7 @@
 @import url(ui.css);
 @import url(item.css);
 @import url(shape.css);
+@import url(menu.css);
 
 * {
 	font-family: source sans pro, sans-serif;
@@ -56,15 +57,4 @@ ul {
 
 #tip.hidden {
 	opacity: 0;
-}
-
-#menu {
-	position: absolute;
-	z-index: 1;
-}
-
-#menu button {
-	display: block;
-	background-color: #fff;
-	border: none;
 }

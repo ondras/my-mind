@@ -43,7 +43,7 @@ MM.Mouse.handleEvent = function(e) {
 			var item = MM.App.map.getItemFor(e.target);
 			if (item == MM.App.current && MM.App.editing) { return; }
 
-			document.activeElement && document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
+			document.activeElement && document.activeElement.blur();
 			this._startDrag(e, item);
 		break;
 		
