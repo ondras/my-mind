@@ -70,7 +70,10 @@ MM.Item.prototype.fromJSON = function(data) {
 	if (data.side) { this._side = data.side; }
 	if (data.color) { this._color = data.color; }
 	if (data.value) { this._value = data.value; }
-	if (data.status) { this._status = data.status; }
+	if (data.status) {
+		this._status = data.status;
+		if (this._status == "maybe") { this._status = "computed"; }
+	}
 	if (data.collapsed) { this.collapse(); }
 	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
 	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
@@ -395,7 +398,7 @@ MM.Item.prototype._updateStatus = function() {
 	this._dom.status.style.display = "";
 
 	var status = this._status;
-	if (this._status == "maybe") {
+	if (this._status == "computed") {
 		var childrenStatus = this._children.every(function(child) {
 			return (child.getComputedStatus() !== false);
 		});
