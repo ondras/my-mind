@@ -650,6 +650,7 @@ MM.Item.prototype.handleEvent = function(e) {
 	switch (e.type) {
 		case "input":
 			this.updateSubtree();
+			this.getMap().ensureItemVisibility(this);
 		break;
 
 		case "keydown":
