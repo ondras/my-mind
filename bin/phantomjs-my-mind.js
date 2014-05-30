@@ -30,6 +30,7 @@ if (dataSource) {
 var page = require("webpage").create();
 page.onAlert = function(msg) { console.log(msg); }
 page.open(url, function() {
+	setTimeout(function() {
 	page.evaluate(function(dataSource, data) {
 		/* switch to print mode */
 		document.querySelector("link[media~=print]").media = "all"; 
@@ -58,4 +59,5 @@ page.open(url, function() {
 
 	page.render(output);
 	phantom.exit();
+	}, 500); /* wait a bit. there is a mysterious race somewhere causing phantom to be too fast otherwise. */
 });
