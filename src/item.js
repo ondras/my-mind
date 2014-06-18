@@ -157,6 +157,10 @@ MM.Item.prototype.setText = function(text) {
 	return this.update();
 }
 
+MM.Item.prototype.getId = function() {
+	return this._id;
+}
+
 MM.Item.prototype.getText = function() {
 	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
 }

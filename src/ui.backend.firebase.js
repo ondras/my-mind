@@ -24,7 +24,7 @@ MM.UI.Backend.Firebase.setState = function(data) {
 	this._connect(data.s, data.a).then(
 		this._load.bind(this, data.id),
 		this._error.bind(this)
-	)
+	);
 }
 
 MM.UI.Backend.Firebase.getState = function() {
@@ -147,4 +147,3 @@ MM.UI.Backend.Firebase._sync = function() {
 	if (this._mode == "load" && !this._list.value) { this._go.disabled = true; }
 	this._go.innerHTML = this._mode.charAt(0).toUpperCase() + this._mode.substring(1);
 }
-

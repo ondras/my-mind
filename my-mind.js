@@ -445,6 +445,10 @@ MM.Item.prototype.setText = function(text) {
 	return this.update();
 }
 
+MM.Item.prototype.getId = function() {
+	return this._id;
+}
+
 MM.Item.prototype.getText = function() {
 	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
 }
@@ -805,7 +809,6 @@ MM.Map = function(options) {
 	this._root = null;
 	this._visible = false;
 	this._position = [0, 0];
-	this._id = MM.generateId();
 
 	this._setRoot(new MM.Item().setText(o.root).setLayout(o.layout));
 }
@@ -815,15 +818,13 @@ MM.Map.fromJSON = function(data) {
 }
 
 MM.Map.prototype.fromJSON = function(data) {
-	if (data.id) { this._id = data.id; }
 	this._setRoot(MM.Item.fromJSON(data.root));
 	return this;
 }
 
 MM.Map.prototype.toJSON = function() {
 	var data = {
-		root: this._root.toJSON(),
-		id: this._id
+		root: this._root.toJSON()
 	};
 	return data;
 }
@@ -954,7 +955,7 @@ MM.Map.prototype.getName = function() {
 }
 
 MM.Map.prototype.getId = function() {
-	return this._id;
+	return this._root.getId();
 }
 
 MM.Map.prototype.pick = function(item, direction) {
@@ -3006,7 +3007,8 @@ MM.Backend.File.load = function() {
 MM.Backend.Firebase = Object.create(MM.Backend, {
 	label: {value: "Firebase"},
 	id: {value: "firebase"},
-	ref: {value:null, writable:true}
+	ref: {value:null, writable:true},
+	listenRef: {value:null, writable:true}
 });
 
 MM.Backend.Firebase.connect = function(server, auth) {
@@ -3019,9 +3021,7 @@ MM.Backend.Firebase.connect = function(server, auth) {
 	if (auth) {
 		return this._login(auth);
 	} else {
-		var promise = new Promise();
-		promise.fulfill();
-		return promise;
+		return new Promise().fulfill();
 	}
 }
 
@@ -3030,13 +3030,15 @@ MM.Backend.Firebase.save = function(data, id, name) {
 
 	try {
 		this.ref.child("names/" + id).set(name);
-		this.ref.child("data/" + id).set(data, function(result) {
+		var ref = this.ref.child("data/" + id);
+		ref.set(data, function(result) {
 			if (result) {
 				promise.reject(result);
 			} else {
 				promise.fulfill();
+				this._listenStart(ref);
 			}
-		});
+		}.bind(this));
 	} catch (e) {
 		promise.reject(e);
 	}
@@ -3046,14 +3048,16 @@ MM.Backend.Firebase.save = function(data, id, name) {
 MM.Backend.Firebase.load = function(id) {
 	var promise = new Promise();
 	
-	this.ref.child("data/" + id).once("value", function(snap) {
+	var ref = this.ref.child("data/" + id);
+	ref.once("value", function(snap) {
 		var data = snap.val();
 		if (data) {
 			promise.fulfill(data);
+			this._listenStart(ref);
 		} else {
 			promise.reject(new Error("There is no such saved map"));
 		}
-	});
+	}.bind(this));
 	return promise;
 }
 
@@ -3074,6 +3078,25 @@ MM.Backend.Firebase.remove = function(id) {
 	}
 
 	return promise;
+}
+
+MM.Backend.Firebase.reset = function() {
+	this._listenStop(); /* do not monitor current firebase ref for changes */
+}
+
+MM.Backend.Firebase._listenStart = function(ref) {
+	if (this.listenRef && this.listenRef.toString() == ref.toString()) { return; }
+
+	this._listenStop();
+	this.listenRef = ref;
+	ref.on("value", function() { /* console.log("!"); */ });
+}
+
+MM.Backend.Firebase._listenStop = function() {
+	if (this.listenRef) { 
+		this.listenRef.off("value");
+		this.listenRef = null;
+	}
 }
 
 MM.Backend.Firebase._login = function(type) {
@@ -3693,6 +3716,9 @@ MM.UI.IO.prototype._syncBackend = function() {
 	this._backends[this._backend.value].show(this._mode);
 }
 
+/**
+ * @param {MM.UI.Backend} backend
+ */
 MM.UI.IO.prototype._setCurrentBackend = function(backend) {
 	if (this._currentBackend && this._currentBackend != backend) { this._currentBackend.reset(); }
 	
@@ -4075,7 +4101,7 @@ MM.UI.Backend.Firebase.setState = function(data) {
 	this._connect(data.s, data.a).then(
 		this._load.bind(this, data.id),
 		this._error.bind(this)
-	)
+	);
 }
 
 MM.UI.Backend.Firebase.getState = function() {
@@ -4198,7 +4224,6 @@ MM.UI.Backend.Firebase._sync = function() {
 	if (this._mode == "load" && !this._list.value) { this._go.disabled = true; }
 	this._go.innerHTML = this._mode.charAt(0).toUpperCase() + this._mode.substring(1);
 }
-
 MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
 	id: {value: "gdrive"}
 });

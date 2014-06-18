@@ -7,7 +7,6 @@ MM.Map = function(options) {
 	this._root = null;
 	this._visible = false;
 	this._position = [0, 0];
-	this._id = MM.generateId();
 
 	this._setRoot(new MM.Item().setText(o.root).setLayout(o.layout));
 }
@@ -17,15 +16,13 @@ MM.Map.fromJSON = function(data) {
 }
 
 MM.Map.prototype.fromJSON = function(data) {
-	if (data.id) { this._id = data.id; }
 	this._setRoot(MM.Item.fromJSON(data.root));
 	return this;
 }
 
 MM.Map.prototype.toJSON = function() {
 	var data = {
-		root: this._root.toJSON(),
-		id: this._id
+		root: this._root.toJSON()
 	};
 	return data;
 }
@@ -156,7 +153,7 @@ MM.Map.prototype.getName = function() {
 }
 
 MM.Map.prototype.getId = function() {
-	return this._id;
+	return this._root.getId();
 }
 
 MM.Map.prototype.pick = function(item, direction) {

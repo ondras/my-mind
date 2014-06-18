@@ -116,6 +116,9 @@ MM.UI.IO.prototype._syncBackend = function() {
 	this._backends[this._backend.value].show(this._mode);
 }
 
+/**
+ * @param {MM.UI.Backend} backend
+ */
 MM.UI.IO.prototype._setCurrentBackend = function(backend) {
 	if (this._currentBackend && this._currentBackend != backend) { this._currentBackend.reset(); }
 	
