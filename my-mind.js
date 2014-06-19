@@ -3092,7 +3092,7 @@ MM.Backend.Firebase.reset = function() {
 /**
  * Merge current (remote) data with updated map
  */
-MM.Backend.Firebase.mergeWidth = function(data, name) {
+MM.Backend.Firebase.mergeWith = function(data, name) {
 	if (name != this._current.name) {
 		this._current.name = name;
 		this.ref.child("names/" + this._current.id).set(name);
@@ -3100,10 +3100,61 @@ MM.Backend.Firebase.mergeWidth = function(data, name) {
 
 	var dataRef = this.ref.child("data/" + this._current.id);
 	this._recursiveRefMerge(dataRef, this._current.data, data);
+	this._current.data = data;
 }
 
+/**
+ * @param {Firebase} ref
+ * @param {object} oldData
+ * @param {object} newData
+ */
 MM.Backend.Firebase._recursiveRefMerge = function(ref, oldData, newData) {
-	/* FIXME */
+	var updateObject = {};
+
+	if (newData instanceof Array) { /* merge arrays */
+
+		for (var i=0; i<newData.length; i++) {
+			var newValue = newData[i];
+
+			if (!(i in oldData)) { /* new key */
+				updateObject[i] = newValue;
+			} else if (typeof(newValue) == "object") { /* recurse */
+				this._recursiveRefMerge(ref.child(i), oldData[i], newValue);
+			} else if (newValue !== oldData[i]) { /* changed key */
+				updateObject[i] = newValue;
+			}
+		}
+
+		for (var i=newData.length; i<oldData.length; i++) { updateObject[i] = null; } /* removed array items */
+
+	} else { /* merge objects */
+
+		for (var p in newData) { /* new/changed keys */
+			var newValue = newData[p];
+
+			if (!(p in oldData)) { /* new key */
+				updateObject[p] = newValue;
+			} else if (typeof(newValue) == "object") { /* recurse */
+				this._recursiveRefMerge(ref.child(p), oldData[p], newValue);
+			} else if (newValue !== oldData[p]) { /* changed key */
+				updateObject[p] = newValue;
+			}
+
+		}
+
+		for (var p in oldData) { /* removed keys */
+			if (!(p in newData)) { updateObject[p] = null; }
+		}
+
+	}
+
+	if (Object.keys(updateObject).length) {
+		console.log("Update set for " + ref, updateObject);
+		ref.update(updateObject);
+	}/*  else {
+		console.log("No update needed for " + ref);
+	} */
+
 }
 
 MM.Backend.Firebase._listenStart = function(data, id) {
@@ -4211,10 +4262,8 @@ MM.UI.Backend.Firebase.reset = function() {
 }
 
 MM.UI.Backend.Firebase._itemChange = function() {
-	console.log("updating to firebase");
-
 	var map = MM.App.map;
-// FIXME	this._backend.mergeWith(map.toJSON(), map.getName());
+	this._backend.mergeWith(map.toJSON(), map.getName());
 }
 
 MM.UI.Backend.Firebase._action = function() {

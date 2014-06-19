@@ -97,10 +97,8 @@ MM.UI.Backend.Firebase.reset = function() {
 }
 
 MM.UI.Backend.Firebase._itemChange = function() {
-	console.log("updating to firebase");
-
 	var map = MM.App.map;
-// FIXME	this._backend.mergeWith(map.toJSON(), map.getName());
+	this._backend.mergeWith(map.toJSON(), map.getName());
 }
 
 MM.UI.Backend.Firebase._action = function() {
