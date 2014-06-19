@@ -76,9 +76,7 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 
 		case "firebase-change":
 			if (data) {
-				console.log("remote data changed");
-				console.log(data);
-				//FIXME MM.App.map.mergeWith(data);
+				MM.App.map.mergeWith(data);
 			} else { /* FIXME */
 				console.log("remote data disappeared");
 			}

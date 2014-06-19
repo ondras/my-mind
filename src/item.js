@@ -61,6 +61,26 @@ MM.Item.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
 
+MM.Item.prototype.toJSON = function() {
+	var data = {
+		id: this._id,
+		text: this.getText()
+	}
+	
+	if (this._side) { data.side = this._side; }
+	if (this._color) { data.color = this._color; }
+	if (this._value) { data.value = this._value; }
+	if (this._status) { data.status = this._status; }
+	if (this._layout) { data.layout = this._layout.id; }
+	if (!this._autoShape) { data.shape = this._shape.id; }
+	if (this._collapsed) { data.collapsed = 1; }
+	if (this._children.length) {
+		data.children = this._children.map(function(child) { return child.toJSON(); });
+	}
+
+	return data;
+}
+
 /**
  * Only when creating a new item. To merge existing items, use .mergeWith().
  */
@@ -85,24 +105,57 @@ MM.Item.prototype.fromJSON = function(data) {
 	return this;
 }
 
-MM.Item.prototype.toJSON = function() {
-	var data = {
-		id: this._id,
-		text: this.getText()
-	}
-	
-	if (this._side) { data.side = this._side; }
-	if (this._color) { data.color = this._color; }
-	if (this._value) { data.value = this._value; }
-	if (this._status) { data.status = this._status; }
-	if (this._layout) { data.layout = this._layout.id; }
-	if (!this._autoShape) { data.shape = this._shape.id; }
-	if (this._collapsed) { data.collapsed = 1; }
-	if (this._children.length) {
-		data.children = this._children.map(function(child) { return child.toJSON(); });
+MM.Item.prototype.mergeWith = function(data) {
+	var dirty = false;
+	if (this.getText() != data.text) { this.setText(data.text); }
+
+	if (this._side != data.side) { 
+		this._side = data.side;
+		dirty = true;
 	}
 
-	return data;
+	if (this._color != data.color) { 
+		this._color = data.color;
+		dirty = true;
+	}
+
+	if (this._value != data.value) { 
+		this._value = data.value;
+		dirty = true;
+	}
+
+	if (this._status != data.status) { 
+		this._status = data.status;
+		dirty = true;
+	}
+
+	if (this._collapsed != !!data.collapsed) { this[this._collapsed ? "expand" : "collapse"](); }
+
+	if (this.getOwnLayout() != data.layout) {
+		this._layout = MM.Layout.getById(data.layout);
+		dirty = true;
+	}
+
+	var s = (this._autoShape ? null : this._shape.id);
+	if (s != data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
+
+	/* FIXME children - co kdyz je nekdo z nas zrovna aktivni, nerkuli editovatelny? */
+	(data.children || []).forEach(function(child, index) {
+		if (index >= this._children.length) { /* new child */
+			this.insertChild(MM.Item.fromJSON(child));
+			dirty = true;
+		} else { /* existing child */
+			var myChild = this._children[index];
+			if (myChild.getId() == child.id) { /* recursive merge */
+				myChild.mergeWith(child);
+			} else { /* changed; replace */
+				this._children[index] = MM.Item.fromJSON(child);
+				dirty = true;
+			}
+		}
+	}, this);
+
+	if (dirty) { this.update(); }
 }
 
 MM.Item.prototype.clone = function() {
@@ -118,10 +171,10 @@ MM.Item.prototype.clone = function() {
 }
 
 MM.Item.prototype.update = function(doNotRecurse) {
-	MM.publish("item-change", this);
-
 	var map = this.getMap();
 	if (!map || !map.isVisible()) { return this; }
+
+	MM.publish("item-change", this);
 
 	if (this._autoShape) { /* check for changed auto-shape */
 		var autoShape = this._getAutoShape();

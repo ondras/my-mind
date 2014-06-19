@@ -15,16 +15,20 @@ MM.Map.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
 
-MM.Map.prototype.fromJSON = function(data) {
-	this._setRoot(MM.Item.fromJSON(data.root));
-	return this;
-}
-
 MM.Map.prototype.toJSON = function() {
 	var data = {
 		root: this._root.toJSON()
 	};
 	return data;
+}
+
+MM.Map.prototype.fromJSON = function(data) {
+	this._setRoot(MM.Item.fromJSON(data.root));
+	return this;
+}
+
+MM.Map.prototype.mergeWith = function(data) {
+	this._root.mergeWith(data.root);
 }
 
 MM.Map.prototype.isVisible = function() {
