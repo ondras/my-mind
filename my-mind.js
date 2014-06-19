@@ -23,12 +23,13 @@ var MM = {
 		if (!(message in this._subscribers)) {
 			this._subscribers[message] = [];
 		}
-		this._subscribers[message].push(subscriber);
+		var index = this._subscribers[message].indexOf(subscriber);
+		if (index == -1) { this._subscribers[message].push(subscriber); }
 	},
 	
 	unsubscribe: function(message, subscriber) {
 		var index = this._subscribers[message].indexOf(subscriber);
-		this._subscribers[message].splice(index, 1);
+		if (index > -1) { this._subscribers[message].splice(index, 1); }
 	},
 	
 	generateId: function() {
@@ -647,13 +648,15 @@ MM.Item.prototype.stopEditing = function() {
 	var result = this._dom.text.innerHTML;
 	this._dom.text.innerHTML = this._oldText;
 	this._oldText = "";
+
+	this.update(); /* text changed */
 	return result;
 }
 
 MM.Item.prototype.handleEvent = function(e) {
 	switch (e.type) {
 		case "input":
-			this.updateSubtree();
+			this.update();
 			this.getMap().ensureItemVisibility(this);
 		break;
 
@@ -3008,7 +3011,11 @@ MM.Backend.Firebase = Object.create(MM.Backend, {
 	label: {value: "Firebase"},
 	id: {value: "firebase"},
 	ref: {value:null, writable:true},
-	listenRef: {value:null, writable:true}
+	_current: {value: {
+		id: null,
+		name: null,
+		data: null
+	}}
 });
 
 MM.Backend.Firebase.connect = function(server, auth) {
@@ -3016,7 +3023,7 @@ MM.Backend.Firebase.connect = function(server, auth) {
 	
 	this.ref.child("names").on("value", function(snap) {
 		MM.publish("firebase-list", this, snap.val() || {});
-	});
+	}, this);
 
 	if (auth) {
 		return this._login(auth);
@@ -3030,13 +3037,12 @@ MM.Backend.Firebase.save = function(data, id, name) {
 
 	try {
 		this.ref.child("names/" + id).set(name);
-		var ref = this.ref.child("data/" + id);
-		ref.set(data, function(result) {
+		this.ref.child("data/" + id).set(data, function(result) {
 			if (result) {
 				promise.reject(result);
 			} else {
 				promise.fulfill();
-				this._listenStart(ref);
+				this._listenStart(data, id);
 			}
 		}.bind(this));
 	} catch (e) {
@@ -3048,16 +3054,15 @@ MM.Backend.Firebase.save = function(data, id, name) {
 MM.Backend.Firebase.load = function(id) {
 	var promise = new Promise();
 	
-	var ref = this.ref.child("data/" + id);
-	ref.once("value", function(snap) {
+	this.ref.child("data/" + id).once("value", function(snap) {
 		var data = snap.val();
 		if (data) {
 			promise.fulfill(data);
-			this._listenStart(ref);
+			this._listenStart(data, id);
 		} else {
 			promise.reject(new Error("There is no such saved map"));
 		}
-	}.bind(this));
+	}, this);
 	return promise;
 }
 
@@ -3084,19 +3089,50 @@ MM.Backend.Firebase.reset = function() {
 	this._listenStop(); /* do not monitor current firebase ref for changes */
 }
 
-MM.Backend.Firebase._listenStart = function(ref) {
-	if (this.listenRef && this.listenRef.toString() == ref.toString()) { return; }
+/**
+ * Merge current (remote) data with updated map
+ */
+MM.Backend.Firebase.mergeWidth = function(data, name) {
+	if (name != this._current.name) {
+		this._current.name = name;
+		this.ref.child("names/" + this._current.id).set(name);
+	}
+
+	var dataRef = this.ref.child("data/" + this._current.id);
+	this._recursiveRefMerge(dataRef, this._current.data, data);
+}
+
+MM.Backend.Firebase._recursiveRefMerge = function(ref, oldData, newData) {
+	/* FIXME */
+}
+
+MM.Backend.Firebase._listenStart = function(data, id) {
+	if (this._current.id && this.current.id == id) { return; }
 
 	this._listenStop();
-	this.listenRef = ref;
-	ref.on("value", function() { /* console.log("!"); */ });
+	this._current.id = id;
+	this._current.data = data;
+
+	this.ref.child("data/" + id).on("value", this._valueChange, this);
 }
 
 MM.Backend.Firebase._listenStop = function() {
-	if (this.listenRef) { 
-		this.listenRef.off("value");
-		this.listenRef = null;
-	}
+	if (!this._current.id) { return; }
+
+	this.ref.child("data/" + this._current.id).off("value");
+	this._current.id = null;
+	this._current.name = null;
+	this._current.data = null;
+}
+
+
+/**
+ * Monitored remote ref changed
+ * FIXME use timeout to buffer changes?
+ */
+MM.Backend.Firebase._valueChange = function(snap) {
+	this._current.data = snap.val();
+	MM.publish("firebase-change", this, this._current.data);
 }
 
 MM.Backend.Firebase._login = function(type) {
@@ -3682,6 +3718,7 @@ MM.UI.IO.prototype.show = function(mode) {
 }
 
 MM.UI.IO.prototype.hide = function() {
+	if (!this._node.classList.contains("visible")) { return; }
 	this._node.classList.remove("visible");
 	document.activeElement && document.activeElement.blur();
 	window.removeEventListener("keydown", this);
@@ -4083,6 +4120,7 @@ MM.UI.Backend.Firebase.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
 	
 	this._online = false;
+	this._itemChangeTimeout = null;
 	this._list = this._node.querySelector(".list");
 	this._server = this._node.querySelector(".server");
 	this._server.value = localStorage.getItem(this._prefix + "server") || "my-mind";
@@ -4095,6 +4133,7 @@ MM.UI.Backend.Firebase.init = function(select) {
 
 	this._go.disabled = false;
 	MM.subscribe("firebase-list", this);
+	MM.subscribe("firebase-change", this);
 }
 
 MM.UI.Backend.Firebase.setState = function(data) {
@@ -4148,7 +4187,34 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 			}
 			this._sync();
 		break;
+
+		case "firebase-change":
+			if (data) {
+				console.log("remote data changed");
+				console.log(data);
+				//FIXME MM.App.map.mergeWith(data);
+			} else { /* FIXME */
+				console.log("remote data disappeared");
+			}
+		break;
+
+		case "item-change":
+			if (this._itemChangeTimeout) { clearTimeout(this._itemChangeTimeout); }
+			this._itemChangeTimeout = setTimeout(this._itemChange.bind(this), 300);
+		break;
 	}
+}
+
+MM.UI.Backend.Firebase.reset = function() {
+	MM.unsubscribe("item-change", this);
+	this._backend.reset();
+}
+
+MM.UI.Backend.Firebase._itemChange = function() {
+	console.log("updating to firebase");
+
+	var map = MM.App.map;
+// FIXME	this._backend.mergeWith(map.toJSON(), map.getName());
 }
 
 MM.UI.Backend.Firebase._action = function() {
@@ -4223,6 +4289,16 @@ MM.UI.Backend.Firebase._sync = function() {
 	this._go.disabled = false;
 	if (this._mode == "load" && !this._list.value) { this._go.disabled = true; }
 	this._go.innerHTML = this._mode.charAt(0).toUpperCase() + this._mode.substring(1);
+}
+
+MM.UI.Backend.Firebase._loadDone = function() {
+	MM.subscribe("item-change", this);
+	MM.UI.Backend._loadDone.apply(this, arguments);
+}
+
+MM.UI.Backend.Firebase._saveDone = function() {
+	MM.subscribe("item-change", this);
+	MM.UI.Backend._saveDone.apply(this, arguments);
 }
 MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
 	id: {value: "gdrive"}

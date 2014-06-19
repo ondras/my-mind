@@ -359,13 +359,15 @@ MM.Item.prototype.stopEditing = function() {
 	var result = this._dom.text.innerHTML;
 	this._dom.text.innerHTML = this._oldText;
 	this._oldText = "";
+
+	this.update(); /* text changed */
 	return result;
 }
 
 MM.Item.prototype.handleEvent = function(e) {
 	switch (e.type) {
 		case "input":
-			this.updateSubtree();
+			this.update();
 			this.getMap().ensureItemVisibility(this);
 		break;
 

@@ -6,6 +6,7 @@ MM.UI.Backend.Firebase.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
 	
 	this._online = false;
+	this._itemChangeTimeout = null;
 	this._list = this._node.querySelector(".list");
 	this._server = this._node.querySelector(".server");
 	this._server.value = localStorage.getItem(this._prefix + "server") || "my-mind";
@@ -18,6 +19,7 @@ MM.UI.Backend.Firebase.init = function(select) {
 
 	this._go.disabled = false;
 	MM.subscribe("firebase-list", this);
+	MM.subscribe("firebase-change", this);
 }
 
 MM.UI.Backend.Firebase.setState = function(data) {
@@ -71,7 +73,34 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 			}
 			this._sync();
 		break;
+
+		case "firebase-change":
+			if (data) {
+				console.log("remote data changed");
+				console.log(data);
+				//FIXME MM.App.map.mergeWith(data);
+			} else { /* FIXME */
+				console.log("remote data disappeared");
+			}
+		break;
+
+		case "item-change":
+			if (this._itemChangeTimeout) { clearTimeout(this._itemChangeTimeout); }
+			this._itemChangeTimeout = setTimeout(this._itemChange.bind(this), 300);
+		break;
 	}
+}
+
+MM.UI.Backend.Firebase.reset = function() {
+	MM.unsubscribe("item-change", this);
+	this._backend.reset();
+}
+
+MM.UI.Backend.Firebase._itemChange = function() {
+	console.log("updating to firebase");
+
+	var map = MM.App.map;
+// FIXME	this._backend.mergeWith(map.toJSON(), map.getName());
 }
 
 MM.UI.Backend.Firebase._action = function() {
@@ -146,4 +175,14 @@ MM.UI.Backend.Firebase._sync = function() {
 	this._go.disabled = false;
 	if (this._mode == "load" && !this._list.value) { this._go.disabled = true; }
 	this._go.innerHTML = this._mode.charAt(0).toUpperCase() + this._mode.substring(1);
+}
+
+MM.UI.Backend.Firebase._loadDone = function() {
+	MM.subscribe("item-change", this);
+	MM.UI.Backend._loadDone.apply(this, arguments);
+}
+
+MM.UI.Backend.Firebase._saveDone = function() {
+	MM.subscribe("item-change", this);
+	MM.UI.Backend._saveDone.apply(this, arguments);
 }
