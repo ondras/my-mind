@@ -142,15 +142,19 @@ MM.Item.prototype.mergeWith = function(data) {
 	/* FIXME children - co kdyz je nekdo z nas zrovna aktivni, nerkuli editovatelny? */
 	(data.children || []).forEach(function(child, index) {
 		if (index >= this._children.length) { /* new child */
+			console.log("adding new child", child, "at", index);
 			this.insertChild(MM.Item.fromJSON(child));
-			dirty = true;
+			// dirty = true; FIXME to zaridi to dite, ze?
 		} else { /* existing child */
 			var myChild = this._children[index];
 			if (myChild.getId() == child.id) { /* recursive merge */
+				console.log("merging child", myChild, "with", child);
 				myChild.mergeWith(child);
 			} else { /* changed; replace */
-				this._children[index] = MM.Item.fromJSON(child);
-				dirty = true;
+				console.log("replacing dead child", myChild, "with new", child);
+				this.removeChild(this._children[index]);
+				this.insertChild(MM.Item.fromJSON(child), index);
+				// dirty = true; FIXME to zaridi to dite, ze?
 			}
 		}
 	}, this);

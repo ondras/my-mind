@@ -124,7 +124,7 @@ MM.UI.Backend.Firebase.load = function() {
 
 MM.UI.Backend.Firebase._load = function(id) {
 	MM.App.setThrobber(true);
-
+/* FIXME posere se kdyz zmenim jeden firebase na jiny */
 	this._backend.load(id).then(
 		this._loadDone.bind(this),
 		this._error.bind(this)
