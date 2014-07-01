@@ -3215,17 +3215,11 @@ MM.Backend.Firebase._recursiveRefMerge = function(ref, oldData, newData) {
 
 	}
 
-	if (Object.keys(updateObject).length) {
-		console.log("Update set for " + ref, updateObject);
-		ref.update(updateObject);
-	}/*  else {
-		console.log("No update needed for " + ref);
-	} */
-
+	if (Object.keys(updateObject).length) { ref.update(updateObject); }
 }
 
 MM.Backend.Firebase._listenStart = function(data, id) {
-	if (this._current.id && this.current.id == id) { return; }
+	if (this._current.id && this._current.id == id) { return; }
 
 	this._listenStop();
 	this._current.id = id;
@@ -4361,7 +4355,7 @@ MM.UI.Backend.Firebase.load = function() {
 
 MM.UI.Backend.Firebase._load = function(id) {
 	MM.App.setThrobber(true);
-/* FIXME posere se kdyz zmenim jeden firebase na jiny */
+	/* FIXME posere se kdyz zmenim jeden firebase na jiny, mozna */
 	this._backend.load(id).then(
 		this._loadDone.bind(this),
 		this._error.bind(this)

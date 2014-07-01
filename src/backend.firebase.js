@@ -145,17 +145,11 @@ MM.Backend.Firebase._recursiveRefMerge = function(ref, oldData, newData) {
 
 	}
 
-	if (Object.keys(updateObject).length) {
-		console.log("Update set for " + ref, updateObject);
-		ref.update(updateObject);
-	}/*  else {
-		console.log("No update needed for " + ref);
-	} */
-
+	if (Object.keys(updateObject).length) { ref.update(updateObject); }
 }
 
 MM.Backend.Firebase._listenStart = function(data, id) {
-	if (this._current.id && this.current.id == id) { return; }
+	if (this._current.id && this._current.id == id) { return; }
 
 	this._listenStop();
 	this._current.id = id;
