@@ -76,7 +76,9 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 
 		case "firebase-change":
 			if (data) {
+				MM.unsubscribe("item-change", this);
 				MM.App.map.mergeWith(data);
+				MM.subscribe("item-change", this);
 			} else { /* FIXME */
 				console.log("remote data disappeared");
 			}
@@ -84,14 +86,14 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 
 		case "item-change":
 			if (this._itemChangeTimeout) { clearTimeout(this._itemChangeTimeout); }
-			this._itemChangeTimeout = setTimeout(this._itemChange.bind(this), 300);
+			this._itemChangeTimeout = setTimeout(this._itemChange.bind(this), 200);
 		break;
 	}
 }
 
 MM.UI.Backend.Firebase.reset = function() {
-	MM.unsubscribe("item-change", this);
 	this._backend.reset();
+	MM.unsubscribe("item-change", this);
 }
 
 MM.UI.Backend.Firebase._itemChange = function() {

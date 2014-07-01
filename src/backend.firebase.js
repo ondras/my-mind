@@ -84,14 +84,20 @@ MM.Backend.Firebase.reset = function() {
  * Merge current (remote) data with updated map
  */
 MM.Backend.Firebase.mergeWith = function(data, name) {
+	var id = this._current.id;
+
 	if (name != this._current.name) {
 		this._current.name = name;
-		this.ref.child("names/" + this._current.id).set(name);
+		this.ref.child("names/" + id).set(name);
 	}
 
-	var dataRef = this.ref.child("data/" + this._current.id);
-	this._recursiveRefMerge(dataRef, this._current.data, data);
-	this._current.data = data;
+
+	var dataRef = this.ref.child("data/" + id);
+	var oldData = this._current.data;
+
+	this._listenStop();
+	this._recursiveRefMerge(dataRef, oldData, data);
+	this._listenStart(data, id);
 }
 
 /**
@@ -169,12 +175,15 @@ MM.Backend.Firebase._listenStop = function() {
 
 
 /**
- * Monitored remote ref changed
- * FIXME use timeout to buffer changes?
+ * Monitored remote ref changed.
+ * FIXME move timeout logic to ui.backend.firebase?
  */
 MM.Backend.Firebase._valueChange = function(snap) {
 	this._current.data = snap.val();
-	MM.publish("firebase-change", this, this._current.data);
+	if (this._changeTimeout) { clearTimeout(this._changeTimeout); }
+	this._changeTimeout = setTimeout(function() {
+		MM.publish("firebase-change", this, this._current.data);
+	}.bind(this), 200);
 }
 
 MM.Backend.Firebase._login = function(type) {

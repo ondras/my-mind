@@ -395,34 +395,34 @@ MM.Item.prototype.fromJSON = function(data) {
 }
 
 MM.Item.prototype.mergeWith = function(data) {
-	var dirty = false;
+	var dirty = 0;
 	if (this.getText() != data.text) { this.setText(data.text); }
 
 	if (this._side != data.side) { 
 		this._side = data.side;
-		dirty = true;
+		dirty = 1;
 	}
 
 	if (this._color != data.color) { 
 		this._color = data.color;
-		dirty = true;
+		dirty = 2;
 	}
 
 	if (this._value != data.value) { 
 		this._value = data.value;
-		dirty = true;
+		dirty = 1;
 	}
 
 	if (this._status != data.status) { 
 		this._status = data.status;
-		dirty = true;
+		dirty = 1;
 	}
 
 	if (this._collapsed != !!data.collapsed) { this[this._collapsed ? "expand" : "collapse"](); }
 
 	if (this.getOwnLayout() != data.layout) {
 		this._layout = MM.Layout.getById(data.layout);
-		dirty = true;
+		dirty = 2;
 	}
 
 	var s = (this._autoShape ? null : this._shape.id);
@@ -431,24 +431,24 @@ MM.Item.prototype.mergeWith = function(data) {
 	/* FIXME children - co kdyz je nekdo z nas zrovna aktivni, nerkuli editovatelny? */
 	(data.children || []).forEach(function(child, index) {
 		if (index >= this._children.length) { /* new child */
-			console.log("adding new child", child, "at", index);
 			this.insertChild(MM.Item.fromJSON(child));
-			// dirty = true; FIXME to zaridi to dite, ze?
 		} else { /* existing child */
 			var myChild = this._children[index];
 			if (myChild.getId() == child.id) { /* recursive merge */
-				console.log("merging child", myChild, "with", child);
 				myChild.mergeWith(child);
 			} else { /* changed; replace */
-				console.log("replacing dead child", myChild, "with new", child);
 				this.removeChild(this._children[index]);
 				this.insertChild(MM.Item.fromJSON(child), index);
-				// dirty = true; FIXME to zaridi to dite, ze?
 			}
 		}
 	}, this);
 
-	if (dirty) { this.update(); }
+	/* remove dead children */
+	var newLength = (data.children || []).length;
+	while (this._children.length > newLength) { this.removeChild(this._children[this._children.length-1]); }
+
+	if (dirty == 1) { this.update(); }
+	if (dirty == 2) { this.updateSubtree(); }
 }
 
 MM.Item.prototype.clone = function() {
@@ -3154,14 +3154,20 @@ MM.Backend.Firebase.reset = function() {
  * Merge current (remote) data with updated map
  */
 MM.Backend.Firebase.mergeWith = function(data, name) {
+	var id = this._current.id;
+
 	if (name != this._current.name) {
 		this._current.name = name;
-		this.ref.child("names/" + this._current.id).set(name);
+		this.ref.child("names/" + id).set(name);
 	}
 
-	var dataRef = this.ref.child("data/" + this._current.id);
-	this._recursiveRefMerge(dataRef, this._current.data, data);
-	this._current.data = data;
+
+	var dataRef = this.ref.child("data/" + id);
+	var oldData = this._current.data;
+
+	this._listenStop();
+	this._recursiveRefMerge(dataRef, oldData, data);
+	this._listenStart(data, id);
 }
 
 /**
@@ -3239,12 +3245,15 @@ MM.Backend.Firebase._listenStop = function() {
 
 
 /**
- * Monitored remote ref changed
- * FIXME use timeout to buffer changes?
+ * Monitored remote ref changed.
+ * FIXME move timeout logic to ui.backend.firebase?
  */
 MM.Backend.Firebase._valueChange = function(snap) {
 	this._current.data = snap.val();
-	MM.publish("firebase-change", this, this._current.data);
+	if (this._changeTimeout) { clearTimeout(this._changeTimeout); }
+	this._changeTimeout = setTimeout(function() {
+		MM.publish("firebase-change", this, this._current.data);
+	}.bind(this), 200);
 }
 
 MM.Backend.Firebase._login = function(type) {
@@ -4302,7 +4311,9 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 
 		case "firebase-change":
 			if (data) {
+				MM.unsubscribe("item-change", this);
 				MM.App.map.mergeWith(data);
+				MM.subscribe("item-change", this);
 			} else { /* FIXME */
 				console.log("remote data disappeared");
 			}
@@ -4310,14 +4321,14 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 
 		case "item-change":
 			if (this._itemChangeTimeout) { clearTimeout(this._itemChangeTimeout); }
-			this._itemChangeTimeout = setTimeout(this._itemChange.bind(this), 300);
+			this._itemChangeTimeout = setTimeout(this._itemChange.bind(this), 200);
 		break;
 	}
 }
 
 MM.UI.Backend.Firebase.reset = function() {
-	MM.unsubscribe("item-change", this);
 	this._backend.reset();
+	MM.unsubscribe("item-change", this);
 }
 
 MM.UI.Backend.Firebase._itemChange = function() {
