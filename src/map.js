@@ -28,7 +28,36 @@ MM.Map.prototype.fromJSON = function(data) {
 }
 
 MM.Map.prototype.mergeWith = function(data) {
+	/* store a sequence of nodes to be selected when merge is over */
+	var ids = [];
+	var current = MM.App.current;
+	while (current != this) {
+		ids.push(current.getId());
+		current = current.getParent();
+	}
+
 	this._root.mergeWith(data.root);
+
+	if (MM.App.current.getMap()) { return; } /* selected node still in tree, cool */
+
+	/* FIXME what if the current node was being edited? */
+
+	/* get all items by their id */
+	var idMap = {};
+	var scan = function(item) {
+		idMap[item.getId()] = item;
+		item.getChildren().forEach(scan);
+	}
+	scan(this._root);
+
+	/* select the nearest existing parent */
+	while (ids.length) {
+		var id = ids.shift();
+		if (id in idMap) {
+			MM.App.select(idMap[id]);
+			return;
+		}
+	}
 }
 
 MM.Map.prototype.isVisible = function() {

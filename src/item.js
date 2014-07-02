@@ -139,7 +139,6 @@ MM.Item.prototype.mergeWith = function(data) {
 	var s = (this._autoShape ? null : this._shape.id);
 	if (s != data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 
-	/* FIXME children - co kdyz je nekdo z nas zrovna aktivni, nerkuli editovatelny? */
 	(data.children || []).forEach(function(child, index) {
 		if (index >= this._children.length) { /* new child */
 			this.insertChild(MM.Item.fromJSON(child));

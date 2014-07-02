@@ -428,7 +428,6 @@ MM.Item.prototype.mergeWith = function(data) {
 	var s = (this._autoShape ? null : this._shape.id);
 	if (s != data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 
-	/* FIXME children - co kdyz je nekdo z nas zrovna aktivni, nerkuli editovatelny? */
 	(data.children || []).forEach(function(child, index) {
 		if (index >= this._children.length) { /* new child */
 			this.insertChild(MM.Item.fromJSON(child));
@@ -890,7 +889,36 @@ MM.Map.prototype.fromJSON = function(data) {
 }
 
 MM.Map.prototype.mergeWith = function(data) {
+	/* store a sequence of nodes to be selected when merge is over */
+	var ids = [];
+	var current = MM.App.current;
+	while (current != this) {
+		ids.push(current.getId());
+		current = current.getParent();
+	}
+
 	this._root.mergeWith(data.root);
+
+	if (MM.App.current.getMap()) { return; } /* selected node still in tree, cool */
+
+	/* FIXME what if the current node was being edited? */
+
+	/* get all items by their id */
+	var idMap = {};
+	var scan = function(item) {
+		idMap[item.getId()] = item;
+		item.getChildren().forEach(scan);
+	}
+	scan(this._root);
+
+	/* select the nearest existing parent */
+	while (ids.length) {
+		var id = ids.shift();
+		if (id in idMap) {
+			MM.App.select(idMap[id]);
+			return;
+		}
+	}
 }
 
 MM.Map.prototype.isVisible = function() {
