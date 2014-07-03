@@ -40,7 +40,7 @@
           },
           {
             "id": "zcrefcfz",
-            "text": "Folding\n",
+            "text": "Folding",
             "collapsed": 1,
             "children": [
               {
@@ -89,7 +89,7 @@
               },
               {
                 "id": "eiocvrju",
-                "text": "REST DAV-like\n"
+                "text": "REST DAV-like"
               }
             ]
           },
@@ -189,7 +189,7 @@
           },
           {
             "id": "jaalsyvs",
-            "text": "Export to image\n"
+            "text": "Export to image"
           }
         ]
       },
