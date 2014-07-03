@@ -7,7 +7,6 @@ MM.Map = function(options) {
 	this._root = null;
 	this._visible = false;
 	this._position = [0, 0];
-	this._id = MM.generateId();
 
 	this._setRoot(new MM.Item().setText(o.root).setLayout(o.layout));
 }
@@ -16,18 +15,62 @@ MM.Map.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
 
+MM.Map.prototype.toJSON = function() {
+	var data = {
+		root: this._root.toJSON()
+	};
+	return data;
+}
+
 MM.Map.prototype.fromJSON = function(data) {
-	if (data.id) { this._id = data.id; }
 	this._setRoot(MM.Item.fromJSON(data.root));
 	return this;
 }
 
-MM.Map.prototype.toJSON = function() {
-	var data = {
-		root: this._root.toJSON(),
-		id: this._id
-	};
-	return data;
+MM.Map.prototype.mergeWith = function(data) {
+	/* store a sequence of nodes to be selected when merge is over */
+	var ids = [];
+	var current = MM.App.current;
+	var node = current;
+	while (node != this) {
+		ids.push(node.getId());
+		node = node.getParent();
+	}
+
+	this._root.mergeWith(data.root);
+
+	if (current.getMap()) { /* selected node still in tree, cool */
+		/* if one of the parents got collapsed, act as if the node got removed */
+		var node = current.getParent();
+		var hidden = false;
+		while (node != this) {
+			if (node.isCollapsed()) { hidden = true; }
+			node = node.getParent();
+		}
+		if (!hidden) { return; } /* nothing bad happened, continue */
+	} 
+
+	/* previously selected node is no longer in the tree OR it is folded */
+
+	/* what if the node was being edited? */
+	if (MM.App.editing) { current.stopEditing(); } 
+
+	/* get all items by their id */
+	var idMap = {};
+	var scan = function(item) {
+		idMap[item.getId()] = item;
+		item.getChildren().forEach(scan);
+	}
+	scan(this._root);
+
+	/* select the nearest existing parent */
+	while (ids.length) {
+		var id = ids.shift();
+		if (id in idMap) {
+			MM.App.select(idMap[id]);
+			return;
+		}
+	}
 }
 
 MM.Map.prototype.isVisible = function() {
@@ -156,7 +199,7 @@ MM.Map.prototype.getName = function() {
 }
 
 MM.Map.prototype.getId = function() {
-	return this._id;
+	return this._root.getId();
 }
 
 MM.Map.prototype.pick = function(item, direction) {

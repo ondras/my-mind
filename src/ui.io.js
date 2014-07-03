@@ -82,6 +82,7 @@ MM.UI.IO.prototype.show = function(mode) {
 }
 
 MM.UI.IO.prototype.hide = function() {
+	if (!this._node.classList.contains("visible")) { return; }
 	this._node.classList.remove("visible");
 	document.activeElement && document.activeElement.blur();
 	window.removeEventListener("keydown", this);
@@ -116,6 +117,9 @@ MM.UI.IO.prototype._syncBackend = function() {
 	this._backends[this._backend.value].show(this._mode);
 }
 
+/**
+ * @param {MM.UI.Backend} backend
+ */
 MM.UI.IO.prototype._setCurrentBackend = function(backend) {
 	if (this._currentBackend && this._currentBackend != backend) { this._currentBackend.reset(); }
 	

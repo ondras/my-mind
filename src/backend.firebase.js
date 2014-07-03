@@ -1,7 +1,12 @@
 MM.Backend.Firebase = Object.create(MM.Backend, {
 	label: {value: "Firebase"},
 	id: {value: "firebase"},
-	ref: {value:null, writable:true}
+	ref: {value:null, writable:true},
+	_current: {value: {
+		id: null,
+		name: null,
+		data: null
+	}}
 });
 
 MM.Backend.Firebase.connect = function(server, auth) {
@@ -9,14 +14,12 @@ MM.Backend.Firebase.connect = function(server, auth) {
 	
 	this.ref.child("names").on("value", function(snap) {
 		MM.publish("firebase-list", this, snap.val() || {});
-	});
+	}, this);
 
 	if (auth) {
 		return this._login(auth);
 	} else {
-		var promise = new Promise();
-		promise.fulfill();
-		return promise;
+		return new Promise().fulfill();
 	}
 }
 
@@ -30,8 +33,9 @@ MM.Backend.Firebase.save = function(data, id, name) {
 				promise.reject(result);
 			} else {
 				promise.fulfill();
+				this._listenStart(data, id);
 			}
-		});
+		}.bind(this));
 	} catch (e) {
 		promise.reject(e);
 	}
@@ -45,10 +49,11 @@ MM.Backend.Firebase.load = function(id) {
 		var data = snap.val();
 		if (data) {
 			promise.fulfill(data);
+			this._listenStart(data, id);
 		} else {
 			promise.reject(new Error("There is no such saved map"));
 		}
-	});
+	}, this);
 	return promise;
 }
 
@@ -69,6 +74,110 @@ MM.Backend.Firebase.remove = function(id) {
 	}
 
 	return promise;
+}
+
+MM.Backend.Firebase.reset = function() {
+	this._listenStop(); /* do not monitor current firebase ref for changes */
+}
+
+/**
+ * Merge current (remote) data with updated map
+ */
+MM.Backend.Firebase.mergeWith = function(data, name) {
+	var id = this._current.id;
+
+	if (name != this._current.name) {
+		this._current.name = name;
+		this.ref.child("names/" + id).set(name);
+	}
+
+
+	var dataRef = this.ref.child("data/" + id);
+	var oldData = this._current.data;
+
+	this._listenStop();
+	this._recursiveRefMerge(dataRef, oldData, data);
+	this._listenStart(data, id);
+}
+
+/**
+ * @param {Firebase} ref
+ * @param {object} oldData
+ * @param {object} newData
+ */
+MM.Backend.Firebase._recursiveRefMerge = function(ref, oldData, newData) {
+	var updateObject = {};
+
+	if (newData instanceof Array) { /* merge arrays */
+
+		for (var i=0; i<newData.length; i++) {
+			var newValue = newData[i];
+
+			if (!(i in oldData)) { /* new key */
+				updateObject[i] = newValue;
+			} else if (typeof(newValue) == "object") { /* recurse */
+				this._recursiveRefMerge(ref.child(i), oldData[i], newValue);
+			} else if (newValue !== oldData[i]) { /* changed key */
+				updateObject[i] = newValue;
+			}
+		}
+
+		for (var i=newData.length; i<oldData.length; i++) { updateObject[i] = null; } /* removed array items */
+
+	} else { /* merge objects */
+
+		for (var p in newData) { /* new/changed keys */
+			var newValue = newData[p];
+
+			if (!(p in oldData)) { /* new key */
+				updateObject[p] = newValue;
+			} else if (typeof(newValue) == "object") { /* recurse */
+				this._recursiveRefMerge(ref.child(p), oldData[p], newValue);
+			} else if (newValue !== oldData[p]) { /* changed key */
+				updateObject[p] = newValue;
+			}
+
+		}
+
+		for (var p in oldData) { /* removed keys */
+			if (!(p in newData)) { updateObject[p] = null; }
+		}
+
+	}
+
+	if (Object.keys(updateObject).length) { ref.update(updateObject); }
+}
+
+MM.Backend.Firebase._listenStart = function(data, id) {
+	if (this._current.id && this._current.id == id) { return; }
+
+	this._listenStop();
+	this._current.id = id;
+	this._current.data = data;
+
+	this.ref.child("data/" + id).on("value", this._valueChange, this);
+}
+
+MM.Backend.Firebase._listenStop = function() {
+	if (!this._current.id) { return; }
+
+	this.ref.child("data/" + this._current.id).off("value");
+	this._current.id = null;
+	this._current.name = null;
+	this._current.data = null;
+}
+
+
+/**
+ * Monitored remote ref changed.
+ * FIXME move timeout logic to ui.backend.firebase?
+ */
+MM.Backend.Firebase._valueChange = function(snap) {
+	this._current.data = snap.val();
+	if (this._changeTimeout) { clearTimeout(this._changeTimeout); }
+	this._changeTimeout = setTimeout(function() {
+		MM.publish("firebase-change", this, this._current.data);
+	}.bind(this), 200);
 }
 
 MM.Backend.Firebase._login = function(type) {

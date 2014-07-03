@@ -6,6 +6,7 @@ MM.UI.Backend.Firebase.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
 	
 	this._online = false;
+	this._itemChangeTimeout = null;
 	this._list = this._node.querySelector(".list");
 	this._server = this._node.querySelector(".server");
 	this._server.value = localStorage.getItem(this._prefix + "server") || "my-mind";
@@ -18,13 +19,14 @@ MM.UI.Backend.Firebase.init = function(select) {
 
 	this._go.disabled = false;
 	MM.subscribe("firebase-list", this);
+	MM.subscribe("firebase-change", this);
 }
 
 MM.UI.Backend.Firebase.setState = function(data) {
 	this._connect(data.s, data.a).then(
 		this._load.bind(this, data.id),
 		this._error.bind(this)
-	)
+	);
 }
 
 MM.UI.Backend.Firebase.getState = function() {
@@ -71,7 +73,32 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 			}
 			this._sync();
 		break;
+
+		case "firebase-change":
+			if (data) {
+				MM.unsubscribe("item-change", this);
+				MM.App.map.mergeWith(data);
+				MM.subscribe("item-change", this);
+			} else { /* FIXME */
+				console.log("remote data disappeared");
+			}
+		break;
+
+		case "item-change":
+			if (this._itemChangeTimeout) { clearTimeout(this._itemChangeTimeout); }
+			this._itemChangeTimeout = setTimeout(this._itemChange.bind(this), 200);
+		break;
 	}
+}
+
+MM.UI.Backend.Firebase.reset = function() {
+	this._backend.reset();
+	MM.unsubscribe("item-change", this);
+}
+
+MM.UI.Backend.Firebase._itemChange = function() {
+	var map = MM.App.map;
+	this._backend.mergeWith(map.toJSON(), map.getName());
 }
 
 MM.UI.Backend.Firebase._action = function() {
@@ -99,7 +126,7 @@ MM.UI.Backend.Firebase.load = function() {
 
 MM.UI.Backend.Firebase._load = function(id) {
 	MM.App.setThrobber(true);
-
+	/* FIXME posere se kdyz zmenim jeden firebase na jiny, mozna */
 	this._backend.load(id).then(
 		this._loadDone.bind(this),
 		this._error.bind(this)
@@ -148,3 +175,12 @@ MM.UI.Backend.Firebase._sync = function() {
 	this._go.innerHTML = this._mode.charAt(0).toUpperCase() + this._mode.substring(1);
 }
 
+MM.UI.Backend.Firebase._loadDone = function() {
+	MM.subscribe("item-change", this);
+	MM.UI.Backend._loadDone.apply(this, arguments);
+}
+
+MM.UI.Backend.Firebase._saveDone = function() {
+	MM.subscribe("item-change", this);
+	MM.UI.Backend._saveDone.apply(this, arguments);
+}

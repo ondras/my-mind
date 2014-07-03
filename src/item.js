@@ -61,6 +61,26 @@ MM.Item.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
 
+MM.Item.prototype.toJSON = function() {
+	var data = {
+		id: this._id,
+		text: this.getText()
+	}
+	
+	if (this._side) { data.side = this._side; }
+	if (this._color) { data.color = this._color; }
+	if (this._value) { data.value = this._value; }
+	if (this._status) { data.status = this._status; }
+	if (this._layout) { data.layout = this._layout.id; }
+	if (!this._autoShape) { data.shape = this._shape.id; }
+	if (this._collapsed) { data.collapsed = 1; }
+	if (this._children.length) {
+		data.children = this._children.map(function(child) { return child.toJSON(); });
+	}
+
+	return data;
+}
+
 /**
  * Only when creating a new item. To merge existing items, use .mergeWith().
  */
@@ -85,24 +105,60 @@ MM.Item.prototype.fromJSON = function(data) {
 	return this;
 }
 
-MM.Item.prototype.toJSON = function() {
-	var data = {
-		id: this._id,
-		text: this.getText()
-	}
-	
-	if (this._side) { data.side = this._side; }
-	if (this._color) { data.color = this._color; }
-	if (this._value) { data.value = this._value; }
-	if (this._status) { data.status = this._status; }
-	if (this._layout) { data.layout = this._layout.id; }
-	if (!this._autoShape) { data.shape = this._shape.id; }
-	if (this._collapsed) { data.collapsed = 1; }
-	if (this._children.length) {
-		data.children = this._children.map(function(child) { return child.toJSON(); });
+MM.Item.prototype.mergeWith = function(data) {
+	var dirty = 0;
+	if (this.getText() != data.text) { this.setText(data.text); }
+
+	if (this._side != data.side) { 
+		this._side = data.side;
+		dirty = 1;
 	}
 
-	return data;
+	if (this._color != data.color) { 
+		this._color = data.color;
+		dirty = 2;
+	}
+
+	if (this._value != data.value) { 
+		this._value = data.value;
+		dirty = 1;
+	}
+
+	if (this._status != data.status) { 
+		this._status = data.status;
+		dirty = 1;
+	}
+
+	if (this._collapsed != !!data.collapsed) { this[this._collapsed ? "expand" : "collapse"](); }
+
+	if (this.getOwnLayout() != data.layout) {
+		this._layout = MM.Layout.getById(data.layout);
+		dirty = 2;
+	}
+
+	var s = (this._autoShape ? null : this._shape.id);
+	if (s != data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
+
+	(data.children || []).forEach(function(child, index) {
+		if (index >= this._children.length) { /* new child */
+			this.insertChild(MM.Item.fromJSON(child));
+		} else { /* existing child */
+			var myChild = this._children[index];
+			if (myChild.getId() == child.id) { /* recursive merge */
+				myChild.mergeWith(child);
+			} else { /* changed; replace */
+				this.removeChild(this._children[index]);
+				this.insertChild(MM.Item.fromJSON(child), index);
+			}
+		}
+	}, this);
+
+	/* remove dead children */
+	var newLength = (data.children || []).length;
+	while (this._children.length > newLength) { this.removeChild(this._children[this._children.length-1]); }
+
+	if (dirty == 1) { this.update(); }
+	if (dirty == 2) { this.updateSubtree(); }
 }
 
 MM.Item.prototype.clone = function() {
@@ -118,10 +174,10 @@ MM.Item.prototype.clone = function() {
 }
 
 MM.Item.prototype.update = function(doNotRecurse) {
-	MM.publish("item-change", this);
-
 	var map = this.getMap();
 	if (!map || !map.isVisible()) { return this; }
+
+	MM.publish("item-change", this);
 
 	if (this._autoShape) { /* check for changed auto-shape */
 		var autoShape = this._getAutoShape();
@@ -155,6 +211,10 @@ MM.Item.prototype.setText = function(text) {
 	this._dom.text.innerHTML = text.replace(/\n/g, "<br/>");
 	this._findLinks(this._dom.text);
 	return this.update();
+}
+
+MM.Item.prototype.getId = function() {
+	return this._id;
 }
 
 MM.Item.prototype.getText = function() {
@@ -355,13 +415,15 @@ MM.Item.prototype.stopEditing = function() {
 	var result = this._dom.text.innerHTML;
 	this._dom.text.innerHTML = this._oldText;
 	this._oldText = "";
+
+	this.update(); /* text changed */
 	return result;
 }
 
 MM.Item.prototype.handleEvent = function(e) {
 	switch (e.type) {
 		case "input":
-			this.updateSubtree();
+			this.update();
 			this.getMap().ensureItemVisibility(this);
 		break;
 

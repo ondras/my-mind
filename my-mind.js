@@ -23,12 +23,13 @@ var MM = {
 		if (!(message in this._subscribers)) {
 			this._subscribers[message] = [];
 		}
-		this._subscribers[message].push(subscriber);
+		var index = this._subscribers[message].indexOf(subscriber);
+		if (index == -1) { this._subscribers[message].push(subscriber); }
 	},
 	
 	unsubscribe: function(message, subscriber) {
 		var index = this._subscribers[message].indexOf(subscriber);
-		this._subscribers[message].splice(index, 1);
+		if (index > -1) { this._subscribers[message].splice(index, 1); }
 	},
 	
 	generateId: function() {
@@ -349,6 +350,26 @@ MM.Item.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
 
+MM.Item.prototype.toJSON = function() {
+	var data = {
+		id: this._id,
+		text: this.getText()
+	}
+	
+	if (this._side) { data.side = this._side; }
+	if (this._color) { data.color = this._color; }
+	if (this._value) { data.value = this._value; }
+	if (this._status) { data.status = this._status; }
+	if (this._layout) { data.layout = this._layout.id; }
+	if (!this._autoShape) { data.shape = this._shape.id; }
+	if (this._collapsed) { data.collapsed = 1; }
+	if (this._children.length) {
+		data.children = this._children.map(function(child) { return child.toJSON(); });
+	}
+
+	return data;
+}
+
 /**
  * Only when creating a new item. To merge existing items, use .mergeWith().
  */
@@ -373,24 +394,60 @@ MM.Item.prototype.fromJSON = function(data) {
 	return this;
 }
 
-MM.Item.prototype.toJSON = function() {
-	var data = {
-		id: this._id,
-		text: this.getText()
-	}
-	
-	if (this._side) { data.side = this._side; }
-	if (this._color) { data.color = this._color; }
-	if (this._value) { data.value = this._value; }
-	if (this._status) { data.status = this._status; }
-	if (this._layout) { data.layout = this._layout.id; }
-	if (!this._autoShape) { data.shape = this._shape.id; }
-	if (this._collapsed) { data.collapsed = 1; }
-	if (this._children.length) {
-		data.children = this._children.map(function(child) { return child.toJSON(); });
+MM.Item.prototype.mergeWith = function(data) {
+	var dirty = 0;
+	if (this.getText() != data.text) { this.setText(data.text); }
+
+	if (this._side != data.side) { 
+		this._side = data.side;
+		dirty = 1;
 	}
 
-	return data;
+	if (this._color != data.color) { 
+		this._color = data.color;
+		dirty = 2;
+	}
+
+	if (this._value != data.value) { 
+		this._value = data.value;
+		dirty = 1;
+	}
+
+	if (this._status != data.status) { 
+		this._status = data.status;
+		dirty = 1;
+	}
+
+	if (this._collapsed != !!data.collapsed) { this[this._collapsed ? "expand" : "collapse"](); }
+
+	if (this.getOwnLayout() != data.layout) {
+		this._layout = MM.Layout.getById(data.layout);
+		dirty = 2;
+	}
+
+	var s = (this._autoShape ? null : this._shape.id);
+	if (s != data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
+
+	(data.children || []).forEach(function(child, index) {
+		if (index >= this._children.length) { /* new child */
+			this.insertChild(MM.Item.fromJSON(child));
+		} else { /* existing child */
+			var myChild = this._children[index];
+			if (myChild.getId() == child.id) { /* recursive merge */
+				myChild.mergeWith(child);
+			} else { /* changed; replace */
+				this.removeChild(this._children[index]);
+				this.insertChild(MM.Item.fromJSON(child), index);
+			}
+		}
+	}, this);
+
+	/* remove dead children */
+	var newLength = (data.children || []).length;
+	while (this._children.length > newLength) { this.removeChild(this._children[this._children.length-1]); }
+
+	if (dirty == 1) { this.update(); }
+	if (dirty == 2) { this.updateSubtree(); }
 }
 
 MM.Item.prototype.clone = function() {
@@ -406,10 +463,10 @@ MM.Item.prototype.clone = function() {
 }
 
 MM.Item.prototype.update = function(doNotRecurse) {
-	MM.publish("item-change", this);
-
 	var map = this.getMap();
 	if (!map || !map.isVisible()) { return this; }
+
+	MM.publish("item-change", this);
 
 	if (this._autoShape) { /* check for changed auto-shape */
 		var autoShape = this._getAutoShape();
@@ -443,6 +500,10 @@ MM.Item.prototype.setText = function(text) {
 	this._dom.text.innerHTML = text.replace(/\n/g, "<br/>");
 	this._findLinks(this._dom.text);
 	return this.update();
+}
+
+MM.Item.prototype.getId = function() {
+	return this._id;
 }
 
 MM.Item.prototype.getText = function() {
@@ -643,13 +704,15 @@ MM.Item.prototype.stopEditing = function() {
 	var result = this._dom.text.innerHTML;
 	this._dom.text.innerHTML = this._oldText;
 	this._oldText = "";
+
+	this.update(); /* text changed */
 	return result;
 }
 
 MM.Item.prototype.handleEvent = function(e) {
 	switch (e.type) {
 		case "input":
-			this.updateSubtree();
+			this.update();
 			this.getMap().ensureItemVisibility(this);
 		break;
 
@@ -805,7 +868,6 @@ MM.Map = function(options) {
 	this._root = null;
 	this._visible = false;
 	this._position = [0, 0];
-	this._id = MM.generateId();
 
 	this._setRoot(new MM.Item().setText(o.root).setLayout(o.layout));
 }
@@ -814,18 +876,62 @@ MM.Map.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
 
+MM.Map.prototype.toJSON = function() {
+	var data = {
+		root: this._root.toJSON()
+	};
+	return data;
+}
+
 MM.Map.prototype.fromJSON = function(data) {
-	if (data.id) { this._id = data.id; }
 	this._setRoot(MM.Item.fromJSON(data.root));
 	return this;
 }
 
-MM.Map.prototype.toJSON = function() {
-	var data = {
-		root: this._root.toJSON(),
-		id: this._id
-	};
-	return data;
+MM.Map.prototype.mergeWith = function(data) {
+	/* store a sequence of nodes to be selected when merge is over */
+	var ids = [];
+	var current = MM.App.current;
+	var node = current;
+	while (node != this) {
+		ids.push(node.getId());
+		node = node.getParent();
+	}
+
+	this._root.mergeWith(data.root);
+
+	if (current.getMap()) { /* selected node still in tree, cool */
+		/* if one of the parents got collapsed, act as if the node got removed */
+		var node = current.getParent();
+		var hidden = false;
+		while (node != this) {
+			if (node.isCollapsed()) { hidden = true; }
+			node = node.getParent();
+		}
+		if (!hidden) { return; } /* nothing bad happened, continue */
+	} 
+
+	/* previously selected node is no longer in the tree OR it is folded */
+
+	/* what if the node was being edited? */
+	if (MM.App.editing) { current.stopEditing(); } 
+
+	/* get all items by their id */
+	var idMap = {};
+	var scan = function(item) {
+		idMap[item.getId()] = item;
+		item.getChildren().forEach(scan);
+	}
+	scan(this._root);
+
+	/* select the nearest existing parent */
+	while (ids.length) {
+		var id = ids.shift();
+		if (id in idMap) {
+			MM.App.select(idMap[id]);
+			return;
+		}
+	}
 }
 
 MM.Map.prototype.isVisible = function() {
@@ -954,7 +1060,7 @@ MM.Map.prototype.getName = function() {
 }
 
 MM.Map.prototype.getId = function() {
-	return this._id;
+	return this._root.getId();
 }
 
 MM.Map.prototype.pick = function(item, direction) {
@@ -3006,7 +3112,12 @@ MM.Backend.File.load = function() {
 MM.Backend.Firebase = Object.create(MM.Backend, {
 	label: {value: "Firebase"},
 	id: {value: "firebase"},
-	ref: {value:null, writable:true}
+	ref: {value:null, writable:true},
+	_current: {value: {
+		id: null,
+		name: null,
+		data: null
+	}}
 });
 
 MM.Backend.Firebase.connect = function(server, auth) {
@@ -3014,14 +3125,12 @@ MM.Backend.Firebase.connect = function(server, auth) {
 	
 	this.ref.child("names").on("value", function(snap) {
 		MM.publish("firebase-list", this, snap.val() || {});
-	});
+	}, this);
 
 	if (auth) {
 		return this._login(auth);
 	} else {
-		var promise = new Promise();
-		promise.fulfill();
-		return promise;
+		return new Promise().fulfill();
 	}
 }
 
@@ -3035,8 +3144,9 @@ MM.Backend.Firebase.save = function(data, id, name) {
 				promise.reject(result);
 			} else {
 				promise.fulfill();
+				this._listenStart(data, id);
 			}
-		});
+		}.bind(this));
 	} catch (e) {
 		promise.reject(e);
 	}
@@ -3050,10 +3160,11 @@ MM.Backend.Firebase.load = function(id) {
 		var data = snap.val();
 		if (data) {
 			promise.fulfill(data);
+			this._listenStart(data, id);
 		} else {
 			promise.reject(new Error("There is no such saved map"));
 		}
-	});
+	}, this);
 	return promise;
 }
 
@@ -3074,6 +3185,110 @@ MM.Backend.Firebase.remove = function(id) {
 	}
 
 	return promise;
+}
+
+MM.Backend.Firebase.reset = function() {
+	this._listenStop(); /* do not monitor current firebase ref for changes */
+}
+
+/**
+ * Merge current (remote) data with updated map
+ */
+MM.Backend.Firebase.mergeWith = function(data, name) {
+	var id = this._current.id;
+
+	if (name != this._current.name) {
+		this._current.name = name;
+		this.ref.child("names/" + id).set(name);
+	}
+
+
+	var dataRef = this.ref.child("data/" + id);
+	var oldData = this._current.data;
+
+	this._listenStop();
+	this._recursiveRefMerge(dataRef, oldData, data);
+	this._listenStart(data, id);
+}
+
+/**
+ * @param {Firebase} ref
+ * @param {object} oldData
+ * @param {object} newData
+ */
+MM.Backend.Firebase._recursiveRefMerge = function(ref, oldData, newData) {
+	var updateObject = {};
+
+	if (newData instanceof Array) { /* merge arrays */
+
+		for (var i=0; i<newData.length; i++) {
+			var newValue = newData[i];
+
+			if (!(i in oldData)) { /* new key */
+				updateObject[i] = newValue;
+			} else if (typeof(newValue) == "object") { /* recurse */
+				this._recursiveRefMerge(ref.child(i), oldData[i], newValue);
+			} else if (newValue !== oldData[i]) { /* changed key */
+				updateObject[i] = newValue;
+			}
+		}
+
+		for (var i=newData.length; i<oldData.length; i++) { updateObject[i] = null; } /* removed array items */
+
+	} else { /* merge objects */
+
+		for (var p in newData) { /* new/changed keys */
+			var newValue = newData[p];
+
+			if (!(p in oldData)) { /* new key */
+				updateObject[p] = newValue;
+			} else if (typeof(newValue) == "object") { /* recurse */
+				this._recursiveRefMerge(ref.child(p), oldData[p], newValue);
+			} else if (newValue !== oldData[p]) { /* changed key */
+				updateObject[p] = newValue;
+			}
+
+		}
+
+		for (var p in oldData) { /* removed keys */
+			if (!(p in newData)) { updateObject[p] = null; }
+		}
+
+	}
+
+	if (Object.keys(updateObject).length) { ref.update(updateObject); }
+}
+
+MM.Backend.Firebase._listenStart = function(data, id) {
+	if (this._current.id && this._current.id == id) { return; }
+
+	this._listenStop();
+	this._current.id = id;
+	this._current.data = data;
+
+	this.ref.child("data/" + id).on("value", this._valueChange, this);
+}
+
+MM.Backend.Firebase._listenStop = function() {
+	if (!this._current.id) { return; }
+
+	this.ref.child("data/" + this._current.id).off("value");
+	this._current.id = null;
+	this._current.name = null;
+	this._current.data = null;
+}
+
+
+/**
+ * Monitored remote ref changed.
+ * FIXME move timeout logic to ui.backend.firebase?
+ */
+MM.Backend.Firebase._valueChange = function(snap) {
+	this._current.data = snap.val();
+	if (this._changeTimeout) { clearTimeout(this._changeTimeout); }
+	this._changeTimeout = setTimeout(function() {
+		MM.publish("firebase-change", this, this._current.data);
+	}.bind(this), 200);
 }
 
 MM.Backend.Firebase._login = function(type) {
@@ -3659,6 +3874,7 @@ MM.UI.IO.prototype.show = function(mode) {
 }
 
 MM.UI.IO.prototype.hide = function() {
+	if (!this._node.classList.contains("visible")) { return; }
 	this._node.classList.remove("visible");
 	document.activeElement && document.activeElement.blur();
 	window.removeEventListener("keydown", this);
@@ -3693,6 +3909,9 @@ MM.UI.IO.prototype._syncBackend = function() {
 	this._backends[this._backend.value].show(this._mode);
 }
 
+/**
+ * @param {MM.UI.Backend} backend
+ */
 MM.UI.IO.prototype._setCurrentBackend = function(backend) {
 	if (this._currentBackend && this._currentBackend != backend) { this._currentBackend.reset(); }
 	
@@ -4057,6 +4276,7 @@ MM.UI.Backend.Firebase.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
 	
 	this._online = false;
+	this._itemChangeTimeout = null;
 	this._list = this._node.querySelector(".list");
 	this._server = this._node.querySelector(".server");
 	this._server.value = localStorage.getItem(this._prefix + "server") || "my-mind";
@@ -4069,13 +4289,14 @@ MM.UI.Backend.Firebase.init = function(select) {
 
 	this._go.disabled = false;
 	MM.subscribe("firebase-list", this);
+	MM.subscribe("firebase-change", this);
 }
 
 MM.UI.Backend.Firebase.setState = function(data) {
 	this._connect(data.s, data.a).then(
 		this._load.bind(this, data.id),
 		this._error.bind(this)
-	)
+	);
 }
 
 MM.UI.Backend.Firebase.getState = function() {
@@ -4122,7 +4343,32 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 			}
 			this._sync();
 		break;
+
+		case "firebase-change":
+			if (data) {
+				MM.unsubscribe("item-change", this);
+				MM.App.map.mergeWith(data);
+				MM.subscribe("item-change", this);
+			} else { /* FIXME */
+				console.log("remote data disappeared");
+			}
+		break;
+
+		case "item-change":
+			if (this._itemChangeTimeout) { clearTimeout(this._itemChangeTimeout); }
+			this._itemChangeTimeout = setTimeout(this._itemChange.bind(this), 200);
+		break;
 	}
+}
+
+MM.UI.Backend.Firebase.reset = function() {
+	this._backend.reset();
+	MM.unsubscribe("item-change", this);
+}
+
+MM.UI.Backend.Firebase._itemChange = function() {
+	var map = MM.App.map;
+	this._backend.mergeWith(map.toJSON(), map.getName());
 }
 
 MM.UI.Backend.Firebase._action = function() {
@@ -4150,7 +4396,7 @@ MM.UI.Backend.Firebase.load = function() {
 
 MM.UI.Backend.Firebase._load = function(id) {
 	MM.App.setThrobber(true);
-
+	/* FIXME posere se kdyz zmenim jeden firebase na jiny, mozna */
 	this._backend.load(id).then(
 		this._loadDone.bind(this),
 		this._error.bind(this)
@@ -4199,6 +4445,15 @@ MM.UI.Backend.Firebase._sync = function() {
 	this._go.innerHTML = this._mode.charAt(0).toUpperCase() + this._mode.substring(1);
 }
 
+MM.UI.Backend.Firebase._loadDone = function() {
+	MM.subscribe("item-change", this);
+	MM.UI.Backend._loadDone.apply(this, arguments);
+}
+
+MM.UI.Backend.Firebase._saveDone = function() {
+	MM.subscribe("item-change", this);
+	MM.UI.Backend._saveDone.apply(this, arguments);
+}
 MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
 	id: {value: "gdrive"}
 });

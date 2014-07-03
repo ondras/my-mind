@@ -6,8 +6,8 @@
 		<title>My Mind</title>
 		<link rel="icon" href="favicon.ico" />
 		<script src="my-mind.js"></script>
-		<script src="https://cdn.firebase.com/v0/firebase.js"></script>
-		<script src="https://cdn.firebase.com/v0/firebase-simple-login.js"></script>
+		<script src="https://cdn.firebase.com/js/client/1.0.15/firebase.js"></script>
+		<script src="https://cdn.firebase.com/js/simple-login/1.5.0/firebase-simple-login.js"></script>
 		<link rel="stylesheet" href="css/font.css" />
 		<link rel="stylesheet" href="css/style.css" />
 		<link rel="stylesheet" href="css/print.css" media="print" />
@@ -91,6 +91,7 @@
 			</p>
 			
 			<div id="file">
+				<p class="desc">Local files are suitable for loading/saving files from other mindmapping applications.</p>
 				<p data-for="save">
 					<span>Format</span>
 					<select class="format"></select>
@@ -101,12 +102,14 @@
 			</div>
 
 			<div id="image">
+				<p class="desc">Export your design as a PNG image.</p>
 				<p data-for="save">
 					<button class="go"></button><button class="cancel">Cancel</button>
 				</p>
 			</div>
 
 			<div id="local">
+				<p class="desc">Your browser's localStorage can handle many mind maps and creates a permalink, but this URL cannot be shared.</p>
 				<p data-for="load">
 					<span>Saved maps</span>
 					<select class="list"></select>
@@ -120,6 +123,7 @@
 			</div>
 
 			<div id="firebase">
+				<p class="desc">Firebase offers real-time synchronization for true multi-user collaboration.</p>
 				<p data-for="save load">
 					<span>Server</span>
 					<input type="text" class="server" />
@@ -147,6 +151,7 @@
 			</div>
 
 			<div id="webdav">
+				<p class="desc">Use this to access a generic DAV-like REST API.</p>
 				<p data-for="save load">
 					<span>URL</span>
 					<input type="text" class="url" />
@@ -157,6 +162,7 @@
 			</div>
 
 			<div id="gdrive">
+				<p class="desc">Maps stored in Google Drive have a permalink URL and can be shared with other users, if you allow this by setting proper permissions (inside Google Drive itself).</p>
 				<p data-for="save">
 					<span>Format</span>
 					<select class="format"></select>
