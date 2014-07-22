@@ -174,7 +174,7 @@ Promise.prototype._executeCallback = function(cb) {
 /**
  * Wait for all these promises to complete. One failed => this fails too.
  */
-Promise.when = function(all) {
+Promise.all = Promise.when = function(all) {
 	var promise = new this();
 	var counter = 0;
 	var results = [];
@@ -236,7 +236,7 @@ Promise.send = function(xhr, data) {
 	var promise = new this();
 	xhr.addEventListener("readystatechange", function(e) {
 		if (e.target.readyState != 4) { return; }
-		if (e.target.status == 200) {
+		if (e.target.status.toString().charAt(0) == "2") {
 			promise.fulfill(e.target);
 		} else {
 			promise.reject(e.target);
@@ -3024,7 +3024,7 @@ MM.Backend.WebDAV = Object.create(MM.Backend, {
 });
 
 MM.Backend.WebDAV.save = function(data, url) {
-	return this._request("post", url, data);
+	return this._request("put", url, data);
 }
 
 MM.Backend.WebDAV.load = function(url) {
@@ -4131,7 +4131,7 @@ MM.UI.Backend.WebDAV.save = function() {
 	var url = this._url.value;
 	localStorage.setItem(this._prefix + "url", url);
 
-	if (url.charCodeAt(url.length-1) != "/") { url += "/"; }
+	if (url.charAt(url.length-1) != "/") { url += "/"; }
 	url += map.getName() + "." + MM.Format.JSON.extension;
 
 	this._current = url;
