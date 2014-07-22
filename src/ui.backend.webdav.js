@@ -29,7 +29,7 @@ MM.UI.Backend.WebDAV.save = function() {
 	var url = this._url.value;
 	localStorage.setItem(this._prefix + "url", url);
 
-	if (url.charCodeAt(url.length-1) != "/") { url += "/"; }
+	if (url.charAt(url.length-1) != "/") { url += "/"; }
 	url += map.getName() + "." + MM.Format.JSON.extension;
 
 	this._current = url;

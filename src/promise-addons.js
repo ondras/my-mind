@@ -1,7 +1,7 @@
 /**
  * Wait for all these promises to complete. One failed => this fails too.
  */
-Promise.when = function(all) {
+Promise.all = Promise.when = function(all) {
 	var promise = new this();
 	var counter = 0;
 	var results = [];
@@ -63,7 +63,7 @@ Promise.send = function(xhr, data) {
 	var promise = new this();
 	xhr.addEventListener("readystatechange", function(e) {
 		if (e.target.readyState != 4) { return; }
-		if (e.target.status == 200) {
+		if (e.target.status.toString().charAt(0) == "2") {
 			promise.fulfill(e.target);
 		} else {
 			promise.reject(e.target);
