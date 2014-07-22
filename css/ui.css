@@ -56,6 +56,10 @@ button:not(:disabled) {
 	margin: 8px 16px;
 }
 
+.ui p.desc {
+	font-size: 13px;
+}
+
 .ui:not([id]) button {
 	border: none;
 	padding: 0;

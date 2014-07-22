@@ -892,16 +892,29 @@ MM.Map.prototype.mergeWith = function(data) {
 	/* store a sequence of nodes to be selected when merge is over */
 	var ids = [];
 	var current = MM.App.current;
-	while (current != this) {
-		ids.push(current.getId());
-		current = current.getParent();
+	var node = current;
+	while (node != this) {
+		ids.push(node.getId());
+		node = node.getParent();
 	}
 
 	this._root.mergeWith(data.root);
 
-	if (MM.App.current.getMap()) { return; } /* selected node still in tree, cool */
+	if (current.getMap()) { /* selected node still in tree, cool */
+		/* if one of the parents got collapsed, act as if the node got removed */
+		var node = current.getParent();
+		var hidden = false;
+		while (node != this) {
+			if (node.isCollapsed()) { hidden = true; }
+			node = node.getParent();
+		}
+		if (!hidden) { return; } /* nothing bad happened, continue */
+	} 
 
-	/* FIXME what if the current node was being edited? */
+	/* previously selected node is no longer in the tree OR it is folded */
+
+	/* what if the node was being edited? */
+	if (MM.App.editing) { current.stopEditing(); } 
 
 	/* get all items by their id */
 	var idMap = {};
