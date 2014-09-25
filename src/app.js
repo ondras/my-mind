@@ -1,3 +1,34 @@
+/*
+ * Notes regarding app state/modes, activeElements, focusing etc.
+ * ==============================================================
+ * 
+ * 1) There is always exactly one item selected. All executed commands 
+ *    operate on this item.
+ * 
+ * 2) The app distinguishes three modes with respect to focus:
+ *   2a) One of the UI panes has focus (inputs, buttons, selects). 
+ *       Keyboard shortcuts are disabled.
+ *   2b) Current item is being edited. It is contentEditable and focused. 
+ *       Blurring ends the edit mode.
+ *   2c) ELSE the focus belongs the the currently selected item.
+ * 
+ * In 2a, we try to return focus (re-select, 2c) as soon as possible
+ * (after clicking, after changing select's value).
+ *
+ * 3) After selecting an item, we switch to 2c. In 2c, the current item
+ *    focuses its invisible "paste" node to listen for ctrl+v data.
+ * 
+ * 4) Editing mode (2b) can be ended by multiple ways:
+ *   4a) By calling current.stopEditing();
+ *       this shall be followed by some resolution.
+ *   4b) By executing MM.Command.{Finish,Cancel};
+ *       these call 4a internally.
+ *   4c) By blurring the item itself (by selecting another);
+ *       this calls MM.Command.Finish (4b).
+ *   4b) By blurring the currentElement;
+ *       this calls MM.Command.Finish (4b).
+ * 
+ */
 MM.App = {
 	keyboard: null,
 	current: null,
@@ -41,17 +72,9 @@ MM.App = {
 	},
 	
 	select: function(item) {
-		if (item == this.current) { return; }
-
-		if (this.editing) { MM.Command.Finish.execute(); }
-
-		if (this.current) {
-			this.current.getDOM().node.classList.remove("current");
-		}
+		if (this.current && this.current != item) { this.current.blur(); }
 		this.current = item;
-		this.current.getDOM().node.classList.add("current");
-		this.map.ensureItemVisibility(item);
-		MM.publish("item-select", item);
+		this.current.focus();
 	},
 	
 	adjustFontSize: function(diff) {

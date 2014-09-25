@@ -2,6 +2,21 @@ MM.Action = function() {}
 MM.Action.prototype.perform = function() {}
 MM.Action.prototype.undo = function() {}
 
+MM.Action.Multi = function(actions) {
+	this._actions = actions;
+}
+MM.Action.Multi.prototype = Object.create(MM.Action.prototype);
+MM.Action.Multi.prototype.perform = function() {
+	this._actions.forEach(function(action) {
+		action.perform();
+	});
+}
+MM.Action.Multi.prototype.undo = function() {
+	this._actions.slice().reverse().forEach(function(action) {
+		action.undo();
+	});
+}
+
 MM.Action.InsertNewItem = function(parent, index) {
 	this._parent = parent;
 	this._index = index;

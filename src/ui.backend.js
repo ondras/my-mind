@@ -55,7 +55,8 @@ MM.UI.Backend.show = function(mode) {
 
 	var visible = this._node.querySelectorAll("[data-for~=" + mode + "]");
 	[].concat.apply([], visible).forEach(function(node) { node.style.display = ""; });
-	
+
+	/* switch to 2a: steal focus from the current item */
 	this._go.focus();
 }
 

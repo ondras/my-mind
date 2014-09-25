@@ -173,6 +173,19 @@ MM.Item.prototype.clone = function() {
 	return this.constructor.fromJSON(data);
 }
 
+MM.Item.prototype.focus = function() {
+	/* going to mode 2c */
+	this._dom.node.classList.add("current");
+	this.getMap().ensureItemVisibility(this);
+	MM.publish("item-focus", this);
+}
+
+MM.Item.prototype.blur = function() {
+	/* we were in 2b; finish that via 4b */
+	if (MM.App.editing) { MM.Command.Finish.execute(); }
+	this._dom.node.classList.remove("current");
+}
+
 MM.Item.prototype.update = function(doNotRecurse) {
 	var map = this.getMap();
 	if (!map || !map.isVisible()) { return this; }
@@ -396,7 +409,7 @@ MM.Item.prototype.removeChild = function(child) {
 MM.Item.prototype.startEditing = function() {
 	this._oldText = this.getText();
 	this._dom.text.contentEditable = true;
-	this._dom.text.focus();
+	this._dom.text.focus(); /* switch to 2b */
 	document.execCommand("styleWithCSS", null, false);
 
 	this._dom.text.addEventListener("input", this);
@@ -431,7 +444,7 @@ MM.Item.prototype.handleEvent = function(e) {
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
 		break;
 
-		case "blur":
+		case "blur": /* 4d */
 			MM.Command.Finish.execute();
 		break;
 

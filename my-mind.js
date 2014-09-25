@@ -462,6 +462,19 @@ MM.Item.prototype.clone = function() {
 	return this.constructor.fromJSON(data);
 }
 
+MM.Item.prototype.focus = function() {
+	/* going to mode 2c */
+	this._dom.node.classList.add("current");
+	this.getMap().ensureItemVisibility(this);
+	MM.publish("item-focus", this);
+}
+
+MM.Item.prototype.blur = function() {
+	/* we were in 2b; finish that via 4b */
+	if (MM.App.editing) { MM.Command.Finish.execute(); }
+	this._dom.node.classList.remove("current");
+}
+
 MM.Item.prototype.update = function(doNotRecurse) {
 	var map = this.getMap();
 	if (!map || !map.isVisible()) { return this; }
@@ -685,7 +698,7 @@ MM.Item.prototype.removeChild = function(child) {
 MM.Item.prototype.startEditing = function() {
 	this._oldText = this.getText();
 	this._dom.text.contentEditable = true;
-	this._dom.text.focus();
+	this._dom.text.focus(); /* switch to 2b */
 	document.execCommand("styleWithCSS", null, false);
 
 	this._dom.text.addEventListener("input", this);
@@ -720,7 +733,7 @@ MM.Item.prototype.handleEvent = function(e) {
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
 		break;
 
-		case "blur":
+		case "blur": /* 4d */
 			MM.Command.Finish.execute();
 		break;
 
@@ -1133,6 +1146,7 @@ MM.Keyboard.init = function() {
 }
 
 MM.Keyboard.handleEvent = function(e) {
+	/* mode 2a: ignore keyboard when the activeElement resides somewhere inside of the UI pane */
 	var node = document.activeElement;
 	while (node && node != document) {
 		if (node.classList.contains("ui")) { return; }
@@ -1193,6 +1207,21 @@ MM.Tip = {
 MM.Action = function() {}
 MM.Action.prototype.perform = function() {}
 MM.Action.prototype.undo = function() {}
+
+MM.Action.Multi = function(actions) {
+	this._actions = actions;
+}
+MM.Action.Multi.prototype = Object.create(MM.Action.prototype);
+MM.Action.Multi.prototype.perform = function() {
+	this._actions.forEach(function(action) {
+		action.perform();
+	});
+}
+MM.Action.Multi.prototype.undo = function() {
+	this._actions.slice().reverse().forEach(function(action) {
+		action.undo();
+	});
+}
 
 MM.Action.InsertNewItem = function(parent, index) {
 	this._parent = parent;
@@ -3502,15 +3531,15 @@ MM.UI = function() {
 	this._value = new MM.UI.Value();
 	this._status = new MM.UI.Status();
 		
+	MM.subscribe("item-focus", this);
 	MM.subscribe("item-change", this);
-	MM.subscribe("item-select", this);
 
 	this.toggle();
 }
 
 MM.UI.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
-		case "item-select":
+		case "item-focus":
 			this._update();
 		break;
 
@@ -3521,7 +3550,8 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 }
 
 MM.UI.prototype.handleEvent = function(e) {
-	/* blur to return focus back to app commands */
+	/* blur to return focus back to app commands (mode 2c) */
+	/* FIXME 1) re-select current node, 2) do it also after any select changes */
 	if (e.target.nodeName.toLowerCase() != "select") { e.target.blur(); }
 
 	if (e.target == this._toggle) {
@@ -3876,6 +3906,7 @@ MM.UI.IO.prototype.show = function(mode) {
 MM.UI.IO.prototype.hide = function() {
 	if (!this._node.classList.contains("visible")) { return; }
 	this._node.classList.remove("visible");
+	/* FIXME instead of blurring, just re-select current node => switch to 2c */
 	document.activeElement && document.activeElement.blur();
 	window.removeEventListener("keydown", this);
 }
@@ -3990,7 +4021,8 @@ MM.UI.Backend.show = function(mode) {
 
 	var visible = this._node.querySelectorAll("[data-for~=" + mode + "]");
 	[].concat.apply([], visible).forEach(function(node) { node.style.display = ""; });
-	
+
+	/* switch to 2a: steal focus from the current item */
 	this._go.focus();
 }
 
@@ -4596,7 +4628,8 @@ MM.Mouse.handleEvent = function(e) {
 			}
 
 			if (item == MM.App.current && MM.App.editing) { return; }
-			document.activeElement && document.activeElement.blur();
+			/* if we are editing another item, end that by blurring it */
+			document.activeElement && document.activeElement.blur(); 
 			this._startDrag(e, item);
 		break;
 		
@@ -4805,6 +4838,37 @@ MM.Mouse._visualizeDragState = function(state) {
 		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
 	}
 }
+/*
+ * Notes regarding app state/modes, activeElements, focusing etc.
+ * ==============================================================
+ * 
+ * 1) There is always exactly one item selected. All executed commands 
+ *    operate on this item.
+ * 
+ * 2) The app distinguishes three modes with respect to focus:
+ *   2a) One of the UI panes has focus (inputs, buttons, selects). 
+ *       Keyboard shortcuts are disabled.
+ *   2b) Current item is being edited. It is contentEditable and focused. 
+ *       Blurring ends the edit mode.
+ *   2c) ELSE the focus belongs the the currently selected item.
+ * 
+ * In 2a, we try to return focus (re-select, 2c) as soon as possible
+ * (after clicking, after changing select's value).
+ *
+ * 3) After selecting an item, we switch to 2c. In 2c, the current item
+ *    focuses its invisible "paste" node to listen for ctrl+v data.
+ * 
+ * 4) Editing mode (2b) can be ended by multiple ways:
+ *   4a) By calling current.stopEditing();
+ *       this shall be followed by some resolution.
+ *   4b) By executing MM.Command.{Finish,Cancel};
+ *       these call 4a internally.
+ *   4c) By blurring the item itself (by selecting another);
+ *       this calls MM.Command.Finish (4b).
+ *   4b) By blurring the currentElement;
+ *       this calls MM.Command.Finish (4b).
+ * 
+ */
 MM.App = {
 	keyboard: null,
 	current: null,
@@ -4848,17 +4912,9 @@ MM.App = {
 	},
 	
 	select: function(item) {
-		if (item == this.current) { return; }
-
-		if (this.editing) { MM.Command.Finish.execute(); }
-
-		if (this.current) {
-			this.current.getDOM().node.classList.remove("current");
-		}
+		if (this.current && this.current != item) { this.current.blur(); }
 		this.current = item;
-		this.current.getDOM().node.classList.add("current");
-		this.map.ensureItemVisibility(item);
-		MM.publish("item-select", item);
+		this.current.focus();
 	},
 	
 	adjustFontSize: function(diff) {

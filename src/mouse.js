@@ -58,7 +58,8 @@ MM.Mouse.handleEvent = function(e) {
 			}
 
 			if (item == MM.App.current && MM.App.editing) { return; }
-			document.activeElement && document.activeElement.blur();
+			/* if we are editing another item, end that by blurring it */
+			document.activeElement && document.activeElement.blur(); 
 			this._startDrag(e, item);
 		break;
 		

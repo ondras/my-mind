@@ -10,15 +10,15 @@ MM.UI = function() {
 	this._value = new MM.UI.Value();
 	this._status = new MM.UI.Status();
 		
+	MM.subscribe("item-focus", this);
 	MM.subscribe("item-change", this);
-	MM.subscribe("item-select", this);
 
 	this.toggle();
 }
 
 MM.UI.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
-		case "item-select":
+		case "item-focus":
 			this._update();
 		break;
 
@@ -29,7 +29,8 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 }
 
 MM.UI.prototype.handleEvent = function(e) {
-	/* blur to return focus back to app commands */
+	/* blur to return focus back to app commands (mode 2c) */
+	/* FIXME 1) re-select current node, 2) do it also after any select changes */
 	if (e.target.nodeName.toLowerCase() != "select") { e.target.blur(); }
 
 	if (e.target == this._toggle) {
