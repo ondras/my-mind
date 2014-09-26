@@ -462,15 +462,15 @@ MM.Item.prototype.clone = function() {
 	return this.constructor.fromJSON(data);
 }
 
-MM.Item.prototype.focus = function() {
-	/* going to mode 2c */
+MM.Item.prototype.select = function() {
 	this._dom.node.classList.add("current");
 	this.getMap().ensureItemVisibility(this);
-	MM.publish("item-focus", this);
+	MM.Clipboard.focus(); /* going to mode 2c */
+	MM.publish("item-select", this);
 }
 
-MM.Item.prototype.blur = function() {
-	/* we were in 2b; finish that via 4b */
+MM.Item.prototype.deselect = function() {
+	/* we were in 2b; finish that via 3b */
 	if (MM.App.editing) { MM.Command.Finish.execute(); }
 	this._dom.node.classList.remove("current");
 }
@@ -733,7 +733,7 @@ MM.Item.prototype.handleEvent = function(e) {
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
 		break;
 
-		case "blur": /* 4d */
+		case "blur": /* 3d */
 			MM.Command.Finish.execute();
 		break;
 
@@ -1160,7 +1160,7 @@ MM.Keyboard.handleEvent = function(e) {
 		var keys = command.keys;
 		for (var j=0;j<keys.length;j++) {
 			if (this._keyOK(keys[j], e)) {
-				e.preventDefault();
+				command.prevent && e.preventDefault();
 				command.execute(e);
 				return;
 			}
@@ -1409,14 +1409,33 @@ MM.Action.SetStatus.prototype.undo = function() {
 }
 MM.Clipboard = {
 	_data: null,
-	_mode: ""
+	_mode: "",
+	_node: document.createElement("textarea")
 };
+
+MM.Clipboard.init = function() {
+	this._node.style.position = "absolute";
+	this._node.style.width = 0;
+	this._node.style.height = 0;
+	this._node.style.left = "-100px";
+	this._node.style.top = "-100px";
+	document.body.appendChild(this._node);
+}
+
+MM.Clipboard.focus = function() {
+	this._node.focus();
+}
 
 MM.Clipboard.copy = function(sourceItem) {
 	this._endCut();
-
 	this._data = sourceItem.clone();
 	this._mode = "copy";
+
+	var plaintext = this._itemToPlaintext(sourceItem);
+	this._node.value = plaintext;
+	this._node.selectionStart = 0;
+	this._node.selectionEnd = this._node.value.length;
+	setTimeout(function() { this._node.value = ""; }.bind(this), 0);
 }
 
 MM.Clipboard.paste = function(targetItem) {
@@ -1467,6 +1486,19 @@ MM.Clipboard._endCut = function() {
 
 	this._data = null;
 	this._mode = "";
+}
+
+MM.Clipboard._itemToPlaintext = function(item, depth) {
+	depth = depth || 0;
+
+	var lines = item.getChildren().map(function(child) {
+		return this._itemToPlaintext(child, depth+1);
+	}, this);
+
+	var prefix = new Array(depth+1).join("\t");
+	lines.unshift(prefix + item.getText().replace(/\n/g, "<br/>"))
+
+	return lines.join("\n") + (depth ? "" : "\n");
 }
 MM.Menu = {
 	_dom: {},
@@ -1528,6 +1560,7 @@ MM.Menu = {
 MM.Command = Object.create(MM.Repo, {
 	keys: {value: []},
 	editMode: {value: false},
+	prevent: {value: true}, /* prevent default keyboard action? */
 	label: {value: ""}
 });
 
@@ -1771,6 +1804,7 @@ MM.Command.Pan.handleEvent = function(e) {
 
 MM.Command.Copy = Object.create(MM.Command, {
 	label: {value: "Copy"},
+	prevent: {value: false},
 	keys: {value: [{keyCode: "C".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Copy.execute = function() {
@@ -1779,6 +1813,7 @@ MM.Command.Copy.execute = function() {
 
 MM.Command.Cut = Object.create(MM.Command, {
 	label: {value: "Cut"},
+	prevent: {value: false},
 	keys: {value: [{keyCode: "X".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Cut.execute = function() {
@@ -1787,6 +1822,7 @@ MM.Command.Cut.execute = function() {
 
 MM.Command.Paste = Object.create(MM.Command, {
 	label: {value: "Paste"},
+	prevent: {value: false},
 	keys: {value: [{keyCode: "V".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Paste.execute = function() {
@@ -3521,7 +3557,6 @@ MM.Backend.GDrive._auth = function(forceUI) {
 }
 MM.UI = function() {
 	this._node = document.querySelector(".ui");
-	this._node.addEventListener("click", this);
 	
 	this._toggle = this._node.querySelector("#toggle");
 
@@ -3531,15 +3566,18 @@ MM.UI = function() {
 	this._value = new MM.UI.Value();
 	this._status = new MM.UI.Status();
 		
-	MM.subscribe("item-focus", this);
+	MM.subscribe("item-select", this);
 	MM.subscribe("item-change", this);
+
+	this._node.addEventListener("click", this);
+	this._node.addEventListener("change", this);
 
 	this.toggle();
 }
 
 MM.UI.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
-		case "item-focus":
+		case "item-select":
 			this._update();
 		break;
 
@@ -3550,23 +3588,29 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 }
 
 MM.UI.prototype.handleEvent = function(e) {
-	/* blur to return focus back to app commands (mode 2c) */
-	/* FIXME 1) re-select current node, 2) do it also after any select changes */
-	if (e.target.nodeName.toLowerCase() != "select") { e.target.blur(); }
+	switch (e.type) {
+		case "click":
+			if (e.target.nodeName.toLowerCase() != "select") { MM.Clipboard.focus(); } /* focus the clipboard (2c) */
 
-	if (e.target == this._toggle) {
-		this.toggle();
-		return;
-	}
-	
-	var node = e.target;
-	while (node != document) {
-		var command = node.getAttribute("data-command");
-		if (command) {
-			MM.Command[command].execute();
-			return;
-		}
-		node = node.parentNode;
+			if (e.target == this._toggle) {
+				this.toggle();
+				return;
+			}
+			
+			var node = e.target;
+			while (node != document) {
+				var command = node.getAttribute("data-command");
+				if (command) {
+					MM.Command[command].execute();
+					return;
+				}
+				node = node.parentNode;
+			}
+		break;
+
+		case "change":
+			MM.Clipboard.focus(); /* focus the clipboard (2c) */
+		break;
 	}
 }
 
@@ -3906,8 +3950,7 @@ MM.UI.IO.prototype.show = function(mode) {
 MM.UI.IO.prototype.hide = function() {
 	if (!this._node.classList.contains("visible")) { return; }
 	this._node.classList.remove("visible");
-	/* FIXME instead of blurring, just re-select current node => switch to 2c */
-	document.activeElement && document.activeElement.blur();
+	MM.Clipboard.focus();
 	window.removeEventListener("keydown", this);
 }
 
@@ -4838,6 +4881,12 @@ MM.Mouse._visualizeDragState = function(state) {
 		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
 	}
 }
+
+setInterval(function() {
+	console.log(document.activeElement);
+}, 1000);
+
+
 /*
  * Notes regarding app state/modes, activeElements, focusing etc.
  * ==============================================================
@@ -4850,23 +4899,20 @@ MM.Mouse._visualizeDragState = function(state) {
  *       Keyboard shortcuts are disabled.
  *   2b) Current item is being edited. It is contentEditable and focused. 
  *       Blurring ends the edit mode.
- *   2c) ELSE the focus belongs the the currently selected item.
+ *   2c) ELSE the Clipboard is focused (its invisible textarea)
  * 
- * In 2a, we try to return focus (re-select, 2c) as soon as possible
- * (after clicking, after changing select's value).
+ * In 2a, we try to lose focus as soon as possible
+ * (after clicking, after changing select's value), switching to 2c.
  *
- * 3) After selecting an item, we switch to 2c. In 2c, the current item
- *    focuses its invisible "paste" node to listen for ctrl+v data.
- * 
- * 4) Editing mode (2b) can be ended by multiple ways:
- *   4a) By calling current.stopEditing();
+ * 3) Editing mode (2b) can be ended by multiple ways:
+ *   3a) By calling current.stopEditing();
  *       this shall be followed by some resolution.
- *   4b) By executing MM.Command.{Finish,Cancel};
- *       these call 4a internally.
- *   4c) By blurring the item itself (by selecting another);
- *       this calls MM.Command.Finish (4b).
- *   4b) By blurring the currentElement;
- *       this calls MM.Command.Finish (4b).
+ *   3b) By executing MM.Command.{Finish,Cancel};
+ *       these call 3a internally.
+ *   3c) By blurring the item itself (by selecting another);
+ *       this calls MM.Command.Finish (3b).
+ *   3b) By blurring the currentElement;
+ *       this calls MM.Command.Finish (3b).
  * 
  */
 MM.App = {
@@ -4912,11 +4958,11 @@ MM.App = {
 	},
 	
 	select: function(item) {
-		if (this.current && this.current != item) { this.current.blur(); }
+		if (this.current && this.current != item) { this.current.deselect(); }
 		this.current = item;
-		this.current.focus();
+		this.current.select();
 	},
-	
+
 	adjustFontSize: function(diff) {
 		this._fontSize = Math.max(30, this._fontSize + 10*diff);
 		this._port.style.fontSize = this._fontSize + "%";
@@ -4966,6 +5012,7 @@ MM.App = {
 		MM.Keyboard.init();
 		MM.Menu.init(this._port);
 		MM.Mouse.init(this._port);
+		MM.Clipboard.init();
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);

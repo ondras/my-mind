@@ -173,15 +173,15 @@ MM.Item.prototype.clone = function() {
 	return this.constructor.fromJSON(data);
 }
 
-MM.Item.prototype.focus = function() {
-	/* going to mode 2c */
+MM.Item.prototype.select = function() {
 	this._dom.node.classList.add("current");
 	this.getMap().ensureItemVisibility(this);
-	MM.publish("item-focus", this);
+	MM.Clipboard.focus(); /* going to mode 2c */
+	MM.publish("item-select", this);
 }
 
-MM.Item.prototype.blur = function() {
-	/* we were in 2b; finish that via 4b */
+MM.Item.prototype.deselect = function() {
+	/* we were in 2b; finish that via 3b */
 	if (MM.App.editing) { MM.Command.Finish.execute(); }
 	this._dom.node.classList.remove("current");
 }
@@ -444,7 +444,7 @@ MM.Item.prototype.handleEvent = function(e) {
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
 		break;
 
-		case "blur": /* 4d */
+		case "blur": /* 3d */
 			MM.Command.Finish.execute();
 		break;
 

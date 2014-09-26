@@ -1,3 +1,9 @@
+
+setInterval(function() {
+	console.log(document.activeElement);
+}, 1000);
+
+
 /*
  * Notes regarding app state/modes, activeElements, focusing etc.
  * ==============================================================
@@ -10,23 +16,20 @@
  *       Keyboard shortcuts are disabled.
  *   2b) Current item is being edited. It is contentEditable and focused. 
  *       Blurring ends the edit mode.
- *   2c) ELSE the focus belongs the the currently selected item.
+ *   2c) ELSE the Clipboard is focused (its invisible textarea)
  * 
- * In 2a, we try to return focus (re-select, 2c) as soon as possible
- * (after clicking, after changing select's value).
+ * In 2a, we try to lose focus as soon as possible
+ * (after clicking, after changing select's value), switching to 2c.
  *
- * 3) After selecting an item, we switch to 2c. In 2c, the current item
- *    focuses its invisible "paste" node to listen for ctrl+v data.
- * 
- * 4) Editing mode (2b) can be ended by multiple ways:
- *   4a) By calling current.stopEditing();
+ * 3) Editing mode (2b) can be ended by multiple ways:
+ *   3a) By calling current.stopEditing();
  *       this shall be followed by some resolution.
- *   4b) By executing MM.Command.{Finish,Cancel};
- *       these call 4a internally.
- *   4c) By blurring the item itself (by selecting another);
- *       this calls MM.Command.Finish (4b).
- *   4b) By blurring the currentElement;
- *       this calls MM.Command.Finish (4b).
+ *   3b) By executing MM.Command.{Finish,Cancel};
+ *       these call 3a internally.
+ *   3c) By blurring the item itself (by selecting another);
+ *       this calls MM.Command.Finish (3b).
+ *   3b) By blurring the currentElement;
+ *       this calls MM.Command.Finish (3b).
  * 
  */
 MM.App = {
@@ -72,11 +75,11 @@ MM.App = {
 	},
 	
 	select: function(item) {
-		if (this.current && this.current != item) { this.current.blur(); }
+		if (this.current && this.current != item) { this.current.deselect(); }
 		this.current = item;
-		this.current.focus();
+		this.current.select();
 	},
-	
+
 	adjustFontSize: function(diff) {
 		this._fontSize = Math.max(30, this._fontSize + 10*diff);
 		this._port.style.fontSize = this._fontSize + "%";
@@ -126,6 +129,7 @@ MM.App = {
 		MM.Keyboard.init();
 		MM.Menu.init(this._port);
 		MM.Mouse.init(this._port);
+		MM.Clipboard.init();
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);

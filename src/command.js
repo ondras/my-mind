@@ -1,6 +1,7 @@
 MM.Command = Object.create(MM.Repo, {
 	keys: {value: []},
 	editMode: {value: false},
+	prevent: {value: true}, /* prevent default keyboard action? */
 	label: {value: ""}
 });
 
@@ -244,6 +245,7 @@ MM.Command.Pan.handleEvent = function(e) {
 
 MM.Command.Copy = Object.create(MM.Command, {
 	label: {value: "Copy"},
+	prevent: {value: false},
 	keys: {value: [{keyCode: "C".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Copy.execute = function() {
@@ -252,6 +254,7 @@ MM.Command.Copy.execute = function() {
 
 MM.Command.Cut = Object.create(MM.Command, {
 	label: {value: "Cut"},
+	prevent: {value: false},
 	keys: {value: [{keyCode: "X".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Cut.execute = function() {
@@ -260,6 +263,7 @@ MM.Command.Cut.execute = function() {
 
 MM.Command.Paste = Object.create(MM.Command, {
 	label: {value: "Paste"},
+	prevent: {value: false},
 	keys: {value: [{keyCode: "V".charCodeAt(0), ctrlKey:true}]}
 });
 MM.Command.Paste.execute = function() {

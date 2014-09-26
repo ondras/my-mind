@@ -19,7 +19,7 @@ MM.Keyboard.handleEvent = function(e) {
 		var keys = command.keys;
 		for (var j=0;j<keys.length;j++) {
 			if (this._keyOK(keys[j], e)) {
-				e.preventDefault();
+				command.prevent && e.preventDefault();
 				command.execute(e);
 				return;
 			}

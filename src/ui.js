@@ -1,6 +1,5 @@
 MM.UI = function() {
 	this._node = document.querySelector(".ui");
-	this._node.addEventListener("click", this);
 	
 	this._toggle = this._node.querySelector("#toggle");
 
@@ -10,15 +9,18 @@ MM.UI = function() {
 	this._value = new MM.UI.Value();
 	this._status = new MM.UI.Status();
 		
-	MM.subscribe("item-focus", this);
+	MM.subscribe("item-select", this);
 	MM.subscribe("item-change", this);
+
+	this._node.addEventListener("click", this);
+	this._node.addEventListener("change", this);
 
 	this.toggle();
 }
 
 MM.UI.prototype.handleMessage = function(message, publisher) {
 	switch (message) {
-		case "item-focus":
+		case "item-select":
 			this._update();
 		break;
 
@@ -29,23 +31,29 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 }
 
 MM.UI.prototype.handleEvent = function(e) {
-	/* blur to return focus back to app commands (mode 2c) */
-	/* FIXME 1) re-select current node, 2) do it also after any select changes */
-	if (e.target.nodeName.toLowerCase() != "select") { e.target.blur(); }
+	switch (e.type) {
+		case "click":
+			if (e.target.nodeName.toLowerCase() != "select") { MM.Clipboard.focus(); } /* focus the clipboard (2c) */
 
-	if (e.target == this._toggle) {
-		this.toggle();
-		return;
-	}
-	
-	var node = e.target;
-	while (node != document) {
-		var command = node.getAttribute("data-command");
-		if (command) {
-			MM.Command[command].execute();
-			return;
-		}
-		node = node.parentNode;
+			if (e.target == this._toggle) {
+				this.toggle();
+				return;
+			}
+			
+			var node = e.target;
+			while (node != document) {
+				var command = node.getAttribute("data-command");
+				if (command) {
+					MM.Command[command].execute();
+					return;
+				}
+				node = node.parentNode;
+			}
+		break;
+
+		case "change":
+			MM.Clipboard.focus(); /* focus the clipboard (2c) */
+		break;
 	}
 }
 
