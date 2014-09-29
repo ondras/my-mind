@@ -44,7 +44,7 @@ MM.Format.Plaintext._serializeItem = function(item, depth) {
 	}, this);
 
 	var prefix = new Array(depth+1).join("\t");
-	lines.unshift(prefix + item.text.replace(/\n/g, "<br/>"))
+	lines.unshift(prefix + item.text.replace(/\n/g, ""));
 
 	return lines.join("\n") + (depth ? "" : "\n");
 }

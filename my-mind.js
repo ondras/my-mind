@@ -510,7 +510,7 @@ MM.Item.prototype.updateSubtree = function(isSubChild) {
 }
 
 MM.Item.prototype.setText = function(text) {
-	this._dom.text.innerHTML = text.replace(/\n/g, "<br/>");
+	this._dom.text.innerHTML = text;
 	this._findLinks(this._dom.text);
 	return this.update();
 }
@@ -520,7 +520,7 @@ MM.Item.prototype.getId = function() {
 }
 
 MM.Item.prototype.getText = function() {
-	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
+	return this._dom.text.innerHTML;
 }
 
 MM.Item.prototype.collapse = function() {
@@ -1069,7 +1069,7 @@ MM.Map.prototype.getRoot = function() {
 
 MM.Map.prototype.getName = function() {
 	var name = this._root.getText();
-	return name.replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
+	return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
 }
 
 MM.Map.prototype.getId = function() {
@@ -2790,6 +2790,14 @@ MM.Format.getByMime = function(mime) {
 
 MM.Format.to = function(data) {}
 MM.Format.from = function(data) {}
+
+MM.Format.nl2br = function(str) {
+	return str.replace(/\n/g, "<br/>");
+}
+
+MM.Format.br2nl = function(str) {
+	return str.replace(/<br\s*\/?>/g, "\n");
+}
 MM.Format.JSON = Object.create(MM.Format, {
 	id: {value: "json"},
 	label: {value: "Native (JSON)"},
@@ -2798,7 +2806,7 @@ MM.Format.JSON = Object.create(MM.Format, {
 });
 
 MM.Format.JSON.to = function(data) { 
-	return JSON.stringify(data, null, 2) + "\n";
+	return JSON.stringify(data, null, "\t") + "\n";
 }
 
 MM.Format.JSON.from = function(data) {
@@ -2852,7 +2860,7 @@ MM.Format.FreeMind._serializeItem = function(doc, json) {
 
 MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
-	elm.setAttribute("TEXT", json.text);
+	elm.setAttribute("TEXT", MM.Format.br2nl(json.text));
 	elm.setAttribute("ID", json.id);
 
 	if (json.side) { elm.setAttribute("POSITION", json.side); }
@@ -2878,7 +2886,7 @@ MM.Format.FreeMind._parseNode = function(node, parent) {
 MM.Format.FreeMind._parseAttributes = function(node, parent) {
 	var json = {
 		children: [],
-		text: node.getAttribute("TEXT") || "",
+		text: MM.Format.nl2br(node.getAttribute("TEXT") || ""),
 		id: node.getAttribute("ID")
 	};
 
@@ -2924,7 +2932,7 @@ MM.Format.MMA = Object.create(MM.Format.FreeMind, {
 MM.Format.MMA._parseAttributes = function(node, parent) {
 	var json = {
 		children: [],
-		text: node.getAttribute("title") || "",
+		text: MM.Format.nl2br(node.getAttribute("title") || ""),
 		shape: "box"
 	};
 
@@ -2954,7 +2962,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 
 MM.Format.MMA._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
-	elm.setAttribute("title", json.text);
+	elm.setAttribute("title", MM.Format.br2nl(json.text));
 	elm.setAttribute("expand", json.collapsed ? "false" : "true");
 
 	if (json.side) { elm.setAttribute("direction", json.side == "left" ? "0" : "1"); }
@@ -2993,7 +3001,7 @@ MM.Format.Mup.from = function(data) {
 
 MM.Format.Mup._MupToMM = function(item) {
 	var json = {
-		text: item.title,
+		text: MM.Format.nl2br(item.title),
 		id: item.id,
 		shape: "box"
 	}
@@ -3031,7 +3039,7 @@ MM.Format.Mup._MupToMM = function(item) {
 MM.Format.Mup._MMtoMup = function(item, side) {
 	var result = {
 		id: item.id,
-		title: item.text,
+		title: MM.Format.br2nl(item.text),
 		attr: {}
 	}
 	if (item.color) {
@@ -3103,7 +3111,7 @@ MM.Format.Plaintext._serializeItem = function(item, depth) {
 	}, this);
 
 	var prefix = new Array(depth+1).join("\t");
-	lines.unshift(prefix + item.text.replace(/\n/g, "<br/>"))
+	lines.unshift(prefix + item.text.replace(/\n/g, ""));
 
 	return lines.join("\n") + (depth ? "" : "\n");
 }
