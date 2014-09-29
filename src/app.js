@@ -1,8 +1,8 @@
-/*
+
 setInterval(function() {
 	console.log(document.activeElement);
 }, 1000);
-*/
+
 
 /*
  * Notes regarding app state/modes, activeElements, focusing etc.

@@ -371,7 +371,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	if (!child) { 
 		child = new MM.Item();
 		newChild = true;
-	} else if (child.getParent()) {
+	} else if (child.getParent() && child.getParent().removeChild) { /* only when the child has non-map parent */
 		child.getParent().removeChild(child);
 	}
 
@@ -430,6 +430,9 @@ MM.Item.prototype.stopEditing = function() {
 	this._oldText = "";
 
 	this.update(); /* text changed */
+
+	MM.Clipboard.focus();
+
 	return result;
 }
 

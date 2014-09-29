@@ -660,7 +660,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	if (!child) { 
 		child = new MM.Item();
 		newChild = true;
-	} else if (child.getParent()) {
+	} else if (child.getParent() && child.getParent().removeChild) { /* only when the child has non-map parent */
 		child.getParent().removeChild(child);
 	}
 
@@ -719,6 +719,9 @@ MM.Item.prototype.stopEditing = function() {
 	this._oldText = "";
 
 	this.update(); /* text changed */
+
+	MM.Clipboard.focus();
+
 	return result;
 }
 
@@ -4769,11 +4772,11 @@ MM.Mouse.handleEvent = function(e) {
 		
 		case "contextmenu":
 			this._endDrag();
+			e.preventDefault();
 
 			var item = MM.App.map.getItemFor(e.target);
-			if (item) {	MM.App.select(item); }
+			item && MM.App.select(item);
 
-			e.preventDefault();
 			MM.Menu.open(e.clientX, e.clientY);
 		break;
 
@@ -4782,6 +4785,7 @@ MM.Mouse.handleEvent = function(e) {
 			e.clientX = e.touches[0].clientX;
 			e.clientY = e.touches[0].clientY;
 		case "mousedown":
+			if (e.type == "mousedown") { e.preventDefault(); } /* to prevent blurring the clipboard node */
 			var item = MM.App.map.getItemFor(e.target);
 
 			if (e.type == "touchstart") { /* context menu here, after we have the item */
@@ -4791,9 +4795,11 @@ MM.Mouse.handleEvent = function(e) {
 				}, this.TOUCH_DELAY);
 			}
 
-			if (item == MM.App.current && MM.App.editing) { return; }
-			/* if we are editing another item, end that by blurring it */
-			document.activeElement && document.activeElement.blur(); 
+			if (MM.App.editing) {
+				if (item == MM.App.current) { return; } /* ignore dnd on edited node */
+				MM.Command.Finish.execute(); /* clicked elsewhere => finalize edit */
+			}
+
 			this._startDrag(e, item);
 		break;
 		
@@ -5002,11 +5008,11 @@ MM.Mouse._visualizeDragState = function(state) {
 		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
 	}
 }
-/*
+
 setInterval(function() {
 	console.log(document.activeElement);
 }, 1000);
-*/
+
 
 /*
  * Notes regarding app state/modes, activeElements, focusing etc.
