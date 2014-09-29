@@ -1441,7 +1441,7 @@ MM.Clipboard.paste = function(targetItem) {
 		this._node.value = "";
 		if (!pasted) { return; } /* nothing */
 
-		if (this._item && pasted == this._itemToPlaintext(this._item)) { /* pasted a previously copied/cut item */
+		if (this._item && pasted == MM.Format.Plaintext.to(this._item.toJSON())) { /* pasted a previously copied/cut item */
 			this._pasteItem(this._item, targetItem);
 		} else { /* pasted some external data */
 			this._pastePlaintext(pasted, targetItem);
@@ -1478,27 +1478,22 @@ MM.Clipboard._pasteItem = function(sourceItem, targetItem) {
 }
 
 MM.Clipboard._pastePlaintext = function(plaintext, targetItem) {
-	var items = this._parsePlaintext(plaintext);
-
 	if (this._mode == "cut") { this._endCut(); } /* external paste => abort cutting */
 
-	switch (items.length) {
-		case 0: return;
+	var json = MM.Format.Plaintext.from(plaintext);
+	var map = MM.Map.fromJSON(json);
+	var root = map.getRoot();
 
-		case 1:
-			var action = new MM.Action.AppendItem(targetItem, items[0]);
-			MM.App.action(action);
-		break;
-
-		default:
-			var actions = items.map(function(item) {
-				return new MM.Action.AppendItem(targetItem, item);
-			});
-			var action = new MM.Action.Multi(actions);
-			MM.App.action(action);
-		break;
+	if (root.getText()) {
+		var action = new MM.Action.AppendItem(targetItem, root);
+		MM.App.action(action);
+	} else {
+		var actions = root.getChildren().map(function(item) {
+			return new MM.Action.AppendItem(targetItem, item);
+		});
+		var action = new MM.Action.Multi(actions);
+		MM.App.action(action);
 	}
-
 }
 
 MM.Clipboard.cut = function(sourceItem) {
@@ -1515,7 +1510,8 @@ MM.Clipboard.cut = function(sourceItem) {
  * Expose plaintext data to the textarea to be copied to system clipboard. Clear afterwards.
  */
 MM.Clipboard._expose = function() {
-	var plaintext = this._itemToPlaintext(this._item);
+	var json = this._item.toJSON();
+	var plaintext = MM.Format.Plaintext.to(json);
 	this._node.value = plaintext;
 	this._node.selectionStart = 0;
 	this._node.selectionEnd = this._node.value.length;
@@ -1528,65 +1524,6 @@ MM.Clipboard._endCut = function() {
 	this._item.getDOM().node.classList.remove("cut");
 	this._item = null;
 	this._mode = "";
-}
-
-MM.Clipboard._itemToPlaintext = function(item, depth) {
-	depth = depth || 0;
-
-	var lines = item.getChildren().map(function(child) {
-		return this._itemToPlaintext(child, depth+1);
-	}, this);
-
-	var prefix = new Array(depth+1).join("\t");
-	lines.unshift(prefix + item.getText().replace(/\n/g, "<br/>"))
-
-	return lines.join("\n") + (depth ? "" : "\n");
-}
-
-MM.Clipboard._parsePlaintext = function(plaintext) {
-	var lines = plaintext.split("\n").filter(function(line) {
-		return line.match(/\S/);
-	});
-
-	return this._parsePlaintextItems(lines);
-}
-
-MM.Clipboard._parsePlaintextItems = function(lines) {
-	var items = [];
-	if (!lines.length) { return items; }
-	var firstPrefix = this._getPlaintextPrefix(lines[0]);
-
-	var currentItem = null;
-	var childLines = [];
-
-	/* finalize a block of sub-children by converting them to items and appending */
-	var convertChildLinesToChildren = function() { 
-		if (!currentItem || !childLines.length) { return; }
-		this._parsePlaintextItems(childLines).forEach(function(child) {
-			currentItem.insertChild(child);
-		});
-		childLines = [];
-	}
-
-	lines.forEach(function(line, index) {
-		if (this._getPlaintextPrefix(line) == firstPrefix) { /* new top-level item! */
-			convertChildLinesToChildren.call(this); /* finalize previous item */
-
-			var json = {text:line.match(/^\s*(.*)/)[1]};
-			currentItem = MM.Item.fromJSON(json);
-			items.push(currentItem);
-		} else { /* prepare as a future child */
-			childLines.push(line);
-		}
-	}, this);
-
-	convertChildLinesToChildren.call(this);
-
-	return items;
-}
-
-MM.Clipboard._getPlaintextPrefix = function(line) {
-	return line.match(/^\s*/)[0];
 }
 MM.Menu = {
 	_dom: {},
@@ -3120,6 +3057,92 @@ MM.Format.Mup._MMtoMup = function(item, side) {
 
 	return result;
 }
+MM.Format.Plaintext = Object.create(MM.Format, {
+	id: {value: "plaintext"},
+	label: {value: "Plain text"},
+	extension: {value: "txt"},
+	mime: {value: "application/vnd.mymind+txt"}
+});
+
+/**
+ * Can serialize also a sub-tree
+ */
+MM.Format.Plaintext.to = function(data) {
+	return this._serializeItem(data.root || data);
+}
+
+MM.Format.Plaintext.from = function(data) {
+	var lines = data.split("\n").filter(function(line) {
+		return line.match(/\S/);
+	});
+
+	var items = this._parseItems(lines);
+
+	if (items.length == 1) {
+		var result = {
+			root: items[0]
+		}
+	} else {
+		var result = {
+			root: {
+				text: "",
+				children: items
+			}
+		}
+	}
+	result.root.layout = "map";
+
+	return result;
+}
+
+MM.Format.Plaintext._serializeItem = function(item, depth) {
+	depth = depth || 0;
+
+	var lines = (item.children || []) .map(function(child) {
+		return this._serializeItem(child, depth+1);
+	}, this);
+
+	var prefix = new Array(depth+1).join("\t");
+	lines.unshift(prefix + item.text.replace(/\n/g, "<br/>"))
+
+	return lines.join("\n") + (depth ? "" : "\n");
+}
+
+
+MM.Format.Plaintext._parseItems = function(lines) {
+	var items = [];
+	if (!lines.length) { return items; }
+	var firstPrefix = this._parsePrefix(lines[0]);
+
+	var currentItem = null;
+	var childLines = [];
+
+	/* finalize a block of sub-children by converting them to items and appending */
+	var convertChildLinesToChildren = function() { 
+		if (!currentItem || !childLines.length) { return; }
+		var children = this._parseItems(childLines);
+		if (children.length) { currentItem.children = children; }
+		childLines = [];
+	}
+
+	lines.forEach(function(line, index) {
+		if (this._parsePrefix(line) == firstPrefix) { /* new top-level item! */
+			convertChildLinesToChildren.call(this); /* finalize previous item */
+			currentItem = {text:line.match(/^\s*(.*)/)[1]};
+			items.push(currentItem);
+		} else { /* prepare as a future child */
+			childLines.push(line);
+		}
+	}, this);
+
+	convertChildLinesToChildren.call(this);
+
+	return items;
+}
+
+MM.Format.Plaintext._parsePrefix = function(line) {
+	return line.match(/^\s*/)[0];
+}
 MM.Backend = Object.create(MM.Repo);
 
 /**
@@ -4219,6 +4242,7 @@ MM.UI.Backend.File.init = function(select) {
 	this._format.appendChild(MM.Format.FreeMind.buildOption());
 	this._format.appendChild(MM.Format.MMA.buildOption());
 	this._format.appendChild(MM.Format.Mup.buildOption());
+	this._format.appendChild(MM.Format.Plaintext.buildOption());
 	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
 }
 
@@ -4632,6 +4656,7 @@ MM.UI.Backend.GDrive.init = function(select) {
 	this._format.appendChild(MM.Format.FreeMind.buildOption());
 	this._format.appendChild(MM.Format.MMA.buildOption());
 	this._format.appendChild(MM.Format.Mup.buildOption());
+	this._format.appendChild(MM.Format.Plaintext.buildOption());
 	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
 }
 
