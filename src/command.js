@@ -246,7 +246,10 @@ MM.Command.Pan.handleEvent = function(e) {
 MM.Command.Copy = Object.create(MM.Command, {
 	label: {value: "Copy"},
 	prevent: {value: false},
-	keys: {value: [{keyCode: "C".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [
+		{keyCode: "C".charCodeAt(0), ctrlKey:true},
+		{keyCode: "C".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Copy.execute = function() {
 	MM.Clipboard.copy(MM.App.current);
@@ -255,7 +258,10 @@ MM.Command.Copy.execute = function() {
 MM.Command.Cut = Object.create(MM.Command, {
 	label: {value: "Cut"},
 	prevent: {value: false},
-	keys: {value: [{keyCode: "X".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [
+		{keyCode: "X".charCodeAt(0), ctrlKey:true},
+		{keyCode: "X".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Cut.execute = function() {
 	MM.Clipboard.cut(MM.App.current);
@@ -264,7 +270,10 @@ MM.Command.Cut.execute = function() {
 MM.Command.Paste = Object.create(MM.Command, {
 	label: {value: "Paste"},
 	prevent: {value: false},
-	keys: {value: [{keyCode: "V".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [
+		{keyCode: "V".charCodeAt(0), ctrlKey:true},
+		{keyCode: "V".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);

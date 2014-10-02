@@ -1,7 +1,7 @@
 MM.Clipboard = {
 	_item: null,
 	_mode: "",
-	_delay: 0,
+	_delay: 50,
 	_node: document.createElement("textarea")
 };
 
@@ -16,6 +16,7 @@ MM.Clipboard.init = function() {
 
 MM.Clipboard.focus = function() {
 	this._node.focus();
+	this._empty();
 }
 
 MM.Clipboard.copy = function(sourceItem) {
@@ -29,7 +30,7 @@ MM.Clipboard.copy = function(sourceItem) {
 MM.Clipboard.paste = function(targetItem) {
 	setTimeout(function() {
 		var pasted = this._node.value;
-		this._node.value = "";
+		this._empty();
 		if (!pasted) { return; } /* nothing */
 
 		if (this._item && pasted == MM.Format.Plaintext.to(this._item.toJSON())) { /* pasted a previously copied/cut item */
@@ -106,7 +107,14 @@ MM.Clipboard._expose = function() {
 	this._node.value = plaintext;
 	this._node.selectionStart = 0;
 	this._node.selectionEnd = this._node.value.length;
-	setTimeout(function() { this._node.value = ""; }.bind(this), this._delay);
+	setTimeout(this._empty.bind(this), this._delay);
+}
+
+MM.Clipboard._empty = function() {
+	/* safari needs a non-empty selection in order to actually perfrom a real copy on cmd+c */
+	this._node.value = "\n";
+	this._node.selectionStart = 0;
+	this._node.selectionEnd = this._node.value.length;
 }
 
 MM.Clipboard._endCut = function() {

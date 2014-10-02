@@ -1413,7 +1413,7 @@ MM.Action.SetStatus.prototype.undo = function() {
 MM.Clipboard = {
 	_item: null,
 	_mode: "",
-	_delay: 0,
+	_delay: 50,
 	_node: document.createElement("textarea")
 };
 
@@ -1428,6 +1428,7 @@ MM.Clipboard.init = function() {
 
 MM.Clipboard.focus = function() {
 	this._node.focus();
+	this._empty();
 }
 
 MM.Clipboard.copy = function(sourceItem) {
@@ -1441,7 +1442,7 @@ MM.Clipboard.copy = function(sourceItem) {
 MM.Clipboard.paste = function(targetItem) {
 	setTimeout(function() {
 		var pasted = this._node.value;
-		this._node.value = "";
+		this._empty();
 		if (!pasted) { return; } /* nothing */
 
 		if (this._item && pasted == MM.Format.Plaintext.to(this._item.toJSON())) { /* pasted a previously copied/cut item */
@@ -1518,7 +1519,14 @@ MM.Clipboard._expose = function() {
 	this._node.value = plaintext;
 	this._node.selectionStart = 0;
 	this._node.selectionEnd = this._node.value.length;
-	setTimeout(function() { this._node.value = ""; }.bind(this), this._delay);
+	setTimeout(this._empty.bind(this), this._delay);
+}
+
+MM.Clipboard._empty = function() {
+	/* safari needs a non-empty selection in order to actually perfrom a real copy on cmd+c */
+	this._node.value = "\n";
+	this._node.selectionStart = 0;
+	this._node.selectionEnd = this._node.value.length;
 }
 
 MM.Clipboard._endCut = function() {
@@ -1833,7 +1841,10 @@ MM.Command.Pan.handleEvent = function(e) {
 MM.Command.Copy = Object.create(MM.Command, {
 	label: {value: "Copy"},
 	prevent: {value: false},
-	keys: {value: [{keyCode: "C".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [
+		{keyCode: "C".charCodeAt(0), ctrlKey:true},
+		{keyCode: "C".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Copy.execute = function() {
 	MM.Clipboard.copy(MM.App.current);
@@ -1842,7 +1853,10 @@ MM.Command.Copy.execute = function() {
 MM.Command.Cut = Object.create(MM.Command, {
 	label: {value: "Cut"},
 	prevent: {value: false},
-	keys: {value: [{keyCode: "X".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [
+		{keyCode: "X".charCodeAt(0), ctrlKey:true},
+		{keyCode: "X".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Cut.execute = function() {
 	MM.Clipboard.cut(MM.App.current);
@@ -1851,7 +1865,10 @@ MM.Command.Cut.execute = function() {
 MM.Command.Paste = Object.create(MM.Command, {
 	label: {value: "Paste"},
 	prevent: {value: false},
-	keys: {value: [{keyCode: "V".charCodeAt(0), ctrlKey:true}]}
+	keys: {value: [
+		{keyCode: "V".charCodeAt(0), ctrlKey:true},
+		{keyCode: "V".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);
@@ -1969,7 +1986,7 @@ MM.Command.Strikethrough = Object.create(MM.Command.Style, {
 
 MM.Command.Value = Object.create(MM.Command, {
 	label: {value: "Set value"},
-	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false}]}
+	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
 MM.Command.Value.execute = function() {
 	var item = MM.App.current;
@@ -2008,7 +2025,7 @@ MM.Command.No.execute = function() {
 
 MM.Command.Computed = Object.create(MM.Command, {
 	label: {value: "Computed"},
-	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false}]}
+	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
 MM.Command.Computed.execute = function() {
 	var item = MM.App.current;
@@ -5008,11 +5025,11 @@ MM.Mouse._visualizeDragState = function(state) {
 		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
 	}
 }
-
+/*
 setInterval(function() {
 	console.log(document.activeElement);
 }, 1000);
-
+*/
 
 /*
  * Notes regarding app state/modes, activeElements, focusing etc.
