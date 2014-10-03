@@ -84,7 +84,7 @@ MM.UI.IO.prototype.show = function(mode) {
 MM.UI.IO.prototype.hide = function() {
 	if (!this._node.classList.contains("visible")) { return; }
 	this._node.classList.remove("visible");
-	document.activeElement && document.activeElement.blur();
+	MM.Clipboard.focus();
 	window.removeEventListener("keydown", this);
 }
 

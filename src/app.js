@@ -1,3 +1,37 @@
+/*
+setInterval(function() {
+	console.log(document.activeElement);
+}, 1000);
+*/
+
+/*
+ * Notes regarding app state/modes, activeElements, focusing etc.
+ * ==============================================================
+ * 
+ * 1) There is always exactly one item selected. All executed commands 
+ *    operate on this item.
+ * 
+ * 2) The app distinguishes three modes with respect to focus:
+ *   2a) One of the UI panes has focus (inputs, buttons, selects). 
+ *       Keyboard shortcuts are disabled.
+ *   2b) Current item is being edited. It is contentEditable and focused. 
+ *       Blurring ends the edit mode.
+ *   2c) ELSE the Clipboard is focused (its invisible textarea)
+ * 
+ * In 2a, we try to lose focus as soon as possible
+ * (after clicking, after changing select's value), switching to 2c.
+ *
+ * 3) Editing mode (2b) can be ended by multiple ways:
+ *   3a) By calling current.stopEditing();
+ *       this shall be followed by some resolution.
+ *   3b) By executing MM.Command.{Finish,Cancel};
+ *       these call 3a internally.
+ *   3c) By blurring the item itself (by selecting another);
+ *       this calls MM.Command.Finish (3b).
+ *   3b) By blurring the currentElement;
+ *       this calls MM.Command.Finish (3b).
+ * 
+ */
 MM.App = {
 	keyboard: null,
 	current: null,
@@ -41,19 +75,11 @@ MM.App = {
 	},
 	
 	select: function(item) {
-		if (item == this.current) { return; }
-
-		if (this.editing) { MM.Command.Finish.execute(); }
-
-		if (this.current) {
-			this.current.getDOM().node.classList.remove("current");
-		}
+		if (this.current && this.current != item) { this.current.deselect(); }
 		this.current = item;
-		this.current.getDOM().node.classList.add("current");
-		this.map.ensureItemVisibility(item);
-		MM.publish("item-select", item);
+		this.current.select();
 	},
-	
+
 	adjustFontSize: function(diff) {
 		this._fontSize = Math.max(30, this._fontSize + 10*diff);
 		this._port.style.fontSize = this._fontSize + "%";
@@ -103,6 +129,7 @@ MM.App = {
 		MM.Keyboard.init();
 		MM.Menu.init(this._port);
 		MM.Mouse.init(this._port);
+		MM.Clipboard.init();
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);

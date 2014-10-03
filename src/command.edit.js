@@ -101,7 +101,7 @@ MM.Command.Strikethrough = Object.create(MM.Command.Style, {
 
 MM.Command.Value = Object.create(MM.Command, {
 	label: {value: "Set value"},
-	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false}]}
+	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
 MM.Command.Value.execute = function() {
 	var item = MM.App.current;
@@ -140,7 +140,7 @@ MM.Command.No.execute = function() {
 
 MM.Command.Computed = Object.create(MM.Command, {
 	label: {value: "Computed"},
-	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false}]}
+	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
 MM.Command.Computed.execute = function() {
 	var item = MM.App.current;

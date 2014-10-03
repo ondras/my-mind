@@ -10,6 +10,7 @@ MM.UI.Backend.GDrive.init = function(select) {
 	this._format.appendChild(MM.Format.FreeMind.buildOption());
 	this._format.appendChild(MM.Format.MMA.buildOption());
 	this._format.appendChild(MM.Format.Mup.buildOption());
+	this._format.appendChild(MM.Format.Plaintext.buildOption());
 	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
 }
 

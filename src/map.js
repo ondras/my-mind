@@ -195,7 +195,7 @@ MM.Map.prototype.getRoot = function() {
 
 MM.Map.prototype.getName = function() {
 	var name = this._root.getText();
-	return name.replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
+	return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
 }
 
 MM.Map.prototype.getId = function() {

@@ -25,6 +25,7 @@ SOURCES =	src/mm.js \
 			src/format.freemind.js \
 			src/format.mma.js \
 			src/format.mup.js \
+			src/format.plaintext.js \
 			src/backend.js \
 			src/backend.local.js \
 			src/backend.webdav.js \

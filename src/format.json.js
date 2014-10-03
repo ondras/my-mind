@@ -6,7 +6,7 @@ MM.Format.JSON = Object.create(MM.Format, {
 });
 
 MM.Format.JSON.to = function(data) { 
-	return JSON.stringify(data, null, 2) + "\n";
+	return JSON.stringify(data, null, "\t") + "\n";
 }
 
 MM.Format.JSON.from = function(data) {

@@ -462,6 +462,19 @@ MM.Item.prototype.clone = function() {
 	return this.constructor.fromJSON(data);
 }
 
+MM.Item.prototype.select = function() {
+	this._dom.node.classList.add("current");
+	this.getMap().ensureItemVisibility(this);
+	MM.Clipboard.focus(); /* going to mode 2c */
+	MM.publish("item-select", this);
+}
+
+MM.Item.prototype.deselect = function() {
+	/* we were in 2b; finish that via 3b */
+	if (MM.App.editing) { MM.Command.Finish.execute(); }
+	this._dom.node.classList.remove("current");
+}
+
 MM.Item.prototype.update = function(doNotRecurse) {
 	var map = this.getMap();
 	if (!map || !map.isVisible()) { return this; }
@@ -497,7 +510,7 @@ MM.Item.prototype.updateSubtree = function(isSubChild) {
 }
 
 MM.Item.prototype.setText = function(text) {
-	this._dom.text.innerHTML = text.replace(/\n/g, "<br/>");
+	this._dom.text.innerHTML = text;
 	this._findLinks(this._dom.text);
 	return this.update();
 }
@@ -507,7 +520,7 @@ MM.Item.prototype.getId = function() {
 }
 
 MM.Item.prototype.getText = function() {
-	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
+	return this._dom.text.innerHTML;
 }
 
 MM.Item.prototype.collapse = function() {
@@ -647,7 +660,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	if (!child) { 
 		child = new MM.Item();
 		newChild = true;
-	} else if (child.getParent()) {
+	} else if (child.getParent() && child.getParent().removeChild) { /* only when the child has non-map parent */
 		child.getParent().removeChild(child);
 	}
 
@@ -685,7 +698,7 @@ MM.Item.prototype.removeChild = function(child) {
 MM.Item.prototype.startEditing = function() {
 	this._oldText = this.getText();
 	this._dom.text.contentEditable = true;
-	this._dom.text.focus();
+	this._dom.text.focus(); /* switch to 2b */
 	document.execCommand("styleWithCSS", null, false);
 
 	this._dom.text.addEventListener("input", this);
@@ -706,6 +719,9 @@ MM.Item.prototype.stopEditing = function() {
 	this._oldText = "";
 
 	this.update(); /* text changed */
+
+	MM.Clipboard.focus();
+
 	return result;
 }
 
@@ -720,7 +736,7 @@ MM.Item.prototype.handleEvent = function(e) {
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
 		break;
 
-		case "blur":
+		case "blur": /* 3d */
 			MM.Command.Finish.execute();
 		break;
 
@@ -1056,7 +1072,7 @@ MM.Map.prototype.getRoot = function() {
 
 MM.Map.prototype.getName = function() {
 	var name = this._root.getText();
-	return name.replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
+	return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
 }
 
 MM.Map.prototype.getId = function() {
@@ -1133,6 +1149,7 @@ MM.Keyboard.init = function() {
 }
 
 MM.Keyboard.handleEvent = function(e) {
+	/* mode 2a: ignore keyboard when the activeElement resides somewhere inside of the UI pane */
 	var node = document.activeElement;
 	while (node && node != document) {
 		if (node.classList.contains("ui")) { return; }
@@ -1146,7 +1163,7 @@ MM.Keyboard.handleEvent = function(e) {
 		var keys = command.keys;
 		for (var j=0;j<keys.length;j++) {
 			if (this._keyOK(keys[j], e)) {
-				e.preventDefault();
+				command.prevent && e.preventDefault();
 				command.execute(e);
 				return;
 			}
@@ -1193,6 +1210,21 @@ MM.Tip = {
 MM.Action = function() {}
 MM.Action.prototype.perform = function() {}
 MM.Action.prototype.undo = function() {}
+
+MM.Action.Multi = function(actions) {
+	this._actions = actions;
+}
+MM.Action.Multi.prototype = Object.create(MM.Action.prototype);
+MM.Action.Multi.prototype.perform = function() {
+	this._actions.forEach(function(action) {
+		action.perform();
+	});
+}
+MM.Action.Multi.prototype.undo = function() {
+	this._actions.slice().reverse().forEach(function(action) {
+		action.undo();
+	});
+}
 
 MM.Action.InsertNewItem = function(parent, index) {
 	this._parent = parent;
@@ -1379,64 +1411,129 @@ MM.Action.SetStatus.prototype.undo = function() {
 	this._item.getMap().update();
 }
 MM.Clipboard = {
-	_data: null,
-	_mode: ""
+	_item: null,
+	_mode: "",
+	_delay: 50,
+	_node: document.createElement("textarea")
 };
+
+MM.Clipboard.init = function() {
+	this._node.style.position = "absolute";
+	this._node.style.width = 0;
+	this._node.style.height = 0;
+	this._node.style.left = "-100px";
+	this._node.style.top = "-100px";
+	document.body.appendChild(this._node);
+}
+
+MM.Clipboard.focus = function() {
+	this._node.focus();
+	this._empty();
+}
 
 MM.Clipboard.copy = function(sourceItem) {
 	this._endCut();
-
-	this._data = sourceItem.clone();
+	this._item = sourceItem.clone();
 	this._mode = "copy";
+
+	this._expose();
 }
 
 MM.Clipboard.paste = function(targetItem) {
-	if (!this._data) { return; }
+	setTimeout(function() {
+		var pasted = this._node.value;
+		this._empty();
+		if (!pasted) { return; } /* nothing */
 
+		if (this._item && pasted == MM.Format.Plaintext.to(this._item.toJSON())) { /* pasted a previously copied/cut item */
+			this._pasteItem(this._item, targetItem);
+		} else { /* pasted some external data */
+			this._pastePlaintext(pasted, targetItem);
+		}
+
+	}.bind(this), this._delay);
+}
+
+MM.Clipboard._pasteItem = function(sourceItem, targetItem) {
 	switch (this._mode) {
 		case "cut":
-			if (this._data == targetItem || this._data.getParent() == targetItem) { /* abort by pasting on the same node or the parent */
+			if (sourceItem == targetItem || sourceItem.getParent() == targetItem) { /* abort by pasting on the same node or the parent */
 				this._endCut();
 				return;
 			}
 
 			var item = targetItem;
 			while (!item.isRoot()) {
-				if (item == this._data) { return; } /* moving to a child => forbidden */
+				if (item == sourceItem) { return; } /* moving to a child => forbidden */
 				item = item.getParent();
 			}
 
-			var action = new MM.Action.MoveItem(this._data, targetItem);
+			var action = new MM.Action.MoveItem(sourceItem, targetItem);
 			MM.App.action(action);
 
 			this._endCut();
 		break;
 
 		case "copy":
-			var action = new MM.Action.AppendItem(targetItem, this._data.clone());
+			var action = new MM.Action.AppendItem(targetItem, sourceItem.clone());
 			MM.App.action(action);
 		break;
 	}
+}
 
+MM.Clipboard._pastePlaintext = function(plaintext, targetItem) {
+	if (this._mode == "cut") { this._endCut(); } /* external paste => abort cutting */
+
+	var json = MM.Format.Plaintext.from(plaintext);
+	var map = MM.Map.fromJSON(json);
+	var root = map.getRoot();
+
+	if (root.getText()) {
+		var action = new MM.Action.AppendItem(targetItem, root);
+		MM.App.action(action);
+	} else {
+		var actions = root.getChildren().map(function(item) {
+			return new MM.Action.AppendItem(targetItem, item);
+		});
+		var action = new MM.Action.Multi(actions);
+		MM.App.action(action);
+	}
 }
 
 MM.Clipboard.cut = function(sourceItem) {
 	this._endCut();
 
-	this._data = sourceItem;
+	this._item = sourceItem;
+	this._item.getDOM().node.classList.add("cut");
 	this._mode = "cut";
 
-	var node = this._data.getDOM().node;
-	node.classList.add("cut");
+	this._expose();
+}
+
+/**
+ * Expose plaintext data to the textarea to be copied to system clipboard. Clear afterwards.
+ */
+MM.Clipboard._expose = function() {
+	var json = this._item.toJSON();
+	var plaintext = MM.Format.Plaintext.to(json);
+	this._node.value = plaintext;
+	this._node.selectionStart = 0;
+	this._node.selectionEnd = this._node.value.length;
+	setTimeout(this._empty.bind(this), this._delay);
+}
+
+MM.Clipboard._empty = function() {
+	/* safari needs a non-empty selection in order to actually perfrom a real copy on cmd+c */
+	this._node.value = "\n";
+	this._node.selectionStart = 0;
+	this._node.selectionEnd = this._node.value.length;
 }
 
 MM.Clipboard._endCut = function() {
 	if (this._mode != "cut") { return; }
 
-	var node = this._data.getDOM().node;
-	node.classList.remove("cut");
-
-	this._data = null;
+	this._item.getDOM().node.classList.remove("cut");
+	this._item = null;
 	this._mode = "";
 }
 MM.Menu = {
@@ -1499,6 +1596,7 @@ MM.Menu = {
 MM.Command = Object.create(MM.Repo, {
 	keys: {value: []},
 	editMode: {value: false},
+	prevent: {value: true}, /* prevent default keyboard action? */
 	label: {value: ""}
 });
 
@@ -1742,7 +1840,11 @@ MM.Command.Pan.handleEvent = function(e) {
 
 MM.Command.Copy = Object.create(MM.Command, {
 	label: {value: "Copy"},
-	keys: {value: [{keyCode: "C".charCodeAt(0), ctrlKey:true}]}
+	prevent: {value: false},
+	keys: {value: [
+		{keyCode: "C".charCodeAt(0), ctrlKey:true},
+		{keyCode: "C".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Copy.execute = function() {
 	MM.Clipboard.copy(MM.App.current);
@@ -1750,7 +1852,11 @@ MM.Command.Copy.execute = function() {
 
 MM.Command.Cut = Object.create(MM.Command, {
 	label: {value: "Cut"},
-	keys: {value: [{keyCode: "X".charCodeAt(0), ctrlKey:true}]}
+	prevent: {value: false},
+	keys: {value: [
+		{keyCode: "X".charCodeAt(0), ctrlKey:true},
+		{keyCode: "X".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Cut.execute = function() {
 	MM.Clipboard.cut(MM.App.current);
@@ -1758,7 +1864,11 @@ MM.Command.Cut.execute = function() {
 
 MM.Command.Paste = Object.create(MM.Command, {
 	label: {value: "Paste"},
-	keys: {value: [{keyCode: "V".charCodeAt(0), ctrlKey:true}]}
+	prevent: {value: false},
+	keys: {value: [
+		{keyCode: "V".charCodeAt(0), ctrlKey:true},
+		{keyCode: "V".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);
@@ -1876,7 +1986,7 @@ MM.Command.Strikethrough = Object.create(MM.Command.Style, {
 
 MM.Command.Value = Object.create(MM.Command, {
 	label: {value: "Set value"},
-	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false}]}
+	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
 MM.Command.Value.execute = function() {
 	var item = MM.App.current;
@@ -1915,7 +2025,7 @@ MM.Command.No.execute = function() {
 
 MM.Command.Computed = Object.create(MM.Command, {
 	label: {value: "Computed"},
-	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false}]}
+	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
 MM.Command.Computed.execute = function() {
 	var item = MM.App.current;
@@ -2700,6 +2810,14 @@ MM.Format.getByMime = function(mime) {
 
 MM.Format.to = function(data) {}
 MM.Format.from = function(data) {}
+
+MM.Format.nl2br = function(str) {
+	return str.replace(/\n/g, "<br/>");
+}
+
+MM.Format.br2nl = function(str) {
+	return str.replace(/<br\s*\/?>/g, "\n");
+}
 MM.Format.JSON = Object.create(MM.Format, {
 	id: {value: "json"},
 	label: {value: "Native (JSON)"},
@@ -2708,7 +2826,7 @@ MM.Format.JSON = Object.create(MM.Format, {
 });
 
 MM.Format.JSON.to = function(data) { 
-	return JSON.stringify(data, null, 2) + "\n";
+	return JSON.stringify(data, null, "\t") + "\n";
 }
 
 MM.Format.JSON.from = function(data) {
@@ -2762,7 +2880,7 @@ MM.Format.FreeMind._serializeItem = function(doc, json) {
 
 MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
-	elm.setAttribute("TEXT", json.text);
+	elm.setAttribute("TEXT", MM.Format.br2nl(json.text));
 	elm.setAttribute("ID", json.id);
 
 	if (json.side) { elm.setAttribute("POSITION", json.side); }
@@ -2788,7 +2906,7 @@ MM.Format.FreeMind._parseNode = function(node, parent) {
 MM.Format.FreeMind._parseAttributes = function(node, parent) {
 	var json = {
 		children: [],
-		text: node.getAttribute("TEXT") || "",
+		text: MM.Format.nl2br(node.getAttribute("TEXT") || ""),
 		id: node.getAttribute("ID")
 	};
 
@@ -2834,7 +2952,7 @@ MM.Format.MMA = Object.create(MM.Format.FreeMind, {
 MM.Format.MMA._parseAttributes = function(node, parent) {
 	var json = {
 		children: [],
-		text: node.getAttribute("title") || "",
+		text: MM.Format.nl2br(node.getAttribute("title") || ""),
 		shape: "box"
 	};
 
@@ -2864,7 +2982,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 
 MM.Format.MMA._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
-	elm.setAttribute("title", json.text);
+	elm.setAttribute("title", MM.Format.br2nl(json.text));
 	elm.setAttribute("expand", json.collapsed ? "false" : "true");
 
 	if (json.side) { elm.setAttribute("direction", json.side == "left" ? "0" : "1"); }
@@ -2903,7 +3021,7 @@ MM.Format.Mup.from = function(data) {
 
 MM.Format.Mup._MupToMM = function(item) {
 	var json = {
-		text: item.title,
+		text: MM.Format.nl2br(item.title),
 		id: item.id,
 		shape: "box"
 	}
@@ -2941,7 +3059,7 @@ MM.Format.Mup._MupToMM = function(item) {
 MM.Format.Mup._MMtoMup = function(item, side) {
 	var result = {
 		id: item.id,
-		title: item.text,
+		title: MM.Format.br2nl(item.text),
 		attr: {}
 	}
 	if (item.color) {
@@ -2966,6 +3084,92 @@ MM.Format.Mup._MMtoMup = function(item, side) {
 	}
 
 	return result;
+}
+MM.Format.Plaintext = Object.create(MM.Format, {
+	id: {value: "plaintext"},
+	label: {value: "Plain text"},
+	extension: {value: "txt"},
+	mime: {value: "application/vnd.mymind+txt"}
+});
+
+/**
+ * Can serialize also a sub-tree
+ */
+MM.Format.Plaintext.to = function(data) {
+	return this._serializeItem(data.root || data);
+}
+
+MM.Format.Plaintext.from = function(data) {
+	var lines = data.split("\n").filter(function(line) {
+		return line.match(/\S/);
+	});
+
+	var items = this._parseItems(lines);
+
+	if (items.length == 1) {
+		var result = {
+			root: items[0]
+		}
+	} else {
+		var result = {
+			root: {
+				text: "",
+				children: items
+			}
+		}
+	}
+	result.root.layout = "map";
+
+	return result;
+}
+
+MM.Format.Plaintext._serializeItem = function(item, depth) {
+	depth = depth || 0;
+
+	var lines = (item.children || []) .map(function(child) {
+		return this._serializeItem(child, depth+1);
+	}, this);
+
+	var prefix = new Array(depth+1).join("\t");
+	lines.unshift(prefix + item.text.replace(/\n/g, ""));
+
+	return lines.join("\n") + (depth ? "" : "\n");
+}
+
+
+MM.Format.Plaintext._parseItems = function(lines) {
+	var items = [];
+	if (!lines.length) { return items; }
+	var firstPrefix = this._parsePrefix(lines[0]);
+
+	var currentItem = null;
+	var childLines = [];
+
+	/* finalize a block of sub-children by converting them to items and appending */
+	var convertChildLinesToChildren = function() { 
+		if (!currentItem || !childLines.length) { return; }
+		var children = this._parseItems(childLines);
+		if (children.length) { currentItem.children = children; }
+		childLines = [];
+	}
+
+	lines.forEach(function(line, index) {
+		if (this._parsePrefix(line) == firstPrefix) { /* new top-level item! */
+			convertChildLinesToChildren.call(this); /* finalize previous item */
+			currentItem = {text:line.match(/^\s*(.*)/)[1]};
+			items.push(currentItem);
+		} else { /* prepare as a future child */
+			childLines.push(line);
+		}
+	}, this);
+
+	convertChildLinesToChildren.call(this);
+
+	return items;
+}
+
+MM.Format.Plaintext._parsePrefix = function(line) {
+	return line.match(/^\s*/)[0];
 }
 MM.Backend = Object.create(MM.Repo);
 
@@ -3492,7 +3696,6 @@ MM.Backend.GDrive._auth = function(forceUI) {
 }
 MM.UI = function() {
 	this._node = document.querySelector(".ui");
-	this._node.addEventListener("click", this);
 	
 	this._toggle = this._node.querySelector("#toggle");
 
@@ -3502,8 +3705,11 @@ MM.UI = function() {
 	this._value = new MM.UI.Value();
 	this._status = new MM.UI.Status();
 		
-	MM.subscribe("item-change", this);
 	MM.subscribe("item-select", this);
+	MM.subscribe("item-change", this);
+
+	this._node.addEventListener("click", this);
+	this._node.addEventListener("change", this);
 
 	this.toggle();
 }
@@ -3521,22 +3727,29 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 }
 
 MM.UI.prototype.handleEvent = function(e) {
-	/* blur to return focus back to app commands */
-	if (e.target.nodeName.toLowerCase() != "select") { e.target.blur(); }
+	switch (e.type) {
+		case "click":
+			if (e.target.nodeName.toLowerCase() != "select") { MM.Clipboard.focus(); } /* focus the clipboard (2c) */
 
-	if (e.target == this._toggle) {
-		this.toggle();
-		return;
-	}
-	
-	var node = e.target;
-	while (node != document) {
-		var command = node.getAttribute("data-command");
-		if (command) {
-			MM.Command[command].execute();
-			return;
-		}
-		node = node.parentNode;
+			if (e.target == this._toggle) {
+				this.toggle();
+				return;
+			}
+			
+			var node = e.target;
+			while (node != document) {
+				var command = node.getAttribute("data-command");
+				if (command) {
+					MM.Command[command].execute();
+					return;
+				}
+				node = node.parentNode;
+			}
+		break;
+
+		case "change":
+			MM.Clipboard.focus(); /* focus the clipboard (2c) */
+		break;
 	}
 }
 
@@ -3876,7 +4089,7 @@ MM.UI.IO.prototype.show = function(mode) {
 MM.UI.IO.prototype.hide = function() {
 	if (!this._node.classList.contains("visible")) { return; }
 	this._node.classList.remove("visible");
-	document.activeElement && document.activeElement.blur();
+	MM.Clipboard.focus();
 	window.removeEventListener("keydown", this);
 }
 
@@ -3990,7 +4203,8 @@ MM.UI.Backend.show = function(mode) {
 
 	var visible = this._node.querySelectorAll("[data-for~=" + mode + "]");
 	[].concat.apply([], visible).forEach(function(node) { node.style.display = ""; });
-	
+
+	/* switch to 2a: steal focus from the current item */
 	this._go.focus();
 }
 
@@ -4056,6 +4270,7 @@ MM.UI.Backend.File.init = function(select) {
 	this._format.appendChild(MM.Format.FreeMind.buildOption());
 	this._format.appendChild(MM.Format.MMA.buildOption());
 	this._format.appendChild(MM.Format.Mup.buildOption());
+	this._format.appendChild(MM.Format.Plaintext.buildOption());
 	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
 }
 
@@ -4469,6 +4684,7 @@ MM.UI.Backend.GDrive.init = function(select) {
 	this._format.appendChild(MM.Format.FreeMind.buildOption());
 	this._format.appendChild(MM.Format.MMA.buildOption());
 	this._format.appendChild(MM.Format.Mup.buildOption());
+	this._format.appendChild(MM.Format.Plaintext.buildOption());
 	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
 }
 
@@ -4573,11 +4789,11 @@ MM.Mouse.handleEvent = function(e) {
 		
 		case "contextmenu":
 			this._endDrag();
+			e.preventDefault();
 
 			var item = MM.App.map.getItemFor(e.target);
-			if (item) {	MM.App.select(item); }
+			item && MM.App.select(item);
 
-			e.preventDefault();
 			MM.Menu.open(e.clientX, e.clientY);
 		break;
 
@@ -4586,6 +4802,7 @@ MM.Mouse.handleEvent = function(e) {
 			e.clientX = e.touches[0].clientX;
 			e.clientY = e.touches[0].clientY;
 		case "mousedown":
+			if (e.type == "mousedown") { e.preventDefault(); } /* to prevent blurring the clipboard node */
 			var item = MM.App.map.getItemFor(e.target);
 
 			if (e.type == "touchstart") { /* context menu here, after we have the item */
@@ -4595,8 +4812,11 @@ MM.Mouse.handleEvent = function(e) {
 				}, this.TOUCH_DELAY);
 			}
 
-			if (item == MM.App.current && MM.App.editing) { return; }
-			document.activeElement && document.activeElement.blur();
+			if (MM.App.editing) {
+				if (item == MM.App.current) { return; } /* ignore dnd on edited node */
+				MM.Command.Finish.execute(); /* clicked elsewhere => finalize edit */
+			}
+
 			this._startDrag(e, item);
 		break;
 		
@@ -4805,6 +5025,40 @@ MM.Mouse._visualizeDragState = function(state) {
 		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
 	}
 }
+/*
+setInterval(function() {
+	console.log(document.activeElement);
+}, 1000);
+*/
+
+/*
+ * Notes regarding app state/modes, activeElements, focusing etc.
+ * ==============================================================
+ * 
+ * 1) There is always exactly one item selected. All executed commands 
+ *    operate on this item.
+ * 
+ * 2) The app distinguishes three modes with respect to focus:
+ *   2a) One of the UI panes has focus (inputs, buttons, selects). 
+ *       Keyboard shortcuts are disabled.
+ *   2b) Current item is being edited. It is contentEditable and focused. 
+ *       Blurring ends the edit mode.
+ *   2c) ELSE the Clipboard is focused (its invisible textarea)
+ * 
+ * In 2a, we try to lose focus as soon as possible
+ * (after clicking, after changing select's value), switching to 2c.
+ *
+ * 3) Editing mode (2b) can be ended by multiple ways:
+ *   3a) By calling current.stopEditing();
+ *       this shall be followed by some resolution.
+ *   3b) By executing MM.Command.{Finish,Cancel};
+ *       these call 3a internally.
+ *   3c) By blurring the item itself (by selecting another);
+ *       this calls MM.Command.Finish (3b).
+ *   3b) By blurring the currentElement;
+ *       this calls MM.Command.Finish (3b).
+ * 
+ */
 MM.App = {
 	keyboard: null,
 	current: null,
@@ -4848,19 +5102,11 @@ MM.App = {
 	},
 	
 	select: function(item) {
-		if (item == this.current) { return; }
-
-		if (this.editing) { MM.Command.Finish.execute(); }
-
-		if (this.current) {
-			this.current.getDOM().node.classList.remove("current");
-		}
+		if (this.current && this.current != item) { this.current.deselect(); }
 		this.current = item;
-		this.current.getDOM().node.classList.add("current");
-		this.map.ensureItemVisibility(item);
-		MM.publish("item-select", item);
+		this.current.select();
 	},
-	
+
 	adjustFontSize: function(diff) {
 		this._fontSize = Math.max(30, this._fontSize + 10*diff);
 		this._port.style.fontSize = this._fontSize + "%";
@@ -4910,6 +5156,7 @@ MM.App = {
 		MM.Keyboard.init();
 		MM.Menu.init(this._port);
 		MM.Mouse.init(this._port);
+		MM.Clipboard.init();
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);

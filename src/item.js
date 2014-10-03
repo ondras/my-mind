@@ -173,6 +173,19 @@ MM.Item.prototype.clone = function() {
 	return this.constructor.fromJSON(data);
 }
 
+MM.Item.prototype.select = function() {
+	this._dom.node.classList.add("current");
+	this.getMap().ensureItemVisibility(this);
+	MM.Clipboard.focus(); /* going to mode 2c */
+	MM.publish("item-select", this);
+}
+
+MM.Item.prototype.deselect = function() {
+	/* we were in 2b; finish that via 3b */
+	if (MM.App.editing) { MM.Command.Finish.execute(); }
+	this._dom.node.classList.remove("current");
+}
+
 MM.Item.prototype.update = function(doNotRecurse) {
 	var map = this.getMap();
 	if (!map || !map.isVisible()) { return this; }
@@ -208,7 +221,7 @@ MM.Item.prototype.updateSubtree = function(isSubChild) {
 }
 
 MM.Item.prototype.setText = function(text) {
-	this._dom.text.innerHTML = text.replace(/\n/g, "<br/>");
+	this._dom.text.innerHTML = text;
 	this._findLinks(this._dom.text);
 	return this.update();
 }
@@ -218,7 +231,7 @@ MM.Item.prototype.getId = function() {
 }
 
 MM.Item.prototype.getText = function() {
-	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
+	return this._dom.text.innerHTML;
 }
 
 MM.Item.prototype.collapse = function() {
@@ -358,7 +371,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	if (!child) { 
 		child = new MM.Item();
 		newChild = true;
-	} else if (child.getParent()) {
+	} else if (child.getParent() && child.getParent().removeChild) { /* only when the child has non-map parent */
 		child.getParent().removeChild(child);
 	}
 
@@ -396,7 +409,7 @@ MM.Item.prototype.removeChild = function(child) {
 MM.Item.prototype.startEditing = function() {
 	this._oldText = this.getText();
 	this._dom.text.contentEditable = true;
-	this._dom.text.focus();
+	this._dom.text.focus(); /* switch to 2b */
 	document.execCommand("styleWithCSS", null, false);
 
 	this._dom.text.addEventListener("input", this);
@@ -417,6 +430,9 @@ MM.Item.prototype.stopEditing = function() {
 	this._oldText = "";
 
 	this.update(); /* text changed */
+
+	MM.Clipboard.focus();
+
 	return result;
 }
 
@@ -431,7 +447,7 @@ MM.Item.prototype.handleEvent = function(e) {
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
 		break;
 
-		case "blur":
+		case "blur": /* 3d */
 			MM.Command.Finish.execute();
 		break;
 
