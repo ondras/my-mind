@@ -1,20 +1,24 @@
 MM.Mouse = {
+	TOUCH_DELAY: 500,
 	_port: null,
 	_cursor: [0, 0],
 	_pos: [0, 0], /* ghost pos */
 	_mode: "",
 	_item: null,
 	_ghost: null,
-	_oldDragState: null
+	_oldDragState: null,
+	_touchTimeout: null
 }
 
 MM.Mouse.init = function(port) {
 	this._port = port;
+	this._port.addEventListener("touchstart", this);
 	this._port.addEventListener("mousedown", this);
 	this._port.addEventListener("click", this);
 	this._port.addEventListener("dblclick", this);
 	this._port.addEventListener("wheel", this);
 	this._port.addEventListener("mousewheel", this);
+	this._port.addEventListener("contextmenu", this);
 }
 
 MM.Mouse.handleEvent = function(e) {
@@ -29,20 +33,52 @@ MM.Mouse.handleEvent = function(e) {
 			if (item) { MM.Command.Edit.execute(); }
 		break;
 		
-		case "mousedown":
-			var item = MM.App.map.getItemFor(e.target);
-			if (item == MM.App.current && MM.App.editing) { return; }
+		case "contextmenu":
+			this._endDrag();
+			e.preventDefault();
 
-			document.activeElement && document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
+			var item = MM.App.map.getItemFor(e.target);
+			item && MM.App.select(item);
+
+			MM.Menu.open(e.clientX, e.clientY);
+		break;
+
+		case "touchstart":
+			if (e.touches.length > 1) { return; }
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
+		case "mousedown":
+			if (e.type == "mousedown") { e.preventDefault(); } /* to prevent blurring the clipboard node */
+			var item = MM.App.map.getItemFor(e.target);
+
+			if (e.type == "touchstart") { /* context menu here, after we have the item */
+				this._touchTimeout = setTimeout(function() { 
+					item && MM.App.select(item);
+					MM.Menu.open(e.clientX, e.clientY);
+				}, this.TOUCH_DELAY);
+			}
+
+			if (MM.App.editing) {
+				if (item == MM.App.current) { return; } /* ignore dnd on edited node */
+				MM.Command.Finish.execute(); /* clicked elsewhere => finalize edit */
+			}
+
 			this._startDrag(e, item);
 		break;
 		
+		case "touchmove":
+			if (e.touches.length > 1) { return; }
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
+			clearTimeout(this._touchTimeout);
 		case "mousemove":
 			this._processDrag(e);
 		break;
 		
+		case "touchend":
+			clearTimeout(this._touchTimeout);
 		case "mouseup":
-			this._endDrag(e);
+			this._endDrag();
 		break;
 
 		case "wheel":
@@ -56,9 +92,15 @@ MM.Mouse.handleEvent = function(e) {
 }
 
 MM.Mouse._startDrag = function(e, item) {
-	e.preventDefault(); /* no selections allowed */
-	this._port.addEventListener("mousemove", this);
-	this._port.addEventListener("mouseup", this);
+
+	if (e.type == "mousedown") {
+		e.preventDefault(); /* no selections allowed. only for mouse; preventing touchstart would prevent Safari from emulating clicks */
+		this._port.addEventListener("mousemove", this);
+		this._port.addEventListener("mouseup", this);
+	} else {
+		this._port.addEventListener("touchmove", this);
+		this._port.addEventListener("touchend", this);
+	}
 
 	this._cursor[0] = e.clientX;
 	this._cursor[1] = e.clientY;
@@ -73,6 +115,7 @@ MM.Mouse._startDrag = function(e, item) {
 }
 
 MM.Mouse._processDrag = function(e) {
+	e.preventDefault();
 	var dx = e.clientX - this._cursor[0];
 	var dy = e.clientY - this._cursor[1];
 	this._cursor[0] = e.clientX;
@@ -95,7 +138,7 @@ MM.Mouse._processDrag = function(e) {
 	}
 }
 
-MM.Mouse._endDrag = function(e) {
+MM.Mouse._endDrag = function() {
 	this._port.style.cursor = "";
 	this._port.removeEventListener("mousemove", this);
 	this._port.removeEventListener("mouseup", this);
@@ -227,6 +270,4 @@ MM.Mouse._visualizeDragState = function(state) {
 		var spread = (x || y ? -2 : 2);
 		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
 	}
-
-
 }

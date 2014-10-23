@@ -8,6 +8,7 @@ SOURCES =	src/mm.js \
 			src/tip.js \
 			src/action.js \
 			src/clipboard.js \
+			src/menu.js \
 			src/command.js \
 			src/command.edit.js \
 			src/command.select.js \
@@ -24,6 +25,7 @@ SOURCES =	src/mm.js \
 			src/format.freemind.js \
 			src/format.mma.js \
 			src/format.mup.js \
+			src/format.plaintext.js \
 			src/backend.js \
 			src/backend.local.js \
 			src/backend.webdav.js \

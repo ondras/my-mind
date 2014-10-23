@@ -7,7 +7,7 @@ MM.Format.MMA = Object.create(MM.Format.FreeMind, {
 MM.Format.MMA._parseAttributes = function(node, parent) {
 	var json = {
 		children: [],
-		text: node.getAttribute("title") || "",
+		text: MM.Format.nl2br(node.getAttribute("title") || ""),
 		shape: "box"
 	};
 
@@ -37,7 +37,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 
 MM.Format.MMA._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
-	elm.setAttribute("title", json.text);
+	elm.setAttribute("title", MM.Format.br2nl(json.text));
 	elm.setAttribute("expand", json.collapsed ? "false" : "true");
 
 	if (json.side) { elm.setAttribute("direction", json.side == "left" ? "0" : "1"); }

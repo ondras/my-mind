@@ -16,3 +16,11 @@ MM.Format.getByMime = function(mime) {
 
 MM.Format.to = function(data) {}
 MM.Format.from = function(data) {}
+
+MM.Format.nl2br = function(str) {
+	return str.replace(/\n/g, "<br/>");
+}
+
+MM.Format.br2nl = function(str) {
+	return str.replace(/<br\s*\/?>/g, "\n");
+}

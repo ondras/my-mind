@@ -4,7 +4,7 @@ MM.Backend.WebDAV = Object.create(MM.Backend, {
 });
 
 MM.Backend.WebDAV.save = function(data, url) {
-	return this._request("post", url, data);
+	return this._request("put", url, data);
 }
 
 MM.Backend.WebDAV.load = function(url) {
@@ -22,6 +22,6 @@ MM.Backend.WebDAV._request = function(method, url, data) {
 		function(xhr) { promise.fulfill(xhr.responseText); },
 		function(xhr) { promise.reject(new Error("HTTP/" + xhr.status + "\n\n" + xhr.responseText)); }
 	);
-	
+
 	return promise;
 }

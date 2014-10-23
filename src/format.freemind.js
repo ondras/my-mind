@@ -46,7 +46,7 @@ MM.Format.FreeMind._serializeItem = function(doc, json) {
 
 MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
-	elm.setAttribute("TEXT", json.text);
+	elm.setAttribute("TEXT", MM.Format.br2nl(json.text));
 	elm.setAttribute("ID", json.id);
 
 	if (json.side) { elm.setAttribute("POSITION", json.side); }
@@ -72,7 +72,7 @@ MM.Format.FreeMind._parseNode = function(node, parent) {
 MM.Format.FreeMind._parseAttributes = function(node, parent) {
 	var json = {
 		children: [],
-		text: node.getAttribute("TEXT") || "",
+		text: MM.Format.nl2br(node.getAttribute("TEXT") || ""),
 		id: node.getAttribute("ID")
 	};
 

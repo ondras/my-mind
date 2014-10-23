@@ -1,3 +1,7 @@
+button:not(:disabled) {
+	cursor: pointer;
+}
+
 .ui {
 	position: fixed;
 	right: 0;
@@ -6,7 +10,8 @@
 	background-color: #fff;
 	width: 200px;
 	box-shadow: 0 0 2px 2px #666;
-	overflow-y: auto;
+	-webkit-transition: -webkit-transform 500ms;
+	transition: transform 500ms;
 }
 
 .ui:not(.visible) {
@@ -19,63 +24,62 @@
 	color: #fff;
 	padding: 0.2em 0;
 	margin: 0;
-	text-transform: uppercase;
+	text-transform: capitalize;
 	text-align: center;
 }
 
-.ui button, .ui select, .ui input, #toggle {
-	color: #000;
-	border: none;
+.ui select, .ui input {
+	background-color: transparent;
+	border: 1px solid rgba(50, 70, 90, 0.5);
 	font-size: 13px;
-	line-height: 1.4;
 	border-radius: 4px;
-	padding: 10px;
+	padding: 4px;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
 	-webkit-font-smoothing: subpixel-antialiased;
 	transition: all 250ms linear;
 }
 
-.ui button:hover, .ui select:hover, .ui input:hover, .ui :focus, #toggle:hover {
-	color: #000;
-	opacity: 0.8;
-}
-
-.ui:not([id]) button {
-	color: #fff;
-}
-
-.ui:not([id]) p:nth-of-type(1) button {
-	background-color: #1abc9c;
-}
-
-.ui:not([id]) p:nth-of-type(2) button {
-	background-color: #3498db;
-}
-
-.ui:not([id]) p:nth-of-type(3) button {
-	background-color: #2ecc71;
-}
-
-
-.ui button, #toggle {
-	cursor: pointer;
-	text-align: center;
-	width: 82px;
+.ui select:hover, .ui input:hover, .ui select:focus, .ui input:focus {
+	border-color: rgba(50, 70, 90, 1);
 }
 
 .ui select, .ui input, .ui #color {
 	width: 168px;
 }
 
-.ui button:first-child {
-	margin-right: 4px;
-}
-
-.ui button.go {
+.ui .go {
 	font-weight: bold;
 }
 
 .ui p {
 	margin: 8px 16px;
+}
+
+.ui p.desc {
+	font-size: 13px;
+}
+
+.ui:not([id]) button {
+	border: none;
+	padding: 0;
+	margin: 0 4px;
+	background-color: transparent;
+	width: 32px;
+}
+
+.ui button:first-child {
+	margin-left: 0 !important;
+}
+
+.ui button:last-child {
+	margin-right: 0 !important;
+}
+
+.ui button[data-command=Help] {
+	position: absolute;
+	left: -50px;
+	top: 5px;
 }
 
 .ui table {
@@ -123,7 +127,7 @@
 
 .ui #github {
 	position: absolute;
-	right: 160px;
+	right: 8px;
 	bottom: 6px;
 }
 
@@ -131,33 +135,36 @@
 	vertical-align: middle;
 }
 
-.ui ~ #toggle {
-	position: fixed;
-	bottom: 6px;
-	right: 10px;
-	width: 32px;
-	height: 32px;
+.ui #toggle {
+	z-index: 999;
+	position: absolute;
+	left: -23px;
+	top: 48%;
+	width: 35px;
+	height: 35px;
+	padding: 0 0 0 2px;
+	text-align: left;
+
+	border: none;
+	background-color: #fff;
+	box-shadow: -3px 0 2px 0px #666;
+
 	line-height: 8px;
-	margin: auto;
 	border-radius: 50%;
-	box-shadow: 0 0 2px 3px #ccf;
 }
 
-.ui ~ #toggle:after {
+.ui #toggle:after {
 	content: "←";
 	font-weight: bold;
 	font-size: 22px;
 }
 
-.ui.visible ~ #toggle {
-	box-shadow: inset 0 0 2px 3px #ccf;
-}
-
-.ui.visible ~ #toggle:after {
+.ui.visible #toggle:after {
 	content: "→";
 }
 
 .ui#help {
+	overflow-y: auto;
 	right: auto;
 	left: 0;
 	background-color: rgba(255, 255, 255, 0.7);
@@ -171,4 +178,16 @@
 
 .ui#help table {
 	font-size: 80%;
+}
+
+.ui#io button {
+	width: 45%;
+}
+
+.ui#io button:nth-child(odd) {
+	float: left;
+}
+
+.ui#io button:nth-child(even) {
+	float: right;
 }

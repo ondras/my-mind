@@ -61,27 +61,6 @@ MM.Item.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
 
-/**
- * Only when creating a new item. To merge existing items, use .mergeWith().
- */
-MM.Item.prototype.fromJSON = function(data) {
-	this.setText(data.text);
-	if (data.id) { this._id = data.id; }
-	if (data.side) { this._side = data.side; }
-	if (data.color) { this._color = data.color; }
-	if (data.value) { this._value = data.value; }
-	if (data.status) { this._status = data.status; }
-	if (data.collapsed) { this.collapse(); }
-	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
-	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
-
-	(data.children || []).forEach(function(child) {
-		this.insertChild(MM.Item.fromJSON(child));
-	}, this);
-
-	return this;
-}
-
 MM.Item.prototype.toJSON = function() {
 	var data = {
 		id: this._id,
@@ -102,6 +81,86 @@ MM.Item.prototype.toJSON = function() {
 	return data;
 }
 
+/**
+ * Only when creating a new item. To merge existing items, use .mergeWith().
+ */
+MM.Item.prototype.fromJSON = function(data) {
+	this.setText(data.text);
+	if (data.id) { this._id = data.id; }
+	if (data.side) { this._side = data.side; }
+	if (data.color) { this._color = data.color; }
+	if (data.value) { this._value = data.value; }
+	if (data.status) {
+		this._status = data.status;
+		if (this._status == "maybe") { this._status = "computed"; }
+	}
+	if (data.collapsed) { this.collapse(); }
+	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
+	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
+
+	(data.children || []).forEach(function(child) {
+		this.insertChild(MM.Item.fromJSON(child));
+	}, this);
+
+	return this;
+}
+
+MM.Item.prototype.mergeWith = function(data) {
+	var dirty = 0;
+	if (this.getText() != data.text) { this.setText(data.text); }
+
+	if (this._side != data.side) { 
+		this._side = data.side;
+		dirty = 1;
+	}
+
+	if (this._color != data.color) { 
+		this._color = data.color;
+		dirty = 2;
+	}
+
+	if (this._value != data.value) { 
+		this._value = data.value;
+		dirty = 1;
+	}
+
+	if (this._status != data.status) { 
+		this._status = data.status;
+		dirty = 1;
+	}
+
+	if (this._collapsed != !!data.collapsed) { this[this._collapsed ? "expand" : "collapse"](); }
+
+	if (this.getOwnLayout() != data.layout) {
+		this._layout = MM.Layout.getById(data.layout);
+		dirty = 2;
+	}
+
+	var s = (this._autoShape ? null : this._shape.id);
+	if (s != data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
+
+	(data.children || []).forEach(function(child, index) {
+		if (index >= this._children.length) { /* new child */
+			this.insertChild(MM.Item.fromJSON(child));
+		} else { /* existing child */
+			var myChild = this._children[index];
+			if (myChild.getId() == child.id) { /* recursive merge */
+				myChild.mergeWith(child);
+			} else { /* changed; replace */
+				this.removeChild(this._children[index]);
+				this.insertChild(MM.Item.fromJSON(child), index);
+			}
+		}
+	}, this);
+
+	/* remove dead children */
+	var newLength = (data.children || []).length;
+	while (this._children.length > newLength) { this.removeChild(this._children[this._children.length-1]); }
+
+	if (dirty == 1) { this.update(); }
+	if (dirty == 2) { this.updateSubtree(); }
+}
+
 MM.Item.prototype.clone = function() {
 	var data = this.toJSON();
 
@@ -114,11 +173,24 @@ MM.Item.prototype.clone = function() {
 	return this.constructor.fromJSON(data);
 }
 
-MM.Item.prototype.update = function(doNotRecurse) {
-	MM.publish("item-change", this);
+MM.Item.prototype.select = function() {
+	this._dom.node.classList.add("current");
+	this.getMap().ensureItemVisibility(this);
+	MM.Clipboard.focus(); /* going to mode 2c */
+	MM.publish("item-select", this);
+}
 
+MM.Item.prototype.deselect = function() {
+	/* we were in 2b; finish that via 3b */
+	if (MM.App.editing) { MM.Command.Finish.execute(); }
+	this._dom.node.classList.remove("current");
+}
+
+MM.Item.prototype.update = function(doNotRecurse) {
 	var map = this.getMap();
 	if (!map || !map.isVisible()) { return this; }
+
+	MM.publish("item-change", this);
 
 	if (this._autoShape) { /* check for changed auto-shape */
 		var autoShape = this._getAutoShape();
@@ -149,13 +221,17 @@ MM.Item.prototype.updateSubtree = function(isSubChild) {
 }
 
 MM.Item.prototype.setText = function(text) {
-	this._dom.text.innerHTML = text.replace(/\n/g, "<br/>");
+	this._dom.text.innerHTML = text;
 	this._findLinks(this._dom.text);
 	return this.update();
 }
 
+MM.Item.prototype.getId = function() {
+	return this._id;
+}
+
 MM.Item.prototype.getText = function() {
-	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
+	return this._dom.text.innerHTML;
 }
 
 MM.Item.prototype.collapse = function() {
@@ -295,7 +371,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	if (!child) { 
 		child = new MM.Item();
 		newChild = true;
-	} else if (child.getParent()) {
+	} else if (child.getParent() && child.getParent().removeChild) { /* only when the child has non-map parent */
 		child.getParent().removeChild(child);
 	}
 
@@ -333,34 +409,46 @@ MM.Item.prototype.removeChild = function(child) {
 MM.Item.prototype.startEditing = function() {
 	this._oldText = this.getText();
 	this._dom.text.contentEditable = true;
-	this._dom.text.focus();
+	this._dom.text.focus(); /* switch to 2b */
 	document.execCommand("styleWithCSS", null, false);
 
 	this._dom.text.addEventListener("input", this);
 	this._dom.text.addEventListener("keydown", this);
+	this._dom.text.addEventListener("blur", this);
 	return this;
 }
 
 MM.Item.prototype.stopEditing = function() {
 	this._dom.text.removeEventListener("input", this);
 	this._dom.text.removeEventListener("keydown", this);
+	this._dom.text.removeEventListener("blur", this);
 
 	this._dom.text.blur();
 	this._dom.text.contentEditable = false;
 	var result = this._dom.text.innerHTML;
 	this._dom.text.innerHTML = this._oldText;
 	this._oldText = "";
+
+	this.update(); /* text changed */
+
+	MM.Clipboard.focus();
+
 	return result;
 }
 
 MM.Item.prototype.handleEvent = function(e) {
 	switch (e.type) {
 		case "input":
-			this.updateSubtree();
+			this.update();
+			this.getMap().ensureItemVisibility(this);
 		break;
 
 		case "keydown":
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
+		break;
+
+		case "blur": /* 3d */
+			MM.Command.Finish.execute();
 		break;
 
 		case "click":
@@ -389,7 +477,7 @@ MM.Item.prototype._updateStatus = function() {
 	this._dom.status.style.display = "";
 
 	var status = this._status;
-	if (this._status == "maybe") {
+	if (this._status == "computed") {
 		var childrenStatus = this._children.every(function(child) {
 			return (child.getComputedStatus() !== false);
 		});

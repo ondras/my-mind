@@ -1,3 +1,13 @@
+if (!Function.prototype.bind) {
+	Function.prototype.bind = function(thisObj) {
+		var fn = this;
+		var args = Array.prototype.slice.call(arguments, 1);
+		return function() {
+			return fn.apply(thisObj, args.concat(Array.prototype.slice.call(arguments)));
+		}
+	}
+};
+
 var MM = {
 	_subscribers: {},
 	
@@ -12,12 +22,13 @@ var MM = {
 		if (!(message in this._subscribers)) {
 			this._subscribers[message] = [];
 		}
-		this._subscribers[message].push(subscriber);
+		var index = this._subscribers[message].indexOf(subscriber);
+		if (index == -1) { this._subscribers[message].push(subscriber); }
 	},
 	
 	unsubscribe: function(message, subscriber) {
 		var index = this._subscribers[message].indexOf(subscriber);
-		this._subscribers[message].splice(index, 1);
+		if (index > -1) { this._subscribers[message].splice(index, 1); }
 	},
 	
 	generateId: function() {

@@ -5,6 +5,7 @@ MM.Keyboard.init = function() {
 }
 
 MM.Keyboard.handleEvent = function(e) {
+	/* mode 2a: ignore keyboard when the activeElement resides somewhere inside of the UI pane */
 	var node = document.activeElement;
 	while (node && node != document) {
 		if (node.classList.contains("ui")) { return; }
@@ -18,7 +19,7 @@ MM.Keyboard.handleEvent = function(e) {
 		var keys = command.keys;
 		for (var j=0;j<keys.length;j++) {
 			if (this._keyOK(keys[j], e)) {
-				e.preventDefault();
+				command.prevent && e.preventDefault();
 				command.execute(e);
 				return;
 			}

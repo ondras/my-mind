@@ -1,7 +1,7 @@
 {
   "root": {
     "id": "ujfdpxoz",
-    "text": "My Mind\nFeatures",
+    "text": "My Mind<br/>Features",
     "layout": "map",
     "children": [
       {
@@ -40,7 +40,7 @@
           },
           {
             "id": "zcrefcfz",
-            "text": "Folding\n",
+            "text": "Folding",
             "collapsed": 1,
             "children": [
               {
@@ -75,11 +75,21 @@
               },
               {
                 "id": "megldbuw",
-                "text": "Firebase"
+                "text": "Firebase",
+                "children": [
+                  {
+                    "id": "krsvhker",
+                    "text": "Realtime sync"
+                  }
+                ]
               },
               {
                 "id": "rmxmrpum",
                 "text": "Google Drive"
+              },
+              {
+                "id": "eiocvrju",
+                "text": "REST DAV-like"
               }
             ]
           },
@@ -138,7 +148,7 @@
             "id": "pjqwdjad",
             "text": "Bool node statuses",
             "value": "maybe",
-            "status": "maybe",
+            "status": "computed",
             "children": [
               {
                 "id": "jsrxnhgy",
@@ -150,7 +160,7 @@
                 "id": "oqzwbzvf",
                 "text": "Auto-propagation to parent",
                 "value": "no",
-                "status": "maybe"
+                "status": "computed"
               }
             ]
           },
@@ -176,6 +186,10 @@
           {
             "id": "rsruxymh",
             "text": "Infinite undo/redo"
+          },
+          {
+            "id": "jaalsyvs",
+            "text": "Export to image"
           }
         ]
       },
@@ -185,10 +199,6 @@
         "side": "left",
         "color": "#d3d",
         "children": [
-          {
-            "id": "krsvhker",
-            "text": "Realtime sync (Firebase)"
-          },
           {
             "id": "vcmxdsvj",
             "text": "Custom styles"
@@ -200,6 +210,5 @@
         ]
       }
     ]
-  },
-  "id": "dwqxduay"
+  }
 }

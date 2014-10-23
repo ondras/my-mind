@@ -82,8 +82,9 @@ MM.UI.IO.prototype.show = function(mode) {
 }
 
 MM.UI.IO.prototype.hide = function() {
+	if (!this._node.classList.contains("visible")) { return; }
 	this._node.classList.remove("visible");
-	document.activeElement && document.activeElement.blur();
+	MM.Clipboard.focus();
 	window.removeEventListener("keydown", this);
 }
 
@@ -109,13 +110,16 @@ MM.UI.IO.prototype.handleEvent = function(e) {
 
 MM.UI.IO.prototype._syncBackend = function() {
 	var all = this._node.querySelectorAll("div[id]");
-	[].concat.apply([], all).forEach(function(node) { node.style.display = "none"; });
+	[].slice.apply(all).forEach(function(node) { node.style.display = "none"; });
 	
 	this._node.querySelector("#" + this._backend.value).style.display = "";
 	
 	this._backends[this._backend.value].show(this._mode);
 }
 
+/**
+ * @param {MM.UI.Backend} backend
+ */
 MM.UI.IO.prototype._setCurrentBackend = function(backend) {
 	if (this._currentBackend && this._currentBackend != backend) { this._currentBackend.reset(); }
 	

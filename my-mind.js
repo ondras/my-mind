@@ -1,4 +1,14 @@
 /* My Mind web app: all source files combined. */
+if (!Function.prototype.bind) {
+	Function.prototype.bind = function(thisObj) {
+		var fn = this;
+		var args = Array.prototype.slice.call(arguments, 1);
+		return function() {
+			return fn.apply(thisObj, args.concat(Array.prototype.slice.call(arguments)));
+		}
+	}
+};
+
 var MM = {
 	_subscribers: {},
 	
@@ -13,12 +23,13 @@ var MM = {
 		if (!(message in this._subscribers)) {
 			this._subscribers[message] = [];
 		}
-		this._subscribers[message].push(subscriber);
+		var index = this._subscribers[message].indexOf(subscriber);
+		if (index == -1) { this._subscribers[message].push(subscriber); }
 	},
 	
 	unsubscribe: function(message, subscriber) {
 		var index = this._subscribers[message].indexOf(subscriber);
-		this._subscribers[message].splice(index, 1);
+		if (index > -1) { this._subscribers[message].splice(index, 1); }
 	},
 	
 	generateId: function() {
@@ -163,7 +174,7 @@ Promise.prototype._executeCallback = function(cb) {
 /**
  * Wait for all these promises to complete. One failed => this fails too.
  */
-Promise.when = function(all) {
+Promise.all = Promise.when = function(all) {
 	var promise = new this();
 	var counter = 0;
 	var results = [];
@@ -225,7 +236,7 @@ Promise.send = function(xhr, data) {
 	var promise = new this();
 	xhr.addEventListener("readystatechange", function(e) {
 		if (e.target.readyState != 4) { return; }
-		if (e.target.status == 200) {
+		if (e.target.status.toString().charAt(0) == "2") {
 			promise.fulfill(e.target);
 		} else {
 			promise.reject(e.target);
@@ -339,27 +350,6 @@ MM.Item.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
 
-/**
- * Only when creating a new item. To merge existing items, use .mergeWith().
- */
-MM.Item.prototype.fromJSON = function(data) {
-	this.setText(data.text);
-	if (data.id) { this._id = data.id; }
-	if (data.side) { this._side = data.side; }
-	if (data.color) { this._color = data.color; }
-	if (data.value) { this._value = data.value; }
-	if (data.status) { this._status = data.status; }
-	if (data.collapsed) { this.collapse(); }
-	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
-	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
-
-	(data.children || []).forEach(function(child) {
-		this.insertChild(MM.Item.fromJSON(child));
-	}, this);
-
-	return this;
-}
-
 MM.Item.prototype.toJSON = function() {
 	var data = {
 		id: this._id,
@@ -380,6 +370,86 @@ MM.Item.prototype.toJSON = function() {
 	return data;
 }
 
+/**
+ * Only when creating a new item. To merge existing items, use .mergeWith().
+ */
+MM.Item.prototype.fromJSON = function(data) {
+	this.setText(data.text);
+	if (data.id) { this._id = data.id; }
+	if (data.side) { this._side = data.side; }
+	if (data.color) { this._color = data.color; }
+	if (data.value) { this._value = data.value; }
+	if (data.status) {
+		this._status = data.status;
+		if (this._status == "maybe") { this._status = "computed"; }
+	}
+	if (data.collapsed) { this.collapse(); }
+	if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
+	if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
+
+	(data.children || []).forEach(function(child) {
+		this.insertChild(MM.Item.fromJSON(child));
+	}, this);
+
+	return this;
+}
+
+MM.Item.prototype.mergeWith = function(data) {
+	var dirty = 0;
+	if (this.getText() != data.text) { this.setText(data.text); }
+
+	if (this._side != data.side) { 
+		this._side = data.side;
+		dirty = 1;
+	}
+
+	if (this._color != data.color) { 
+		this._color = data.color;
+		dirty = 2;
+	}
+
+	if (this._value != data.value) { 
+		this._value = data.value;
+		dirty = 1;
+	}
+
+	if (this._status != data.status) { 
+		this._status = data.status;
+		dirty = 1;
+	}
+
+	if (this._collapsed != !!data.collapsed) { this[this._collapsed ? "expand" : "collapse"](); }
+
+	if (this.getOwnLayout() != data.layout) {
+		this._layout = MM.Layout.getById(data.layout);
+		dirty = 2;
+	}
+
+	var s = (this._autoShape ? null : this._shape.id);
+	if (s != data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
+
+	(data.children || []).forEach(function(child, index) {
+		if (index >= this._children.length) { /* new child */
+			this.insertChild(MM.Item.fromJSON(child));
+		} else { /* existing child */
+			var myChild = this._children[index];
+			if (myChild.getId() == child.id) { /* recursive merge */
+				myChild.mergeWith(child);
+			} else { /* changed; replace */
+				this.removeChild(this._children[index]);
+				this.insertChild(MM.Item.fromJSON(child), index);
+			}
+		}
+	}, this);
+
+	/* remove dead children */
+	var newLength = (data.children || []).length;
+	while (this._children.length > newLength) { this.removeChild(this._children[this._children.length-1]); }
+
+	if (dirty == 1) { this.update(); }
+	if (dirty == 2) { this.updateSubtree(); }
+}
+
 MM.Item.prototype.clone = function() {
 	var data = this.toJSON();
 
@@ -392,11 +462,24 @@ MM.Item.prototype.clone = function() {
 	return this.constructor.fromJSON(data);
 }
 
-MM.Item.prototype.update = function(doNotRecurse) {
-	MM.publish("item-change", this);
+MM.Item.prototype.select = function() {
+	this._dom.node.classList.add("current");
+	this.getMap().ensureItemVisibility(this);
+	MM.Clipboard.focus(); /* going to mode 2c */
+	MM.publish("item-select", this);
+}
 
+MM.Item.prototype.deselect = function() {
+	/* we were in 2b; finish that via 3b */
+	if (MM.App.editing) { MM.Command.Finish.execute(); }
+	this._dom.node.classList.remove("current");
+}
+
+MM.Item.prototype.update = function(doNotRecurse) {
 	var map = this.getMap();
 	if (!map || !map.isVisible()) { return this; }
+
+	MM.publish("item-change", this);
 
 	if (this._autoShape) { /* check for changed auto-shape */
 		var autoShape = this._getAutoShape();
@@ -427,13 +510,17 @@ MM.Item.prototype.updateSubtree = function(isSubChild) {
 }
 
 MM.Item.prototype.setText = function(text) {
-	this._dom.text.innerHTML = text.replace(/\n/g, "<br/>");
+	this._dom.text.innerHTML = text;
 	this._findLinks(this._dom.text);
 	return this.update();
 }
 
+MM.Item.prototype.getId = function() {
+	return this._id;
+}
+
 MM.Item.prototype.getText = function() {
-	return this._dom.text.innerHTML.replace(/<br\s*\/?>/g, "\n");
+	return this._dom.text.innerHTML;
 }
 
 MM.Item.prototype.collapse = function() {
@@ -573,7 +660,7 @@ MM.Item.prototype.insertChild = function(child, index) {
 	if (!child) { 
 		child = new MM.Item();
 		newChild = true;
-	} else if (child.getParent()) {
+	} else if (child.getParent() && child.getParent().removeChild) { /* only when the child has non-map parent */
 		child.getParent().removeChild(child);
 	}
 
@@ -611,34 +698,46 @@ MM.Item.prototype.removeChild = function(child) {
 MM.Item.prototype.startEditing = function() {
 	this._oldText = this.getText();
 	this._dom.text.contentEditable = true;
-	this._dom.text.focus();
+	this._dom.text.focus(); /* switch to 2b */
 	document.execCommand("styleWithCSS", null, false);
 
 	this._dom.text.addEventListener("input", this);
 	this._dom.text.addEventListener("keydown", this);
+	this._dom.text.addEventListener("blur", this);
 	return this;
 }
 
 MM.Item.prototype.stopEditing = function() {
 	this._dom.text.removeEventListener("input", this);
 	this._dom.text.removeEventListener("keydown", this);
+	this._dom.text.removeEventListener("blur", this);
 
 	this._dom.text.blur();
 	this._dom.text.contentEditable = false;
 	var result = this._dom.text.innerHTML;
 	this._dom.text.innerHTML = this._oldText;
 	this._oldText = "";
+
+	this.update(); /* text changed */
+
+	MM.Clipboard.focus();
+
 	return result;
 }
 
 MM.Item.prototype.handleEvent = function(e) {
 	switch (e.type) {
 		case "input":
-			this.updateSubtree();
+			this.update();
+			this.getMap().ensureItemVisibility(this);
 		break;
 
 		case "keydown":
 			if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
+		break;
+
+		case "blur": /* 3d */
+			MM.Command.Finish.execute();
 		break;
 
 		case "click":
@@ -667,7 +766,7 @@ MM.Item.prototype._updateStatus = function() {
 	this._dom.status.style.display = "";
 
 	var status = this._status;
-	if (this._status == "maybe") {
+	if (this._status == "computed") {
 		var childrenStatus = this._children.every(function(child) {
 			return (child.getComputedStatus() !== false);
 		});
@@ -785,7 +884,6 @@ MM.Map = function(options) {
 	this._root = null;
 	this._visible = false;
 	this._position = [0, 0];
-	this._id = MM.generateId();
 
 	this._setRoot(new MM.Item().setText(o.root).setLayout(o.layout));
 }
@@ -794,18 +892,62 @@ MM.Map.fromJSON = function(data) {
 	return new this().fromJSON(data);
 }
 
+MM.Map.prototype.toJSON = function() {
+	var data = {
+		root: this._root.toJSON()
+	};
+	return data;
+}
+
 MM.Map.prototype.fromJSON = function(data) {
-	if (data.id) { this._id = data.id; }
 	this._setRoot(MM.Item.fromJSON(data.root));
 	return this;
 }
 
-MM.Map.prototype.toJSON = function() {
-	var data = {
-		root: this._root.toJSON(),
-		id: this._id
-	};
-	return data;
+MM.Map.prototype.mergeWith = function(data) {
+	/* store a sequence of nodes to be selected when merge is over */
+	var ids = [];
+	var current = MM.App.current;
+	var node = current;
+	while (node != this) {
+		ids.push(node.getId());
+		node = node.getParent();
+	}
+
+	this._root.mergeWith(data.root);
+
+	if (current.getMap()) { /* selected node still in tree, cool */
+		/* if one of the parents got collapsed, act as if the node got removed */
+		var node = current.getParent();
+		var hidden = false;
+		while (node != this) {
+			if (node.isCollapsed()) { hidden = true; }
+			node = node.getParent();
+		}
+		if (!hidden) { return; } /* nothing bad happened, continue */
+	} 
+
+	/* previously selected node is no longer in the tree OR it is folded */
+
+	/* what if the node was being edited? */
+	if (MM.App.editing) { current.stopEditing(); } 
+
+	/* get all items by their id */
+	var idMap = {};
+	var scan = function(item) {
+		idMap[item.getId()] = item;
+		item.getChildren().forEach(scan);
+	}
+	scan(this._root);
+
+	/* select the nearest existing parent */
+	while (ids.length) {
+		var id = ids.shift();
+		if (id in idMap) {
+			MM.App.select(idMap[id]);
+			return;
+		}
+	}
 }
 
 MM.Map.prototype.isVisible = function() {
@@ -930,11 +1072,11 @@ MM.Map.prototype.getRoot = function() {
 
 MM.Map.prototype.getName = function() {
 	var name = this._root.getText();
-	return name.replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
+	return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
 }
 
 MM.Map.prototype.getId = function() {
-	return this._id;
+	return this._root.getId();
 }
 
 MM.Map.prototype.pick = function(item, direction) {
@@ -1007,6 +1149,7 @@ MM.Keyboard.init = function() {
 }
 
 MM.Keyboard.handleEvent = function(e) {
+	/* mode 2a: ignore keyboard when the activeElement resides somewhere inside of the UI pane */
 	var node = document.activeElement;
 	while (node && node != document) {
 		if (node.classList.contains("ui")) { return; }
@@ -1020,7 +1163,7 @@ MM.Keyboard.handleEvent = function(e) {
 		var keys = command.keys;
 		for (var j=0;j<keys.length;j++) {
 			if (this._keyOK(keys[j], e)) {
-				e.preventDefault();
+				command.prevent && e.preventDefault();
 				command.execute(e);
 				return;
 			}
@@ -1067,6 +1210,21 @@ MM.Tip = {
 MM.Action = function() {}
 MM.Action.prototype.perform = function() {}
 MM.Action.prototype.undo = function() {}
+
+MM.Action.Multi = function(actions) {
+	this._actions = actions;
+}
+MM.Action.Multi.prototype = Object.create(MM.Action.prototype);
+MM.Action.Multi.prototype.perform = function() {
+	this._actions.forEach(function(action) {
+		action.perform();
+	});
+}
+MM.Action.Multi.prototype.undo = function() {
+	this._actions.slice().reverse().forEach(function(action) {
+		action.undo();
+	});
+}
 
 MM.Action.InsertNewItem = function(parent, index) {
 	this._parent = parent;
@@ -1253,69 +1411,192 @@ MM.Action.SetStatus.prototype.undo = function() {
 	this._item.getMap().update();
 }
 MM.Clipboard = {
-	_data: null,
-	_mode: ""
+	_item: null,
+	_mode: "",
+	_delay: 50,
+	_node: document.createElement("textarea")
 };
+
+MM.Clipboard.init = function() {
+	this._node.style.position = "absolute";
+	this._node.style.width = 0;
+	this._node.style.height = 0;
+	this._node.style.left = "-100px";
+	this._node.style.top = "-100px";
+	document.body.appendChild(this._node);
+}
+
+MM.Clipboard.focus = function() {
+	this._node.focus();
+	this._empty();
+}
 
 MM.Clipboard.copy = function(sourceItem) {
 	this._endCut();
-
-	this._data = sourceItem.clone();
+	this._item = sourceItem.clone();
 	this._mode = "copy";
+
+	this._expose();
 }
 
 MM.Clipboard.paste = function(targetItem) {
-	if (!this._data) { return; }
+	setTimeout(function() {
+		var pasted = this._node.value;
+		this._empty();
+		if (!pasted) { return; } /* nothing */
 
+		if (this._item && pasted == MM.Format.Plaintext.to(this._item.toJSON())) { /* pasted a previously copied/cut item */
+			this._pasteItem(this._item, targetItem);
+		} else { /* pasted some external data */
+			this._pastePlaintext(pasted, targetItem);
+		}
+
+	}.bind(this), this._delay);
+}
+
+MM.Clipboard._pasteItem = function(sourceItem, targetItem) {
 	switch (this._mode) {
 		case "cut":
-			if (this._data == targetItem || this._data.getParent() == targetItem) { /* abort by pasting on the same node or the parent */
+			if (sourceItem == targetItem || sourceItem.getParent() == targetItem) { /* abort by pasting on the same node or the parent */
 				this._endCut();
 				return;
 			}
 
 			var item = targetItem;
 			while (!item.isRoot()) {
-				if (item == this._data) { return; } /* moving to a child => forbidden */
+				if (item == sourceItem) { return; } /* moving to a child => forbidden */
 				item = item.getParent();
 			}
 
-			var action = new MM.Action.MoveItem(this._data, targetItem);
+			var action = new MM.Action.MoveItem(sourceItem, targetItem);
 			MM.App.action(action);
 
 			this._endCut();
 		break;
 
 		case "copy":
-			var action = new MM.Action.AppendItem(targetItem, this._data.clone());
+			var action = new MM.Action.AppendItem(targetItem, sourceItem.clone());
 			MM.App.action(action);
 		break;
 	}
+}
 
+MM.Clipboard._pastePlaintext = function(plaintext, targetItem) {
+	if (this._mode == "cut") { this._endCut(); } /* external paste => abort cutting */
+
+	var json = MM.Format.Plaintext.from(plaintext);
+	var map = MM.Map.fromJSON(json);
+	var root = map.getRoot();
+
+	if (root.getText()) {
+		var action = new MM.Action.AppendItem(targetItem, root);
+		MM.App.action(action);
+	} else {
+		var actions = root.getChildren().map(function(item) {
+			return new MM.Action.AppendItem(targetItem, item);
+		});
+		var action = new MM.Action.Multi(actions);
+		MM.App.action(action);
+	}
 }
 
 MM.Clipboard.cut = function(sourceItem) {
 	this._endCut();
 
-	this._data = sourceItem;
+	this._item = sourceItem;
+	this._item.getDOM().node.classList.add("cut");
 	this._mode = "cut";
 
-	var node = this._data.getDOM().node;
-	node.classList.add("cut");
+	this._expose();
+}
+
+/**
+ * Expose plaintext data to the textarea to be copied to system clipboard. Clear afterwards.
+ */
+MM.Clipboard._expose = function() {
+	var json = this._item.toJSON();
+	var plaintext = MM.Format.Plaintext.to(json);
+	this._node.value = plaintext;
+	this._node.selectionStart = 0;
+	this._node.selectionEnd = this._node.value.length;
+	setTimeout(this._empty.bind(this), this._delay);
+}
+
+MM.Clipboard._empty = function() {
+	/* safari needs a non-empty selection in order to actually perfrom a real copy on cmd+c */
+	this._node.value = "\n";
+	this._node.selectionStart = 0;
+	this._node.selectionEnd = this._node.value.length;
 }
 
 MM.Clipboard._endCut = function() {
 	if (this._mode != "cut") { return; }
 
-	var node = this._data.getDOM().node;
-	node.classList.remove("cut");
-
-	this._data = null;
+	this._item.getDOM().node.classList.remove("cut");
+	this._item = null;
 	this._mode = "";
 }
+MM.Menu = {
+	_dom: {},
+	_port: null,
+	
+	open: function(x, y) {
+		this._dom.node.style.display = "";
+		var w = this._dom.node.offsetWidth;
+		var h = this._dom.node.offsetHeight;
+
+		var left = x;
+		var top = y;
+
+		if (left > this._port.offsetWidth / 2) { left -= w; }
+		if (top > this._port.offsetHeight / 2) { top -= h; }
+
+		this._dom.node.style.left = left+"px";
+		this._dom.node.style.top = top+"px";
+	},
+	
+	close: function() {
+		this._dom.node.style.display = "none";
+	},
+	
+	handleEvent: function(e) {
+		if (e.currentTarget != this._dom.node) {
+			this.close();
+			return;
+		}
+		
+		e.stopPropagation(); /* no dragdrop, no blur of activeElement */
+		e.preventDefault(); /* we do not want to focus the button */
+		
+		var command = e.target.getAttribute("data-command");
+		if (!command) { return; }
+
+		command = MM.Command[command];
+		if (!command.isValid()) { return; }
+
+		command.execute();
+		this.close();
+	},
+	
+	init: function(port) {
+		this._port = port;
+		this._dom.node = document.querySelector("#menu");
+		var buttons = this._dom.node.querySelectorAll("[data-command]");
+		[].slice.call(buttons).forEach(function(button) {
+			button.innerHTML = MM.Command[button.getAttribute("data-command")].label;
+		});
+		
+		this._port.addEventListener("mousedown", this);
+		this._dom.node.addEventListener("mousedown", this);
+		
+		this.close();
+	}
+}
+
 MM.Command = Object.create(MM.Repo, {
 	keys: {value: []},
 	editMode: {value: false},
+	prevent: {value: true}, /* prevent default keyboard action? */
 	label: {value: ""}
 });
 
@@ -1542,7 +1823,7 @@ MM.Command.Pan._step = function() {
 		offset[1] += dirs[ch][1];
 	});
 
-	MM.App.map.moveBy(10*offset[0], 10*offset[1]);
+	MM.App.map.moveBy(15*offset[0], 15*offset[1]);
 }
 
 MM.Command.Pan.handleEvent = function(e) {
@@ -1559,7 +1840,11 @@ MM.Command.Pan.handleEvent = function(e) {
 
 MM.Command.Copy = Object.create(MM.Command, {
 	label: {value: "Copy"},
-	keys: {value: [{keyCode: "C".charCodeAt(0), ctrlKey:true}]}
+	prevent: {value: false},
+	keys: {value: [
+		{keyCode: "C".charCodeAt(0), ctrlKey:true},
+		{keyCode: "C".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Copy.execute = function() {
 	MM.Clipboard.copy(MM.App.current);
@@ -1567,7 +1852,11 @@ MM.Command.Copy.execute = function() {
 
 MM.Command.Cut = Object.create(MM.Command, {
 	label: {value: "Cut"},
-	keys: {value: [{keyCode: "X".charCodeAt(0), ctrlKey:true}]}
+	prevent: {value: false},
+	keys: {value: [
+		{keyCode: "X".charCodeAt(0), ctrlKey:true},
+		{keyCode: "X".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Cut.execute = function() {
 	MM.Clipboard.cut(MM.App.current);
@@ -1575,7 +1864,11 @@ MM.Command.Cut.execute = function() {
 
 MM.Command.Paste = Object.create(MM.Command, {
 	label: {value: "Paste"},
-	keys: {value: [{keyCode: "V".charCodeAt(0), ctrlKey:true}]}
+	prevent: {value: false},
+	keys: {value: [
+		{keyCode: "V".charCodeAt(0), ctrlKey:true},
+		{keyCode: "V".charCodeAt(0), metaKey:true}
+	]}
 });
 MM.Command.Paste.execute = function() {
 	MM.Clipboard.paste(MM.App.current);
@@ -1693,7 +1986,7 @@ MM.Command.Strikethrough = Object.create(MM.Command.Style, {
 
 MM.Command.Value = Object.create(MM.Command, {
 	label: {value: "Set value"},
-	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false}]}
+	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
 MM.Command.Value.execute = function() {
 	var item = MM.App.current;
@@ -1730,13 +2023,13 @@ MM.Command.No.execute = function() {
 	MM.App.action(action);
 }
 
-MM.Command.Maybe = Object.create(MM.Command, {
-	label: {value: "Maybe"},
-	keys: {value: [{charCode: "m".charCodeAt(0), ctrlKey:false}]}
+MM.Command.Computed = Object.create(MM.Command, {
+	label: {value: "Computed"},
+	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
-MM.Command.Maybe.execute = function() {
+MM.Command.Computed.execute = function() {
 	var item = MM.App.current;
-	var status = (item.getStatus() == "maybe" ? null : "maybe");
+	var status = (item.getStatus() == "computed" ? null : "computed");
 	var action = new MM.Action.SetStatus(item, status);
 	MM.App.action(action);
 }
@@ -2517,6 +2810,14 @@ MM.Format.getByMime = function(mime) {
 
 MM.Format.to = function(data) {}
 MM.Format.from = function(data) {}
+
+MM.Format.nl2br = function(str) {
+	return str.replace(/\n/g, "<br/>");
+}
+
+MM.Format.br2nl = function(str) {
+	return str.replace(/<br\s*\/?>/g, "\n");
+}
 MM.Format.JSON = Object.create(MM.Format, {
 	id: {value: "json"},
 	label: {value: "Native (JSON)"},
@@ -2525,7 +2826,7 @@ MM.Format.JSON = Object.create(MM.Format, {
 });
 
 MM.Format.JSON.to = function(data) { 
-	return JSON.stringify(data, null, 2) + "\n";
+	return JSON.stringify(data, null, "\t") + "\n";
 }
 
 MM.Format.JSON.from = function(data) {
@@ -2579,7 +2880,7 @@ MM.Format.FreeMind._serializeItem = function(doc, json) {
 
 MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
-	elm.setAttribute("TEXT", json.text);
+	elm.setAttribute("TEXT", MM.Format.br2nl(json.text));
 	elm.setAttribute("ID", json.id);
 
 	if (json.side) { elm.setAttribute("POSITION", json.side); }
@@ -2605,7 +2906,7 @@ MM.Format.FreeMind._parseNode = function(node, parent) {
 MM.Format.FreeMind._parseAttributes = function(node, parent) {
 	var json = {
 		children: [],
-		text: node.getAttribute("TEXT") || "",
+		text: MM.Format.nl2br(node.getAttribute("TEXT") || ""),
 		id: node.getAttribute("ID")
 	};
 
@@ -2651,7 +2952,7 @@ MM.Format.MMA = Object.create(MM.Format.FreeMind, {
 MM.Format.MMA._parseAttributes = function(node, parent) {
 	var json = {
 		children: [],
-		text: node.getAttribute("title") || "",
+		text: MM.Format.nl2br(node.getAttribute("title") || ""),
 		shape: "box"
 	};
 
@@ -2681,7 +2982,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 
 MM.Format.MMA._serializeAttributes = function(doc, json) {
 	var elm = doc.createElement("node");
-	elm.setAttribute("title", json.text);
+	elm.setAttribute("title", MM.Format.br2nl(json.text));
 	elm.setAttribute("expand", json.collapsed ? "false" : "true");
 
 	if (json.side) { elm.setAttribute("direction", json.side == "left" ? "0" : "1"); }
@@ -2720,7 +3021,7 @@ MM.Format.Mup.from = function(data) {
 
 MM.Format.Mup._MupToMM = function(item) {
 	var json = {
-		text: item.title,
+		text: MM.Format.nl2br(item.title),
 		id: item.id,
 		shape: "box"
 	}
@@ -2758,7 +3059,7 @@ MM.Format.Mup._MupToMM = function(item) {
 MM.Format.Mup._MMtoMup = function(item, side) {
 	var result = {
 		id: item.id,
-		title: item.text,
+		title: MM.Format.br2nl(item.text),
 		attr: {}
 	}
 	if (item.color) {
@@ -2783,6 +3084,92 @@ MM.Format.Mup._MMtoMup = function(item, side) {
 	}
 
 	return result;
+}
+MM.Format.Plaintext = Object.create(MM.Format, {
+	id: {value: "plaintext"},
+	label: {value: "Plain text"},
+	extension: {value: "txt"},
+	mime: {value: "application/vnd.mymind+txt"}
+});
+
+/**
+ * Can serialize also a sub-tree
+ */
+MM.Format.Plaintext.to = function(data) {
+	return this._serializeItem(data.root || data);
+}
+
+MM.Format.Plaintext.from = function(data) {
+	var lines = data.split("\n").filter(function(line) {
+		return line.match(/\S/);
+	});
+
+	var items = this._parseItems(lines);
+
+	if (items.length == 1) {
+		var result = {
+			root: items[0]
+		}
+	} else {
+		var result = {
+			root: {
+				text: "",
+				children: items
+			}
+		}
+	}
+	result.root.layout = "map";
+
+	return result;
+}
+
+MM.Format.Plaintext._serializeItem = function(item, depth) {
+	depth = depth || 0;
+
+	var lines = (item.children || []) .map(function(child) {
+		return this._serializeItem(child, depth+1);
+	}, this);
+
+	var prefix = new Array(depth+1).join("\t");
+	lines.unshift(prefix + item.text.replace(/\n/g, ""));
+
+	return lines.join("\n") + (depth ? "" : "\n");
+}
+
+
+MM.Format.Plaintext._parseItems = function(lines) {
+	var items = [];
+	if (!lines.length) { return items; }
+	var firstPrefix = this._parsePrefix(lines[0]);
+
+	var currentItem = null;
+	var childLines = [];
+
+	/* finalize a block of sub-children by converting them to items and appending */
+	var convertChildLinesToChildren = function() { 
+		if (!currentItem || !childLines.length) { return; }
+		var children = this._parseItems(childLines);
+		if (children.length) { currentItem.children = children; }
+		childLines = [];
+	}
+
+	lines.forEach(function(line, index) {
+		if (this._parsePrefix(line) == firstPrefix) { /* new top-level item! */
+			convertChildLinesToChildren.call(this); /* finalize previous item */
+			currentItem = {text:line.match(/^\s*(.*)/)[1]};
+			items.push(currentItem);
+		} else { /* prepare as a future child */
+			childLines.push(line);
+		}
+	}, this);
+
+	convertChildLinesToChildren.call(this);
+
+	return items;
+}
+
+MM.Format.Plaintext._parsePrefix = function(line) {
+	return line.match(/^\s*/)[0];
 }
 MM.Backend = Object.create(MM.Repo);
 
@@ -2841,7 +3228,7 @@ MM.Backend.WebDAV = Object.create(MM.Backend, {
 });
 
 MM.Backend.WebDAV.save = function(data, url) {
-	return this._request("post", url, data);
+	return this._request("put", url, data);
 }
 
 MM.Backend.WebDAV.load = function(url) {
@@ -2859,7 +3246,7 @@ MM.Backend.WebDAV._request = function(method, url, data) {
 		function(xhr) { promise.fulfill(xhr.responseText); },
 		function(xhr) { promise.reject(new Error("HTTP/" + xhr.status + "\n\n" + xhr.responseText)); }
 	);
-	
+
 	return promise;
 }
 MM.Backend.Image = Object.create(MM.Backend, {
@@ -2929,7 +3316,12 @@ MM.Backend.File.load = function() {
 MM.Backend.Firebase = Object.create(MM.Backend, {
 	label: {value: "Firebase"},
 	id: {value: "firebase"},
-	ref: {value:null, writable:true}
+	ref: {value:null, writable:true},
+	_current: {value: {
+		id: null,
+		name: null,
+		data: null
+	}}
 });
 
 MM.Backend.Firebase.connect = function(server, auth) {
@@ -2937,14 +3329,12 @@ MM.Backend.Firebase.connect = function(server, auth) {
 	
 	this.ref.child("names").on("value", function(snap) {
 		MM.publish("firebase-list", this, snap.val() || {});
-	});
+	}, this);
 
 	if (auth) {
 		return this._login(auth);
 	} else {
-		var promise = new Promise();
-		promise.fulfill();
-		return promise;
+		return new Promise().fulfill();
 	}
 }
 
@@ -2958,8 +3348,9 @@ MM.Backend.Firebase.save = function(data, id, name) {
 				promise.reject(result);
 			} else {
 				promise.fulfill();
+				this._listenStart(data, id);
 			}
-		});
+		}.bind(this));
 	} catch (e) {
 		promise.reject(e);
 	}
@@ -2973,10 +3364,11 @@ MM.Backend.Firebase.load = function(id) {
 		var data = snap.val();
 		if (data) {
 			promise.fulfill(data);
+			this._listenStart(data, id);
 		} else {
 			promise.reject(new Error("There is no such saved map"));
 		}
-	});
+	}, this);
 	return promise;
 }
 
@@ -2997,6 +3389,110 @@ MM.Backend.Firebase.remove = function(id) {
 	}
 
 	return promise;
+}
+
+MM.Backend.Firebase.reset = function() {
+	this._listenStop(); /* do not monitor current firebase ref for changes */
+}
+
+/**
+ * Merge current (remote) data with updated map
+ */
+MM.Backend.Firebase.mergeWith = function(data, name) {
+	var id = this._current.id;
+
+	if (name != this._current.name) {
+		this._current.name = name;
+		this.ref.child("names/" + id).set(name);
+	}
+
+
+	var dataRef = this.ref.child("data/" + id);
+	var oldData = this._current.data;
+
+	this._listenStop();
+	this._recursiveRefMerge(dataRef, oldData, data);
+	this._listenStart(data, id);
+}
+
+/**
+ * @param {Firebase} ref
+ * @param {object} oldData
+ * @param {object} newData
+ */
+MM.Backend.Firebase._recursiveRefMerge = function(ref, oldData, newData) {
+	var updateObject = {};
+
+	if (newData instanceof Array) { /* merge arrays */
+
+		for (var i=0; i<newData.length; i++) {
+			var newValue = newData[i];
+
+			if (!(i in oldData)) { /* new key */
+				updateObject[i] = newValue;
+			} else if (typeof(newValue) == "object") { /* recurse */
+				this._recursiveRefMerge(ref.child(i), oldData[i], newValue);
+			} else if (newValue !== oldData[i]) { /* changed key */
+				updateObject[i] = newValue;
+			}
+		}
+
+		for (var i=newData.length; i<oldData.length; i++) { updateObject[i] = null; } /* removed array items */
+
+	} else { /* merge objects */
+
+		for (var p in newData) { /* new/changed keys */
+			var newValue = newData[p];
+
+			if (!(p in oldData)) { /* new key */
+				updateObject[p] = newValue;
+			} else if (typeof(newValue) == "object") { /* recurse */
+				this._recursiveRefMerge(ref.child(p), oldData[p], newValue);
+			} else if (newValue !== oldData[p]) { /* changed key */
+				updateObject[p] = newValue;
+			}
+
+		}
+
+		for (var p in oldData) { /* removed keys */
+			if (!(p in newData)) { updateObject[p] = null; }
+		}
+
+	}
+
+	if (Object.keys(updateObject).length) { ref.update(updateObject); }
+}
+
+MM.Backend.Firebase._listenStart = function(data, id) {
+	if (this._current.id && this._current.id == id) { return; }
+
+	this._listenStop();
+	this._current.id = id;
+	this._current.data = data;
+
+	this.ref.child("data/" + id).on("value", this._valueChange, this);
+}
+
+MM.Backend.Firebase._listenStop = function() {
+	if (!this._current.id) { return; }
+
+	this.ref.child("data/" + this._current.id).off("value");
+	this._current.id = null;
+	this._current.name = null;
+	this._current.data = null;
+}
+
+
+/**
+ * Monitored remote ref changed.
+ * FIXME move timeout logic to ui.backend.firebase?
+ */
+MM.Backend.Firebase._valueChange = function(snap) {
+	this._current.data = snap.val();
+	if (this._changeTimeout) { clearTimeout(this._changeTimeout); }
+	this._changeTimeout = setTimeout(function() {
+		MM.publish("firebase-change", this, this._current.data);
+	}.bind(this), 200);
 }
 
 MM.Backend.Firebase._login = function(type) {
@@ -3200,10 +3696,8 @@ MM.Backend.GDrive._auth = function(forceUI) {
 }
 MM.UI = function() {
 	this._node = document.querySelector(".ui");
-	this._node.addEventListener("click", this);
 	
-	this._toggle = document.querySelector("#toggle");
-	this._toggle.addEventListener("click", this);
+	this._toggle = this._node.querySelector("#toggle");
 
 	this._layout = new MM.UI.Layout();
 	this._shape = new MM.UI.Shape();
@@ -3211,8 +3705,11 @@ MM.UI = function() {
 	this._value = new MM.UI.Value();
 	this._status = new MM.UI.Status();
 		
-	MM.subscribe("item-change", this);
 	MM.subscribe("item-select", this);
+	MM.subscribe("item-change", this);
+
+	this._node.addEventListener("click", this);
+	this._node.addEventListener("change", this);
 
 	this.toggle();
 }
@@ -3230,18 +3727,30 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 }
 
 MM.UI.prototype.handleEvent = function(e) {
-	/* blur to return focus back to app commands */
-	if (e.target.nodeName.toLowerCase() != "select") { e.target.blur(); }
+	switch (e.type) {
+		case "click":
+			if (e.target.nodeName.toLowerCase() != "select") { MM.Clipboard.focus(); } /* focus the clipboard (2c) */
 
-	if (e.target == this._toggle) {
-		this.toggle();
-		return;
+			if (e.target == this._toggle) {
+				this.toggle();
+				return;
+			}
+			
+			var node = e.target;
+			while (node != document) {
+				var command = node.getAttribute("data-command");
+				if (command) {
+					MM.Command[command].execute();
+					return;
+				}
+				node = node.parentNode;
+			}
+		break;
+
+		case "change":
+			MM.Clipboard.focus(); /* focus the clipboard (2c) */
+		break;
 	}
-	
-	var command = e.target.getAttribute("data-command");
-	if (!command) { return; }
-
-	MM.Command[command].execute();
 }
 
 MM.UI.prototype.toggle = function() {
@@ -3448,7 +3957,7 @@ MM.UI.Help.prototype._build = function() {
 
 	var t = this._node.querySelector(".editing");
 	this._buildRow(t, "Value");
-	this._buildRow(t, "Yes", "No", "Maybe");
+	this._buildRow(t, "Yes", "No", "Computed");
 	this._buildRow(t, "Edit");
 	this._buildRow(t, "Newline");
 	this._buildRow(t, "Bold");
@@ -3578,8 +4087,9 @@ MM.UI.IO.prototype.show = function(mode) {
 }
 
 MM.UI.IO.prototype.hide = function() {
+	if (!this._node.classList.contains("visible")) { return; }
 	this._node.classList.remove("visible");
-	document.activeElement && document.activeElement.blur();
+	MM.Clipboard.focus();
 	window.removeEventListener("keydown", this);
 }
 
@@ -3605,13 +4115,16 @@ MM.UI.IO.prototype.handleEvent = function(e) {
 
 MM.UI.IO.prototype._syncBackend = function() {
 	var all = this._node.querySelectorAll("div[id]");
-	[].concat.apply([], all).forEach(function(node) { node.style.display = "none"; });
+	[].slice.apply(all).forEach(function(node) { node.style.display = "none"; });
 	
 	this._node.querySelector("#" + this._backend.value).style.display = "";
 	
 	this._backends[this._backend.value].show(this._mode);
 }
 
+/**
+ * @param {MM.UI.Backend} backend
+ */
 MM.UI.IO.prototype._setCurrentBackend = function(backend) {
 	if (this._currentBackend && this._currentBackend != backend) { this._currentBackend.reset(); }
 	
@@ -3690,7 +4203,8 @@ MM.UI.Backend.show = function(mode) {
 
 	var visible = this._node.querySelectorAll("[data-for~=" + mode + "]");
 	[].concat.apply([], visible).forEach(function(node) { node.style.display = ""; });
-	
+
+	/* switch to 2a: steal focus from the current item */
 	this._go.focus();
 }
 
@@ -3756,6 +4270,7 @@ MM.UI.Backend.File.init = function(select) {
 	this._format.appendChild(MM.Format.FreeMind.buildOption());
 	this._format.appendChild(MM.Format.MMA.buildOption());
 	this._format.appendChild(MM.Format.Mup.buildOption());
+	this._format.appendChild(MM.Format.Plaintext.buildOption());
 	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
 }
 
@@ -3831,8 +4346,11 @@ MM.UI.Backend.WebDAV.save = function() {
 	var url = this._url.value;
 	localStorage.setItem(this._prefix + "url", url);
 
-	if (url.charCodeAt(url.length-1) != "/") { url += "/"; }
-	url += map.getName() + "." + MM.Format.JSON.extension;
+	if (url.match(/\.mymind$/)) { /* complete file name */
+	} else { /* just a path */
+		if (url.charAt(url.length-1) != "/") { url += "/"; }
+		url += map.getName() + "." + MM.Format.JSON.extension;
+	}
 
 	this._current = url;
 	var json = map.toJSON();
@@ -3976,6 +4494,7 @@ MM.UI.Backend.Firebase.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
 	
 	this._online = false;
+	this._itemChangeTimeout = null;
 	this._list = this._node.querySelector(".list");
 	this._server = this._node.querySelector(".server");
 	this._server.value = localStorage.getItem(this._prefix + "server") || "my-mind";
@@ -3988,13 +4507,14 @@ MM.UI.Backend.Firebase.init = function(select) {
 
 	this._go.disabled = false;
 	MM.subscribe("firebase-list", this);
+	MM.subscribe("firebase-change", this);
 }
 
 MM.UI.Backend.Firebase.setState = function(data) {
 	this._connect(data.s, data.a).then(
 		this._load.bind(this, data.id),
 		this._error.bind(this)
-	)
+	);
 }
 
 MM.UI.Backend.Firebase.getState = function() {
@@ -4041,7 +4561,32 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 			}
 			this._sync();
 		break;
+
+		case "firebase-change":
+			if (data) {
+				MM.unsubscribe("item-change", this);
+				MM.App.map.mergeWith(data);
+				MM.subscribe("item-change", this);
+			} else { /* FIXME */
+				console.log("remote data disappeared");
+			}
+		break;
+
+		case "item-change":
+			if (this._itemChangeTimeout) { clearTimeout(this._itemChangeTimeout); }
+			this._itemChangeTimeout = setTimeout(this._itemChange.bind(this), 200);
+		break;
 	}
+}
+
+MM.UI.Backend.Firebase.reset = function() {
+	this._backend.reset();
+	MM.unsubscribe("item-change", this);
+}
+
+MM.UI.Backend.Firebase._itemChange = function() {
+	var map = MM.App.map;
+	this._backend.mergeWith(map.toJSON(), map.getName());
 }
 
 MM.UI.Backend.Firebase._action = function() {
@@ -4069,7 +4614,7 @@ MM.UI.Backend.Firebase.load = function() {
 
 MM.UI.Backend.Firebase._load = function(id) {
 	MM.App.setThrobber(true);
-
+	/* FIXME posere se kdyz zmenim jeden firebase na jiny, mozna */
 	this._backend.load(id).then(
 		this._loadDone.bind(this),
 		this._error.bind(this)
@@ -4118,6 +4663,15 @@ MM.UI.Backend.Firebase._sync = function() {
 	this._go.innerHTML = this._mode.charAt(0).toUpperCase() + this._mode.substring(1);
 }
 
+MM.UI.Backend.Firebase._loadDone = function() {
+	MM.subscribe("item-change", this);
+	MM.UI.Backend._loadDone.apply(this, arguments);
+}
+
+MM.UI.Backend.Firebase._saveDone = function() {
+	MM.subscribe("item-change", this);
+	MM.UI.Backend._saveDone.apply(this, arguments);
+}
 MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
 	id: {value: "gdrive"}
 });
@@ -4130,6 +4684,7 @@ MM.UI.Backend.GDrive.init = function(select) {
 	this._format.appendChild(MM.Format.FreeMind.buildOption());
 	this._format.appendChild(MM.Format.MMA.buildOption());
 	this._format.appendChild(MM.Format.Mup.buildOption());
+	this._format.appendChild(MM.Format.Plaintext.buildOption());
 	this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
 }
 
@@ -4198,22 +4753,26 @@ MM.UI.Backend.GDrive._loadDone = function(data) {
 	MM.UI.Backend._loadDone.call(this, json);
 }
 MM.Mouse = {
+	TOUCH_DELAY: 500,
 	_port: null,
 	_cursor: [0, 0],
 	_pos: [0, 0], /* ghost pos */
 	_mode: "",
 	_item: null,
 	_ghost: null,
-	_oldDragState: null
+	_oldDragState: null,
+	_touchTimeout: null
 }
 
 MM.Mouse.init = function(port) {
 	this._port = port;
+	this._port.addEventListener("touchstart", this);
 	this._port.addEventListener("mousedown", this);
 	this._port.addEventListener("click", this);
 	this._port.addEventListener("dblclick", this);
 	this._port.addEventListener("wheel", this);
 	this._port.addEventListener("mousewheel", this);
+	this._port.addEventListener("contextmenu", this);
 }
 
 MM.Mouse.handleEvent = function(e) {
@@ -4228,20 +4787,52 @@ MM.Mouse.handleEvent = function(e) {
 			if (item) { MM.Command.Edit.execute(); }
 		break;
 		
-		case "mousedown":
-			var item = MM.App.map.getItemFor(e.target);
-			if (item == MM.App.current && MM.App.editing) { return; }
+		case "contextmenu":
+			this._endDrag();
+			e.preventDefault();
 
-			document.activeElement && document.activeElement.blur(); /* blur the panel FIXME only if activeElement is in the UI? */
+			var item = MM.App.map.getItemFor(e.target);
+			item && MM.App.select(item);
+
+			MM.Menu.open(e.clientX, e.clientY);
+		break;
+
+		case "touchstart":
+			if (e.touches.length > 1) { return; }
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
+		case "mousedown":
+			if (e.type == "mousedown") { e.preventDefault(); } /* to prevent blurring the clipboard node */
+			var item = MM.App.map.getItemFor(e.target);
+
+			if (e.type == "touchstart") { /* context menu here, after we have the item */
+				this._touchTimeout = setTimeout(function() { 
+					item && MM.App.select(item);
+					MM.Menu.open(e.clientX, e.clientY);
+				}, this.TOUCH_DELAY);
+			}
+
+			if (MM.App.editing) {
+				if (item == MM.App.current) { return; } /* ignore dnd on edited node */
+				MM.Command.Finish.execute(); /* clicked elsewhere => finalize edit */
+			}
+
 			this._startDrag(e, item);
 		break;
 		
+		case "touchmove":
+			if (e.touches.length > 1) { return; }
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
+			clearTimeout(this._touchTimeout);
 		case "mousemove":
 			this._processDrag(e);
 		break;
 		
+		case "touchend":
+			clearTimeout(this._touchTimeout);
 		case "mouseup":
-			this._endDrag(e);
+			this._endDrag();
 		break;
 
 		case "wheel":
@@ -4255,9 +4846,15 @@ MM.Mouse.handleEvent = function(e) {
 }
 
 MM.Mouse._startDrag = function(e, item) {
-	e.preventDefault(); /* no selections allowed */
-	this._port.addEventListener("mousemove", this);
-	this._port.addEventListener("mouseup", this);
+
+	if (e.type == "mousedown") {
+		e.preventDefault(); /* no selections allowed. only for mouse; preventing touchstart would prevent Safari from emulating clicks */
+		this._port.addEventListener("mousemove", this);
+		this._port.addEventListener("mouseup", this);
+	} else {
+		this._port.addEventListener("touchmove", this);
+		this._port.addEventListener("touchend", this);
+	}
 
 	this._cursor[0] = e.clientX;
 	this._cursor[1] = e.clientY;
@@ -4272,6 +4869,7 @@ MM.Mouse._startDrag = function(e, item) {
 }
 
 MM.Mouse._processDrag = function(e) {
+	e.preventDefault();
 	var dx = e.clientX - this._cursor[0];
 	var dy = e.clientY - this._cursor[1];
 	this._cursor[0] = e.clientX;
@@ -4294,7 +4892,7 @@ MM.Mouse._processDrag = function(e) {
 	}
 }
 
-MM.Mouse._endDrag = function(e) {
+MM.Mouse._endDrag = function() {
 	this._port.style.cursor = "";
 	this._port.removeEventListener("mousemove", this);
 	this._port.removeEventListener("mouseup", this);
@@ -4426,9 +5024,41 @@ MM.Mouse._visualizeDragState = function(state) {
 		var spread = (x || y ? -2 : 2);
 		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
 	}
-
-
 }
+/*
+setInterval(function() {
+	console.log(document.activeElement);
+}, 1000);
+*/
+
+/*
+ * Notes regarding app state/modes, activeElements, focusing etc.
+ * ==============================================================
+ * 
+ * 1) There is always exactly one item selected. All executed commands 
+ *    operate on this item.
+ * 
+ * 2) The app distinguishes three modes with respect to focus:
+ *   2a) One of the UI panes has focus (inputs, buttons, selects). 
+ *       Keyboard shortcuts are disabled.
+ *   2b) Current item is being edited. It is contentEditable and focused. 
+ *       Blurring ends the edit mode.
+ *   2c) ELSE the Clipboard is focused (its invisible textarea)
+ * 
+ * In 2a, we try to lose focus as soon as possible
+ * (after clicking, after changing select's value), switching to 2c.
+ *
+ * 3) Editing mode (2b) can be ended by multiple ways:
+ *   3a) By calling current.stopEditing();
+ *       this shall be followed by some resolution.
+ *   3b) By executing MM.Command.{Finish,Cancel};
+ *       these call 3a internally.
+ *   3c) By blurring the item itself (by selecting another);
+ *       this calls MM.Command.Finish (3b).
+ *   3b) By blurring the currentElement;
+ *       this calls MM.Command.Finish (3b).
+ * 
+ */
 MM.App = {
 	keyboard: null,
 	current: null,
@@ -4472,19 +5102,11 @@ MM.App = {
 	},
 	
 	select: function(item) {
-		if (item == this.current) { return; }
-
-		if (this.editing) { MM.Command.Finish.execute(); }
-
-		if (this.current) {
-			this.current.getDOM().node.classList.remove("current");
-		}
+		if (this.current && this.current != item) { this.current.deselect(); }
 		this.current = item;
-		this.current.getDOM().node.classList.add("current");
-		this.map.ensureItemVisibility(item);
-		MM.publish("item-select", item);
+		this.current.select();
 	},
-	
+
 	adjustFontSize: function(diff) {
 		this._fontSize = Math.max(30, this._fontSize + 10*diff);
 		this._port.style.fontSize = this._fontSize + "%";
@@ -4532,7 +5154,9 @@ MM.App = {
 
 		MM.Tip.init();
 		MM.Keyboard.init();
+		MM.Menu.init(this._port);
 		MM.Mouse.init(this._port);
+		MM.Clipboard.init();
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);

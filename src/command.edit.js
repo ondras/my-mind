@@ -101,7 +101,7 @@ MM.Command.Strikethrough = Object.create(MM.Command.Style, {
 
 MM.Command.Value = Object.create(MM.Command, {
 	label: {value: "Set value"},
-	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false}]}
+	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
 MM.Command.Value.execute = function() {
 	var item = MM.App.current;
@@ -138,13 +138,13 @@ MM.Command.No.execute = function() {
 	MM.App.action(action);
 }
 
-MM.Command.Maybe = Object.create(MM.Command, {
-	label: {value: "Maybe"},
-	keys: {value: [{charCode: "m".charCodeAt(0), ctrlKey:false}]}
+MM.Command.Computed = Object.create(MM.Command, {
+	label: {value: "Computed"},
+	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
-MM.Command.Maybe.execute = function() {
+MM.Command.Computed.execute = function() {
 	var item = MM.App.current;
-	var status = (item.getStatus() == "maybe" ? null : "maybe");
+	var status = (item.getStatus() == "computed" ? null : "computed");
 	var action = new MM.Action.SetStatus(item, status);
 	MM.App.action(action);
 }
