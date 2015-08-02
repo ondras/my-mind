@@ -25,6 +25,7 @@ MM.Mouse.handleEvent = function(e) {
 	switch (e.type) {
 		case "click":
 			var item = MM.App.map.getItemFor(e.target);
+			if (MM.App.editing && item == MM.App.current) { return; } /* ignore on edited node */
 			if (item) { MM.App.select(item); }
 		break;
 		
@@ -48,19 +49,19 @@ MM.Mouse.handleEvent = function(e) {
 			e.clientX = e.touches[0].clientX;
 			e.clientY = e.touches[0].clientY;
 		case "mousedown":
-			if (e.type == "mousedown") { e.preventDefault(); } /* to prevent blurring the clipboard node */
 			var item = MM.App.map.getItemFor(e.target);
+			if (MM.App.editing) {
+				if (item == MM.App.current) { return; } /* ignore dnd on edited node */
+				MM.Command.Finish.execute(); /* clicked elsewhere => finalize edit */
+			}
 
+			if (e.type == "mousedown") { e.preventDefault(); } /* to prevent blurring the clipboard node */
+	
 			if (e.type == "touchstart") { /* context menu here, after we have the item */
 				this._touchTimeout = setTimeout(function() { 
 					item && MM.App.select(item);
 					MM.Menu.open(e.clientX, e.clientY);
 				}, this.TOUCH_DELAY);
-			}
-
-			if (MM.App.editing) {
-				if (item == MM.App.current) { return; } /* ignore dnd on edited node */
-				MM.Command.Finish.execute(); /* clicked elsewhere => finalize edit */
 			}
 
 			this._startDrag(e, item);
