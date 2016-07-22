@@ -5,8 +5,8 @@ MM.Format.FreeMind = Object.create(MM.Format, {
 	mime: {value: "application/x-freemind"}
 });
 
-MM.Format.FreeMind.to = function(data) { 
-	var doc = document.implementation.createDocument(null, null);
+MM.Format.FreeMind.to = function(data) {
+	var doc = document.implementation.createDocument("", "", null);
 	var map = doc.createElement("map");
 
 	map.setAttribute("version", "0.9.0");
