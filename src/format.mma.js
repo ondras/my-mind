@@ -31,6 +31,7 @@ MM.Format.MMA._parseAttributes = function(node, parent) {
 		json.color = "#" + [r,g,b].join("");
 	}
 
+	json.icon = node.getAttribute("icon");
 
 	return json;
 }
@@ -47,6 +48,9 @@ MM.Format.MMA._serializeAttributes = function(doc, json) {
 		var g = new Array(5).join(parts[2]);
 		var b = new Array(5).join(parts[3]);
 		elm.setAttribute("color", "#" + [r,g,b].join(""));
+	}
+	if (json.icon) {
+		elm.setAttribute("icon", json.icon);
 	}
 
 	return elm;
