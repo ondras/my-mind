@@ -136,10 +136,12 @@ MM.Layout._alignItem = function(item, side) {
 
 	switch (side) {
 		case "left":
+			dom.content.insertBefore(dom.icon, dom.content.firstChild);
 			dom.content.appendChild(dom.value);
 			dom.content.appendChild(dom.status);
 		break;
 		case "right":
+			dom.content.insertBefore(dom.icon, dom.content.firstChild);
 			dom.content.insertBefore(dom.value, dom.content.firstChild);
 			dom.content.insertBefore(dom.status, dom.content.firstChild);
 		break;

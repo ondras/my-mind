@@ -10,6 +10,7 @@ MM.Item = function() {
 	this._value = null;
 	this._status = null;
 	this._side = null; /* side preference */
+	this._icon = null;
 	this._id = MM.generateId();
 	this._oldText = "";
 
@@ -22,6 +23,7 @@ MM.Item = function() {
 		node: document.createElement("li"),
 		content: document.createElement("div"),
 		status: document.createElement("span"),
+		icon: document.createElement("span"),
 		value: document.createElement("span"),
 		text: document.createElement("div"),
 		children: document.createElement("ul"),
@@ -31,6 +33,7 @@ MM.Item = function() {
 	this._dom.node.classList.add("item");
 	this._dom.content.classList.add("content");
 	this._dom.status.classList.add("status");
+	this._dom.icon.classList.add("icon");
 	this._dom.value.classList.add("value");
 	this._dom.text.classList.add("text");
 	this._dom.toggle.classList.add("toggle");
@@ -69,6 +72,7 @@ MM.Item.prototype.toJSON = function() {
 	
 	if (this._side) { data.side = this._side; }
 	if (this._color) { data.color = this._color; }
+	if (this._icon) { data.icon = this._icon; }
 	if (this._value) { data.value = this._value; }
 	if (this._status) { data.status = this._status; }
 	if (this._layout) { data.layout = this._layout.id; }
@@ -89,6 +93,7 @@ MM.Item.prototype.fromJSON = function(data) {
 	if (data.id) { this._id = data.id; }
 	if (data.side) { this._side = data.side; }
 	if (data.color) { this._color = data.color; }
+	if (data.icon) { this._icon = data.icon; }
 	if (data.value) { this._value = data.value; }
 	if (data.status) {
 		this._status = data.status;
@@ -118,6 +123,11 @@ MM.Item.prototype.mergeWith = function(data) {
 	if (this._color != data.color) { 
 		this._color = data.color;
 		dirty = 2;
+	}
+
+	if (this._icon != data.icon) {
+		this._icon = data.icon;
+		dirty = 1;
 	}
 
 	if (this._value != data.value) { 
@@ -203,6 +213,7 @@ MM.Item.prototype.update = function(doNotRecurse) {
 	}
 	
 	this._updateStatus();
+	this._updateIcon();
 	this._updateValue();
 
 	this._dom.node.classList[this._collapsed ? "add" : "remove"]("collapsed");
@@ -272,6 +283,15 @@ MM.Item.prototype.setStatus = function(status) {
 
 MM.Item.prototype.getStatus = function() {
 	return this._status;
+}
+
+MM.Item.prototype.setIcon = function(icon) {
+	this._icon = icon;
+	return this.update();
+}
+
+MM.Item.prototype.getIcon = function() {
+	return this._icon;
 }
 
 MM.Item.prototype.getComputedStatus = function() {
@@ -500,6 +520,21 @@ MM.Item.prototype._updateStatus = function() {
 			this._computed.status = null;
 			this._dom.status.style.display = "none";
 		break;
+	}
+}
+MM.Item.prototype._updateIcon = function() {
+    this._dom.icon.className = "icon";
+    this._dom.icon.style.display = "";
+
+    var icon = this._icon;
+    if (icon)
+	{
+        this._dom.icon.classList.add('fa');
+        this._dom.icon.classList.add(icon);
+        this._computed.icon = true;
+	} else {
+        this._computed.icon = null;
+        this._dom.icon.style.display = "none";
 	}
 }
 

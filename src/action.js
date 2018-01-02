@@ -187,6 +187,19 @@ MM.Action.SetStatus.prototype.undo = function() {
 	this._item.setStatus(this._oldStatus);
 }
 
+MM.Action.SetIcon = function(item, icon) {
+	this._item = item;
+	this._icon = icon;
+	this._oldIcon = item.getIcon();
+}
+MM.Action.SetIcon.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetIcon.prototype.perform = function() {
+	this._item.setIcon(this._icon);
+}
+MM.Action.SetIcon.prototype.undo = function() {
+	this._item.setIcon(this._oldIcon);
+}
+
 MM.Action.SetSide = function(item, side) {
 	this._item = item;
 	this._side = side;
