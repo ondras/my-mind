@@ -25,7 +25,8 @@ MM.Format.Mup._MupToMM = function(item) {
 	var json = {
 		text: MM.Format.nl2br(item.title),
 		id: item.id,
-		shape: "box"
+		shape: "box",
+		icon: item.icon
 	}
 
 	if (item.attr && item.attr.style && item.attr.style.background) {
@@ -62,6 +63,7 @@ MM.Format.Mup._MMtoMup = function(item, side) {
 	var result = {
 		id: item.id,
 		title: MM.Format.br2nl(item.text),
+		icon: item.icon,
 		attr: {}
 	}
 	if (item.color) {

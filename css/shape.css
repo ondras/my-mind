@@ -36,3 +36,8 @@
 	border-width: 2px;
 	font-size: 120%;
 }
+
+.item .icon {
+	margin: 0 0.5em 0 0;
+	font-size: x-large;
+}

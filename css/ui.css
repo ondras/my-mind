@@ -191,3 +191,9 @@ button:not(:disabled) {
 .ui#io button:nth-child(even) {
 	float: right;
 }
+
+.ui select.fa-select ,
+.ui select.fa-select option {
+	font-family: fontAwesome;
+	font-size: x-large;
+}
