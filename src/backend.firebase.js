@@ -10,7 +10,18 @@ MM.Backend.Firebase = Object.create(MM.Backend, {
 });
 
 MM.Backend.Firebase.connect = function(server, auth) {
-	this.ref = new Firebase("https://" + server + ".firebaseio.com/");
+	// Initialize Firebase
+	var config = {
+		apiKey: "AIzaSyBO_6uCK8pHjoz1c9htVwZi6Skpm8o4LtQ",
+		authDomain: "my-mind.firebaseapp.com",
+		databaseURL: "https://" + server + ".firebaseio.com",
+		projectId: "firebase-my-mind",
+		storageBucket: "firebase-my-mind.appspot.com",
+		messagingSenderId: "666556281676"
+	};
+	firebase.initializeApp(config);
+
+	this.ref = firebase.database().ref();
 	
 	this.ref.child("names").on("value", function(snap) {
 		MM.publish("firebase-list", this, snap.val() || {});
@@ -181,16 +192,23 @@ MM.Backend.Firebase._valueChange = function(snap) {
 }
 
 MM.Backend.Firebase._login = function(type) {
-	var promise = new Promise();
+	var provider;
+	switch (type) {
+		case "github":
+			provider = new firebase.auth.GithubAuthProvider();
+		break;
+		case "facebook":
+			provider = new firebase.auth.FacebookAuthProvider();
+		break;
+		case "twitter":
+			provider = new firebase.auth.TwitterAuthProvider();
+		break;
+		case "google":
+			provider = new firebase.auth.GoogleAuthProvider();
+		break;
+	}
 
-	var auth = new FirebaseSimpleLogin(this.ref, function(error, user) {
-		if (error) {
-			promise.reject(error);
-		} else if (user) {
-			promise.fulfill(user);
-		}
+	return firebase.auth().signInWithPopup(provider).then(function(result) {
+		return result.user;
 	});
-	auth.login(type);
-
-	return promise;
 }
