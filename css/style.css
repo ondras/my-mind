@@ -55,6 +55,7 @@ ul {
 	left: 10px;
 	bottom: 5px;
 	transition: all 500ms;
+	font-size: 1rem; /* do not scale with map zoom */
 }
 
 #tip:before {
