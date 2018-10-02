@@ -7,7 +7,7 @@
  * @class A promise - value to be resolved in the future.
  * Implements the "Promises/A+" specification.
  */
-var Promise = function() {
+var Promise = function(executor) {
 	this._state = 0; /* 0 = pending, 1 = fulfilled, 2 = rejected */
 	this._value = null; /* fulfillment / rejection value */
 
@@ -17,6 +17,16 @@ var Promise = function() {
 	}
 
 	this._thenPromises = []; /* promises returned by then() */
+
+	executor && executor(this.fulfill.bind(this), this.reject.bind(this));
+}
+
+Promise.resolve = function(value) {
+	return new Promise().fulfill(value);
+}
+
+Promise.reject = function(value) {
+	return new Promise().reject(value);
 }
 
 /**

@@ -50,7 +50,7 @@ var MM = {
  * @class A promise - value to be resolved in the future.
  * Implements the "Promises/A+" specification.
  */
-var Promise = function() {
+var Promise = function(executor) {
 	this._state = 0; /* 0 = pending, 1 = fulfilled, 2 = rejected */
 	this._value = null; /* fulfillment / rejection value */
 
@@ -60,6 +60,16 @@ var Promise = function() {
 	}
 
 	this._thenPromises = []; /* promises returned by then() */
+
+	executor && executor(this.fulfill.bind(this), this.reject.bind(this));
+}
+
+Promise.resolve = function(value) {
+	return new Promise().fulfill(value);
+}
+
+Promise.reject = function(value) {
+	return new Promise().reject(value);
 }
 
 /**
@@ -3382,7 +3392,18 @@ MM.Backend.Firebase = Object.create(MM.Backend, {
 });
 
 MM.Backend.Firebase.connect = function(server, auth) {
-	this.ref = new Firebase("https://" + server + ".firebaseio.com/");
+	// Initialize Firebase
+	var config = {
+		apiKey: "AIzaSyBO_6uCK8pHjoz1c9htVwZi6Skpm8o4LtQ",
+		authDomain: "my-mind.firebaseapp.com",
+		databaseURL: "https://" + server + ".firebaseio.com",
+		projectId: "firebase-my-mind",
+		storageBucket: "firebase-my-mind.appspot.com",
+		messagingSenderId: "666556281676"
+	};
+	firebase.initializeApp(config);
+
+	this.ref = firebase.database().ref();
 	
 	this.ref.child("names").on("value", function(snap) {
 		MM.publish("firebase-list", this, snap.val() || {});
@@ -3553,18 +3574,25 @@ MM.Backend.Firebase._valueChange = function(snap) {
 }
 
 MM.Backend.Firebase._login = function(type) {
-	var promise = new Promise();
+	var provider;
+	switch (type) {
+		case "github":
+			provider = new firebase.auth.GithubAuthProvider();
+		break;
+		case "facebook":
+			provider = new firebase.auth.FacebookAuthProvider();
+		break;
+		case "twitter":
+			provider = new firebase.auth.TwitterAuthProvider();
+		break;
+		case "google":
+			provider = new firebase.auth.GoogleAuthProvider();
+		break;
+	}
 
-	var auth = new FirebaseSimpleLogin(this.ref, function(error, user) {
-		if (error) {
-			promise.reject(error);
-		} else if (user) {
-			promise.fulfill(user);
-		}
+	return firebase.auth().signInWithPopup(provider).then(function(result) {
+		return result.user;
 	});
-	auth.login(type);
-
-	return promise;
 }
 MM.Backend.GDrive = Object.create(MM.Backend, {
 	id: {value: "gdrive"},
