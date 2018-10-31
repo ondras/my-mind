@@ -210,7 +210,7 @@ MM.Action.SetSide.prototype.perform = function() {
 	this._item.setSide(this._side);
 	this._item.getMap().update();
 }
-MM.Action.SetStatus.prototype.undo = function() {
+MM.Action.SetSide.prototype.undo = function() {
 	this._item.setSide(this._oldSide);
 	this._item.getMap().update();
 }
