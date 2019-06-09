@@ -997,6 +997,8 @@
 		</div>
 		
 		<div id="menu">
+			<button data-command="Notes"></button>
+			<span></span>
 			<button data-command="InsertChild"></button>
 			<button data-command="InsertSibling"></button>
 			<button data-command="Delete"></button>
@@ -1026,11 +1028,7 @@
 				window.editor = window.pell.init({
 					element: document.getElementById('notes-content'),
 					onChange: function(html) {
-						if (html.trim().length === 0) {
-							MM.App.current._notes = null;
-						} else {
-							MM.App.current._notes = html;
-						}
+						MM.App.notes.update(html);
 					},
 					defaultParagraphSeparator: 'div',
 					styleWithCSS: false,

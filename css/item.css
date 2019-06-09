@@ -72,6 +72,15 @@ canvas {
 	top: 0;
 }
 
+.has-notes::after {
+	content: "*";
+	color: #666;
+	position: absolute;
+	top: -0.2em;
+	right: -0.5em;
+	font-size: 20px !important;
+}
+
 .toggle {
 	position: absolute;
 	width: 12px;

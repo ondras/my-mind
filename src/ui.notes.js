@@ -11,3 +11,12 @@ MM.UI.Notes.prototype.close = function() {
 		this._node.classList.toggle("visible");
 	}
 }
+
+MM.UI.Notes.prototype.update = function(html) {
+	if (html.trim().length === 0) {
+		MM.App.current._notes = null;
+	} else {
+		MM.App.current._notes = html;
+	}
+	MM.App.current.update();
+}

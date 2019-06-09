@@ -526,6 +526,7 @@ MM.Item.prototype.update = function(doNotRecurse) {
 
 	this._updateStatus();
 	this._updateIcon();
+    this._updateNotesIndicator();
 	this._updateValue();
 
 	this._dom.node.classList[this._collapsed ? "add" : "remove"]("collapsed");
@@ -858,6 +859,15 @@ MM.Item.prototype._updateIcon = function() {
         this._computed.icon = null;
         this._dom.icon.style.display = "none";
 	}
+}
+
+MM.Item.prototype._updateNotesIndicator = function() {
+    if (this._notes)
+    {
+        this._dom.content.classList.add("has-notes");
+    } else {
+        this._dom.content.classList.remove("has-notes");
+    }
 }
 
 MM.Item.prototype._updateValue = function() {
@@ -4162,6 +4172,15 @@ MM.UI.Notes.prototype.close = function() {
 	if (this._node.classList.contains("visible")) {
 		this._node.classList.toggle("visible");
 	}
+}
+
+MM.UI.Notes.prototype.update = function(html) {
+	if (html.trim().length === 0) {
+		MM.App.current._notes = null;
+	} else {
+		MM.App.current._notes = html;
+	}
+	MM.App.current.update();
 }
 MM.UI.IO = function() {
 	this._prefix = "mm.app.";
