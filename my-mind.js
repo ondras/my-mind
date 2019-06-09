@@ -2937,10 +2937,10 @@ MM.Format.FreeMind = Object.create(MM.Format, {
 });
 
 MM.Format.FreeMind.to = function(data) {
-	var doc = document.implementation.createDocument("", "", null);
+	var doc = document.implementation.createDocument(null, null, null);
 	var map = doc.createElement("map");
 
-	map.setAttribute("version", "0.9.0");
+	map.setAttribute("version", "1.0.1");
 	map.appendChild(this._serializeItem(doc, data.root));
 
 	doc.appendChild(map);
@@ -2983,6 +2983,14 @@ MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 	if (json.side) { elm.setAttribute("POSITION", json.side); }
 	if (json.shape == "box") { elm.setAttribute("STYLE", "bubble"); }
 	if (json.collapsed) { elm.setAttribute("FOLDED", "true"); }
+
+	if (json.notes) {
+	    var notesElm = doc.createElement("richcontent");
+	    var cdata = doc.createCDATASection('<html><head></head><body>' + json.notes + '</body></html>');
+	    notesElm.setAttribute("TYPE", "NOTE");
+	    notesElm.appendChild(cdata);
+	    elm.appendChild(notesElm);
+    }
 
 	return elm;
 }
