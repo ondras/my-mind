@@ -5,6 +5,9 @@
 		<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0" />
 		<title>My Mind</title>
 		<link rel="icon" href="favicon.ico" />
+
+		<link rel="stylesheet" type="text/css" href="/vendor/pell/css/pell.min.css">
+
 		<script src="my-mind.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-app.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-database.js"></script>
@@ -989,14 +992,8 @@
 
 		<div id="notes" class="ui">
 			<h3>Topic Notes</h3>
-			<!-- TODO: load notes and save notes with postMessage and iframes -->
-			<!-- sanitize heavily because of raw HTML -->
+			<!-- TODO: sanitize heavily because of raw HTML -->
 			<div id="notes-content"></div>
-			<textarea id="notes-editor"></textarea>
-
-			<!-- TODO: use a cleaner way with data-command -->
-			<button title="Notes" onclick="MM.App.notes.save();">Save</button>
-			<button title="Notes" onclick="MM.App.notes.toggle();">Close</button>
 		</div>
 		
 		<div id="menu">
@@ -1025,8 +1022,40 @@
 			window.onload = function() {
 				MM.App.init();
 				MM.App.io.restore();
+
+				window.editor = window.pell.init({
+					element: document.getElementById('notes-content'),
+					onChange: function(html) {
+						if (html.trim().length === 0) {
+							MM.App.current._notes = null;
+						} else {
+							MM.App.current._notes = html;
+						}
+					},
+					defaultParagraphSeparator: 'div',
+					styleWithCSS: false,
+					actions: [
+						'bold',
+						'underline',
+						{
+							name: 'close',
+							icon: 'Close',
+							title: 'Close Notes',
+							result: function() {
+								MM.App.notes.toggle();
+							}
+						}
+					],
+					classes: {
+						actionbar: 'pell-actionbar',
+						button: 'pell-button',
+						content: 'pell-content',
+						selected: 'pell-button-selected'
+					}
+				})
 			}
 		</script>
+		<script src="/vendor/pell/src/pell.min.js"></script>
 <!--
 TODO:
   shortterm:

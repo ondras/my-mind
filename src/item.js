@@ -192,14 +192,12 @@ MM.Item.prototype.clone = function() {
 
 MM.Item.prototype.select = function() {
 	this._dom.node.classList.add("current");
-	var notesContentElement = document.getElementById('notes-content');
-	var notesEditorElement = document.getElementById('notes-editor');
-	if (this._notes) {
-		notesContentElement.innerHTML = this._notes;
-		notesEditorElement.value = this._notes;
-	} else {
-		notesContentElement.innerHTML = '';
-		notesEditorElement.value = '';
+	if (window.editor) {
+        if (this._notes) {
+            window.editor.content.innerHTML = this._notes;
+        } else {
+            window.editor.content.innerHTML = '';
+        }
 	}
 	this.getMap().ensureItemVisibility(this);
 	MM.Clipboard.focus(); /* going to mode 2c */
