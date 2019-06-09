@@ -2986,9 +2986,9 @@ MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 
 	if (json.notes) {
 	    var notesElm = doc.createElement("richcontent");
-	    var cdata = doc.createCDATASection('<html><head></head><body>' + json.notes + '</body></html>');
 	    notesElm.setAttribute("TYPE", "NOTE");
-	    notesElm.appendChild(cdata);
+	    // note: the freemind file format isn't very good.
+	    notesElm.appendChild(doc.createCDATASection('<html><head></head><body>' + json.notes + '</body></html>'));
 	    elm.appendChild(notesElm);
     }
 
@@ -4156,6 +4156,12 @@ MM.UI.Notes = function() {
 
 MM.UI.Notes.prototype.toggle = function() {
 	this._node.classList.toggle("visible");
+}
+
+MM.UI.Notes.prototype.close = function() {
+	if (this._node.classList.contains("visible")) {
+		this._node.classList.toggle("visible");
+	}
 }
 MM.UI.IO = function() {
 	this._prefix = "mm.app.";
@@ -5330,6 +5336,11 @@ MM.App = {
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);
+		window.addEventListener("keyup", function(e) {
+			if (e.key === "Escape") {
+				MM.App.notes.close();
+			}
+		});
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
 		

@@ -134,6 +134,11 @@ MM.App = {
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);
+		window.addEventListener("keyup", function(e) {
+			if (e.key === "Escape") {
+				MM.App.notes.close();
+			}
+		});
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
 		
