@@ -875,6 +875,7 @@
 			<a id="github" href="https://github.com/ondras/my-mind" title="GitHub project page"><img src="github.png" alt="GitHub project page" /></a>
 			<button id="toggle" title="Toggle UI"></button>
 			<button data-command="Help" title="Help"><img src="icons/help.png" alt="Help" /></button>
+			<button data-command="Notes" title="Notes"><img src="icons/notes.png" alt="Notes" /></button>
 
 			<div id="throbber"></div>
 		</div>
@@ -984,6 +985,18 @@
 
 			<p><span>Other</span></p>
 			<table class="other"></table>
+		</div>
+
+		<div id="notes" class="ui">
+			<h3>Topic Notes</h3>
+			<!-- TODO: load notes and save notes with postMessage and iframes -->
+			<!-- sanitize heavily because of raw HTML -->
+			<div id="notes-content"></div>
+			<textarea id="notes-editor"></textarea>
+
+			<!-- TODO: use a cleaner way with data-command -->
+			<button title="Notes" onclick="MM.App.notes.save();">Save</button>
+			<button title="Notes" onclick="MM.App.notes.toggle();">Close</button>
 		</div>
 		
 		<div id="menu">

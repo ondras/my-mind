@@ -310,6 +310,7 @@ MM.Item = function() {
 	this._status = null;
 	this._side = null; /* side preference */
 	this._icon = null;
+	this._notes = null;
 	this._id = MM.generateId();
 	this._oldText = "";
 
@@ -366,9 +367,11 @@ MM.Item.fromJSON = function(data) {
 MM.Item.prototype.toJSON = function() {
 	var data = {
 		id: this._id,
-		text: this.getText()
+		text: this.getText(),
+		notes: this.getNotes()
 	}
-	
+
+
 	if (this._side) { data.side = this._side; }
 	if (this._color) { data.color = this._color; }
 	if (this._icon) { data.icon = this._icon; }
@@ -389,6 +392,9 @@ MM.Item.prototype.toJSON = function() {
  */
 MM.Item.prototype.fromJSON = function(data) {
 	this.setText(data.text);
+	if (data.notes) {
+		this.setNotes(data.notes);
+	}
 	if (data.id) { this._id = data.id; }
 	if (data.side) { this._side = data.side; }
 	if (data.color) { this._color = data.color; }
@@ -485,6 +491,15 @@ MM.Item.prototype.clone = function() {
 
 MM.Item.prototype.select = function() {
 	this._dom.node.classList.add("current");
+	var notesContentElement = document.getElementById('notes-content');
+	var notesEditorElement = document.getElementById('notes-editor');
+	if (this._notes) {
+		notesContentElement.innerHTML = this._notes;
+		notesEditorElement.value = this._notes;
+	} else {
+		notesContentElement.innerHTML = '';
+		notesEditorElement.value = '';
+	}
 	this.getMap().ensureItemVisibility(this);
 	MM.Clipboard.focus(); /* going to mode 2c */
 	MM.publish("item-select", this);
@@ -510,7 +525,7 @@ MM.Item.prototype.update = function(doNotRecurse) {
 			this._shape.set(this);
 		}
 	}
-	
+
 	this._updateStatus();
 	this._updateIcon();
 	this._updateValue();
@@ -537,12 +552,22 @@ MM.Item.prototype.setText = function(text) {
 	return this.update();
 }
 
+MM.Item.prototype.setNotes = function(notes) {
+	// TODO: add notes icon
+	this._notes = notes;
+	return this.update();
+}
+
 MM.Item.prototype.getId = function() {
 	return this._id;
 }
 
 MM.Item.prototype.getText = function() {
 	return this._dom.text.innerHTML;
+}
+
+MM.Item.prototype.getNotes = function() {
+	return this._notes;
 }
 
 MM.Item.prototype.collapse = function() {
@@ -1663,6 +1688,19 @@ MM.Command.isValid = function() {
 	return (this.editMode === null || this.editMode == MM.App.editing);
 }
 MM.Command.execute = function() {}
+
+MM.Command.Notes = Object.create(MM.Command, {
+	label: {value: "Notes"},
+	keys: {value: [{keyCode: "M".charCodeAt(0), ctrlKey: true}]}
+});
+
+MM.Command.Notes.isValid = function() {
+	return MM.Command.isValid.call(this);
+}
+
+MM.Command.Notes.execute = function() {
+	MM.App.notes.toggle();
+}
 
 MM.Command.Undo = Object.create(MM.Command, {
 	label: {value: "Undo"},
@@ -2988,10 +3026,12 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 		var child = children[i];
 		switch (child.nodeName.toLowerCase()) {
 			case "richcontent":
-				var body = child.querySelector("body > *");
-				if (body) {
-					var serializer = new XMLSerializer();
-					json.text = serializer.serializeToString(body).trim();
+				if (child.getAttribute("TYPE") == "NOTE") {
+					var body = child.querySelector("body > *");
+					if (body) {
+						var serializer = new XMLSerializer();
+						json.notes = serializer.serializeToString(body).trim();
+					}
 				}
 			break;
 
@@ -4071,6 +4111,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "SaveAs");
 	this._buildRow(t, "Load");
 	this._buildRow(t, "Help");
+	this._buildRow(t, "Notes");
 	this._buildRow(t, "UI");
 }
 
@@ -4096,12 +4137,25 @@ MM.UI.Help.prototype._formatKey = function(key) {
 	if (key.ctrlKey) { str += "Ctrl+"; }
 	if (key.altKey) { str += "Alt+"; }
 	if (key.shiftKey) { str += "Shift+"; }
-	if (key.charCode) { 
+	if (key.charCode) {
 		var ch = String.fromCharCode(key.charCode);
-		str += this._map[ch] || ch.toUpperCase(); 
+		str += this._map[ch] || ch.toUpperCase();
 	}
 	if (key.keyCode) { str += this._map[key.keyCode] || String.fromCharCode(key.keyCode); }
 	return str;
+}
+MM.UI.Notes = function() {
+	this._node = document.querySelector("#notes");
+}
+
+MM.UI.Notes.prototype.save = function() {
+	MM.App.current._notes = document.getElementById('notes-editor').value;
+	var notesContentElement = document.getElementById('notes-content');
+	notesContentElement.innerHTML = MM.App.current._notes;
+}
+
+MM.UI.Notes.prototype.toggle = function() {
+	this._node.classList.toggle("visible");
 }
 MM.UI.IO = function() {
 	this._prefix = "mm.app.";
@@ -5266,6 +5320,7 @@ MM.App = {
 		this.ui = new MM.UI();
 		this.io = new MM.UI.IO();
 		this.help = new MM.UI.Help();
+		this.notes = new MM.UI.Notes();
 
 		MM.Tip.init();
 		MM.Keyboard.init();

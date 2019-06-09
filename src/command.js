@@ -10,6 +10,19 @@ MM.Command.isValid = function() {
 }
 MM.Command.execute = function() {}
 
+MM.Command.Notes = Object.create(MM.Command, {
+	label: {value: "Notes"},
+	keys: {value: [{keyCode: "M".charCodeAt(0), ctrlKey: true}]}
+});
+
+MM.Command.Notes.isValid = function() {
+	return MM.Command.isValid.call(this);
+}
+
+MM.Command.Notes.execute = function() {
+	MM.App.notes.toggle();
+}
+
 MM.Command.Undo = Object.create(MM.Command, {
 	label: {value: "Undo"},
 	keys: {value: [{keyCode: "Z".charCodeAt(0), ctrlKey: true}]}

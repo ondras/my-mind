@@ -76,6 +76,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "SaveAs");
 	this._buildRow(t, "Load");
 	this._buildRow(t, "Help");
+	this._buildRow(t, "Notes");
 	this._buildRow(t, "UI");
 }
 
@@ -101,9 +102,9 @@ MM.UI.Help.prototype._formatKey = function(key) {
 	if (key.ctrlKey) { str += "Ctrl+"; }
 	if (key.altKey) { str += "Alt+"; }
 	if (key.shiftKey) { str += "Shift+"; }
-	if (key.charCode) { 
+	if (key.charCode) {
 		var ch = String.fromCharCode(key.charCode);
-		str += this._map[ch] || ch.toUpperCase(); 
+		str += this._map[ch] || ch.toUpperCase();
 	}
 	if (key.keyCode) { str += this._map[key.keyCode] || String.fromCharCode(key.keyCode); }
 	return str;

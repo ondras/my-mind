@@ -11,6 +11,7 @@ MM.Item = function() {
 	this._status = null;
 	this._side = null; /* side preference */
 	this._icon = null;
+	this._notes = null;
 	this._id = MM.generateId();
 	this._oldText = "";
 
@@ -67,9 +68,11 @@ MM.Item.fromJSON = function(data) {
 MM.Item.prototype.toJSON = function() {
 	var data = {
 		id: this._id,
-		text: this.getText()
+		text: this.getText(),
+		notes: this.getNotes()
 	}
-	
+
+
 	if (this._side) { data.side = this._side; }
 	if (this._color) { data.color = this._color; }
 	if (this._icon) { data.icon = this._icon; }
@@ -90,6 +93,9 @@ MM.Item.prototype.toJSON = function() {
  */
 MM.Item.prototype.fromJSON = function(data) {
 	this.setText(data.text);
+	if (data.notes) {
+		this.setNotes(data.notes);
+	}
 	if (data.id) { this._id = data.id; }
 	if (data.side) { this._side = data.side; }
 	if (data.color) { this._color = data.color; }
@@ -186,6 +192,15 @@ MM.Item.prototype.clone = function() {
 
 MM.Item.prototype.select = function() {
 	this._dom.node.classList.add("current");
+	var notesContentElement = document.getElementById('notes-content');
+	var notesEditorElement = document.getElementById('notes-editor');
+	if (this._notes) {
+		notesContentElement.innerHTML = this._notes;
+		notesEditorElement.value = this._notes;
+	} else {
+		notesContentElement.innerHTML = '';
+		notesEditorElement.value = '';
+	}
 	this.getMap().ensureItemVisibility(this);
 	MM.Clipboard.focus(); /* going to mode 2c */
 	MM.publish("item-select", this);
@@ -211,7 +226,7 @@ MM.Item.prototype.update = function(doNotRecurse) {
 			this._shape.set(this);
 		}
 	}
-	
+
 	this._updateStatus();
 	this._updateIcon();
 	this._updateValue();
@@ -238,12 +253,22 @@ MM.Item.prototype.setText = function(text) {
 	return this.update();
 }
 
+MM.Item.prototype.setNotes = function(notes) {
+	// TODO: add notes icon
+	this._notes = notes;
+	return this.update();
+}
+
 MM.Item.prototype.getId = function() {
 	return this._id;
 }
 
 MM.Item.prototype.getText = function() {
 	return this._dom.text.innerHTML;
+}
+
+MM.Item.prototype.getNotes = function() {
+	return this._notes;
 }
 
 MM.Item.prototype.collapse = function() {

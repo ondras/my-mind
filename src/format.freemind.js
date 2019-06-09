@@ -93,10 +93,12 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 		var child = children[i];
 		switch (child.nodeName.toLowerCase()) {
 			case "richcontent":
-				var body = child.querySelector("body > *");
-				if (body) {
-					var serializer = new XMLSerializer();
-					json.text = serializer.serializeToString(body).trim();
+				if (child.getAttribute("TYPE") == "NOTE") {
+					var body = child.querySelector("body > *");
+					if (body) {
+						var serializer = new XMLSerializer();
+						json.notes = serializer.serializeToString(body).trim();
+					}
 				}
 			break;
 

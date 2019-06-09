@@ -124,6 +124,7 @@ MM.App = {
 		this.ui = new MM.UI();
 		this.io = new MM.UI.IO();
 		this.help = new MM.UI.Help();
+		this.notes = new MM.UI.Notes();
 
 		MM.Tip.init();
 		MM.Keyboard.init();
