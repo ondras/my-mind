@@ -1036,7 +1036,26 @@
 					styleWithCSS: false,
 					actions: [
 						'bold',
+						'italic',
 						'underline',
+						'strikethrough',
+						'heading1',
+						'heading2',
+						'paragraph',
+						'quote',
+						'olist',
+						'ulist',
+						'code',
+						'line',
+						{
+							name: 'link',
+							result: function() {
+								const url = window.prompt('Enter the link URL');
+								if (url) {
+									window.pell.exec('createLink', url);
+								}
+							}
+						},
 						{
 							name: 'close',
 							icon: 'Close',
