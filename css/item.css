@@ -72,13 +72,19 @@ canvas {
 	top: 0;
 }
 
-.has-notes::after {
-	content: "*";
-	color: #666;
+.notes-indicator {
+	width: 16px;
+	height: 100%;
+	background: url("../icons/notes-indicator.png") right center no-repeat;
 	position: absolute;
-	top: -0.2em;
-	right: -0.5em;
-	font-size: 20px !important;
+	top: -8px;
+	right: 0;
+	opacity: 0.4;
+	display: none;
+}
+
+.notes-indicator-visible {
+	display: block;
 }
 
 .toggle {

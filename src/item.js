@@ -23,6 +23,7 @@ MM.Item = function() {
 	this._dom = {
 		node: document.createElement("li"),
 		content: document.createElement("div"),
+		notes: document.createElement("div"),
 		status: document.createElement("span"),
 		icon: document.createElement("span"),
 		value: document.createElement("span"),
@@ -33,6 +34,7 @@ MM.Item = function() {
 	}
 	this._dom.node.classList.add("item");
 	this._dom.content.classList.add("content");
+	this._dom.notes.classList.add("notes-indicator");
 	this._dom.status.classList.add("status");
 	this._dom.icon.classList.add("icon");
 	this._dom.value.classList.add("value");
@@ -43,6 +45,7 @@ MM.Item = function() {
 	this._dom.content.appendChild(this._dom.text); /* status+value are appended in layout */
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
+	this._dom.content.appendChild(this._dom.notes);
 	/* toggle+children are appended when children exist */
 
 	this._dom.toggle.addEventListener("click", this);
@@ -565,9 +568,9 @@ MM.Item.prototype._updateIcon = function() {
 MM.Item.prototype._updateNotesIndicator = function() {
     if (this._notes)
     {
-        this._dom.content.classList.add("has-notes");
+        this._dom.notes.classList.add("notes-indicator-visible");
     } else {
-        this._dom.content.classList.remove("has-notes");
+        this._dom.notes.classList.remove("notes-indicator-visible");
     }
 }
 
