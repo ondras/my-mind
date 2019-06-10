@@ -4163,6 +4163,12 @@ MM.UI.Help.prototype._formatKey = function(key) {
 	if (key.keyCode) { str += this._map[key.keyCode] || String.fromCharCode(key.keyCode); }
 	return str;
 }
+
+MM.UI.Help.prototype.close = function() {
+	if (this._node.classList.contains("visible")) {
+		this._node.classList.toggle("visible");
+	}
+}
 MM.UI.Notes = function() {
 	this._node = document.querySelector("#notes");
 }
@@ -5361,6 +5367,7 @@ MM.App = {
 		window.addEventListener("keyup", function(e) {
 			if (e.key === "Escape") {
 				MM.App.notes.close();
+				MM.App.help.close();
 			}
 		});
 		MM.subscribe("ui-change", this);

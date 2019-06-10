@@ -137,6 +137,7 @@ MM.App = {
 		window.addEventListener("keyup", function(e) {
 			if (e.key === "Escape") {
 				MM.App.notes.close();
+				MM.App.help.close();
 			}
 		});
 		MM.subscribe("ui-change", this);
