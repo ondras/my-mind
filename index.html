@@ -992,8 +992,7 @@
 
 		<div id="notes" class="ui">
 			<h3>Topic Notes</h3>
-			<!-- TODO: sanitize heavily because of raw HTML -->
-			<div id="notes-content"></div>
+			<iframe id="notes-editor" sandbox="allow-scripts" src="editor.html"></iframe>
 		</div>
 		
 		<div id="menu">
@@ -1025,51 +1024,22 @@
 				MM.App.init();
 				MM.App.io.restore();
 
-				window.editor = window.pell.init({
-					element: document.getElementById('notes-content'),
-					onChange: function(html) {
-						MM.App.notes.update(html);
+				window.editor = {
+					postMessage: function(action, value) {
+						var iframeElm = document.getElementById('notes-editor');
+						iframeElm.contentWindow.postMessage({
+							action: action,
+							value: value
+						}, '*');
 					},
-					defaultParagraphSeparator: 'div',
-					styleWithCSS: false,
-					actions: [
-						'bold',
-						'italic',
-						'underline',
-						'strikethrough',
-						'heading1',
-						'heading2',
-						'paragraph',
-						'quote',
-						'olist',
-						'ulist',
-						'code',
-						'line',
-						{
-							name: 'link',
-							result: function() {
-								const url = window.prompt('Enter the link URL');
-								if (url) {
-									window.pell.exec('createLink', url);
-								}
-							}
-						},
-						{
-							name: 'close',
-							icon: 'Close',
-							title: 'Close Notes',
-							result: function() {
-								MM.App.notes.toggle();
-							}
-						}
-					],
-					classes: {
-						actionbar: 'pell-actionbar',
-						button: 'pell-button',
-						content: 'pell-content',
-						selected: 'pell-button-selected'
+					setContent: function(html) {
+						this.postMessage('setContent', html);
+					},
+					getContent: function() {
+						return this.postMessage('getContent');
 					}
-				})
+				};
+
 			}
 		</script>
 		<script src="/vendor/pell/src/pell.min.js"></script>

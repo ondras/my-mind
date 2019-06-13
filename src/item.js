@@ -197,9 +197,9 @@ MM.Item.prototype.select = function() {
 	this._dom.node.classList.add("current");
 	if (window.editor) {
         if (this._notes) {
-            window.editor.content.innerHTML = this._notes;
+            window.editor.setContent(this._notes);
         } else {
-            window.editor.content.innerHTML = '';
+            window.editor.setContent('');
         }
 	}
 	this.getMap().ensureItemVisibility(this);
@@ -256,7 +256,6 @@ MM.Item.prototype.setText = function(text) {
 }
 
 MM.Item.prototype.setNotes = function(notes) {
-	// TODO: add notes icon
 	this._notes = notes;
 	return this.update();
 }

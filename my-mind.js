@@ -496,9 +496,9 @@ MM.Item.prototype.select = function() {
 	this._dom.node.classList.add("current");
 	if (window.editor) {
         if (this._notes) {
-            window.editor.content.innerHTML = this._notes;
+            window.editor.setContent(this._notes);
         } else {
-            window.editor.content.innerHTML = '';
+            window.editor.setContent('');
         }
 	}
 	this.getMap().ensureItemVisibility(this);
@@ -555,7 +555,6 @@ MM.Item.prototype.setText = function(text) {
 }
 
 MM.Item.prototype.setNotes = function(notes) {
-	// TODO: add notes icon
 	this._notes = notes;
 	return this.update();
 }
@@ -5335,7 +5334,29 @@ MM.App = {
 		switch (e.type) {
 			case "resize":
 				this._syncPort();
-			break;
+				break;
+
+			case "keyup":
+				if (e.key === "Escape") {
+					MM.App.notes.close();
+					MM.App.help.close();
+				}
+				break;
+
+			case "message":
+				if (e.data && e.data.action) {
+					switch (e.data.action) {
+						case "setContent":
+							MM.App.notes.update(e.data.value);
+							break;
+
+						case "closeEditor":
+							MM.App.notes.close();
+							break;
+					}
+				}
+
+				break;
 
 			case "beforeunload":
 				e.preventDefault();
@@ -5364,12 +5385,8 @@ MM.App = {
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);
-		window.addEventListener("keyup", function(e) {
-			if (e.key === "Escape") {
-				MM.App.notes.close();
-				MM.App.help.close();
-			}
-		});
+		window.addEventListener("keyup", this);
+		window.addEventListener("message", this, false);
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
 		
