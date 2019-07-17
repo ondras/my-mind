@@ -1,4 +1,8 @@
 Privacy Policy
 ==============
 
-This application is only using Google Drive in order to store/load Mind map files. No other Google Drive access is needed/performed.
+This application can be configured to use Google Drive as a storage option for Mind Map design files. If you decide to do so, please note that My Mind will have a theoretical access to all your Google Drive files.
+
+This application, however, only saves/loads those files that are explicitely requested by the user via My Mind's User Interface.
+
+This application is not accessing, reading, writing, modifying or deleting other kinds of data. In particular, user data and metadata (information about the user logged into the Google ecosystem) is never accessed.
