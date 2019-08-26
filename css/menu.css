@@ -27,3 +27,7 @@
 	margin-top: 4px;
 	padding-top: 4px;
 }
+
+#menu .ui select.fa-select, .ui select.fa-select option {
+	font-size: 13px;
+}
