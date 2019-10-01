@@ -1,5 +1,4 @@
-My Mind
-=======
+# My Mind
 
 ![Screenshot](screenshot.png)
 
