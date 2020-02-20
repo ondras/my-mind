@@ -64,7 +64,7 @@ MM.Command.InsertChild = Object.create(MM.Command, {
 MM.Command.InsertChild.execute = function() {
 	var item = MM.App.current;
 	var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
-	MM.App.action(action);	
+	MM.App.action(action);
 
 	MM.Command.Edit.execute();
 
@@ -73,14 +73,14 @@ MM.Command.InsertChild.execute = function() {
 
 MM.Command.Delete = Object.create(MM.Command, {
 	label: {value: "Delete an item"},
-	keys: {value: [{keyCode: 46}]}
+	keys: {value: [{keyCode: MM.isMac() ? 8 : 46}]} // Mac keyboards' "delete" button generates 8 (backspace)
 });
 MM.Command.Delete.isValid = function() {
 	return MM.Command.isValid.call(this) && !MM.App.current.isRoot();
 }
 MM.Command.Delete.execute = function() {
 	var action = new MM.Action.RemoveItem(MM.App.current);
-	MM.App.action(action);	
+	MM.App.action(action);
 }
 
 MM.Command.Swap = Object.create(MM.Command, {
@@ -96,7 +96,7 @@ MM.Command.Swap.execute = function(e) {
 
 	var diff = (e.keyCode == 38 ? -1 : 1);
 	var action = new MM.Action.Swap(MM.App.current, diff);
-	MM.App.action(action);	
+	MM.App.action(action);
 }
 
 MM.Command.Side = Object.create(MM.Command, {

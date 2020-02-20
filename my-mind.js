@@ -11,14 +11,14 @@ if (!Function.prototype.bind) {
 
 var MM = {
 	_subscribers: {},
-	
+
 	publish: function(message, publisher, data) {
 		var subscribers = this._subscribers[message] || [];
 		subscribers.forEach(function(subscriber) {
 			subscriber.handleMessage(message, publisher, data);
 		});
 	},
-	
+
 	subscribe: function(message, subscriber) {
 		if (!(message in this._subscribers)) {
 			this._subscribers[message] = [];
@@ -26,12 +26,12 @@ var MM = {
 		var index = this._subscribers[message].indexOf(subscriber);
 		if (index == -1) { this._subscribers[message].push(subscriber); }
 	},
-	
+
 	unsubscribe: function(message, subscriber) {
 		var index = this._subscribers[message].indexOf(subscriber);
 		if (index > -1) { this._subscribers[message].splice(index, 1); }
 	},
-	
+
 	generateId: function() {
 		var str = "";
 		for (var i=0;i<8;i++) {
@@ -39,6 +39,10 @@ var MM = {
 			str += String.fromCharCode("a".charCodeAt(0) + code);
 		}
 		return str;
+	},
+
+	isMac: function() {
+		return !!navigator.platform.match(/mac/i);
 	}
 };
 /*
@@ -1718,7 +1722,7 @@ MM.Command.InsertChild = Object.create(MM.Command, {
 MM.Command.InsertChild.execute = function() {
 	var item = MM.App.current;
 	var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
-	MM.App.action(action);	
+	MM.App.action(action);
 
 	MM.Command.Edit.execute();
 
@@ -1727,14 +1731,14 @@ MM.Command.InsertChild.execute = function() {
 
 MM.Command.Delete = Object.create(MM.Command, {
 	label: {value: "Delete an item"},
-	keys: {value: [{keyCode: 46}]}
+	keys: {value: [{keyCode: MM.isMac() ? 8 : 46}]} // Mac keyboards' "delete" button generates 8 (backspace)
 });
 MM.Command.Delete.isValid = function() {
 	return MM.Command.isValid.call(this) && !MM.App.current.isRoot();
 }
 MM.Command.Delete.execute = function() {
 	var action = new MM.Action.RemoveItem(MM.App.current);
-	MM.App.action(action);	
+	MM.App.action(action);
 }
 
 MM.Command.Swap = Object.create(MM.Command, {
@@ -1750,7 +1754,7 @@ MM.Command.Swap.execute = function(e) {
 
 	var diff = (e.keyCode == 38 ? -1 : 1);
 	var action = new MM.Action.Swap(MM.App.current, diff);
-	MM.App.action(action);	
+	MM.App.action(action);
 }
 
 MM.Command.Side = Object.create(MM.Command, {
@@ -2099,7 +2103,7 @@ MM.Command.Select = Object.create(MM.Command, {
 		{keyCode: 37, ctrlKey:false},
 		{keyCode: 40, ctrlKey:false},
 		{keyCode: 39, ctrlKey:false}
-	]} 
+	]}
 });
 MM.Command.Select.execute = function(e) {
 	var dirs = {
@@ -2125,15 +2129,17 @@ MM.Command.SelectRoot.execute = function() {
 	MM.App.select(item);
 }
 
-MM.Command.SelectParent = Object.create(MM.Command, {
-	label: {value: "Select parent"},
-	keys: {value: [{keyCode: 8}]}
-});
-MM.Command.SelectParent.execute = function() {
-	if (MM.App.current.isRoot()) { return; }
-	MM.App.select(MM.App.current.getParent());
+// Macs use keyCode 8 to delete instead
+if (!MM.isMac()) {
+	MM.Command.SelectParent = Object.create(MM.Command, {
+		label: {value: "Select parent"},
+		keys: {value: [{keyCode: 8}]}
+	});
+	MM.Command.SelectParent.execute = function() {
+		if (MM.App.current.isRoot()) { return; }
+		MM.App.select(MM.App.current.getParent());
+	}
 }
-
 MM.Layout = Object.create(MM.Repo, {
 	ALL: {value: []},
 	SPACING_RANK: {value: 4},
