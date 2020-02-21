@@ -31,7 +31,7 @@ MM.UI.Help = function() {
 		121: "F10",
 		"-": "&minus;"
 	};
-	
+
 	this._build();
 }
 
@@ -87,6 +87,7 @@ MM.UI.Help.prototype._buildRow = function(table, commandName) {
 
 	for (var i=1;i<arguments.length;i++) {
 		var command = MM.Command[arguments[i]];
+		if (!command) { continue; }
 		labels.push(command.label);
 		keys = keys.concat(command.keys.map(this._formatKey, this));
 	}
@@ -101,9 +102,9 @@ MM.UI.Help.prototype._formatKey = function(key) {
 	if (key.ctrlKey) { str += "Ctrl+"; }
 	if (key.altKey) { str += "Alt+"; }
 	if (key.shiftKey) { str += "Shift+"; }
-	if (key.charCode) { 
+	if (key.charCode) {
 		var ch = String.fromCharCode(key.charCode);
-		str += this._map[ch] || ch.toUpperCase(); 
+		str += this._map[ch] || ch.toUpperCase();
 	}
 	if (key.keyCode) { str += this._map[key.keyCode] || String.fromCharCode(key.keyCode); }
 	return str;
