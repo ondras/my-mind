@@ -105,7 +105,29 @@ MM.App = {
 		switch (e.type) {
 			case "resize":
 				this._syncPort();
-			break;
+				break;
+
+			case "keyup":
+				if (e.key === "Escape") {
+					MM.App.notes.close();
+					MM.App.help.close();
+				}
+				break;
+
+			case "message":
+				if (e.data && e.data.action) {
+					switch (e.data.action) {
+						case "setContent":
+							MM.App.notes.update(e.data.value);
+							break;
+
+						case "closeEditor":
+							MM.App.notes.close();
+							break;
+					}
+				}
+
+				break;
 
 			case "beforeunload":
 				e.preventDefault();
@@ -124,6 +146,7 @@ MM.App = {
 		this.ui = new MM.UI();
 		this.io = new MM.UI.IO();
 		this.help = new MM.UI.Help();
+		this.notes = new MM.UI.Notes();
 
 		MM.Tip.init();
 		MM.Keyboard.init();
@@ -133,6 +156,8 @@ MM.App = {
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);
+		window.addEventListener("keyup", this);
+		window.addEventListener("message", this, false);
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
 		

@@ -72,6 +72,21 @@ canvas {
 	top: 0;
 }
 
+.notes-indicator {
+	width: 16px;
+	height: 100%;
+	background: url("../icons/notes-indicator.png") right center no-repeat;
+	position: absolute;
+	top: -8px;
+	right: 0;
+	opacity: 0.4;
+	display: none;
+}
+
+.notes-indicator-visible {
+	display: block;
+}
+
 .toggle {
 	position: absolute;
 	width: 12px;

@@ -9,6 +9,7 @@ button:not(:disabled) {
 	height: 100%;
 	background-color: #fff;
 	width: 200px;
+	max-width: 600px;
 	box-shadow: 0 0 2px 2px #666;
 	-webkit-transition: -webkit-transform 500ms;
 	transition: transform 500ms;
@@ -82,6 +83,12 @@ button:not(:disabled) {
 	top: 5px;
 }
 
+.ui button[data-command=Notes] {
+	position: absolute;
+	left: -90px;
+	top: 5px;
+}
+
 .ui table {
 	width: 100%;
 	border-collapse: collapse;
@@ -123,6 +130,20 @@ button:not(:disabled) {
 
 .ui [data-color]:hover, .ui [data-color]:first-child {
 	border-color: #000;
+}
+
+#notes {
+	width: 50%;
+}
+
+#notes-editor {
+	border: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.pell-content {
+	height: calc(100% - 60px);
 }
 
 .ui #github {
