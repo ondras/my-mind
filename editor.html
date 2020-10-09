@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0" />
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/pell/dist/pell.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="notes-content"></div>
+    <script>
+
+        var sendMessage = function(action, value) {
+            window.parent.postMessage({
+                action: action,
+                value: value
+            }, '*');
+        };
+
+        window.addEventListener("message", function(e) {
+            if (e.data && e.data.action) {
+                switch (e.data.action) {
+                    case "setContent":
+                        window.editor.content.innerHTML = e.data.value;
+                        break;
+
+                    case "getContent":
+                        sendMessage('setContent', window.editor.content.innerHTML);
+                        break;
+                }
+            }
+        }, false);
+
+        window.onload = function() {
+
+            window.editor = window.pell.init({
+                element: document.getElementById('notes-content'),
+                onChange: function(html) {
+                    sendMessage('setContent', html);
+                },
+                defaultParagraphSeparator: 'div',
+                styleWithCSS: false,
+                actions: [
+                    'bold',
+                    'italic',
+                    'underline',
+                    'strikethrough',
+                    'heading1',
+                    'heading2',
+                    'paragraph',
+                    'quote',
+                    'olist',
+                    'ulist',
+                    'code',
+                    'line',
+                    {
+                        name: 'link',
+                        result: function() {
+                            const url = window.prompt('Enter the link URL');
+                            if (url) {
+                                window.pell.exec('createLink', url);
+                            }
+                        }
+                    },
+                    {
+                        name: 'close',
+                        icon: 'Close',
+                        title: 'Close Notes',
+                        result: function() {
+                            sendMessage('closeEditor', true);
+                        }
+                    }
+                ],
+                classes: {
+                    actionbar: 'pell-actionbar',
+                    button: 'pell-button',
+                    content: 'pell-content',
+                    selected: 'pell-button-selected'
+                }
+            })
+        }
+    </script>
+    <script src="https://unpkg.com/pell"></script>
+</body>
+</html>

@@ -6,10 +6,10 @@ MM.Format.FreeMind = Object.create(MM.Format, {
 });
 
 MM.Format.FreeMind.to = function(data) {
-	var doc = document.implementation.createDocument("", "", null);
+	var doc = document.implementation.createDocument(null, null, null);
 	var map = doc.createElement("map");
 
-	map.setAttribute("version", "0.9.0");
+	map.setAttribute("version", "1.0.1");
 	map.appendChild(this._serializeItem(doc, data.root));
 
 	doc.appendChild(map);
@@ -53,6 +53,14 @@ MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 	if (json.shape == "box") { elm.setAttribute("STYLE", "bubble"); }
 	if (json.collapsed) { elm.setAttribute("FOLDED", "true"); }
 
+	if (json.notes) {
+	    var notesElm = doc.createElement("richcontent");
+	    notesElm.setAttribute("TYPE", "NOTE");
+	    // note: the freemind file format isn't very good.
+	    notesElm.appendChild(doc.createCDATASection('<html><head></head><body>' + json.notes + '</body></html>'));
+	    elm.appendChild(notesElm);
+    }
+
 	return elm;
 }
 
@@ -93,10 +101,12 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 		var child = children[i];
 		switch (child.nodeName.toLowerCase()) {
 			case "richcontent":
-				var body = child.querySelector("body > *");
-				if (body) {
-					var serializer = new XMLSerializer();
-					json.text = serializer.serializeToString(body).trim();
+				if (child.getAttribute("TYPE") == "NOTE") {
+					var body = child.querySelector("body > *");
+					if (body) {
+						var serializer = new XMLSerializer();
+						json.notes = serializer.serializeToString(body).trim();
+					}
 				}
 			break;
 

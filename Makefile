@@ -41,6 +41,7 @@ SOURCES =	src/mm.js \
 			src/ui.color.js \
 			src/ui.icon.js \
 			src/ui.help.js \
+			src/ui.notes.js \
 			src/ui.io.js \
 			src/ui.backend.js \
 			src/ui.backend.file.js \

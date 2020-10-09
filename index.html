@@ -5,6 +5,9 @@
 		<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0" />
 		<title>My Mind</title>
 		<link rel="icon" href="favicon.ico" />
+
+		<link rel="stylesheet" type="text/css" href="/vendor/pell/css/pell.min.css">
+
 		<script src="my-mind.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-app.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-database.js"></script>
@@ -889,6 +892,7 @@
 			<a id="privacy" href="http://my-mind.github.io/PRIVACY.txt">Privacy policy</a>
 			<button id="toggle" title="Toggle UI"></button>
 			<button data-command="Help" title="Help"><img src="icons/help.png" alt="Help" /></button>
+			<button data-command="Notes" title="Notes"><img src="icons/notes.png" alt="Notes" /></button>
 
 			<div id="throbber"></div>
 		</div>
@@ -999,8 +1003,15 @@
 			<p><span>Other</span></p>
 			<table class="other"></table>
 		</div>
+
+		<div id="notes" class="ui">
+			<h3>Topic Notes</h3>
+			<iframe id="notes-editor" sandbox="allow-scripts" src="editor.html"></iframe>
+		</div>
 		
 		<div id="menu">
+			<button data-command="Notes"></button>
+			<span></span>
 			<button data-command="InsertChild"></button>
 			<button data-command="InsertSibling"></button>
 			<button data-command="Delete"></button>
@@ -1016,8 +1027,26 @@
 			window.onload = function() {
 				MM.App.init();
 				MM.App.io.restore();
+
+				window.editor = {
+					postMessage: function(action, value) {
+						var iframeElm = document.getElementById('notes-editor');
+						iframeElm.contentWindow.postMessage({
+							action: action,
+							value: value
+						}, '*');
+					},
+					setContent: function(html) {
+						this.postMessage('setContent', html);
+					},
+					getContent: function() {
+						return this.postMessage('getContent');
+					}
+				};
+
 			}
 		</script>
+		<script src="/vendor/pell/src/pell.min.js"></script>
 <!--
 TODO:
   shortterm:

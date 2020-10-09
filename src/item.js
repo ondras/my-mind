@@ -11,6 +11,7 @@ MM.Item = function() {
 	this._status = null;
 	this._side = null; /* side preference */
 	this._icon = null;
+	this._notes = null;
 	this._id = MM.generateId();
 	this._oldText = "";
 
@@ -22,6 +23,7 @@ MM.Item = function() {
 	this._dom = {
 		node: document.createElement("li"),
 		content: document.createElement("div"),
+		notes: document.createElement("div"),
 		status: document.createElement("span"),
 		icon: document.createElement("span"),
 		value: document.createElement("span"),
@@ -32,6 +34,7 @@ MM.Item = function() {
 	}
 	this._dom.node.classList.add("item");
 	this._dom.content.classList.add("content");
+	this._dom.notes.classList.add("notes-indicator");
 	this._dom.status.classList.add("status");
 	this._dom.icon.classList.add("icon");
 	this._dom.value.classList.add("value");
@@ -42,6 +45,7 @@ MM.Item = function() {
 	this._dom.content.appendChild(this._dom.text); /* status+value are appended in layout */
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
+	this._dom.content.appendChild(this._dom.notes);
 	/* toggle+children are appended when children exist */
 
 	this._dom.toggle.addEventListener("click", this);
@@ -67,9 +71,11 @@ MM.Item.fromJSON = function(data) {
 MM.Item.prototype.toJSON = function() {
 	var data = {
 		id: this._id,
-		text: this.getText()
+		text: this.getText(),
+		notes: this.getNotes()
 	}
-	
+
+
 	if (this._side) { data.side = this._side; }
 	if (this._color) { data.color = this._color; }
 	if (this._icon) { data.icon = this._icon; }
@@ -90,6 +96,9 @@ MM.Item.prototype.toJSON = function() {
  */
 MM.Item.prototype.fromJSON = function(data) {
 	this.setText(data.text);
+	if (data.notes) {
+		this.setNotes(data.notes);
+	}
 	if (data.id) { this._id = data.id; }
 	if (data.side) { this._side = data.side; }
 	if (data.color) { this._color = data.color; }
@@ -186,6 +195,13 @@ MM.Item.prototype.clone = function() {
 
 MM.Item.prototype.select = function() {
 	this._dom.node.classList.add("current");
+	if (window.editor) {
+        if (this._notes) {
+            window.editor.setContent(this._notes);
+        } else {
+            window.editor.setContent('');
+        }
+	}
 	this.getMap().ensureItemVisibility(this);
 	MM.Clipboard.focus(); /* going to mode 2c */
 	MM.publish("item-select", this);
@@ -211,9 +227,10 @@ MM.Item.prototype.update = function(doNotRecurse) {
 			this._shape.set(this);
 		}
 	}
-	
+
 	this._updateStatus();
 	this._updateIcon();
+    this._updateNotesIndicator();
 	this._updateValue();
 
 	this._dom.node.classList[this._collapsed ? "add" : "remove"]("collapsed");
@@ -238,12 +255,21 @@ MM.Item.prototype.setText = function(text) {
 	return this.update();
 }
 
+MM.Item.prototype.setNotes = function(notes) {
+	this._notes = notes;
+	return this.update();
+}
+
 MM.Item.prototype.getId = function() {
 	return this._id;
 }
 
 MM.Item.prototype.getText = function() {
 	return this._dom.text.innerHTML;
+}
+
+MM.Item.prototype.getNotes = function() {
+	return this._notes;
 }
 
 MM.Item.prototype.collapse = function() {
@@ -536,6 +562,15 @@ MM.Item.prototype._updateIcon = function() {
         this._computed.icon = null;
         this._dom.icon.style.display = "none";
 	}
+}
+
+MM.Item.prototype._updateNotesIndicator = function() {
+    if (this._notes)
+    {
+        this._dom.notes.classList.add("notes-indicator-visible");
+    } else {
+        this._dom.notes.classList.remove("notes-indicator-visible");
+    }
 }
 
 MM.Item.prototype._updateValue = function() {

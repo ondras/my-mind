@@ -314,6 +314,7 @@ MM.Item = function() {
 	this._status = null;
 	this._side = null; /* side preference */
 	this._icon = null;
+	this._notes = null;
 	this._id = MM.generateId();
 	this._oldText = "";
 
@@ -325,6 +326,7 @@ MM.Item = function() {
 	this._dom = {
 		node: document.createElement("li"),
 		content: document.createElement("div"),
+		notes: document.createElement("div"),
 		status: document.createElement("span"),
 		icon: document.createElement("span"),
 		value: document.createElement("span"),
@@ -335,6 +337,7 @@ MM.Item = function() {
 	}
 	this._dom.node.classList.add("item");
 	this._dom.content.classList.add("content");
+	this._dom.notes.classList.add("notes-indicator");
 	this._dom.status.classList.add("status");
 	this._dom.icon.classList.add("icon");
 	this._dom.value.classList.add("value");
@@ -345,6 +348,7 @@ MM.Item = function() {
 	this._dom.content.appendChild(this._dom.text); /* status+value are appended in layout */
 	this._dom.node.appendChild(this._dom.canvas);
 	this._dom.node.appendChild(this._dom.content);
+	this._dom.content.appendChild(this._dom.notes);
 	/* toggle+children are appended when children exist */
 
 	this._dom.toggle.addEventListener("click", this);
@@ -370,9 +374,11 @@ MM.Item.fromJSON = function(data) {
 MM.Item.prototype.toJSON = function() {
 	var data = {
 		id: this._id,
-		text: this.getText()
+		text: this.getText(),
+		notes: this.getNotes()
 	}
-	
+
+
 	if (this._side) { data.side = this._side; }
 	if (this._color) { data.color = this._color; }
 	if (this._icon) { data.icon = this._icon; }
@@ -393,6 +399,9 @@ MM.Item.prototype.toJSON = function() {
  */
 MM.Item.prototype.fromJSON = function(data) {
 	this.setText(data.text);
+	if (data.notes) {
+		this.setNotes(data.notes);
+	}
 	if (data.id) { this._id = data.id; }
 	if (data.side) { this._side = data.side; }
 	if (data.color) { this._color = data.color; }
@@ -489,6 +498,13 @@ MM.Item.prototype.clone = function() {
 
 MM.Item.prototype.select = function() {
 	this._dom.node.classList.add("current");
+	if (window.editor) {
+        if (this._notes) {
+            window.editor.setContent(this._notes);
+        } else {
+            window.editor.setContent('');
+        }
+	}
 	this.getMap().ensureItemVisibility(this);
 	MM.Clipboard.focus(); /* going to mode 2c */
 	MM.publish("item-select", this);
@@ -514,9 +530,10 @@ MM.Item.prototype.update = function(doNotRecurse) {
 			this._shape.set(this);
 		}
 	}
-	
+
 	this._updateStatus();
 	this._updateIcon();
+    this._updateNotesIndicator();
 	this._updateValue();
 
 	this._dom.node.classList[this._collapsed ? "add" : "remove"]("collapsed");
@@ -541,12 +558,21 @@ MM.Item.prototype.setText = function(text) {
 	return this.update();
 }
 
+MM.Item.prototype.setNotes = function(notes) {
+	this._notes = notes;
+	return this.update();
+}
+
 MM.Item.prototype.getId = function() {
 	return this._id;
 }
 
 MM.Item.prototype.getText = function() {
 	return this._dom.text.innerHTML;
+}
+
+MM.Item.prototype.getNotes = function() {
+	return this._notes;
 }
 
 MM.Item.prototype.collapse = function() {
@@ -839,6 +865,15 @@ MM.Item.prototype._updateIcon = function() {
         this._computed.icon = null;
         this._dom.icon.style.display = "none";
 	}
+}
+
+MM.Item.prototype._updateNotesIndicator = function() {
+    if (this._notes)
+    {
+        this._dom.notes.classList.add("notes-indicator-visible");
+    } else {
+        this._dom.notes.classList.remove("notes-indicator-visible");
+    }
 }
 
 MM.Item.prototype._updateValue = function() {
@@ -1667,6 +1702,19 @@ MM.Command.isValid = function() {
 	return (this.editMode === null || this.editMode == MM.App.editing);
 }
 MM.Command.execute = function() {}
+
+MM.Command.Notes = Object.create(MM.Command, {
+	label: {value: "Notes"},
+	keys: {value: [{keyCode: "M".charCodeAt(0), ctrlKey: true}]}
+});
+
+MM.Command.Notes.isValid = function() {
+	return MM.Command.isValid.call(this);
+}
+
+MM.Command.Notes.execute = function() {
+	MM.App.notes.toggle();
+}
 
 MM.Command.Undo = Object.create(MM.Command, {
 	label: {value: "Undo"},
@@ -2907,10 +2955,10 @@ MM.Format.FreeMind = Object.create(MM.Format, {
 });
 
 MM.Format.FreeMind.to = function(data) {
-	var doc = document.implementation.createDocument("", "", null);
+	var doc = document.implementation.createDocument(null, null, null);
 	var map = doc.createElement("map");
 
-	map.setAttribute("version", "0.9.0");
+	map.setAttribute("version", "1.0.1");
 	map.appendChild(this._serializeItem(doc, data.root));
 
 	doc.appendChild(map);
@@ -2954,6 +3002,14 @@ MM.Format.FreeMind._serializeAttributes = function(doc, json) {
 	if (json.shape == "box") { elm.setAttribute("STYLE", "bubble"); }
 	if (json.collapsed) { elm.setAttribute("FOLDED", "true"); }
 
+	if (json.notes) {
+	    var notesElm = doc.createElement("richcontent");
+	    notesElm.setAttribute("TYPE", "NOTE");
+	    // note: the freemind file format isn't very good.
+	    notesElm.appendChild(doc.createCDATASection('<html><head></head><body>' + json.notes + '</body></html>'));
+	    elm.appendChild(notesElm);
+    }
+
 	return elm;
 }
 
@@ -2994,10 +3050,12 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
 		var child = children[i];
 		switch (child.nodeName.toLowerCase()) {
 			case "richcontent":
-				var body = child.querySelector("body > *");
-				if (body) {
-					var serializer = new XMLSerializer();
-					json.text = serializer.serializeToString(body).trim();
+				if (child.getAttribute("TYPE") == "NOTE") {
+					var body = child.querySelector("body > *");
+					if (body) {
+						var serializer = new XMLSerializer();
+						json.notes = serializer.serializeToString(body).trim();
+					}
 				}
 			break;
 
@@ -4077,6 +4135,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "SaveAs");
 	this._buildRow(t, "Load");
 	this._buildRow(t, "Help");
+	this._buildRow(t, "Notes");
 	this._buildRow(t, "UI");
 }
 
@@ -4109,6 +4168,34 @@ MM.UI.Help.prototype._formatKey = function(key) {
 	}
 	if (key.keyCode) { str += this._map[key.keyCode] || String.fromCharCode(key.keyCode); }
 	return str;
+}
+
+MM.UI.Help.prototype.close = function() {
+	if (this._node.classList.contains("visible")) {
+		this._node.classList.toggle("visible");
+	}
+}
+MM.UI.Notes = function() {
+	this._node = document.querySelector("#notes");
+}
+
+MM.UI.Notes.prototype.toggle = function() {
+	this._node.classList.toggle("visible");
+}
+
+MM.UI.Notes.prototype.close = function() {
+	if (this._node.classList.contains("visible")) {
+		this._node.classList.toggle("visible");
+	}
+}
+
+MM.UI.Notes.prototype.update = function(html) {
+	if (html.trim().length === 0) {
+		MM.App.current._notes = null;
+	} else {
+		MM.App.current._notes = html;
+	}
+	MM.App.current.update();
 }
 MM.UI.IO = function() {
 	this._prefix = "mm.app.";
@@ -5254,7 +5341,29 @@ MM.App = {
 		switch (e.type) {
 			case "resize":
 				this._syncPort();
-			break;
+				break;
+
+			case "keyup":
+				if (e.key === "Escape") {
+					MM.App.notes.close();
+					MM.App.help.close();
+				}
+				break;
+
+			case "message":
+				if (e.data && e.data.action) {
+					switch (e.data.action) {
+						case "setContent":
+							MM.App.notes.update(e.data.value);
+							break;
+
+						case "closeEditor":
+							MM.App.notes.close();
+							break;
+					}
+				}
+
+				break;
 
 			case "beforeunload":
 				e.preventDefault();
@@ -5273,6 +5382,7 @@ MM.App = {
 		this.ui = new MM.UI();
 		this.io = new MM.UI.IO();
 		this.help = new MM.UI.Help();
+		this.notes = new MM.UI.Notes();
 
 		MM.Tip.init();
 		MM.Keyboard.init();
@@ -5282,6 +5392,8 @@ MM.App = {
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);
+		window.addEventListener("keyup", this);
+		window.addEventListener("message", this, false);
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
 		

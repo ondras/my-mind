@@ -76,6 +76,7 @@ MM.UI.Help.prototype._build = function() {
 	this._buildRow(t, "SaveAs");
 	this._buildRow(t, "Load");
 	this._buildRow(t, "Help");
+	this._buildRow(t, "Notes");
 	this._buildRow(t, "UI");
 }
 
@@ -108,4 +109,10 @@ MM.UI.Help.prototype._formatKey = function(key) {
 	}
 	if (key.keyCode) { str += this._map[key.keyCode] || String.fromCharCode(key.keyCode); }
 	return str;
+}
+
+MM.UI.Help.prototype.close = function() {
+	if (this._node.classList.contains("visible")) {
+		this._node.classList.toggle("visible");
+	}
 }
