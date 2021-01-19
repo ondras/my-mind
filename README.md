@@ -25,3 +25,6 @@ Do you want to participate?
 * Not sure how to do stuff? [Check the docs.](https://github.com/ondras/my-mind/wiki)
 * Have a feature request? [Open an issue.](https://github.com/ondras/my-mind/issues)
 * Have an improvement? [Submit a pull request.](https://github.com/ondras/my-mind/pulls)
+
+## License
+[MIT](LICENSE.txt)
