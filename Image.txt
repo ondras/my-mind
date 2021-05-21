@@ -1,0 +1,8 @@
+Problem Or Bugs In This Project
+==============
+
+This application can be configured to Saving As A Image So You Have To Save As A json or take screenshot
+
+This application, however, only saves/loads those files that are explicitely requested by the user via My Mind's User Interface.
+
+This application is not accessing, reading, writing, modifying or deleting 
