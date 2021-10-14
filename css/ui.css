@@ -45,7 +45,7 @@ button:not(:disabled) {
 	border-color: rgba(50, 70, 90, 1);
 }
 
-.ui select, .ui input, .ui #color {
+.ui select, .ui input, .ui .color-picker {
 	width: 168px;
 }
 
@@ -108,11 +108,11 @@ button:not(:disabled) {
 	font-size: 80%;
 }
 
-.ui #color {
+.ui .color-picker {
 	display: block;
 }
 
-.ui #color::after {
+.ui .color-picker::after {
 	clear: both;
 	content: "";
 	display: block;

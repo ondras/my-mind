@@ -144,6 +144,19 @@ MM.Action.SetColor.prototype.undo = function() {
 	this._item.setColor(this._oldColor);
 }
 
+MM.Action.SetFontColor = function(item, fontColor) {
+	this._item = item;
+	this._fontColor = fontColor;
+	this._oldFontColor = item.getOwnFontColor();
+}
+MM.Action.SetFontColor.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetFontColor.prototype.perform = function() {
+	this._item.setFontColor(this._fontColor);
+}
+MM.Action.SetFontColor.prototype.undo = function() {
+	this._item.setFontColor(this._oldFontColor);
+}
+
 MM.Action.SetText = function(item, text) {
 	this._item = item;
 	this._text = text;

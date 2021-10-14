@@ -310,6 +310,7 @@ MM.Item = function() {
 	this._shape = null;
 	this._autoShape = true;
 	this._color = null;
+	this._fontColor = null;
 	this._value = null;
 	this._status = null;
 	this._side = null; /* side preference */
@@ -355,6 +356,7 @@ MM.Item = function() {
 }
 
 MM.Item.COLOR = "#999";
+MM.Item.COLOR_FONT = "#000";
 
     /* RE explanation:
      *          _________________________________________________________________________ One of the three possible variants
@@ -381,6 +383,7 @@ MM.Item.prototype.toJSON = function() {
 
 	if (this._side) { data.side = this._side; }
 	if (this._color) { data.color = this._color; }
+	if (this._fontColor) { data.fontColor = this._fontColor; }
 	if (this._icon) { data.icon = this._icon; }
 	if (this._value) { data.value = this._value; }
 	if (this._status) { data.status = this._status; }
@@ -405,6 +408,9 @@ MM.Item.prototype.fromJSON = function(data) {
 	if (data.id) { this._id = data.id; }
 	if (data.side) { this._side = data.side; }
 	if (data.color) { this._color = data.color; }
+	if (data.fontColor) { 
+		this.setFontColor(data.fontColor);
+	}
 	if (data.icon) { this._icon = data.icon; }
 	if (data.value) { this._value = data.value; }
 	if (data.status) {
@@ -434,6 +440,11 @@ MM.Item.prototype.mergeWith = function(data) {
 
 	if (this._color != data.color) { 
 		this._color = data.color;
+		dirty = 2;
+	}
+
+	if (this._fontColor != data.fontColor) { 
+		this._fontColor = data.fontColor;
 		dirty = 2;
 	}
 
@@ -651,6 +662,20 @@ MM.Item.prototype.getColor = function() {
 
 MM.Item.prototype.getOwnColor = function() {
 	return this._color;
+}
+
+MM.Item.prototype.setFontColor = function(fontColor) {
+	this._fontColor = fontColor;
+	this._dom.text.style.color = this._fontColor;
+	return this.updateSubtree();
+}
+
+MM.Item.prototype.getFontColor = function() {
+	return this._fontColor || (this.isRoot() ? MM.Item.COLOR_FONT : this._parent.getFontColor());
+}
+
+MM.Item.prototype.getOwnFontColor = function() {
+	return this._fontColor;
 }
 
 MM.Item.prototype.getLayout = function() {
@@ -1436,6 +1461,19 @@ MM.Action.SetColor.prototype.perform = function() {
 }
 MM.Action.SetColor.prototype.undo = function() {
 	this._item.setColor(this._oldColor);
+}
+
+MM.Action.SetFontColor = function(item, fontColor) {
+	this._item = item;
+	this._fontColor = fontColor;
+	this._oldFontColor = item.getOwnFontColor();
+}
+MM.Action.SetFontColor.prototype = Object.create(MM.Action.prototype);
+MM.Action.SetFontColor.prototype.perform = function() {
+	this._item.setFontColor(this._fontColor);
+}
+MM.Action.SetFontColor.prototype.undo = function() {
+	this._item.setFontColor(this._oldFontColor);
 }
 
 MM.Action.SetText = function(item, text) {
@@ -3852,6 +3890,7 @@ MM.UI = function() {
 	this._shape = new MM.UI.Shape();
 	this._icon = new MM.UI.Icon();
 	this._color = new MM.UI.Color();
+	this._fontColor = new MM.UI.FontColor();
 	this._value = new MM.UI.Value();
 	this._status = new MM.UI.Status();
 		
@@ -4042,6 +4081,26 @@ MM.UI.Color.prototype.handleEvent = function(e) {
 	
 	var color = e.target.getAttribute("data-color") || null;
 	var action = new MM.Action.SetColor(MM.App.current, color);
+	MM.App.action(action);
+}
+MM.UI.FontColor = function() {
+	this._node = document.querySelector("#fontColor");
+	this._node.addEventListener("click", this);
+
+	var items = this._node.querySelectorAll("[data-color]");
+	
+	for (var i=0;i<items.length;i++) {
+		var item = items[i];
+		item.style.backgroundColor = item.getAttribute("data-color");
+	}
+}
+
+MM.UI.FontColor.prototype.handleEvent = function(e) {
+	e.preventDefault();
+	if (!e.target.hasAttribute("data-color")) { return; }
+	
+	var color = e.target.getAttribute("data-color") || null;
+	var action = new MM.Action.SetFontColor(MM.App.current, color);
 	MM.App.action(action);
 }
 MM.UI.Icon = function() {

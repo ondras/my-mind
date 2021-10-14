@@ -7,6 +7,7 @@ MM.UI = function() {
 	this._shape = new MM.UI.Shape();
 	this._icon = new MM.UI.Icon();
 	this._color = new MM.UI.Color();
+	this._fontColor = new MM.UI.FontColor();
 	this._value = new MM.UI.Value();
 	this._status = new MM.UI.Status();
 		
