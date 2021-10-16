@@ -93,7 +93,7 @@ MM.Action.Swap = function(item, diff) {
 
 	var children = this._parent.getChildren();
 	var sibling = this._parent.getLayout().pickSibling(this._item, diff);
-	
+
 	this._sourceIndex = children.indexOf(this._item);
 	this._targetIndex = children.indexOf(sibling);
 }

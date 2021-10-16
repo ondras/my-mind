@@ -8,7 +8,7 @@ if (!Function.prototype.bind) {
 	}
 };
 
-var MM = {
+window.MM = {
 	_subscribers: {},
 
 	publish: function(message, publisher, data) {

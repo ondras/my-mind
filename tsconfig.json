@@ -1,0 +1,10 @@
+{
+	"include": ["src"],
+	"compilerOptions": {
+		"outDir": ".js",
+		"target": "es2019",
+		"allowJs": true,
+		"noEmitOnError": true,
+		"incremental": true,
+	}
+}

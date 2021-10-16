@@ -1,70 +1,25 @@
-SOURCES =	src/mm.js \
-			src/promise.js \
-			src/promise-addons.js \
-			src/repo.js \
-			src/item.js \
-			src/map.js \
-			src/keyboard.js \
-			src/tip.js \
-			src/action.js \
-			src/clipboard.js \
-			src/menu.js \
-			src/command.js \
-			src/command.edit.js \
-			src/command.select.js \
-			src/layout.js \
-			src/layout.graph.js \
-			src/layout.tree.js \
-			src/layout.map.js \
-			src/shape.js \
-			src/shape.underline.js \
-			src/shape.box.js \
-			src/shape.ellipse.js \
-			src/format.js \
-			src/format.json.js \
-			src/format.freemind.js \
-			src/format.mma.js \
-			src/format.mup.js \
-			src/format.plaintext.js \
-			src/backend.js \
-			src/backend.local.js \
-			src/backend.webdav.js \
-			src/backend.image.js \
-			src/backend.file.js \
-			src/backend.firebase.js \
-			src/backend.gdrive.js \
-			src/ui.js \
-			src/ui.layout.js \
-			src/ui.shape.js \
-			src/ui.value.js \
-			src/ui.status.js \
-			src/ui.color.js \
-			src/ui.icon.js \
-			src/ui.help.js \
-			src/ui.notes.js \
-			src/ui.io.js \
-			src/ui.backend.js \
-			src/ui.backend.file.js \
-			src/ui.backend.webdav.js \
-			src/ui.backend.image.js \
-			src/ui.backend.local.js \
-			src/ui.backend.firebase.js \
-			src/ui.backend.gdrive.js \
-			src/mouse.js \
-			src/app.js
+MAKEOPTS = "-r"
 
-.PHONY: all push clean
+BIN := $(shell npm bin)
+TSC := $(BIN)/tsc
+LESSC := $(BIN)/lessc
+ESBUILD := $(BIN)/esbuild
+GCC := $(BIN)/google-closure-compiler
 
-all: my-mind.js
+JS := .js
+FLAG := $(JS)/.tsflag
+APP := my-mind.js
 
-my-mind.js: $(SOURCES)
-	@echo "/* My Mind web app: all source files combined. */" > $@
-	@cat $^ >> $@
+all: $(APP)
 
-push:
-	@hg bookmark -f master
-	@hg push ; true
-	@hg push github ; true
+$(APP): $(FLAG)
+	$(ESBUILD) --bundle $(JS)/$(APP) > $@
+
+$(FLAG): $(shell find src -type f)
+	$(TSC)
+	touch $@
 
 clean:
-	@rm my-mind.js
+	rm -rf $(JS) $(APP)
+
+.PHONY: all clean
