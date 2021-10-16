@@ -46,7 +46,7 @@
   };
 
   // .js/promise.js
-  var Promise2 = function(executor) {
+  window.Promise = function(executor) {
     this._state = 0;
     this._value = null;
     this._cb = {
@@ -56,23 +56,23 @@
     this._thenPromises = [];
     executor && executor(this.fulfill.bind(this), this.reject.bind(this));
   };
-  Promise2.resolve = function(value) {
-    return new Promise2().fulfill(value);
+  Promise.resolve = function(value) {
+    return new Promise().fulfill(value);
   };
-  Promise2.reject = function(value) {
-    return new Promise2().reject(value);
+  Promise.reject = function(value) {
+    return new Promise().reject(value);
   };
-  Promise2.prototype.then = function(onFulfilled, onRejected) {
+  Promise.prototype.then = function(onFulfilled, onRejected) {
     this._cb.fulfilled.push(onFulfilled);
     this._cb.rejected.push(onRejected);
-    var thenPromise = new Promise2();
+    var thenPromise = new Promise();
     this._thenPromises.push(thenPromise);
     if (this._state > 0) {
       setTimeout(this._processQueue.bind(this), 0);
     }
     return thenPromise;
   };
-  Promise2.prototype.fulfill = function(value) {
+  Promise.prototype.fulfill = function(value) {
     if (this._state != 0) {
       return this;
     }
@@ -81,7 +81,7 @@
     this._processQueue();
     return this;
   };
-  Promise2.prototype.reject = function(value) {
+  Promise.prototype.reject = function(value) {
     if (this._state != 0) {
       return this;
     }
@@ -90,20 +90,20 @@
     this._processQueue();
     return this;
   };
-  Promise2.prototype.chain = function(promise) {
+  Promise.prototype.chain = function(promise) {
     return this.then(promise.fulfill.bind(promise), promise.reject.bind(promise));
   };
-  Promise2.prototype["catch"] = function(onRejected) {
+  Promise.prototype["catch"] = function(onRejected) {
     return this.then(null, onRejected);
   };
-  Promise2.prototype._processQueue = function() {
+  Promise.prototype._processQueue = function() {
     while (this._thenPromises.length) {
       var onFulfilled = this._cb.fulfilled.shift();
       var onRejected = this._cb.rejected.shift();
       this._executeCallback(this._state == 1 ? onFulfilled : onRejected);
     }
   };
-  Promise2.prototype._executeCallback = function(cb) {
+  Promise.prototype._executeCallback = function(cb) {
     var thenPromise = this._thenPromises.shift();
     if (typeof cb != "function") {
       if (this._state == 1) {

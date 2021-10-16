@@ -7,7 +7,7 @@
  * @class A promise - value to be resolved in the future.
  * Implements the "Promises/A+" specification.
  */
-var Promise = function(executor) {
+window.Promise = function(executor) {
 	this._state = 0; /* 0 = pending, 1 = fulfilled, 2 = rejected */
 	this._value = null; /* fulfillment / rejection value */
 
@@ -47,7 +47,7 @@ Promise.prototype.then = function(onFulfilled, onRejected) {
 	}
 
 	/* 3.2.6. then must return a promise. */
-	return thenPromise; 
+	return thenPromise;
 }
 
 /**
@@ -127,14 +127,14 @@ Promise.prototype._executeCallback = function(cb) {
 			var rejectThenPromise = function(value) { thenPromise.reject(value); }
 			returned.then(fulfillThenPromise, rejectThenPromise);
 		} else {
-			/* 3.2.6.1. If either onFulfilled or onRejected returns a value that is not a promise, promise2 must be fulfilled with that value. */ 
+			/* 3.2.6.1. If either onFulfilled or onRejected returns a value that is not a promise, promise2 must be fulfilled with that value. */
 			thenPromise.fulfill(returned);
 		}
 
 	} catch (e) {
 
 		/* 3.2.6.2. If either onFulfilled or onRejected throws an exception, promise2 must be rejected with the thrown exception as the reason. */
-		thenPromise.reject(e); 
+		thenPromise.reject(e);
 
 	}
-}    
+}
