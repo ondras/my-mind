@@ -76,7 +76,7 @@ MM.Clipboard._pastePlaintext = function(plaintext, targetItem) {
 	var map = MM.Map.fromJSON(json);
 	var root = map.getRoot();
 
-	if (root.getText()) {
+	if (root.text) {
 		var action = new MM.Action.AppendItem(targetItem, root);
 		MM.App.action(action);
 	} else {

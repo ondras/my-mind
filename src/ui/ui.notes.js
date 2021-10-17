@@ -15,9 +15,9 @@ MM.UI.Notes.prototype.close = function() {
 
 MM.UI.Notes.prototype.update = function(html) {
 	if (html.trim().length === 0) {
-		MM.App.current._notes = null;
+		MM.App.current.notes = null;
 	} else {
-		MM.App.current._notes = html;
+		MM.App.current.notes = html;
 	}
 	MM.App.current.update();
 }

@@ -147,17 +147,17 @@ MM.Action.SetColor.prototype.undo = function() {
 MM.Action.SetText = function(item, text) {
 	this._item = item;
 	this._text = text;
-	this._oldText = item.getText();
+	this._oldText = item.text;
 	this._oldValue = item.getValue(); /* adjusting text can also modify value! */
 }
 MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetText.prototype.perform = function() {
-	this._item.setText(this._text);
+	this._item.text = this._text;
 	var numText = Number(this._text);
 	if (numText == this._text) { this._item.setValue(numText); }
 }
 MM.Action.SetText.prototype.undo = function() {
-	this._item.setText(this._oldText);
+	this._item.text = this._oldText;
 	this._item.setValue(this._oldValue);
 }
 
@@ -190,14 +190,14 @@ MM.Action.SetStatus.prototype.undo = function() {
 MM.Action.SetIcon = function(item, icon) {
 	this._item = item;
 	this._icon = icon;
-	this._oldIcon = item.getIcon();
+	this._oldIcon = item.icon;
 }
 MM.Action.SetIcon.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetIcon.prototype.perform = function() {
-	this._item.setIcon(this._icon);
+	this._item.icon = this._icon;
 }
 MM.Action.SetIcon.prototype.undo = function() {
-	this._item.setIcon(this._oldIcon);
+	this._item.icon = this._oldIcon;
 }
 
 MM.Action.SetSide = function(item, side) {

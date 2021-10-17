@@ -12,7 +12,7 @@ MM.Map = function(options) {
 	this._position = [0, 0];
 
 	let root = new Item();
-	root.setText(o.root);
+	root.text = o.root;
 	root.setLayout(o.layout);
 	this._setRoot(root);
 }
@@ -198,7 +198,7 @@ MM.Map.prototype.getRoot = function() {
 }
 
 MM.Map.prototype.getName = function() {
-	var name = this._root.getText();
+	var name = this._root.text;
 	return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
 }
 

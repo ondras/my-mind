@@ -4,17 +4,14 @@ MM.Shape = Object.create(MM.Repo, {
 
 MM.Shape.set = function(item) {
 	item.dom.node.classList.add("shape-"+this.id);
-	return this;
 }
 
 MM.Shape.unset = function(item) {
 	item.dom.node.classList.remove("shape-"+this.id);
-	return this;
 }
 
 MM.Shape.update = function(item) {
 	item.dom.content.style.borderColor = item.getColor();
-	return this;
 }
 
 MM.Shape.getHorizontalAnchor = function(item) {

@@ -4,7 +4,7 @@ MM.UI.Icon = function() {
 }
 
 MM.UI.Icon.prototype.update = function() {
-    this._select.value = MM.App.current.getIcon() || "";
+    this._select.value = MM.App.current.icon || "";
 }
 
 MM.UI.Icon.prototype.handleEvent = function(e) {

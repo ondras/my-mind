@@ -88,79 +88,6 @@
     }
   };
 
-  // .js/promise-addons.js
-  Promise.all = Promise.when = function(all) {
-    var promise = new this();
-    var counter = 0;
-    var results = [];
-    for (var i = 0; i < all.length; i++) {
-      counter++;
-      all[i].then(function(index, result) {
-        results[index] = result;
-        counter--;
-        if (!counter) {
-          promise.fulfill(results);
-        }
-      }.bind(null, i), function(reason) {
-        counter = 1 / 0;
-        promise.reject(reason);
-      });
-    }
-    return promise;
-  };
-  Promise.setTimeout = function(ms) {
-    var promise = new this();
-    setTimeout(function() {
-      promise.fulfill();
-    }, ms);
-    return promise;
-  };
-  Promise.event = function(element, event, capture) {
-    var promise = new this();
-    var cb = function(e) {
-      element.removeEventListener(event, cb, capture);
-      promise.fulfill(e);
-    };
-    element.addEventListener(event, cb, capture);
-    return promise;
-  };
-  Promise.transition = function(element) {
-    if ("transition" in element.style) {
-      return this.event(element, "transitionend", false);
-    } else if ("webkitTransition" in element.style) {
-      return this.event(element, "webkitTransitionEnd", false);
-    } else {
-      return new this().fulfill();
-    }
-  };
-  Promise.send = function(xhr, data) {
-    var promise = new this();
-    xhr.addEventListener("readystatechange", function(e) {
-      if (e.target.readyState != 4) {
-        return;
-      }
-      if (e.target.status.toString().charAt(0) == "2") {
-        promise.fulfill(e.target);
-      } else {
-        promise.reject(e.target);
-      }
-    });
-    xhr.send(data);
-    return promise;
-  };
-  Promise.worker = function(url, message) {
-    var promise = new this();
-    var worker = new Worker(url);
-    Promise.event(worker, "message").then(function(e) {
-      promise.fulfill(e.data);
-    });
-    Promise.event(worker, "error").then(function(e) {
-      promise.reject(e.message);
-    });
-    worker.postMessage(message);
-    return promise;
-  };
-
   // .js/repo.js
   MM.Repo = {
     id: "",
@@ -236,6 +163,8 @@
       this._id = generateId();
       this._parent = null;
       this._collapsed = false;
+      this._icon = null;
+      this._notes = null;
       this.dom = {
         node: node("li"),
         content: node("div"),
@@ -256,8 +185,6 @@
       this._value = null;
       this._status = null;
       this._side = null;
-      this._icon = null;
-      this._notes = null;
       this._oldText = "";
       this._computed = {
         value: 0,
@@ -338,8 +265,8 @@
     toJSON() {
       let data = {
         id: this.id,
-        text: this.getText(),
-        notes: this.getNotes()
+        text: this.text,
+        notes: this.notes
       };
       if (this._side) {
         data.side = this._side;
@@ -371,12 +298,12 @@
       return data;
     }
     fromJSON(data) {
-      this.setText(data.text);
-      if (data.notes) {
-        this.setNotes(data.notes);
-      }
+      this.text = data.text;
       if (data.id) {
         this._id = data.id;
+      }
+      if (data.notes) {
+        this.notes = data.notes;
       }
       if (data.side) {
         this._side = data.side;
@@ -412,8 +339,8 @@
     }
     mergeWith(data) {
       var dirty = 0;
-      if (this.getText() != data.text && !this.dom.text.contentEditable) {
-        this.setText(data.text);
+      if (this.text != data.text && !this.dom.text.contentEditable) {
+        this.text = data.text;
       }
       if (this._side != data.side) {
         this._side = data.side;
@@ -482,8 +409,8 @@
     select() {
       this.dom.node.classList.add("current");
       if (window.editor) {
-        if (this._notes) {
-          window.editor.setContent(this._notes);
+        if (this.notes) {
+          window.editor.setContent(this.notes);
         } else {
           window.editor.setContent("");
         }
@@ -521,7 +448,7 @@
       }
       this._updateStatus();
       this._updateIcon();
-      this.dom.notes.classList.toggle("notes-indicator-visible", !!this._notes);
+      this.dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
       this._updateValue();
       this.dom.node.classList.toggle("collapsed", this._collapsed);
       this.getLayout().update(this);
@@ -530,20 +457,20 @@
         this.parent.update();
       }
     }
-    setText(text) {
+    get text() {
+      return this.dom.text.innerHTML;
+    }
+    set text(text) {
       this.dom.text.innerHTML = text;
       findLinks(this.dom.text);
       this.update();
     }
-    setNotes(notes) {
+    get notes() {
+      return this._notes;
+    }
+    set notes(notes) {
       this._notes = notes;
       this.update();
-    }
-    getText() {
-      return this.dom.text.innerHTML;
-    }
-    getNotes() {
-      return this._notes;
     }
     collapse() {
       if (this._collapsed) {
@@ -580,12 +507,12 @@
     getStatus() {
       return this._status;
     }
-    setIcon(icon) {
+    get icon() {
+      return this._icon;
+    }
+    set icon(icon) {
       this._icon = icon;
       this.update();
-    }
-    getIcon() {
-      return this._icon;
     }
     getComputedStatus() {
       return this._computed.status;
@@ -684,7 +611,7 @@
       this.update();
     }
     startEditing() {
-      this._oldText = this.getText();
+      this._oldText = this.text;
       this.dom.text.contentEditable = "true";
       this.dom.text.focus();
       document.execCommand("styleWithCSS", null, "false");
@@ -871,7 +798,7 @@
     this._visible = false;
     this._position = [0, 0];
     let root = new Item();
-    root.setText(o.root);
+    root.text = o.root;
     root.setLayout(o.layout);
     this._setRoot(root);
   };
@@ -1038,7 +965,7 @@
     return this._root;
   };
   MM.Map.prototype.getName = function() {
-    var name = this._root.getText();
+    var name = this._root.text;
     return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
   };
   MM.Map.prototype.getId = function() {
@@ -1317,19 +1244,19 @@
   MM.Action.SetText = function(item, text) {
     this._item = item;
     this._text = text;
-    this._oldText = item.getText();
+    this._oldText = item.text;
     this._oldValue = item.getValue();
   };
   MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetText.prototype.perform = function() {
-    this._item.setText(this._text);
+    this._item.text = this._text;
     var numText = Number(this._text);
     if (numText == this._text) {
       this._item.setValue(numText);
     }
   };
   MM.Action.SetText.prototype.undo = function() {
-    this._item.setText(this._oldText);
+    this._item.text = this._oldText;
     this._item.setValue(this._oldValue);
   };
   MM.Action.SetValue = function(item, value) {
@@ -1359,14 +1286,14 @@
   MM.Action.SetIcon = function(item, icon) {
     this._item = item;
     this._icon = icon;
-    this._oldIcon = item.getIcon();
+    this._oldIcon = item.icon;
   };
   MM.Action.SetIcon.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetIcon.prototype.perform = function() {
-    this._item.setIcon(this._icon);
+    this._item.icon = this._icon;
   };
   MM.Action.SetIcon.prototype.undo = function() {
-    this._item.setIcon(this._oldIcon);
+    this._item.icon = this._oldIcon;
   };
   MM.Action.SetSide = function(item, side) {
     this._item = item;
@@ -1453,7 +1380,7 @@
     var json = MM.Format.Plaintext.from(plaintext);
     var map = MM.Map.fromJSON(json);
     var root = map.getRoot();
-    if (root.getText()) {
+    if (root.text) {
       var action = new MM.Action.AppendItem(targetItem, root);
       MM.App.action(action);
     } else {
@@ -1878,7 +1805,7 @@
   MM.Command.Cancel.execute = function() {
     MM.App.editing = false;
     MM.App.current.stopEditing();
-    var oldText = MM.App.current.getText();
+    var oldText = MM.App.current.text;
     if (!oldText) {
       var action = new MM.Action.RemoveItem(MM.App.current);
       MM.App.action(action);
@@ -2562,15 +2489,12 @@
   });
   MM.Shape.set = function(item) {
     item.dom.node.classList.add("shape-" + this.id);
-    return this;
   };
   MM.Shape.unset = function(item) {
     item.dom.node.classList.remove("shape-" + this.id);
-    return this;
   };
   MM.Shape.update = function(item) {
     item.dom.content.style.borderColor = item.getColor();
-    return this;
   };
   MM.Shape.getHorizontalAnchor = function(item) {
     const { contentPosition, contentSize } = item;
@@ -3032,22 +2956,26 @@
     label: { value: "Generic WebDAV" }
   });
   MM.Backend.WebDAV.save = function(data, url) {
-    return this._request("put", url, data);
+    return this._request("PUT", url, data);
   };
   MM.Backend.WebDAV.load = function(url) {
-    return this._request("get", url);
+    return this._request("GET", url);
   };
-  MM.Backend.WebDAV._request = function(method, url, data) {
-    var xhr = new XMLHttpRequest();
-    xhr.open(method, url, true);
-    xhr.withCredentials = true;
-    var promise = new Promise();
-    Promise.send(xhr, data).then(function(xhr2) {
-      promise.fulfill(xhr2.responseText);
-    }, function(xhr2) {
-      promise.reject(new Error("HTTP/" + xhr2.status + "\n\n" + xhr2.responseText));
-    });
-    return promise;
+  MM.Backend.WebDAV._request = async function(method, url, data) {
+    let init = {
+      method,
+      credentials: "include"
+    };
+    if (data) {
+      init.body = data;
+    }
+    let response = await fetch(url, init);
+    let text = await response.text();
+    if (response.status == 200) {
+      return text;
+    } else {
+      throw new Error("HTTP/" + response.status + "\n\n" + text);
+    }
   };
 
   // .js/backend/backend.image.js
@@ -3632,7 +3560,7 @@
     this._select.addEventListener("change", this);
   };
   MM.UI.Icon.prototype.update = function() {
-    this._select.value = MM.App.current.getIcon() || "";
+    this._select.value = MM.App.current.icon || "";
   };
   MM.UI.Icon.prototype.handleEvent = function(e) {
     var action = new MM.Action.SetIcon(MM.App.current, this._select.value || null);
@@ -3770,9 +3698,9 @@
   };
   MM.UI.Notes.prototype.update = function(html2) {
     if (html2.trim().length === 0) {
-      MM.App.current._notes = null;
+      MM.App.current.notes = null;
     } else {
-      MM.App.current._notes = html2;
+      MM.App.current.notes = html2;
     }
     MM.App.current.update();
   };

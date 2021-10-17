@@ -48,7 +48,7 @@ MM.Command.Cancel = Object.create(MM.Command, {
 MM.Command.Cancel.execute = function() {
 	MM.App.editing = false;
 	MM.App.current.stopEditing();
-	var oldText = MM.App.current.getText();
+	var oldText = MM.App.current.text;
 	if (!oldText) { /* newly added node */
 		var action = new MM.Action.RemoveItem(MM.App.current);
 		MM.App.action(action);

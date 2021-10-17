@@ -32,6 +32,8 @@ export default class Item {
 	protected _id = generateId();
 	protected _parent: Item | null = null;
 	protected _collapsed = false;
+	protected _icon: string | null = null;
+	protected _notes: string | null = null;
 
 	dom = {
 		node: html.node("li"),
@@ -56,8 +58,6 @@ export default class Item {
 	protected _value = null;
 	protected _status = null;
 	protected _side = null; /* side preference */
-	protected _icon = null;
-	protected _notes = null;
 	protected _oldText = "";
 	protected _computed = {
 		value: 0,
@@ -149,8 +149,8 @@ export default class Item {
 	toJSON() {
 		let data: Record<string, any> = {
 			id: this.id,
-			text: this.getText(),
-			notes: this.getNotes()
+			text: this.text,
+			notes: this.notes
 		}
 
 		if (this._side) { data.side = this._side; }
@@ -172,11 +172,10 @@ export default class Item {
 	 * Only when creating a new item. To merge existing items, use .mergeWith().
 	 */
 	fromJSON(data) {
-		this.setText(data.text);
-		if (data.notes) {
-			this.setNotes(data.notes);
-		}
+		this.text = data.text;
+
 		if (data.id) { this._id = data.id; }
+		if (data.notes) { this.notes = data.notes; }
 		if (data.side) { this._side = data.side; }
 		if (data.color) { this._color = data.color; }
 		if (data.icon) { this._icon = data.icon; }
@@ -199,7 +198,7 @@ export default class Item {
 	mergeWith(data) {
 		var dirty = 0;
 
-		if (this.getText() != data.text && !this.dom.text.contentEditable) { this.setText(data.text); }
+		if (this.text != data.text && !this.dom.text.contentEditable) { this.text = data.text; }
 
 		if (this._side != data.side) {
 			this._side = data.side;
@@ -273,8 +272,8 @@ export default class Item {
 	select() {
 		this.dom.node.classList.add("current");
 		if (window.editor) {
-			if (this._notes) {
-				window.editor.setContent(this._notes);
+			if (this.notes) {
+				window.editor.setContent(this.notes);
 			} else {
 				window.editor.setContent('');
 			}
@@ -320,7 +319,7 @@ export default class Item {
 
 		this._updateStatus();
 		this._updateIcon();
-		this.dom.notes.classList.toggle("notes-indicator-visible", !!this._notes);
+		this.dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
 
 		this._updateValue();
 
@@ -333,23 +332,17 @@ export default class Item {
 		if (options.parent && !this.isRoot()) { this.parent.update(); }
 	}
 
-	setText(text) {
+	get text() { return this.dom.text.innerHTML; }
+	set text(text: string) {
 		this.dom.text.innerHTML = text;
 		findLinks(this.dom.text);
 		this.update();
 	}
 
-	setNotes(notes) {
+	get notes() { return this._notes; }
+	set notes(notes: string) {
 		this._notes = notes;
 		this.update();
-	}
-
-	getText() {
-		return this.dom.text.innerHTML;
-	}
-
-	getNotes() {
-		return this._notes;
 	}
 
 	collapse() {
@@ -391,13 +384,10 @@ export default class Item {
 		return this._status;
 	}
 
-	setIcon(icon) {
+	get icon() { return this._icon; }
+	set icon(icon: string) {
 		this._icon = icon;
 		this.update();
-	}
-
-	getIcon() {
-		return this._icon;
 	}
 
 	getComputedStatus() {
@@ -516,7 +506,7 @@ export default class Item {
 	}
 
 	startEditing() {
-		this._oldText = this.getText();
+		this._oldText = this.text;
 		this.dom.text.contentEditable = "true";
 		this.dom.text.focus(); /* switch to 2b */
 		document.execCommand("styleWithCSS", null, "false");

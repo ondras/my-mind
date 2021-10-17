@@ -4,24 +4,26 @@ MM.Backend.WebDAV = Object.create(MM.Backend, {
 });
 
 MM.Backend.WebDAV.save = function(data, url) {
-	return this._request("put", url, data);
+	return this._request("PUT", url, data);
 }
 
 MM.Backend.WebDAV.load = function(url) {
-	return this._request("get", url);
+	return this._request("GET", url);
 }
 
-MM.Backend.WebDAV._request = function(method, url, data) {
-	var xhr = new XMLHttpRequest();
-	xhr.open(method, url, true);
-	xhr.withCredentials = true;
+MM.Backend.WebDAV._request = async function(method, url, data) {
+	let init = {
+		method,
+		credentials: "include"
+	}
+	if (data) { init.body = data; }
 
-	var promise = new Promise();
-	
-	Promise.send(xhr, data).then(
-		function(xhr) { promise.fulfill(xhr.responseText); },
-		function(xhr) { promise.reject(new Error("HTTP/" + xhr.status + "\n\n" + xhr.responseText)); }
-	);
+	let response = await fetch(url, init);
+	let text = await response.text();
 
-	return promise;
+	if (response.status == 200) {
+		return text;
+	} else {
+		throw new Error("HTTP/" + response.status + "\n\n" + text);
+	}
 }

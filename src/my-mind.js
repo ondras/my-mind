@@ -1,6 +1,5 @@
 import "./mm.js";
 import "./promise.js";
-import "./promise-addons.js";
 import "./repo.js";
 import "./item.js";
 import "./map.js";
