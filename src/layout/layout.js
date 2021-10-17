@@ -94,13 +94,13 @@ MM.Layout._anchorToggle = function(item, x, y, side) {
 }
 
 MM.Layout._getChildAnchor = function(item, side) {
-	let { position, dom } = item;
+	let { position, contentPosition, contentSize } = item;
 	if (side == "left" || side == "right") {
-		var pos = position[0] + dom.content.offsetLeft;
-		if (side == "left") { pos += dom.content.offsetWidth; }
+		var pos = position[0] + contentPosition[0];
+		if (side == "left") { pos += contentSize[0]; }
 	} else {
-		var pos = position[1] + dom.content.offsetTop;
-		if (side == "top") { pos += dom.content.offsetHeight; }
+		var pos = position[1] + contentPosition[1];
+		if (side == "top") { pos += contentSize[1]; }
 	}
 	return pos;
 }
@@ -125,12 +125,12 @@ MM.Layout._alignItem = function(item, side) {
 	var dom = item.dom;
 
 	switch (side) {
-		case "left":
+		case "left": // icon, text, value, status
 			dom.content.insertBefore(dom.icon, dom.content.firstChild);
 			dom.content.appendChild(dom.value);
 			dom.content.appendChild(dom.status);
 		break;
-		case "right":
+		case "right": // status, value, icon, text
 			dom.content.insertBefore(dom.icon, dom.content.firstChild);
 			dom.content.insertBefore(dom.value, dom.content.firstChild);
 			dom.content.insertBefore(dom.status, dom.content.firstChild);

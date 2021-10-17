@@ -18,11 +18,11 @@ MM.Shape.update = function(item) {
 }
 
 MM.Shape.getHorizontalAnchor = function(item) {
-	var node = item.dom.content;
-	return Math.round(node.offsetLeft + node.offsetWidth/2) + 0.5;
+	const { contentPosition, contentSize } = item;
+	return Math.round(contentPosition[0] + contentSize[0]/2) + 0.5;
 }
 
 MM.Shape.getVerticalAnchor = function(item) {
-	var node = item.dom.content;
-	return node.offsetTop + Math.round(node.offsetHeight * this.VERTICAL_OFFSET) + 0.5;
+	const { contentPosition, contentSize } = item;
+	return contentPosition[1] + Math.round(contentSize[1] * this.VERTICAL_OFFSET) + 0.5;
 }

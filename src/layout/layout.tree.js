@@ -33,10 +33,7 @@ MM.Layout.Tree.update = function(item) {
  * Generic graph child layout routine. Updates item's orthogonal size according to the sum of its children.
  */
 MM.Layout.Tree._layoutItem = function(item, rankDirection) {
-	var dom = item.dom;
-
-	/* content size */
-	var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
+	const { contentSize } = item;
 
 	/* children size */
 	var bbox = this._computeChildrenBBox(item.children, 1);
@@ -57,8 +54,8 @@ MM.Layout.Tree._layoutItem = function(item, rankDirection) {
 	/* label position */
 	var labelPos = 0;
 	if (rankDirection == "left") { labelPos = rankSize - contentSize[0]; }
-	dom.content.style.left = labelPos + "px";
-	dom.content.style.top = 0;
+
+	item.contentPosition = [labelPos, 0];
 
 	return this;
 }
@@ -79,18 +76,16 @@ MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox)
 }
 
 MM.Layout.Tree._drawLines = function(item, side) {
-	var dom = item.dom;
-	var canvas = dom.canvas;
+	const { contentSize, size, ctx } = item;
 
 	var R = this.SPACING_RANK/4;
 	// FIXME canvas.width nahradit za item.size[0] ?
-	var x = (side == "left" ? canvas.width - 2*R : 2*R) + 0.5;
-	this._anchorToggle(item, x, dom.content.offsetHeight, "bottom");
+	var x = (side == "left" ? size[0] - 2*R : 2*R) + 0.5;
+	this._anchorToggle(item, x, contentSize[1], "bottom");
 
 	var children = item.children;
 	if (children.length == 0 || item.isCollapsed()) { return; }
 
-	var ctx = canvas.getContext("2d");
 	ctx.strokeStyle = item.getColor();
 
 	var y1 = item.getShape().getVerticalAnchor(item);

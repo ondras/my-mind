@@ -175,8 +175,7 @@ MM.Mouse._buildGhost = function() {
 	var content = this._item.dom.content;
 	this._ghost = content.cloneNode(true);
 	this._ghost.classList.add("ghost");
-	this._pos[0] = content.offsetLeft;
-	this._pos[1] = content.offsetTop;
+	this._pos = this._item.contentPosition;
 	content.parentNode.appendChild(this._ghost);
 }
 
@@ -232,12 +231,10 @@ MM.Mouse._computeDragState = function() {
 		tmp = tmp.parent;
 	}
 
-	var w1 = this._item.dom.content.offsetWidth;
-	var w2 = target.dom.content.offsetWidth;
-	var w = Math.max(w1, w2);
-	var h1 = this._item.dom.content.offsetHeight;
-	var h2 = target.dom.content.offsetHeight;
-	var h = Math.max(h1, h2);
+	let itemContentSize = this._item.contentSize;
+	let targetContentSize = target.contentSize;
+	var w = Math.max(itemContentSize[0], targetContentSize[0]);
+	var h = Math.max(itemContentSize[1], targetContentSize[1]);
 
 	if (target.isRoot()) { /* append here */
 		state.result = "append";
@@ -246,7 +243,6 @@ MM.Mouse._computeDragState = function() {
 	} else {
 		state.result = "sibling";
 		var childDirection = target.parent.getLayout().getChildDirection(target);
-		var diff = -1 * (childDirection == "top" || childDirection == "bottom" ? closest.dx : closest.dy);
 
 		if (childDirection == "left" || childDirection == "right") {
 			state.direction = (closest.dy < 0 ? "bottom" : "top");

@@ -95,6 +95,9 @@ export default class Item {
 		this.update({children:true});
 	}
 
+	// fixme zrusit
+	get ctx() { return this.dom.canvas.getContext("2d"); }
+
 	get metrics() { // FIXME bud tohle, nebo size/position
 		const { dom } = this, { node } = dom;
 		return {
@@ -106,26 +109,41 @@ export default class Item {
 	}
 
 	get size() {
-		const { dom } = this;
-		return [dom.node.offsetWidth, dom.node.offsetHeight];
+		const { node } = this.dom;
+		return [node.offsetWidth, node.offsetHeight];
 	}
 	set size(size: number[]) {
-		const { dom } = this;
-		dom.node.style.width = `${size[0]}px`;
-		dom.node.style.height = `${size[1]}px`;
+		const { node, canvas } = this.dom;
+		node.style.width = `${size[0]}px`;
+		node.style.height = `${size[1]}px`;
 
-		dom.canvas.width = size[0];
-		dom.canvas.height = size[1];
+		canvas.width = size[0];
+		canvas.height = size[1];
 	}
 
 	get position() {
-		const { dom } = this;
-		return [dom.node.offsetLeft, dom.node.offsetTop];
+		const { node } = this.dom;
+		return [node.offsetLeft, node.offsetTop];
 	}
 	set position(position: number[]) {
-		const { dom } = this;
-		dom.node.style.left = `${position[0]}px`;
-		dom.node.style.top = `${position[1]}px`;
+		const { node } = this.dom;
+		node.style.left = `${position[0]}px`;
+		node.style.top = `${position[1]}px`;
+	}
+
+	get contentSize() {
+		const { content } = this.dom;
+		return [content.offsetWidth, content.offsetHeight];
+	}
+
+	get contentPosition() {
+		const { content } = this.dom;
+		return [content.offsetLeft, content.offsetTop];
+	}
+	set contentPosition(position: number[]) {
+		const { content } = this.dom;
+		content.style.left = `${position[0]}px`;
+		content.style.top = `${position[1]}px`;
 	}
 
 	toJSON() {
@@ -171,9 +189,9 @@ export default class Item {
 		if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
 		if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 
-		(data.children || []).forEach(function(child) {
+		(data.children || []).forEach(child => {
 			this.insertChild(Item.fromJSON(child));
-		}, this);
+		});
 
 		return this;
 	}
@@ -218,7 +236,7 @@ export default class Item {
 		var s = (this._autoShape ? null : this._shape.id);
 		if (s != data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
 
-		(data.children || []).forEach(function(child, index) {
+		(data.children || []).forEach((child, index) => {
 			if (index >= this.children.length) { /* new child */
 				this.insertChild(Item.fromJSON(child));
 			} else { /* existing child */
@@ -230,7 +248,7 @@ export default class Item {
 					this.insertChild(Item.fromJSON(child), index);
 				}
 			}
-		}, this);
+		});
 
 		/* remove dead children */
 		var newLength = (data.children || []).length;
@@ -302,7 +320,8 @@ export default class Item {
 
 		this._updateStatus();
 		this._updateIcon();
-		this._updateNotesIndicator();
+		this.dom.notes.classList.toggle("notes-indicator-visible", !!this._notes);
+
 		this._updateValue();
 
 		this.dom.node.classList.toggle("collapsed", this._collapsed);
@@ -317,12 +336,12 @@ export default class Item {
 	setText(text) {
 		this.dom.text.innerHTML = text;
 		findLinks(this.dom.text);
-		return this.update();
+		this.update();
 	}
 
 	setNotes(notes) {
 		this._notes = notes;
-		return this.update();
+		this.update();
 	}
 
 	getText() {
@@ -336,14 +355,14 @@ export default class Item {
 	collapse() {
 		if (this._collapsed) { return; }
 		this._collapsed = true;
-		return this.update();
+		this.update();
 	}
 
 	expand() {
 		if (!this._collapsed) { return; }
 		this._collapsed = false;
 		this.update();
-		return this.update({children:true});
+		this.update({children:true});
 	}
 
 	isCollapsed() {
@@ -352,7 +371,7 @@ export default class Item {
 
 	setValue(value) {
 		this._value = value;
-		return this.update();
+		this.update();
 	}
 
 	getValue() {
@@ -365,7 +384,7 @@ export default class Item {
 
 	setStatus(status) {
 		this._status = status;
-		return this.update();
+		this.update();
 	}
 
 	getStatus() {
@@ -374,7 +393,7 @@ export default class Item {
 
 	setIcon(icon) {
 		this._icon = icon;
-		return this.update();
+		this.update();
 	}
 
 	getIcon() {
@@ -387,6 +406,7 @@ export default class Item {
 
 	setSide(side) {
 		this._side = side;
+		// FIXME no .update() call, because the whole map needs updating?
 		return this;
 	}
 
@@ -396,7 +416,7 @@ export default class Item {
 
 	setColor(color) {
 		this._color = color;
-		return this.update({children:true});
+		this.update({children:true});
 	}
 
 	getColor() {
@@ -417,7 +437,7 @@ export default class Item {
 
 	setLayout(layout) {
 		this._layout = layout;
-		return this.update({children:true});
+		this.update({children:true});
 	}
 
 	getShape() {
@@ -440,7 +460,7 @@ export default class Item {
 		}
 
 		this._shape.set(this);
-		return this.update();
+		this.update();
 	}
 
 	get map() {
@@ -456,12 +476,10 @@ export default class Item {
 		return (this.parent instanceof MM.Map);
 	}
 
-	insertChild(child, index) {
+	insertChild(child: Item, index?: number) {
 		/* Create or remove child as necessary. This must be done before computing the index (inserting own child) */
-		var newChild = false;
 		if (!child) {
 			child = new Item();
-			newChild = true;
 		} else if (child.parent && child.parent.removeChild) { /* only when the child has non-map parent */
 			child.parent.removeChild(child);
 		}
@@ -602,10 +620,6 @@ export default class Item {
 			this.dom.icon.classList.add('fa');
 			this.dom.icon.classList.add(icon);
 		}
-	}
-
-	_updateNotesIndicator() {
-		this.dom.notes.classList.toggle("notes-indicator-visible", !!this._notes);
 	}
 
 	_updateValue() {

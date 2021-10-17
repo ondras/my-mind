@@ -89,8 +89,7 @@ MM.Map.prototype.update = function() {
 }
 
 MM.Map.prototype.show = function(where) {
-	var node = this._root.dom.node;
-	where.appendChild(node);
+	where.appendChild(this._root.dom.node);
 	this._visible = true;
 	this._root.update({parent:true, children:true});
 	this.center();
@@ -99,8 +98,7 @@ MM.Map.prototype.show = function(where) {
 }
 
 MM.Map.prototype.hide = function() {
-	var node = this._root.dom.node;
-	node.parentNode.removeChild(node);
+	this._root.dom.node.remove();
 	this._visible = false;
 	return this;
 }

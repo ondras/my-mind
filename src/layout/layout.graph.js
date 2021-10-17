@@ -40,17 +40,10 @@ MM.Layout.Graph.update = function(item) {
  * Generic graph child layout routine. Updates item's orthogonal size according to the sum of its children.
  */
 MM.Layout.Graph._layoutItem = function(item, rankDirection) {
-	var posProps = ["left", "top"];
 	var rankIndex = (rankDirection == "left" || rankDirection == "right" ? 0 : 1);
 	var childIndex = (rankIndex+1) % 2;
 
-	var rankPosProp = posProps[rankIndex];
-	var childPosProp = posProps[childIndex];
-
-	var dom = item.dom;
-
-	/* content size */
-	var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
+	const { contentSize } = item;
 
 	/* children size */
 	var bbox = this._computeChildrenBBox(item.children, childIndex);
@@ -60,7 +53,9 @@ MM.Layout.Graph._layoutItem = function(item, rankDirection) {
 	if (bbox[rankIndex]) { rankSize += bbox[rankIndex] + this.SPACING_RANK; }
 	var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
 
-	item.size = (rankIndex == 0 ? [rankSize, childSize] : [childSize, rankSize]);
+	let size = [rankSize, childSize];
+	if (rankIndex == 1) { size = size.reverse(); }
+	item.size = size;
 
 	var offset = [0, 0];
 	if (rankDirection == "right") { offset[0] = contentSize[0] + this.SPACING_RANK; }
@@ -72,28 +67,27 @@ MM.Layout.Graph._layoutItem = function(item, rankDirection) {
 	var labelPos = 0;
 	if (rankDirection == "left") { labelPos = rankSize - contentSize[0]; }
 	if (rankDirection == "top") { labelPos = rankSize - contentSize[1]; }
-	dom.content.style[childPosProp] = Math.round((childSize - contentSize[childIndex])/2) + "px";
-	dom.content.style[rankPosProp] = labelPos + "px";
+
+	let contentPosition = [Math.round((childSize - contentSize[childIndex])/2), labelPos];
+	if (rankIndex == 0) { contentPosition = contentPosition.reverse(); }
+	item.contentPosition = contentPosition;
 
 	return this;
 }
 
 MM.Layout.Graph._layoutChildren = function(children, rankDirection, offset, bbox) {
-	var posProps = ["left", "top"];
-
 	var rankIndex = (rankDirection == "left" || rankDirection == "right" ? 0 : 1);
 	var childIndex = (rankIndex+1) % 2;
-	var rankPosProp = posProps[rankIndex];
-	var childPosProp = posProps[childIndex];
 
 	children.forEach(child => {
-		const { size, dom } = child;
+		const { size } = child;
 
 		if (rankDirection == "left") { offset[0] = bbox[0] - size[0]; }
 		if (rankDirection == "top") { offset[1] = bbox[1] - size[1]; }
 
-		dom.node.style[childPosProp] = offset[childIndex] + "px";
-		dom.node.style[rankPosProp] = offset[rankIndex] + "px";
+		let childPosition = offset.slice(); // could be reversed
+		if (rankIndex == 1) { childPosition = childPosition.reverse(); }
+		child.position = childPosition;
 
 		offset[childIndex] += size[childIndex] + this.SPACING_CHILD; /* offset for next child */
 	});
@@ -112,18 +106,17 @@ MM.Layout.Graph._drawLinesVertical = function(item, side) {
 MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	if (children.length == 0) { return; }
 
-	var dom = item.dom;
-	var canvas = dom.canvas;
-	var ctx = canvas.getContext("2d");
+	const { contentPosition, contentSize, ctx } = item;
+
 	ctx.strokeStyle = item.getColor();
 	var R = this.SPACING_RANK/2;
 
 	/* first part */
 	var y1 = item.getShape().getVerticalAnchor(item);
 	if (side == "left") {
-		var x1 = dom.content.offsetLeft - 0.5;
+		var x1 = contentPosition[0] - 0.5;
 	} else {
-		var x1 = dom.content.offsetWidth + dom.content.offsetLeft + 0.5;
+		var x1 = contentPosition[0] + contentSize[0] + 0.5;
 	}
 
 	this._anchorToggle(item, x1, y1, side);
@@ -187,9 +180,8 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 	if (children.length == 0) { return; }
 
-	var dom = item.dom;
-	var canvas = dom.canvas;
-	var ctx = canvas.getContext("2d");
+	const { contentSize, size, ctx } = item;
+
 	ctx.strokeStyle = item.getColor();
 
 	/* first part */
@@ -199,13 +191,13 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 	var height = (children.length == 1 ? 2*R : R);
 
 	if (side == "top") {
-		var y1 = canvas.height - dom.content.offsetHeight;
+		var y1 = size[1] - contentSize[1];
 		var y2 = y1 - height;
 		this._anchorToggle(item, x, y1, side);
 	} else {
 		var y1 = item.getShape().getVerticalAnchor(item);
-		var y2 = dom.content.offsetHeight + height;
-		this._anchorToggle(item, x, dom.content.offsetHeight, side);
+		var y2 = contentSize[1] + height;
+		this._anchorToggle(item, x, contentSize[1], side);
 	}
 
 	ctx.beginPath();
@@ -219,8 +211,8 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 	/* rounded connectors */
 	var c1 = children[0];
 	var c2 = children[children.length-1];
-	var offset = dom.content.offsetHeight + height;
-	var y = Math.round(side == "top" ? canvas.height - offset : offset) + 0.5;
+	var offset = contentSize[1] + height;
+	var y = Math.round(side == "top" ? size[1] - offset : offset) + 0.5;
 
 	const p1 = c1.position;
 	const p2 = c2.position;

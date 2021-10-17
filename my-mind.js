@@ -290,6 +290,9 @@
       this._parent = parent;
       this.update({ children: true });
     }
+    get ctx() {
+      return this.dom.canvas.getContext("2d");
+    }
     get metrics() {
       const { dom } = this, { node: node2 } = dom;
       return {
@@ -300,24 +303,37 @@
       };
     }
     get size() {
-      const { dom } = this;
-      return [dom.node.offsetWidth, dom.node.offsetHeight];
+      const { node: node2 } = this.dom;
+      return [node2.offsetWidth, node2.offsetHeight];
     }
     set size(size) {
-      const { dom } = this;
-      dom.node.style.width = `${size[0]}px`;
-      dom.node.style.height = `${size[1]}px`;
-      dom.canvas.width = size[0];
-      dom.canvas.height = size[1];
+      const { node: node2, canvas } = this.dom;
+      node2.style.width = `${size[0]}px`;
+      node2.style.height = `${size[1]}px`;
+      canvas.width = size[0];
+      canvas.height = size[1];
     }
     get position() {
-      const { dom } = this;
-      return [dom.node.offsetLeft, dom.node.offsetTop];
+      const { node: node2 } = this.dom;
+      return [node2.offsetLeft, node2.offsetTop];
     }
     set position(position) {
-      const { dom } = this;
-      dom.node.style.left = `${position[0]}px`;
-      dom.node.style.top = `${position[1]}px`;
+      const { node: node2 } = this.dom;
+      node2.style.left = `${position[0]}px`;
+      node2.style.top = `${position[1]}px`;
+    }
+    get contentSize() {
+      const { content } = this.dom;
+      return [content.offsetWidth, content.offsetHeight];
+    }
+    get contentPosition() {
+      const { content } = this.dom;
+      return [content.offsetLeft, content.offsetTop];
+    }
+    set contentPosition(position) {
+      const { content } = this.dom;
+      content.style.left = `${position[0]}px`;
+      content.style.top = `${position[1]}px`;
     }
     toJSON() {
       let data = {
@@ -389,9 +405,9 @@
       if (data.shape) {
         this.setShape(MM.Shape.getById(data.shape));
       }
-      (data.children || []).forEach(function(child) {
+      (data.children || []).forEach((child) => {
         this.insertChild(Item.fromJSON(child));
-      }, this);
+      });
       return this;
     }
     mergeWith(data) {
@@ -430,7 +446,7 @@
       if (s != data.shape) {
         this.setShape(MM.Shape.getById(data.shape));
       }
-      (data.children || []).forEach(function(child, index) {
+      (data.children || []).forEach((child, index) => {
         if (index >= this.children.length) {
           this.insertChild(Item.fromJSON(child));
         } else {
@@ -442,7 +458,7 @@
             this.insertChild(Item.fromJSON(child), index);
           }
         }
-      }, this);
+      });
       var newLength = (data.children || []).length;
       while (this.children.length > newLength) {
         this.removeChild(this.children[this.children.length - 1]);
@@ -505,7 +521,7 @@
       }
       this._updateStatus();
       this._updateIcon();
-      this._updateNotesIndicator();
+      this.dom.notes.classList.toggle("notes-indicator-visible", !!this._notes);
       this._updateValue();
       this.dom.node.classList.toggle("collapsed", this._collapsed);
       this.getLayout().update(this);
@@ -517,11 +533,11 @@
     setText(text) {
       this.dom.text.innerHTML = text;
       findLinks(this.dom.text);
-      return this.update();
+      this.update();
     }
     setNotes(notes) {
       this._notes = notes;
-      return this.update();
+      this.update();
     }
     getText() {
       return this.dom.text.innerHTML;
@@ -534,7 +550,7 @@
         return;
       }
       this._collapsed = true;
-      return this.update();
+      this.update();
     }
     expand() {
       if (!this._collapsed) {
@@ -542,14 +558,14 @@
       }
       this._collapsed = false;
       this.update();
-      return this.update({ children: true });
+      this.update({ children: true });
     }
     isCollapsed() {
       return this._collapsed;
     }
     setValue(value) {
       this._value = value;
-      return this.update();
+      this.update();
     }
     getValue() {
       return this._value;
@@ -559,14 +575,14 @@
     }
     setStatus(status) {
       this._status = status;
-      return this.update();
+      this.update();
     }
     getStatus() {
       return this._status;
     }
     setIcon(icon) {
       this._icon = icon;
-      return this.update();
+      this.update();
     }
     getIcon() {
       return this._icon;
@@ -583,7 +599,7 @@
     }
     setColor(color) {
       this._color = color;
-      return this.update({ children: true });
+      this.update({ children: true });
     }
     getColor() {
       return this._color || (this.isRoot() ? COLOR : this.parent.getColor());
@@ -599,7 +615,7 @@
     }
     setLayout(layout) {
       this._layout = layout;
-      return this.update({ children: true });
+      this.update({ children: true });
     }
     getShape() {
       return this._shape;
@@ -619,7 +635,7 @@
         this._shape = this._getAutoShape();
       }
       this._shape.set(this);
-      return this.update();
+      this.update();
     }
     get map() {
       let item = this.parent;
@@ -635,10 +651,8 @@
       return this.parent instanceof MM.Map;
     }
     insertChild(child, index) {
-      var newChild = false;
       if (!child) {
         child = new Item();
-        newChild = true;
       } else if (child.parent && child.parent.removeChild) {
         child.parent.removeChild(child);
       }
@@ -764,9 +778,6 @@
         this.dom.icon.classList.add("fa");
         this.dom.icon.classList.add(icon);
       }
-    }
-    _updateNotesIndicator() {
-      this.dom.notes.classList.toggle("notes-indicator-visible", !!this._notes);
     }
     _updateValue() {
       this.dom.value.hidden = false;
@@ -924,8 +935,7 @@
     return this;
   };
   MM.Map.prototype.show = function(where) {
-    var node2 = this._root.dom.node;
-    where.appendChild(node2);
+    where.appendChild(this._root.dom.node);
     this._visible = true;
     this._root.update({ parent: true, children: true });
     this.center();
@@ -933,8 +943,7 @@
     return this;
   };
   MM.Map.prototype.hide = function() {
-    var node2 = this._root.dom.node;
-    node2.parentNode.removeChild(node2);
+    this._root.dom.node.remove();
     this._visible = false;
     return this;
   };
@@ -2088,16 +2097,16 @@
     node2.style.top = Math.round(t) + "px";
   };
   MM.Layout._getChildAnchor = function(item, side) {
-    let { position, dom } = item;
+    let { position, contentPosition, contentSize } = item;
     if (side == "left" || side == "right") {
-      var pos = position[0] + dom.content.offsetLeft;
+      var pos = position[0] + contentPosition[0];
       if (side == "left") {
-        pos += dom.content.offsetWidth;
+        pos += contentSize[0];
       }
     } else {
-      var pos = position[1] + dom.content.offsetTop;
+      var pos = position[1] + contentPosition[1];
       if (side == "top") {
-        pos += dom.content.offsetHeight;
+        pos += contentSize[1];
       }
     }
     return pos;
@@ -2163,20 +2172,20 @@
     return this;
   };
   MM.Layout.Graph._layoutItem = function(item, rankDirection) {
-    var posProps = ["left", "top"];
     var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
     var childIndex = (rankIndex + 1) % 2;
-    var rankPosProp = posProps[rankIndex];
-    var childPosProp = posProps[childIndex];
-    var dom = item.dom;
-    var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
+    const { contentSize } = item;
     var bbox = this._computeChildrenBBox(item.children, childIndex);
     var rankSize = contentSize[rankIndex];
     if (bbox[rankIndex]) {
       rankSize += bbox[rankIndex] + this.SPACING_RANK;
     }
     var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
-    item.size = rankIndex == 0 ? [rankSize, childSize] : [childSize, rankSize];
+    let size = [rankSize, childSize];
+    if (rankIndex == 1) {
+      size = size.reverse();
+    }
+    item.size = size;
     var offset = [0, 0];
     if (rankDirection == "right") {
       offset[0] = contentSize[0] + this.SPACING_RANK;
@@ -2193,26 +2202,29 @@
     if (rankDirection == "top") {
       labelPos = rankSize - contentSize[1];
     }
-    dom.content.style[childPosProp] = Math.round((childSize - contentSize[childIndex]) / 2) + "px";
-    dom.content.style[rankPosProp] = labelPos + "px";
+    let contentPosition = [Math.round((childSize - contentSize[childIndex]) / 2), labelPos];
+    if (rankIndex == 0) {
+      contentPosition = contentPosition.reverse();
+    }
+    item.contentPosition = contentPosition;
     return this;
   };
   MM.Layout.Graph._layoutChildren = function(children, rankDirection, offset, bbox) {
-    var posProps = ["left", "top"];
     var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
     var childIndex = (rankIndex + 1) % 2;
-    var rankPosProp = posProps[rankIndex];
-    var childPosProp = posProps[childIndex];
     children.forEach((child) => {
-      const { size, dom } = child;
+      const { size } = child;
       if (rankDirection == "left") {
         offset[0] = bbox[0] - size[0];
       }
       if (rankDirection == "top") {
         offset[1] = bbox[1] - size[1];
       }
-      dom.node.style[childPosProp] = offset[childIndex] + "px";
-      dom.node.style[rankPosProp] = offset[rankIndex] + "px";
+      let childPosition = offset.slice();
+      if (rankIndex == 1) {
+        childPosition = childPosition.reverse();
+      }
+      child.position = childPosition;
       offset[childIndex] += size[childIndex] + this.SPACING_CHILD;
     });
     return bbox;
@@ -2227,16 +2239,14 @@
     if (children.length == 0) {
       return;
     }
-    var dom = item.dom;
-    var canvas = dom.canvas;
-    var ctx = canvas.getContext("2d");
+    const { contentPosition, contentSize, ctx } = item;
     ctx.strokeStyle = item.getColor();
     var R = this.SPACING_RANK / 2;
     var y1 = item.getShape().getVerticalAnchor(item);
     if (side == "left") {
-      var x1 = dom.content.offsetLeft - 0.5;
+      var x1 = contentPosition[0] - 0.5;
     } else {
-      var x1 = dom.content.offsetWidth + dom.content.offsetLeft + 0.5;
+      var x1 = contentPosition[0] + contentSize[0] + 0.5;
     }
     this._anchorToggle(item, x1, y1, side);
     if (item.isCollapsed()) {
@@ -2292,21 +2302,19 @@
     if (children.length == 0) {
       return;
     }
-    var dom = item.dom;
-    var canvas = dom.canvas;
-    var ctx = canvas.getContext("2d");
+    const { contentSize, size, ctx } = item;
     ctx.strokeStyle = item.getColor();
     var R = this.SPACING_RANK / 2;
     var x = item.getShape().getHorizontalAnchor(item);
     var height = children.length == 1 ? 2 * R : R;
     if (side == "top") {
-      var y1 = canvas.height - dom.content.offsetHeight;
+      var y1 = size[1] - contentSize[1];
       var y2 = y1 - height;
       this._anchorToggle(item, x, y1, side);
     } else {
       var y1 = item.getShape().getVerticalAnchor(item);
-      var y2 = dom.content.offsetHeight + height;
-      this._anchorToggle(item, x, dom.content.offsetHeight, side);
+      var y2 = contentSize[1] + height;
+      this._anchorToggle(item, x, contentSize[1], side);
     }
     ctx.beginPath();
     ctx.moveTo(x, y1);
@@ -2317,8 +2325,8 @@
     }
     var c1 = children[0];
     var c2 = children[children.length - 1];
-    var offset = dom.content.offsetHeight + height;
-    var y = Math.round(side == "top" ? canvas.height - offset : offset) + 0.5;
+    var offset = contentSize[1] + height;
+    var y = Math.round(side == "top" ? size[1] - offset : offset) + 0.5;
     const p1 = c1.position;
     const p2 = c2.position;
     var x1 = c1.getShape().getHorizontalAnchor(c1) + p1[0];
@@ -2372,8 +2380,7 @@
     return this;
   };
   MM.Layout.Tree._layoutItem = function(item, rankDirection) {
-    var dom = item.dom;
-    var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
+    const { contentSize } = item;
     var bbox = this._computeChildrenBBox(item.children, 1);
     var rankSize = contentSize[0];
     var childSize = bbox[1] + contentSize[1];
@@ -2391,8 +2398,7 @@
     if (rankDirection == "left") {
       labelPos = rankSize - contentSize[0];
     }
-    dom.content.style.left = labelPos + "px";
-    dom.content.style.top = 0;
+    item.contentPosition = [labelPos, 0];
     return this;
   };
   MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox) {
@@ -2408,16 +2414,14 @@
     return bbox;
   };
   MM.Layout.Tree._drawLines = function(item, side) {
-    var dom = item.dom;
-    var canvas = dom.canvas;
+    const { contentSize, size, ctx } = item;
     var R = this.SPACING_RANK / 4;
-    var x = (side == "left" ? canvas.width - 2 * R : 2 * R) + 0.5;
-    this._anchorToggle(item, x, dom.content.offsetHeight, "bottom");
+    var x = (side == "left" ? size[0] - 2 * R : 2 * R) + 0.5;
+    this._anchorToggle(item, x, contentSize[1], "bottom");
     var children = item.children;
     if (children.length == 0 || item.isCollapsed()) {
       return;
     }
-    var ctx = canvas.getContext("2d");
     ctx.strokeStyle = item.getColor();
     var y1 = item.getShape().getVerticalAnchor(item);
     var last = children[children.length - 1];
@@ -2493,10 +2497,10 @@
   };
   MM.Layout.Map._layoutRoot = function(item) {
     this._alignItem(item, "right");
-    var dom = item.dom;
-    var children = item.children;
+    const { children, contentSize } = item;
     var childrenLeft = [];
     var childrenRight = [];
+    let contentPosition = [0, 0];
     children.forEach((child) => {
       var side = this.getChildDirection(child);
       if (side == "left") {
@@ -2507,21 +2511,22 @@
     });
     var bboxLeft = this._computeChildrenBBox(childrenLeft, 1);
     var bboxRight = this._computeChildrenBBox(childrenRight, 1);
-    var height = Math.max(bboxLeft[1], bboxRight[1], dom.content.offsetHeight);
+    var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
     var left = 0;
     this._layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
     left += bboxLeft[0];
     if (childrenLeft.length) {
       left += this.SPACING_RANK;
     }
-    dom.content.style.left = left + "px";
-    left += dom.content.offsetWidth;
+    contentPosition[0] = left;
+    left += contentSize[1];
     if (childrenRight.length) {
       left += this.SPACING_RANK;
     }
     this._layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
     left += bboxRight[0];
-    dom.content.style.top = Math.round((height - dom.content.offsetHeight) / 2) + "px";
+    contentPosition[1] = Math.round((height - contentSize[1]) / 2);
+    item.contentPosition = contentPosition;
     item.size = [left, height];
     this._drawRootConnectors(item, "left", childrenLeft);
     this._drawRootConnectors(item, "right", childrenRight);
@@ -2530,11 +2535,8 @@
     if (children.length == 0 || item.isCollapsed()) {
       return;
     }
-    var dom = item.dom;
-    var canvas = dom.canvas;
-    var ctx = canvas.getContext("2d");
-    var R = this.SPACING_RANK / 2;
-    var x1 = dom.content.offsetLeft + dom.content.offsetWidth / 2;
+    const { contentSize, contentPosition, ctx } = item;
+    var x1 = contentPosition[0] + contentSize[0] / 2;
     var y1 = item.getShape().getVerticalAnchor(item);
     var half = this.LINE_THICKNESS / 2;
     for (var i = 0; i < children.length; i++) {
@@ -2571,12 +2573,12 @@
     return this;
   };
   MM.Shape.getHorizontalAnchor = function(item) {
-    var node2 = item.dom.content;
-    return Math.round(node2.offsetLeft + node2.offsetWidth / 2) + 0.5;
+    const { contentPosition, contentSize } = item;
+    return Math.round(contentPosition[0] + contentSize[0] / 2) + 0.5;
   };
   MM.Shape.getVerticalAnchor = function(item) {
-    var node2 = item.dom.content;
-    return node2.offsetTop + Math.round(node2.offsetHeight * this.VERTICAL_OFFSET) + 0.5;
+    const { contentPosition, contentSize } = item;
+    return contentPosition[1] + Math.round(contentSize[1] * this.VERTICAL_OFFSET) + 0.5;
   };
 
   // .js/shape/shape.underline.js
@@ -2586,11 +2588,10 @@
     VERTICAL_OFFSET: { value: -3 }
   });
   MM.Shape.Underline.update = function(item) {
-    var dom = item.dom;
-    var ctx = dom.canvas.getContext("2d");
+    const { contentPosition, contentSize, ctx } = item;
     ctx.strokeStyle = item.getColor();
-    var left = dom.content.offsetLeft;
-    var right = left + dom.content.offsetWidth;
+    var left = contentPosition[0];
+    var right = left + contentSize[0];
     var top = this.getVerticalAnchor(item);
     ctx.beginPath();
     ctx.moveTo(left, top);
@@ -2598,8 +2599,8 @@
     ctx.stroke();
   };
   MM.Shape.Underline.getVerticalAnchor = function(item) {
-    var node2 = item.dom.content;
-    return node2.offsetTop + node2.offsetHeight + this.VERTICAL_OFFSET + 0.5;
+    const { contentPosition, contentSize } = item;
+    return contentPosition[1] + contentSize[1] + this.VERTICAL_OFFSET + 0.5;
   };
 
   // .js/shape/shape.box.js
@@ -4555,8 +4556,7 @@
     var content = this._item.dom.content;
     this._ghost = content.cloneNode(true);
     this._ghost.classList.add("ghost");
-    this._pos[0] = content.offsetLeft;
-    this._pos[1] = content.offsetTop;
+    this._pos = this._item.contentPosition;
     content.parentNode.appendChild(this._ghost);
   };
   MM.Mouse._moveGhost = function(dx, dy) {
@@ -4600,12 +4600,10 @@
       }
       tmp = tmp.parent;
     }
-    var w1 = this._item.dom.content.offsetWidth;
-    var w2 = target.dom.content.offsetWidth;
-    var w = Math.max(w1, w2);
-    var h1 = this._item.dom.content.offsetHeight;
-    var h2 = target.dom.content.offsetHeight;
-    var h = Math.max(h1, h2);
+    let itemContentSize = this._item.contentSize;
+    let targetContentSize = target.contentSize;
+    var w = Math.max(itemContentSize[0], targetContentSize[0]);
+    var h = Math.max(itemContentSize[1], targetContentSize[1]);
     if (target.isRoot()) {
       state.result = "append";
     } else if (Math.abs(closest.dx) < w && Math.abs(closest.dy) < h) {
@@ -4613,7 +4611,6 @@
     } else {
       state.result = "sibling";
       var childDirection = target.parent.getLayout().getChildDirection(target);
-      var diff = -1 * (childDirection == "top" || childDirection == "bottom" ? closest.dx : closest.dy);
       if (childDirection == "left" || childDirection == "right") {
         state.direction = closest.dy < 0 ? "bottom" : "top";
       } else {
