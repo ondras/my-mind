@@ -1,3 +1,6 @@
+import Item from "./item.js";
+
+
 MM.Map = function(options) {
 	var o = {
 		root: "My Mind Map",
@@ -8,7 +11,10 @@ MM.Map = function(options) {
 	this._visible = false;
 	this._position = [0, 0];
 
-	this._setRoot(new MM.Item().setText(o.root).setLayout(o.layout));
+	let root = new Item();
+	root.setText(o.root);
+	root.setLayout(o.layout);
+	this._setRoot(root);
 }
 
 MM.Map.fromJSON = function(data) {
@@ -23,7 +29,7 @@ MM.Map.prototype.toJSON = function() {
 }
 
 MM.Map.prototype.fromJSON = function(data) {
-	this._setRoot(MM.Item.fromJSON(data.root));
+	this._setRoot(Item.fromJSON(data.root));
 	return this;
 }
 
@@ -33,33 +39,33 @@ MM.Map.prototype.mergeWith = function(data) {
 	var current = MM.App.current;
 	var node = current;
 	while (node != this) {
-		ids.push(node.getId());
-		node = node.getParent();
+		ids.push(node.id);
+		node = node.parent;
 	}
 
 	this._root.mergeWith(data.root);
 
-	if (current.getMap()) { /* selected node still in tree, cool */
+	if (current.map) { /* selected node still in tree, cool */
 		/* if one of the parents got collapsed, act as if the node got removed */
-		var node = current.getParent();
+		var node = current.parent;
 		var hidden = false;
 		while (node != this) {
 			if (node.isCollapsed()) { hidden = true; }
-			node = node.getParent();
+			node = node.parent;
 		}
 		if (!hidden) { return; } /* nothing bad happened, continue */
-	} 
+	}
 
 	/* previously selected node is no longer in the tree OR it is folded */
 
 	/* what if the node was being edited? */
-	if (MM.App.editing) { current.stopEditing(); } 
+	if (MM.App.editing) { current.stopEditing(); }
 
 	/* get all items by their id */
 	var idMap = {};
 	var scan = function(item) {
-		idMap[item.getId()] = item;
-		item.getChildren().forEach(scan);
+		idMap[item.id] = item;
+		item.children.forEach(scan);
 	}
 	scan(this._root);
 
@@ -78,33 +84,33 @@ MM.Map.prototype.isVisible = function() {
 }
 
 MM.Map.prototype.update = function() {
-	this._root.updateSubtree();
+	this._root.update({parent:true, children:true});
 	return this;
 }
 
 MM.Map.prototype.show = function(where) {
-	var node = this._root.getDOM().node;
+	var node = this._root.dom.node;
 	where.appendChild(node);
 	this._visible = true;
-	this._root.updateSubtree();
+	this._root.update({parent:true, children:true});
 	this.center();
 	MM.App.select(this._root);
 	return this;
 }
 
 MM.Map.prototype.hide = function() {
-	var node = this._root.getDOM().node;
+	var node = this._root.dom.node;
 	node.parentNode.removeChild(node);
 	this._visible = false;
 	return this;
 }
 
 MM.Map.prototype.center = function() {
-	var node = this._root.getDOM().node;
+	let { size } = this._root;
 	var port = MM.App.portSize;
-	var left = (port[0] - node.offsetWidth)/2;
-	var top = (port[1] - node.offsetHeight)/2;
-	
+	var left = (port[0] - size[0])/2;
+	var top = (port[1] - size[1])/2;
+
 	this._moveTo(Math.round(left), Math.round(top));
 
 	return this;
@@ -118,7 +124,7 @@ MM.Map.prototype.getClosestItem = function(x, y) {
 	var all = [];
 
 	var scan = function(item) {
-		var rect = item.getDOM().content.getBoundingClientRect();
+		var rect = item.dom.content.getBoundingClientRect();
 		var dx = rect.left + rect.width/2 - x;
 		var dy = rect.top + rect.height/2 - y;
 		all.push({
@@ -126,30 +132,30 @@ MM.Map.prototype.getClosestItem = function(x, y) {
 			dx: dx,
 			dy: dy
 		});
-		if (!item.isCollapsed()) { item.getChildren().forEach(scan); }
+		if (!item.isCollapsed()) { item.children.forEach(scan); }
 	}
-	
+
 	scan(this._root);
-	
+
 	all.sort(function(a, b) {
 		var da = a.dx*a.dx + a.dy*a.dy;
 		var db = b.dx*b.dx + b.dy*b.dy;
 		return da-db;
 	});
-	
+
 	return all[0];
 }
 
 MM.Map.prototype.getItemFor = function(node) {
-	var port = this._root.getDOM().node.parentNode;
+	var port = this._root.dom.node.parentNode;
 	while (node != port && !node.classList.contains("content")) {
 		node = node.parentNode;
-	}	
+	}
 	if (node == port) { return null; }
 
 	var scan = function(item, node) {
-		if (item.getDOM().content == node) { return item; }
-		var children = item.getChildren();
+		if (item.dom.content == node) { return item; }
+		var children = item.children;
 		for (var i=0;i<children.length;i++) {
 			var result = scan(children[i], node);
 			if (result) { return result; }
@@ -163,9 +169,9 @@ MM.Map.prototype.getItemFor = function(node) {
 MM.Map.prototype.ensureItemVisibility = function(item) {
 	var padding = 10;
 
-	var node = item.getDOM().content;
+	var node = item.dom.content;
 	var itemRect = node.getBoundingClientRect();
-	var root = this._root.getDOM().node;
+	var root = this._root.dom.node;
 	var parentRect = root.parentNode.getBoundingClientRect();
 
 	var delta = [0, 0];
@@ -199,12 +205,12 @@ MM.Map.prototype.getName = function() {
 }
 
 MM.Map.prototype.getId = function() {
-	return this._root.getId();
+	return this._root.id;
 }
 
 MM.Map.prototype.pick = function(item, direction) {
 	var candidates = [];
-	var currentRect = item.getDOM().content.getBoundingClientRect();
+	var currentRect = item.dom.content.getBoundingClientRect();
 
 	this._getPickCandidates(currentRect, this._root, direction, candidates);
 	if (!candidates.length) { return item; }
@@ -218,12 +224,12 @@ MM.Map.prototype.pick = function(item, direction) {
 
 MM.Map.prototype._getPickCandidates = function(currentRect, item, direction, candidates) {
 	if (!item.isCollapsed()) {
-		item.getChildren().forEach(function(child) {
+		item.children.forEach(function(child) {
 			this._getPickCandidates(currentRect, child, direction, candidates);
 		}, this);
 	}
 
-	var node = item.getDOM().content;
+	var node = item.dom.content;
 	var rect = node.getBoundingClientRect();
 
 	if (direction == "left" || direction == "right") {
@@ -255,13 +261,10 @@ MM.Map.prototype._getPickCandidates = function(currentRect, item, direction, can
 
 MM.Map.prototype._moveTo = function(left, top) {
 	this._position = [left, top];
-
-	var node = this._root.getDOM().node;
-	node.style.left = left + "px";
-	node.style.top = top + "px";
+	this._root.position = this._position;
 }
 
 MM.Map.prototype._setRoot = function(item) {
 	this._root = item;
-	this._root.setParent(this);
+	this._root.parent = this;
 }

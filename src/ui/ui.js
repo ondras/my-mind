@@ -1,6 +1,9 @@
+import * as pubsub from "../pubsub.js";
+
+
 MM.UI = function() {
 	this._node = document.querySelector(".ui");
-	
+
 	this._toggle = this._node.querySelector("#toggle");
 
 	this._layout = new MM.UI.Layout();
@@ -9,9 +12,9 @@ MM.UI = function() {
 	this._color = new MM.UI.Color();
 	this._value = new MM.UI.Value();
 	this._status = new MM.UI.Status();
-		
-	MM.subscribe("item-select", this);
-	MM.subscribe("item-change", this);
+
+	pubsub.subscribe("item-select", this);
+	pubsub.subscribe("item-change", this);
 
 	this._node.addEventListener("click", this);
 	this._node.addEventListener("change", this);
@@ -40,7 +43,7 @@ MM.UI.prototype.handleEvent = function(e) {
 				this.toggle();
 				return;
 			}
-			
+
 			var node = e.target;
 			while (node != document) {
 				var command = node.getAttribute("data-command");
@@ -60,7 +63,7 @@ MM.UI.prototype.handleEvent = function(e) {
 
 MM.UI.prototype.toggle = function() {
 	this._node.classList.toggle("visible");
-	MM.publish("ui-change", this);
+	pubsub.publish("ui-change", this);
 }
 
 

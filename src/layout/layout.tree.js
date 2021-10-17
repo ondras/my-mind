@@ -20,12 +20,11 @@ MM.Layout.Tree.create = function(direction, id, label) {
 MM.Layout.Tree.update = function(item) {
 	var side = this.childDirection;
 	if (!item.isRoot()) {
-		side = item.getParent().getLayout().getChildDirection(item);
+		side = item.parent.getLayout().getChildDirection(item);
 	}
 	this._alignItem(item, side);
 
 	this._layoutItem(item, this.childDirection);
-	this._anchorCanvas(item);
 	this._drawLines(item, this.childDirection);
 	return this;
 }
@@ -34,27 +33,26 @@ MM.Layout.Tree.update = function(item) {
  * Generic graph child layout routine. Updates item's orthogonal size according to the sum of its children.
  */
 MM.Layout.Tree._layoutItem = function(item, rankDirection) {
-	var dom = item.getDOM();
+	var dom = item.dom;
 
 	/* content size */
 	var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
 
 	/* children size */
-	var bbox = this._computeChildrenBBox(item.getChildren(), 1);
+	var bbox = this._computeChildrenBBox(item.children, 1);
 
 	/* node size */
 	var rankSize = contentSize[0];
 	var childSize = bbox[1] + contentSize[1];
-	if (bbox[0]) { 
-		rankSize = Math.max(rankSize, bbox[0] + this.SPACING_RANK); 
+	if (bbox[0]) {
+		rankSize = Math.max(rankSize, bbox[0] + this.SPACING_RANK);
 		childSize += this.SPACING_CHILD;
 	}
-	dom.node.style.width = rankSize + "px";
-	dom.node.style.height = childSize + "px";
+	item.size = [rankSize, childSize];
 
 	var offset = [this.SPACING_RANK, contentSize[1]+this.SPACING_CHILD];
 	if (rankDirection == "left") { offset[0] = rankSize - bbox[0] - this.SPACING_RANK; }
-	this._layoutChildren(item.getChildren(), rankDirection, offset, bbox);
+	this._layoutChildren(item.children, rankDirection, offset, bbox);
 
 	/* label position */
 	var labelPos = 0;
@@ -66,30 +64,30 @@ MM.Layout.Tree._layoutItem = function(item, rankDirection) {
 }
 
 MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox) {
-	children.forEach(function(child, index) {
-		var node = child.getDOM().node;
-		var childSize = [node.offsetWidth, node.offsetHeight];
+	children.forEach(child => {
+		const { size } = child;
+
 		var left = offset[0];
-		if (rankDirection == "left") { left += (bbox[0] - childSize[0]); }
+		if (rankDirection == "left") { left += (bbox[0] - size[0]); }
 
-		node.style.left = left + "px";
-		node.style.top = offset[1] + "px";
+		child.position = [left, offset[1]];
 
-		offset[1] += childSize[1] + this.SPACING_CHILD; /* offset for next child */
-	}, this);
+		offset[1] += size[1] + this.SPACING_CHILD; /* offset for next child */
+	});
 
 	return bbox;
 }
 
 MM.Layout.Tree._drawLines = function(item, side) {
-	var dom = item.getDOM();
+	var dom = item.dom;
 	var canvas = dom.canvas;
 
 	var R = this.SPACING_RANK/4;
+	// FIXME canvas.width nahradit za item.size[0] ?
 	var x = (side == "left" ? canvas.width - 2*R : 2*R) + 0.5;
 	this._anchorToggle(item, x, dom.content.offsetHeight, "bottom");
 
-	var children = item.getChildren();
+	var children = item.children;
 	if (children.length == 0 || item.isCollapsed()) { return; }
 
 	var ctx = canvas.getContext("2d");
@@ -97,7 +95,7 @@ MM.Layout.Tree._drawLines = function(item, side) {
 
 	var y1 = item.getShape().getVerticalAnchor(item);
 	var last = children[children.length-1];
-	var y2 = last.getShape().getVerticalAnchor(last) + last.getDOM().node.offsetTop;
+	var y2 = last.getShape().getVerticalAnchor(last) + last.position[1];
 
 	ctx.beginPath();
 	ctx.moveTo(x, y1);
@@ -106,7 +104,7 @@ MM.Layout.Tree._drawLines = function(item, side) {
 	/* rounded connectors */
 	for (var i=0; i<children.length; i++) {
 		var c = children[i];
-		var y = c.getShape().getVerticalAnchor(c) + c.getDOM().node.offsetTop;
+		var y = c.getShape().getVerticalAnchor(c) + c.position[1];
 		var anchor = this._getChildAnchor(c, side);
 
 		ctx.moveTo(x, y - R);

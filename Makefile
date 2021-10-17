@@ -1,5 +1,4 @@
-MAKEOPTS = "-r"
-
+MAKEOPTS := "-r"
 BIN := $(shell npm bin)
 TSC := $(BIN)/tsc
 LESSC := $(BIN)/lessc
@@ -16,10 +15,13 @@ $(APP): $(FLAG)
 	$(ESBUILD) --bundle $(JS)/$(APP) > $@
 
 $(FLAG): $(shell find src -type f)
-	$(TSC)
+	$(TSC) -p src
 	touch $@
+
+watch: all
+	while inotifywait -e MODIFY -r src ; do $(MAKE) $^ ; done
 
 clean:
 	rm -rf $(JS) $(APP)
 
-.PHONY: all clean
+.PHONY: all clean watch

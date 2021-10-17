@@ -1,3 +1,6 @@
+import * as pubsub from "../../pubsub.js";
+
+
 MM.UI.Backend = Object.create(MM.Repo);
 
 MM.UI.Backend.init = function(select) {
@@ -6,13 +9,13 @@ MM.UI.Backend.init = function(select) {
 	this._prefix = "mm.app." + this.id + ".";
 
 	this._node = document.querySelector("#" + this.id);
-	
+
 	this._cancel = this._node.querySelector(".cancel");
 	this._cancel.addEventListener("click", this);
 
 	this._go = this._node.querySelector(".go");
 	this._go.addEventListener("click", this);
-	
+
 	select.appendChild(this._backend.buildOption());
 }
 
@@ -50,11 +53,8 @@ MM.UI.Backend.show = function(mode) {
 
 	this._go.innerHTML = mode.charAt(0).toUpperCase() + mode.substring(1);
 
-	var all = this._node.querySelectorAll("[data-for]");
-	[].concat.apply([], all).forEach(function(node) { node.style.display = "none"; });
-
-	var visible = this._node.querySelectorAll("[data-for~=" + mode + "]");
-	[].concat.apply([], visible).forEach(function(node) { node.style.display = ""; });
+	[...this._node.querySelectorAll("[data-for]")].forEach(node => node.hidden = true);
+	[...this._node.querySelectorAll(`[data-for~=${mode}]`)].forEach(node => node.hidden = false);
 
 	/* switch to 2a: steal focus from the current item */
 	this._go.focus();
@@ -65,7 +65,7 @@ MM.UI.Backend._action = function() {
 		case "save":
 			this.save();
 		break;
-		
+
 		case "load":
 			this.load();
 		break;
@@ -74,15 +74,15 @@ MM.UI.Backend._action = function() {
 
 MM.UI.Backend._saveDone = function() {
 	MM.App.setThrobber(false);
-	MM.publish("save-done", this);
+	pubsub.publish("save-done", this);
 }
 
 MM.UI.Backend._loadDone = function(json) {
 	MM.App.setThrobber(false);
 	try {
 		MM.App.setMap(MM.Map.fromJSON(json));
-		MM.publish("load-done", this);
-	} catch (e) { 
+		pubsub.publish("load-done", this);
+	} catch (e) {
 		this._error(e);
 	}
 }
@@ -94,15 +94,15 @@ MM.UI.Backend._error = function(e) {
 
 MM.UI.Backend._buildList = function(list, select) {
 	var data = [];
-	
+
 	for (var id in list) {
 		data.push({id:id, name:list[id]});
 	}
-	
+
 	data.sort(function(a, b) {
 		return a.name.localeCompare(b.name);
 	});
-	
+
 	data.forEach(function(item) {
 		var o = document.createElement("option");
 		o.value = item.id;

@@ -5,7 +5,7 @@ MM.Shape.Underline = Object.create(MM.Shape, {
 });
 
 MM.Shape.Underline.update = function(item) {
-	var dom = item.getDOM();
+	var dom = item.dom;
 
 	var ctx = dom.canvas.getContext("2d");
 	ctx.strokeStyle = item.getColor();
@@ -22,6 +22,6 @@ MM.Shape.Underline.update = function(item) {
 }
 
 MM.Shape.Underline.getVerticalAnchor = function(item) {
-	var node = item.getDOM().content;
+	var node = item.dom.content;
 	return node.offsetTop + node.offsetHeight + this.VERTICAL_OFFSET + 0.5;
 }

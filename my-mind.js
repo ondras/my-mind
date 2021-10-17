@@ -1,49 +1,6 @@
 (() => {
   // .js/mm.js
-  if (!Function.prototype.bind) {
-    Function.prototype.bind = function(thisObj) {
-      var fn = this;
-      var args = Array.prototype.slice.call(arguments, 1);
-      return function() {
-        return fn.apply(thisObj, args.concat(Array.prototype.slice.call(arguments)));
-      };
-    };
-  }
-  window.MM = {
-    _subscribers: {},
-    publish: function(message, publisher, data) {
-      var subscribers = this._subscribers[message] || [];
-      subscribers.forEach(function(subscriber) {
-        subscriber.handleMessage(message, publisher, data);
-      });
-    },
-    subscribe: function(message, subscriber) {
-      if (!(message in this._subscribers)) {
-        this._subscribers[message] = [];
-      }
-      var index = this._subscribers[message].indexOf(subscriber);
-      if (index == -1) {
-        this._subscribers[message].push(subscriber);
-      }
-    },
-    unsubscribe: function(message, subscriber) {
-      var index = this._subscribers[message].indexOf(subscriber);
-      if (index > -1) {
-        this._subscribers[message].splice(index, 1);
-      }
-    },
-    generateId: function() {
-      var str = "";
-      for (var i = 0; i < 8; i++) {
-        var code = Math.floor(Math.random() * 26);
-        str += String.fromCharCode("a".charCodeAt(0) + code);
-      }
-      return str;
-    },
-    isMac: function() {
-      return !!navigator.platform.match(/mac/i);
-    }
-  };
+  window.MM = {};
 
   // .js/promise.js
   window.Promise = function(executor) {
@@ -219,7 +176,7 @@
       return all;
     },
     getByProperty: function(property, value) {
-      return this.getAll().filter(function(item) {
+      return this.getAll().filter((item) => {
         return item[property] == value;
       })[0] || null;
     },
@@ -234,577 +191,621 @@
     }
   };
 
+  // .js/html.js
+  function node(name, attrs) {
+    let node2 = document.createElement(name);
+    Object.assign(node2, attrs);
+    return node2;
+  }
+
+  // .js/pubsub.js
+  var subscribers = new Map();
+  function publish(message, publisher, data) {
+    let subs = subscribers.get(message) || [];
+    subs.forEach(function(subscriber) {
+      subscriber.handleMessage(message, publisher, data);
+    });
+  }
+  function subscribe(message, subscriber) {
+    if (!subscribers.has(message)) {
+      subscribers.set(message, []);
+    }
+    let subs = subscribers.get(message) || [];
+    let index = subs.indexOf(subscriber);
+    if (index == -1) {
+      subs.push(subscriber);
+    }
+  }
+  function unsubscribe(message, subscriber) {
+    let subs = subscribers.get(message) || [];
+    let index = subs.indexOf(subscriber);
+    if (index > -1) {
+      subs.splice(index, 1);
+    }
+  }
+
   // .js/item.js
-  MM.Item = function() {
-    this._parent = null;
-    this._children = [];
-    this._collapsed = false;
-    this._layout = null;
-    this._shape = null;
-    this._autoShape = true;
-    this._color = null;
-    this._value = null;
-    this._status = null;
-    this._side = null;
-    this._icon = null;
-    this._notes = null;
-    this._id = MM.generateId();
-    this._oldText = "";
-    this._computed = {
-      value: 0,
-      status: null
-    };
-    this._dom = {
-      node: document.createElement("li"),
-      content: document.createElement("div"),
-      notes: document.createElement("div"),
-      status: document.createElement("span"),
-      icon: document.createElement("span"),
-      value: document.createElement("span"),
-      text: document.createElement("div"),
-      children: document.createElement("ul"),
-      toggle: document.createElement("div"),
-      canvas: document.createElement("canvas")
-    };
-    this._dom.node.classList.add("item");
-    this._dom.content.classList.add("content");
-    this._dom.notes.classList.add("notes-indicator");
-    this._dom.status.classList.add("status");
-    this._dom.icon.classList.add("icon");
-    this._dom.value.classList.add("value");
-    this._dom.text.classList.add("text");
-    this._dom.toggle.classList.add("toggle");
-    this._dom.children.classList.add("children");
-    this._dom.content.appendChild(this._dom.text);
-    this._dom.node.appendChild(this._dom.canvas);
-    this._dom.node.appendChild(this._dom.content);
-    this._dom.content.appendChild(this._dom.notes);
-    this._dom.toggle.addEventListener("click", this);
+  var COLOR = "#999";
+  var RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
+  var UPDATE_OPTIONS = {
+    parent: true,
+    children: false
   };
-  MM.Item.COLOR = "#999";
-  MM.Item.RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
-  MM.Item.fromJSON = function(data) {
-    return new this().fromJSON(data);
-  };
-  MM.Item.prototype.toJSON = function() {
-    var data = {
-      id: this._id,
-      text: this.getText(),
-      notes: this.getNotes()
-    };
-    if (this._side) {
-      data.side = this._side;
+  var Item = class {
+    constructor() {
+      this._id = generateId();
+      this._parent = null;
+      this._collapsed = false;
+      this.dom = {
+        node: node("li"),
+        content: node("div"),
+        notes: node("div"),
+        status: node("span"),
+        icon: node("span"),
+        value: node("span"),
+        text: node("div"),
+        children: node("ul"),
+        toggle: node("div"),
+        canvas: node("canvas")
+      };
+      this.children = [];
+      this._layout = null;
+      this._shape = null;
+      this._autoShape = true;
+      this._color = null;
+      this._value = null;
+      this._status = null;
+      this._side = null;
+      this._icon = null;
+      this._notes = null;
+      this._oldText = "";
+      this._computed = {
+        value: 0,
+        status: null
+      };
+      const { dom } = this;
+      dom.node.classList.add("item");
+      dom.content.classList.add("content");
+      dom.notes.classList.add("notes-indicator");
+      dom.status.classList.add("status");
+      dom.icon.classList.add("icon");
+      dom.value.classList.add("value");
+      dom.text.classList.add("text");
+      dom.toggle.classList.add("toggle");
+      dom.children.classList.add("children");
+      dom.node.append(dom.canvas, dom.content);
+      dom.content.append(dom.text, dom.notes);
+      dom.toggle.addEventListener("click", this);
     }
-    if (this._color) {
-      data.color = this._color;
+    static fromJSON(data) {
+      return new this().fromJSON(data);
     }
-    if (this._icon) {
-      data.icon = this._icon;
+    get id() {
+      return this._id;
     }
-    if (this._value) {
-      data.value = this._value;
+    get parent() {
+      return this._parent;
     }
-    if (this._status) {
-      data.status = this._status;
+    set parent(parent) {
+      this._parent = parent;
+      this.update({ children: true });
     }
-    if (this._layout) {
-      data.layout = this._layout.id;
+    get metrics() {
+      const { dom } = this, { node: node2 } = dom;
+      return {
+        left: node2.offsetLeft,
+        top: node2.offsetTop,
+        width: node2.offsetWidth,
+        height: node2.offsetHeight
+      };
     }
-    if (!this._autoShape) {
-      data.shape = this._shape.id;
+    get size() {
+      const { dom } = this;
+      return [dom.node.offsetWidth, dom.node.offsetHeight];
     }
-    if (this._collapsed) {
-      data.collapsed = 1;
+    set size(size) {
+      const { dom } = this;
+      dom.node.style.width = `${size[0]}px`;
+      dom.node.style.height = `${size[1]}px`;
+      dom.canvas.width = size[0];
+      dom.canvas.height = size[1];
     }
-    if (this._children.length) {
-      data.children = this._children.map(function(child) {
-        return child.toJSON();
-      });
+    get position() {
+      const { dom } = this;
+      return [dom.node.offsetLeft, dom.node.offsetTop];
     }
-    return data;
-  };
-  MM.Item.prototype.fromJSON = function(data) {
-    this.setText(data.text);
-    if (data.notes) {
-      this.setNotes(data.notes);
+    set position(position) {
+      const { dom } = this;
+      dom.node.style.left = `${position[0]}px`;
+      dom.node.style.top = `${position[1]}px`;
     }
-    if (data.id) {
-      this._id = data.id;
-    }
-    if (data.side) {
-      this._side = data.side;
-    }
-    if (data.color) {
-      this._color = data.color;
-    }
-    if (data.icon) {
-      this._icon = data.icon;
-    }
-    if (data.value) {
-      this._value = data.value;
-    }
-    if (data.status) {
-      this._status = data.status;
-      if (this._status == "maybe") {
-        this._status = "computed";
+    toJSON() {
+      let data = {
+        id: this.id,
+        text: this.getText(),
+        notes: this.getNotes()
+      };
+      if (this._side) {
+        data.side = this._side;
       }
+      if (this._color) {
+        data.color = this._color;
+      }
+      if (this._icon) {
+        data.icon = this._icon;
+      }
+      if (this._value) {
+        data.value = this._value;
+      }
+      if (this._status) {
+        data.status = this._status;
+      }
+      if (this._layout) {
+        data.layout = this._layout.id;
+      }
+      if (!this._autoShape) {
+        data.shape = this._shape.id;
+      }
+      if (this._collapsed) {
+        data.collapsed = 1;
+      }
+      if (this.children.length) {
+        data.children = this.children.map((child) => child.toJSON());
+      }
+      return data;
     }
-    if (data.collapsed) {
-      this.collapse();
-    }
-    if (data.layout) {
-      this._layout = MM.Layout.getById(data.layout);
-    }
-    if (data.shape) {
-      this.setShape(MM.Shape.getById(data.shape));
-    }
-    (data.children || []).forEach(function(child) {
-      this.insertChild(MM.Item.fromJSON(child));
-    }, this);
-    return this;
-  };
-  MM.Item.prototype.mergeWith = function(data) {
-    var dirty = 0;
-    if (this.getText() != data.text && !this._dom.text.contentEditable) {
+    fromJSON(data) {
       this.setText(data.text);
-    }
-    if (this._side != data.side) {
-      this._side = data.side;
-      dirty = 1;
-    }
-    if (this._color != data.color) {
-      this._color = data.color;
-      dirty = 2;
-    }
-    if (this._icon != data.icon) {
-      this._icon = data.icon;
-      dirty = 1;
-    }
-    if (this._value != data.value) {
-      this._value = data.value;
-      dirty = 1;
-    }
-    if (this._status != data.status) {
-      this._status = data.status;
-      dirty = 1;
-    }
-    if (this._collapsed != !!data.collapsed) {
-      this[this._collapsed ? "expand" : "collapse"]();
-    }
-    if (this.getOwnLayout() != data.layout) {
-      this._layout = MM.Layout.getById(data.layout);
-      dirty = 2;
-    }
-    var s = this._autoShape ? null : this._shape.id;
-    if (s != data.shape) {
-      this.setShape(MM.Shape.getById(data.shape));
-    }
-    (data.children || []).forEach(function(child, index) {
-      if (index >= this._children.length) {
-        this.insertChild(MM.Item.fromJSON(child));
-      } else {
-        var myChild = this._children[index];
-        if (myChild.getId() == child.id) {
-          myChild.mergeWith(child);
-        } else {
-          this.removeChild(this._children[index]);
-          this.insertChild(MM.Item.fromJSON(child), index);
+      if (data.notes) {
+        this.setNotes(data.notes);
+      }
+      if (data.id) {
+        this._id = data.id;
+      }
+      if (data.side) {
+        this._side = data.side;
+      }
+      if (data.color) {
+        this._color = data.color;
+      }
+      if (data.icon) {
+        this._icon = data.icon;
+      }
+      if (data.value) {
+        this._value = data.value;
+      }
+      if (data.status) {
+        this._status = data.status;
+        if (this._status == "maybe") {
+          this._status = "computed";
         }
       }
-    }, this);
-    var newLength = (data.children || []).length;
-    while (this._children.length > newLength) {
-      this.removeChild(this._children[this._children.length - 1]);
-    }
-    if (dirty == 1) {
-      this.update();
-    }
-    if (dirty == 2) {
-      this.updateSubtree();
-    }
-  };
-  MM.Item.prototype.clone = function() {
-    var data = this.toJSON();
-    var removeId = function(obj) {
-      delete obj.id;
-      obj.children && obj.children.forEach(removeId);
-    };
-    removeId(data);
-    return this.constructor.fromJSON(data);
-  };
-  MM.Item.prototype.select = function() {
-    this._dom.node.classList.add("current");
-    if (window.editor) {
-      if (this._notes) {
-        window.editor.setContent(this._notes);
-      } else {
-        window.editor.setContent("");
+      if (data.collapsed) {
+        this.collapse();
       }
-    }
-    this.getMap().ensureItemVisibility(this);
-    MM.Clipboard.focus();
-    MM.publish("item-select", this);
-  };
-  MM.Item.prototype.deselect = function() {
-    if (MM.App.editing) {
-      MM.Command.Finish.execute();
-    }
-    this._dom.node.classList.remove("current");
-  };
-  MM.Item.prototype.update = function(doNotRecurse) {
-    var map = this.getMap();
-    if (!map || !map.isVisible()) {
+      if (data.layout) {
+        this._layout = MM.Layout.getById(data.layout);
+      }
+      if (data.shape) {
+        this.setShape(MM.Shape.getById(data.shape));
+      }
+      (data.children || []).forEach(function(child) {
+        this.insertChild(Item.fromJSON(child));
+      }, this);
       return this;
     }
-    MM.publish("item-change", this);
-    if (this._autoShape) {
-      var autoShape = this._getAutoShape();
-      if (autoShape != this._shape) {
-        if (this._shape) {
-          this._shape.unset(this);
-        }
-        this._shape = autoShape;
-        this._shape.set(this);
+    mergeWith(data) {
+      var dirty = 0;
+      if (this.getText() != data.text && !this.dom.text.contentEditable) {
+        this.setText(data.text);
       }
-    }
-    this._updateStatus();
-    this._updateIcon();
-    this._updateNotesIndicator();
-    this._updateValue();
-    this._dom.node.classList[this._collapsed ? "add" : "remove"]("collapsed");
-    this.getLayout().update(this);
-    this.getShape().update(this);
-    if (!this.isRoot() && !doNotRecurse) {
-      this._parent.update();
-    }
-    return this;
-  };
-  MM.Item.prototype.updateSubtree = function(isSubChild) {
-    this._children.forEach(function(child) {
-      child.updateSubtree(true);
-    });
-    return this.update(isSubChild);
-  };
-  MM.Item.prototype.setText = function(text) {
-    this._dom.text.innerHTML = text;
-    this._findLinks(this._dom.text);
-    return this.update();
-  };
-  MM.Item.prototype.setNotes = function(notes) {
-    this._notes = notes;
-    return this.update();
-  };
-  MM.Item.prototype.getId = function() {
-    return this._id;
-  };
-  MM.Item.prototype.getText = function() {
-    return this._dom.text.innerHTML;
-  };
-  MM.Item.prototype.getNotes = function() {
-    return this._notes;
-  };
-  MM.Item.prototype.collapse = function() {
-    if (this._collapsed) {
-      return;
-    }
-    this._collapsed = true;
-    return this.update();
-  };
-  MM.Item.prototype.expand = function() {
-    if (!this._collapsed) {
-      return;
-    }
-    this._collapsed = false;
-    this.update();
-    return this.updateSubtree();
-  };
-  MM.Item.prototype.isCollapsed = function() {
-    return this._collapsed;
-  };
-  MM.Item.prototype.setValue = function(value) {
-    this._value = value;
-    return this.update();
-  };
-  MM.Item.prototype.getValue = function() {
-    return this._value;
-  };
-  MM.Item.prototype.getComputedValue = function() {
-    return this._computed.value;
-  };
-  MM.Item.prototype.setStatus = function(status) {
-    this._status = status;
-    return this.update();
-  };
-  MM.Item.prototype.getStatus = function() {
-    return this._status;
-  };
-  MM.Item.prototype.setIcon = function(icon) {
-    this._icon = icon;
-    return this.update();
-  };
-  MM.Item.prototype.getIcon = function() {
-    return this._icon;
-  };
-  MM.Item.prototype.getComputedStatus = function() {
-    return this._computed.status;
-  };
-  MM.Item.prototype.setSide = function(side) {
-    this._side = side;
-    return this;
-  };
-  MM.Item.prototype.getSide = function() {
-    return this._side;
-  };
-  MM.Item.prototype.getChildren = function() {
-    return this._children;
-  };
-  MM.Item.prototype.setColor = function(color) {
-    this._color = color;
-    return this.updateSubtree();
-  };
-  MM.Item.prototype.getColor = function() {
-    return this._color || (this.isRoot() ? MM.Item.COLOR : this._parent.getColor());
-  };
-  MM.Item.prototype.getOwnColor = function() {
-    return this._color;
-  };
-  MM.Item.prototype.getLayout = function() {
-    return this._layout || this._parent.getLayout();
-  };
-  MM.Item.prototype.getOwnLayout = function() {
-    return this._layout;
-  };
-  MM.Item.prototype.setLayout = function(layout) {
-    this._layout = layout;
-    return this.updateSubtree();
-  };
-  MM.Item.prototype.getShape = function() {
-    return this._shape;
-  };
-  MM.Item.prototype.getOwnShape = function() {
-    return this._autoShape ? null : this._shape;
-  };
-  MM.Item.prototype.setShape = function(shape) {
-    if (this._shape) {
-      this._shape.unset(this);
-    }
-    if (shape) {
-      this._autoShape = false;
-      this._shape = shape;
-    } else {
-      this._autoShape = true;
-      this._shape = this._getAutoShape();
-    }
-    this._shape.set(this);
-    return this.update();
-  };
-  MM.Item.prototype.getDOM = function() {
-    return this._dom;
-  };
-  MM.Item.prototype.getMap = function() {
-    var item = this._parent;
-    while (item) {
-      if (item instanceof MM.Map) {
-        return item;
+      if (this._side != data.side) {
+        this._side = data.side;
+        dirty = 1;
       }
-      item = item.getParent();
-    }
-    return null;
-  };
-  MM.Item.prototype.getParent = function() {
-    return this._parent;
-  };
-  MM.Item.prototype.isRoot = function() {
-    return this._parent instanceof MM.Map;
-  };
-  MM.Item.prototype.setParent = function(parent) {
-    this._parent = parent;
-    return this.updateSubtree();
-  };
-  MM.Item.prototype.insertChild = function(child, index) {
-    var newChild = false;
-    if (!child) {
-      child = new MM.Item();
-      newChild = true;
-    } else if (child.getParent() && child.getParent().removeChild) {
-      child.getParent().removeChild(child);
-    }
-    if (!this._children.length) {
-      this._dom.node.appendChild(this._dom.toggle);
-      this._dom.node.appendChild(this._dom.children);
-    }
-    if (arguments.length < 2) {
-      index = this._children.length;
-    }
-    var next = null;
-    if (index < this._children.length) {
-      next = this._children[index].getDOM().node;
-    }
-    this._dom.children.insertBefore(child.getDOM().node, next);
-    this._children.splice(index, 0, child);
-    return child.setParent(this);
-  };
-  MM.Item.prototype.removeChild = function(child) {
-    var index = this._children.indexOf(child);
-    this._children.splice(index, 1);
-    var node = child.getDOM().node;
-    node.parentNode.removeChild(node);
-    child.setParent(null);
-    if (!this._children.length) {
-      this._dom.toggle.parentNode.removeChild(this._dom.toggle);
-      this._dom.children.parentNode.removeChild(this._dom.children);
-    }
-    return this.update();
-  };
-  MM.Item.prototype.startEditing = function() {
-    this._oldText = this.getText();
-    this._dom.text.contentEditable = true;
-    this._dom.text.focus();
-    document.execCommand("styleWithCSS", null, false);
-    this._dom.text.addEventListener("input", this);
-    this._dom.text.addEventListener("keydown", this);
-    this._dom.text.addEventListener("blur", this);
-    return this;
-  };
-  MM.Item.prototype.stopEditing = function() {
-    this._dom.text.removeEventListener("input", this);
-    this._dom.text.removeEventListener("keydown", this);
-    this._dom.text.removeEventListener("blur", this);
-    this._dom.text.blur();
-    this._dom.text.contentEditable = false;
-    var result = this._dom.text.innerHTML;
-    this._dom.text.innerHTML = this._oldText;
-    this._oldText = "";
-    this.update();
-    MM.Clipboard.focus();
-    return result;
-  };
-  MM.Item.prototype.handleEvent = function(e) {
-    switch (e.type) {
-      case "input":
-        this.update();
-        this.getMap().ensureItemVisibility(this);
-        break;
-      case "keydown":
-        if (e.keyCode == 9) {
-          e.preventDefault();
-        }
-        break;
-      case "blur":
-        MM.Command.Finish.execute();
-        break;
-      case "click":
-        if (this._collapsed) {
-          this.expand();
+      if (this._color != data.color) {
+        this._color = data.color;
+        dirty = 2;
+      }
+      if (this._icon != data.icon) {
+        this._icon = data.icon;
+        dirty = 1;
+      }
+      if (this._value != data.value) {
+        this._value = data.value;
+        dirty = 1;
+      }
+      if (this._status != data.status) {
+        this._status = data.status;
+        dirty = 1;
+      }
+      if (this._collapsed != !!data.collapsed) {
+        this[this._collapsed ? "expand" : "collapse"]();
+      }
+      if (this.getOwnLayout() != data.layout) {
+        this._layout = MM.Layout.getById(data.layout);
+        dirty = 2;
+      }
+      var s = this._autoShape ? null : this._shape.id;
+      if (s != data.shape) {
+        this.setShape(MM.Shape.getById(data.shape));
+      }
+      (data.children || []).forEach(function(child, index) {
+        if (index >= this.children.length) {
+          this.insertChild(Item.fromJSON(child));
         } else {
-          this.collapse();
+          var myChild = this.children[index];
+          if (myChild.id == child.id) {
+            myChild.mergeWith(child);
+          } else {
+            this.removeChild(this.children[index]);
+            this.insertChild(Item.fromJSON(child), index);
+          }
         }
-        MM.App.select(this);
-        break;
+      }, this);
+      var newLength = (data.children || []).length;
+      while (this.children.length > newLength) {
+        this.removeChild(this.children[this.children.length - 1]);
+      }
+      if (dirty == 1) {
+        this.update({ children: false });
+      }
+      if (dirty == 2) {
+        this.update({ children: true });
+      }
     }
-  };
-  MM.Item.prototype._getAutoShape = function() {
-    var depth = 0;
-    var node = this;
-    while (!node.isRoot()) {
-      depth++;
-      node = node.getParent();
+    clone() {
+      var data = this.toJSON();
+      var removeId = function(obj) {
+        delete obj.id;
+        obj.children && obj.children.forEach(removeId);
+      };
+      removeId(data);
+      return Item.fromJSON(data);
     }
-    switch (depth) {
-      case 0:
-        return MM.Shape.Ellipse;
-      case 1:
-        return MM.Shape.Box;
-      default:
-        return MM.Shape.Underline;
+    select() {
+      this.dom.node.classList.add("current");
+      if (window.editor) {
+        if (this._notes) {
+          window.editor.setContent(this._notes);
+        } else {
+          window.editor.setContent("");
+        }
+      }
+      this.map.ensureItemVisibility(this);
+      MM.Clipboard.focus();
+      publish("item-select", this);
     }
-  };
-  MM.Item.prototype._updateStatus = function() {
-    this._dom.status.className = "status";
-    this._dom.status.style.display = "";
-    var status = this._status;
-    if (this._status == "computed") {
-      var childrenStatus = this._children.every(function(child) {
-        return child.getComputedStatus() !== false;
-      });
-      status = childrenStatus ? "yes" : "no";
+    deselect() {
+      if (MM.App.editing) {
+        MM.Command.Finish.execute();
+      }
+      this.dom.node.classList.remove("current");
     }
-    switch (status) {
-      case "yes":
-        this._dom.status.classList.add("yes");
-        this._computed.status = true;
-        break;
-      case "no":
-        this._dom.status.classList.add("no");
-        this._computed.status = false;
-        break;
-      default:
-        this._computed.status = null;
-        this._dom.status.style.display = "none";
-        break;
-    }
-  };
-  MM.Item.prototype._updateIcon = function() {
-    this._dom.icon.className = "icon";
-    this._dom.icon.style.display = "";
-    var icon = this._icon;
-    if (icon) {
-      this._dom.icon.classList.add("fa");
-      this._dom.icon.classList.add(icon);
-      this._computed.icon = true;
-    } else {
-      this._computed.icon = null;
-      this._dom.icon.style.display = "none";
-    }
-  };
-  MM.Item.prototype._updateNotesIndicator = function() {
-    if (this._notes) {
-      this._dom.notes.classList.add("notes-indicator-visible");
-    } else {
-      this._dom.notes.classList.remove("notes-indicator-visible");
-    }
-  };
-  MM.Item.prototype._updateValue = function() {
-    this._dom.value.style.display = "";
-    if (typeof this._value == "number") {
-      this._computed.value = this._value;
-      this._dom.value.innerHTML = this._value;
-      return;
-    }
-    var childValues = this._children.map(function(child) {
-      return child.getComputedValue();
-    });
-    var result = 0;
-    switch (this._value) {
-      case "sum":
-        result = childValues.reduce(function(prev, cur) {
-          return prev + cur;
-        }, 0);
-        break;
-      case "avg":
-        var sum = childValues.reduce(function(prev, cur) {
-          return prev + cur;
-        }, 0);
-        result = childValues.length ? sum / childValues.length : 0;
-        break;
-      case "max":
-        result = Math.max.apply(Math, childValues);
-        break;
-      case "min":
-        result = Math.min.apply(Math, childValues);
-        break;
-      default:
-        this._computed.value = 0;
-        this._dom.value.innerHTML = "";
-        this._dom.value.style.display = "none";
+    update(options = {}) {
+      options = Object.assign({}, UPDATE_OPTIONS, options);
+      var map = this.map;
+      if (!map || !map.isVisible()) {
         return;
-        break;
+      }
+      if (options.children) {
+        let childUpdateOptions = { parent: false, children: true };
+        this.children.forEach((child) => child.update(childUpdateOptions));
+      }
+      publish("item-change", this);
+      if (this._autoShape) {
+        var autoShape = this._getAutoShape();
+        if (autoShape != this._shape) {
+          if (this._shape) {
+            this._shape.unset(this);
+          }
+          this._shape = autoShape;
+          this._shape.set(this);
+        }
+      }
+      this._updateStatus();
+      this._updateIcon();
+      this._updateNotesIndicator();
+      this._updateValue();
+      this.dom.node.classList.toggle("collapsed", this._collapsed);
+      this.getLayout().update(this);
+      this.getShape().update(this);
+      if (options.parent && !this.isRoot()) {
+        this.parent.update();
+      }
     }
-    this._computed.value = result;
-    this._dom.value.innerHTML = Math.round(result) == result ? result : result.toFixed(3);
+    setText(text) {
+      this.dom.text.innerHTML = text;
+      findLinks(this.dom.text);
+      return this.update();
+    }
+    setNotes(notes) {
+      this._notes = notes;
+      return this.update();
+    }
+    getText() {
+      return this.dom.text.innerHTML;
+    }
+    getNotes() {
+      return this._notes;
+    }
+    collapse() {
+      if (this._collapsed) {
+        return;
+      }
+      this._collapsed = true;
+      return this.update();
+    }
+    expand() {
+      if (!this._collapsed) {
+        return;
+      }
+      this._collapsed = false;
+      this.update();
+      return this.update({ children: true });
+    }
+    isCollapsed() {
+      return this._collapsed;
+    }
+    setValue(value) {
+      this._value = value;
+      return this.update();
+    }
+    getValue() {
+      return this._value;
+    }
+    getComputedValue() {
+      return this._computed.value;
+    }
+    setStatus(status) {
+      this._status = status;
+      return this.update();
+    }
+    getStatus() {
+      return this._status;
+    }
+    setIcon(icon) {
+      this._icon = icon;
+      return this.update();
+    }
+    getIcon() {
+      return this._icon;
+    }
+    getComputedStatus() {
+      return this._computed.status;
+    }
+    setSide(side) {
+      this._side = side;
+      return this;
+    }
+    getSide() {
+      return this._side;
+    }
+    setColor(color) {
+      this._color = color;
+      return this.update({ children: true });
+    }
+    getColor() {
+      return this._color || (this.isRoot() ? COLOR : this.parent.getColor());
+    }
+    getOwnColor() {
+      return this._color;
+    }
+    getLayout() {
+      return this._layout || this.parent.getLayout();
+    }
+    getOwnLayout() {
+      return this._layout;
+    }
+    setLayout(layout) {
+      this._layout = layout;
+      return this.update({ children: true });
+    }
+    getShape() {
+      return this._shape;
+    }
+    getOwnShape() {
+      return this._autoShape ? null : this._shape;
+    }
+    setShape(shape) {
+      if (this._shape) {
+        this._shape.unset(this);
+      }
+      if (shape) {
+        this._autoShape = false;
+        this._shape = shape;
+      } else {
+        this._autoShape = true;
+        this._shape = this._getAutoShape();
+      }
+      this._shape.set(this);
+      return this.update();
+    }
+    get map() {
+      let item = this.parent;
+      while (item) {
+        if (item instanceof MM.Map) {
+          return item;
+        }
+        item = item.parent;
+      }
+      return null;
+    }
+    isRoot() {
+      return this.parent instanceof MM.Map;
+    }
+    insertChild(child, index) {
+      var newChild = false;
+      if (!child) {
+        child = new Item();
+        newChild = true;
+      } else if (child.parent && child.parent.removeChild) {
+        child.parent.removeChild(child);
+      }
+      if (!this.children.length) {
+        this.dom.node.appendChild(this.dom.toggle);
+        this.dom.node.appendChild(this.dom.children);
+      }
+      if (arguments.length < 2) {
+        index = this.children.length;
+      }
+      var next = null;
+      if (index < this.children.length) {
+        next = this.children[index].dom.node;
+      }
+      this.dom.children.insertBefore(child.dom.node, next);
+      this.children.splice(index, 0, child);
+      child.parent = this;
+    }
+    removeChild(child) {
+      var index = this.children.indexOf(child);
+      this.children.splice(index, 1);
+      var node2 = child.dom.node;
+      node2.parentNode.removeChild(node2);
+      child.parent = null;
+      if (!this.children.length) {
+        this.dom.toggle.parentNode.removeChild(this.dom.toggle);
+        this.dom.children.parentNode.removeChild(this.dom.children);
+      }
+      this.update();
+    }
+    startEditing() {
+      this._oldText = this.getText();
+      this.dom.text.contentEditable = "true";
+      this.dom.text.focus();
+      document.execCommand("styleWithCSS", null, "false");
+      this.dom.text.addEventListener("input", this);
+      this.dom.text.addEventListener("keydown", this);
+      this.dom.text.addEventListener("blur", this);
+    }
+    stopEditing() {
+      this.dom.text.removeEventListener("input", this);
+      this.dom.text.removeEventListener("keydown", this);
+      this.dom.text.removeEventListener("blur", this);
+      this.dom.text.blur();
+      this.dom.text.contentEditable = "false";
+      var result = this.dom.text.innerHTML;
+      this.dom.text.innerHTML = this._oldText;
+      this._oldText = "";
+      this.update();
+      MM.Clipboard.focus();
+      return result;
+    }
+    handleEvent(e) {
+      switch (e.type) {
+        case "input":
+          this.update();
+          this.map.ensureItemVisibility(this);
+          break;
+        case "keydown":
+          if (e.keyCode == 9) {
+            e.preventDefault();
+          }
+          break;
+        case "blur":
+          MM.Command.Finish.execute();
+          break;
+        case "click":
+          if (this._collapsed) {
+            this.expand();
+          } else {
+            this.collapse();
+          }
+          MM.App.select(this);
+          break;
+      }
+    }
+    _getAutoShape() {
+      let depth = 0;
+      let node2 = this;
+      while (!node2.isRoot()) {
+        depth++;
+        node2 = node2.parent;
+      }
+      switch (depth) {
+        case 0:
+          return MM.Shape.Ellipse;
+        case 1:
+          return MM.Shape.Box;
+        default:
+          return MM.Shape.Underline;
+      }
+    }
+    _updateStatus() {
+      this.dom.status.className = "status";
+      this.dom.status.hidden = false;
+      var status = this._status;
+      if (this._status == "computed") {
+        var childrenStatus = this.children.every(function(child) {
+          return child.getComputedStatus() !== false;
+        });
+        status = childrenStatus ? "yes" : "no";
+      }
+      switch (status) {
+        case "yes":
+          this.dom.status.classList.add("yes");
+          this._computed.status = true;
+          break;
+        case "no":
+          this.dom.status.classList.add("no");
+          this._computed.status = false;
+          break;
+        default:
+          this._computed.status = null;
+          this.dom.status.hidden = true;
+          break;
+      }
+    }
+    _updateIcon() {
+      var icon = this._icon;
+      this.dom.icon.className = "icon";
+      this.dom.icon.hidden = !icon;
+      if (icon) {
+        this.dom.icon.classList.add("fa");
+        this.dom.icon.classList.add(icon);
+      }
+    }
+    _updateNotesIndicator() {
+      this.dom.notes.classList.toggle("notes-indicator-visible", !!this._notes);
+    }
+    _updateValue() {
+      this.dom.value.hidden = false;
+      if (typeof this._value == "number") {
+        this._computed.value = this._value;
+        this.dom.value.textContent = String(this._value);
+        return;
+      }
+      var childValues = this.children.map(function(child) {
+        return child.getComputedValue();
+      });
+      var result = 0;
+      switch (this._value) {
+        case "sum":
+          result = childValues.reduce((prev, cur) => prev + cur, 0);
+          break;
+        case "avg":
+          var sum = childValues.reduce((prev, cur) => prev + cur, 0);
+          result = childValues.length ? sum / childValues.length : 0;
+          break;
+        case "max":
+          result = Math.max(...childValues);
+          break;
+        case "min":
+          result = Math.min(...childValues);
+          break;
+        default:
+          this._computed.value = 0;
+          this.dom.value.innerHTML = "";
+          this.dom.value.hidden = true;
+          return;
+          break;
+      }
+      this._computed.value = result;
+      this.dom.value.innerHTML = String(Math.round(result) == result ? result : result.toFixed(3));
+    }
   };
-  MM.Item.prototype._findLinks = function(node) {
-    var children = [].slice.call(node.childNodes);
+  function findLinks(node2) {
+    var children = [].slice.call(node2.childNodes);
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeType) {
@@ -812,30 +813,39 @@
           if (child.nodeName.toLowerCase() == "a") {
             continue;
           }
-          this._findLinks(child);
+          findLinks(child);
           break;
         case 3:
-          var result = child.nodeValue.match(this.constructor.RE);
+          var result = child.nodeValue.match(RE);
           if (result) {
             var before = child.nodeValue.substring(0, result.index);
             var after = child.nodeValue.substring(result.index + result[0].length);
             var link = document.createElement("a");
             link.innerHTML = link.href = result[0];
             if (before) {
-              node.insertBefore(document.createTextNode(before), child);
+              node2.insertBefore(document.createTextNode(before), child);
             }
-            node.insertBefore(link, child);
+            node2.insertBefore(link, child);
             if (after) {
               child.nodeValue = after;
               i--;
             } else {
-              node.removeChild(child);
+              node2.removeChild(child);
             }
           }
           break;
       }
     }
-  };
+  }
+  function generateId() {
+    let str = "";
+    for (var i = 0; i < 8; i++) {
+      let code = Math.floor(Math.random() * 26);
+      str += String.fromCharCode("a".charCodeAt(0) + code);
+    }
+    return str;
+  }
+  MM.Item = Item;
 
   // .js/map.js
   MM.Map = function(options) {
@@ -849,7 +859,10 @@
     this._root = null;
     this._visible = false;
     this._position = [0, 0];
-    this._setRoot(new MM.Item().setText(o.root).setLayout(o.layout));
+    let root = new Item();
+    root.setText(o.root);
+    root.setLayout(o.layout);
+    this._setRoot(root);
   };
   MM.Map.fromJSON = function(data) {
     return new this().fromJSON(data);
@@ -861,26 +874,26 @@
     return data;
   };
   MM.Map.prototype.fromJSON = function(data) {
-    this._setRoot(MM.Item.fromJSON(data.root));
+    this._setRoot(Item.fromJSON(data.root));
     return this;
   };
   MM.Map.prototype.mergeWith = function(data) {
     var ids = [];
     var current = MM.App.current;
-    var node = current;
-    while (node != this) {
-      ids.push(node.getId());
-      node = node.getParent();
+    var node2 = current;
+    while (node2 != this) {
+      ids.push(node2.id);
+      node2 = node2.parent;
     }
     this._root.mergeWith(data.root);
-    if (current.getMap()) {
-      var node = current.getParent();
+    if (current.map) {
+      var node2 = current.parent;
       var hidden = false;
-      while (node != this) {
-        if (node.isCollapsed()) {
+      while (node2 != this) {
+        if (node2.isCollapsed()) {
           hidden = true;
         }
-        node = node.getParent();
+        node2 = node2.parent;
       }
       if (!hidden) {
         return;
@@ -891,8 +904,8 @@
     }
     var idMap = {};
     var scan = function(item) {
-      idMap[item.getId()] = item;
-      item.getChildren().forEach(scan);
+      idMap[item.id] = item;
+      item.children.forEach(scan);
     };
     scan(this._root);
     while (ids.length) {
@@ -907,29 +920,29 @@
     return this._visible;
   };
   MM.Map.prototype.update = function() {
-    this._root.updateSubtree();
+    this._root.update({ parent: true, children: true });
     return this;
   };
   MM.Map.prototype.show = function(where) {
-    var node = this._root.getDOM().node;
-    where.appendChild(node);
+    var node2 = this._root.dom.node;
+    where.appendChild(node2);
     this._visible = true;
-    this._root.updateSubtree();
+    this._root.update({ parent: true, children: true });
     this.center();
     MM.App.select(this._root);
     return this;
   };
   MM.Map.prototype.hide = function() {
-    var node = this._root.getDOM().node;
-    node.parentNode.removeChild(node);
+    var node2 = this._root.dom.node;
+    node2.parentNode.removeChild(node2);
     this._visible = false;
     return this;
   };
   MM.Map.prototype.center = function() {
-    var node = this._root.getDOM().node;
+    let { size } = this._root;
     var port = MM.App.portSize;
-    var left = (port[0] - node.offsetWidth) / 2;
-    var top = (port[1] - node.offsetHeight) / 2;
+    var left = (port[0] - size[0]) / 2;
+    var top = (port[1] - size[1]) / 2;
     this._moveTo(Math.round(left), Math.round(top));
     return this;
   };
@@ -939,7 +952,7 @@
   MM.Map.prototype.getClosestItem = function(x, y) {
     var all = [];
     var scan = function(item) {
-      var rect = item.getDOM().content.getBoundingClientRect();
+      var rect = item.dom.content.getBoundingClientRect();
       var dx = rect.left + rect.width / 2 - x;
       var dy = rect.top + rect.height / 2 - y;
       all.push({
@@ -948,7 +961,7 @@
         dy
       });
       if (!item.isCollapsed()) {
-        item.getChildren().forEach(scan);
+        item.children.forEach(scan);
       }
     };
     scan(this._root);
@@ -959,34 +972,34 @@
     });
     return all[0];
   };
-  MM.Map.prototype.getItemFor = function(node) {
-    var port = this._root.getDOM().node.parentNode;
-    while (node != port && !node.classList.contains("content")) {
-      node = node.parentNode;
+  MM.Map.prototype.getItemFor = function(node2) {
+    var port = this._root.dom.node.parentNode;
+    while (node2 != port && !node2.classList.contains("content")) {
+      node2 = node2.parentNode;
     }
-    if (node == port) {
+    if (node2 == port) {
       return null;
     }
-    var scan = function(item, node2) {
-      if (item.getDOM().content == node2) {
+    var scan = function(item, node3) {
+      if (item.dom.content == node3) {
         return item;
       }
-      var children = item.getChildren();
+      var children = item.children;
       for (var i = 0; i < children.length; i++) {
-        var result = scan(children[i], node2);
+        var result = scan(children[i], node3);
         if (result) {
           return result;
         }
       }
       return null;
     };
-    return scan(this._root, node);
+    return scan(this._root, node2);
   };
   MM.Map.prototype.ensureItemVisibility = function(item) {
     var padding = 10;
-    var node = item.getDOM().content;
-    var itemRect = node.getBoundingClientRect();
-    var root = this._root.getDOM().node;
+    var node2 = item.dom.content;
+    var itemRect = node2.getBoundingClientRect();
+    var root = this._root.dom.node;
     var parentRect = root.parentNode.getBoundingClientRect();
     var delta = [0, 0];
     var dx = parentRect.left - itemRect.left + padding;
@@ -1020,11 +1033,11 @@
     return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
   };
   MM.Map.prototype.getId = function() {
-    return this._root.getId();
+    return this._root.id;
   };
   MM.Map.prototype.pick = function(item, direction) {
     var candidates = [];
-    var currentRect = item.getDOM().content.getBoundingClientRect();
+    var currentRect = item.dom.content.getBoundingClientRect();
     this._getPickCandidates(currentRect, this._root, direction, candidates);
     if (!candidates.length) {
       return item;
@@ -1036,12 +1049,12 @@
   };
   MM.Map.prototype._getPickCandidates = function(currentRect, item, direction, candidates) {
     if (!item.isCollapsed()) {
-      item.getChildren().forEach(function(child) {
+      item.children.forEach(function(child) {
         this._getPickCandidates(currentRect, child, direction, candidates);
       }, this);
     }
-    var node = item.getDOM().content;
-    var rect = node.getBoundingClientRect();
+    var node2 = item.dom.content;
+    var rect = node2.getBoundingClientRect();
     if (direction == "left" || direction == "right") {
       var x1 = currentRect.left + currentRect.width / 2;
       var x2 = rect.left + rect.width / 2;
@@ -1078,13 +1091,11 @@
   };
   MM.Map.prototype._moveTo = function(left, top) {
     this._position = [left, top];
-    var node = this._root.getDOM().node;
-    node.style.left = left + "px";
-    node.style.top = top + "px";
+    this._root.position = this._position;
   };
   MM.Map.prototype._setRoot = function(item) {
     this._root = item;
-    this._root.setParent(this);
+    this._root.parent = this;
   };
 
   // .js/keyboard.js
@@ -1094,12 +1105,12 @@
     window.addEventListener("keypress", this);
   };
   MM.Keyboard.handleEvent = function(e) {
-    var node = document.activeElement;
-    while (node && node != document) {
-      if (node.classList.contains("ui")) {
+    var node2 = document.activeElement;
+    while (node2 && node2 != document) {
+      if (node2.classList.contains("ui")) {
         return;
       }
-      node = node.parentNode;
+      node2 = node2.parentNode;
     }
     var commands = MM.Command.getAll();
     for (var i = 0; i < commands.length; i++) {
@@ -1144,12 +1155,12 @@
     init: function() {
       this._node = document.querySelector("#tip");
       this._node.addEventListener("click", this);
-      MM.subscribe("command-child", this);
-      MM.subscribe("command-sibling", this);
+      subscribe("command-child", this);
+      subscribe("command-sibling", this);
     },
     _hide: function() {
-      MM.unsubscribe("command-child", this);
-      MM.unsubscribe("command-sibling", this);
+      unsubscribe("command-child", this);
+      unsubscribe("command-sibling", this);
       this._node.removeEventListener("click", this);
       this._node.classList.add("hidden");
       this._node = null;
@@ -1185,7 +1196,7 @@
   MM.Action.InsertNewItem.prototype = Object.create(MM.Action.prototype);
   MM.Action.InsertNewItem.prototype.perform = function() {
     this._parent.expand();
-    this._item = this._parent.insertChild(this._item, this._index);
+    this._parent.insertChild(this._item, this._index);
     MM.App.select(this._item);
   };
   MM.Action.InsertNewItem.prototype.undo = function() {
@@ -1207,8 +1218,8 @@
   };
   MM.Action.RemoveItem = function(item) {
     this._item = item;
-    this._parent = item.getParent();
-    this._index = this._parent.getChildren().indexOf(this._item);
+    this._parent = item.parent;
+    this._index = this._parent.children.indexOf(this._item);
   };
   MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
   MM.Action.RemoveItem.prototype.perform = function() {
@@ -1224,8 +1235,8 @@
     this._newParent = newParent;
     this._newIndex = arguments.length < 3 ? null : newIndex;
     this._newSide = newSide || "";
-    this._oldParent = item.getParent();
-    this._oldIndex = this._oldParent.getChildren().indexOf(item);
+    this._oldParent = item.parent;
+    this._oldIndex = this._oldParent.children.indexOf(item);
     this._oldSide = item.getSide();
   };
   MM.Action.MoveItem.prototype = Object.create(MM.Action.prototype);
@@ -1245,8 +1256,8 @@
   };
   MM.Action.Swap = function(item, diff) {
     this._item = item;
-    this._parent = item.getParent();
-    var children = this._parent.getChildren();
+    this._parent = item.parent;
+    var children = this._parent.children;
     var sibling = this._parent.getLayout().pickSibling(this._item, diff);
     this._sourceIndex = children.indexOf(this._item);
     this._targetIndex = children.indexOf(sibling);
@@ -1356,11 +1367,11 @@
   MM.Action.SetSide.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetSide.prototype.perform = function() {
     this._item.setSide(this._side);
-    this._item.getMap().update();
+    this._item.map.update();
   };
   MM.Action.SetSide.prototype.undo = function() {
     this._item.setSide(this._oldSide);
-    this._item.getMap().update();
+    this._item.map.update();
   };
 
   // .js/clipboard.js
@@ -1405,7 +1416,7 @@
   MM.Clipboard._pasteItem = function(sourceItem, targetItem) {
     switch (this._mode) {
       case "cut":
-        if (sourceItem == targetItem || sourceItem.getParent() == targetItem) {
+        if (sourceItem == targetItem || sourceItem.parent == targetItem) {
           this._endCut();
           return;
         }
@@ -1414,7 +1425,7 @@
           if (item == sourceItem) {
             return;
           }
-          item = item.getParent();
+          item = item.parent;
         }
         var action = new MM.Action.MoveItem(sourceItem, targetItem);
         MM.App.action(action);
@@ -1437,7 +1448,7 @@
       var action = new MM.Action.AppendItem(targetItem, root);
       MM.App.action(action);
     } else {
-      var actions = root.getChildren().map(function(item) {
+      var actions = root.children.map(function(item) {
         return new MM.Action.AppendItem(targetItem, item);
       });
       var action = new MM.Action.Multi(actions);
@@ -1447,7 +1458,7 @@
   MM.Clipboard.cut = function(sourceItem) {
     this._endCut();
     this._item = sourceItem;
-    this._item.getDOM().node.classList.add("cut");
+    this._item.dom.node.classList.add("cut");
     this._mode = "cut";
     this._expose();
   };
@@ -1468,7 +1479,7 @@
     if (this._mode != "cut") {
       return;
     }
-    this._item.getDOM().node.classList.remove("cut");
+    this._item.dom.node.classList.remove("cut");
     this._item = null;
     this._mode = "";
   };
@@ -1527,6 +1538,9 @@
   };
 
   // .js/command/command.js
+  function isMac() {
+    return !!navigator.platform.match(/mac/i);
+  }
   MM.Command = Object.create(MM.Repo, {
     keys: { value: [] },
     editMode: { value: false },
@@ -1577,15 +1591,15 @@
   MM.Command.InsertSibling.execute = function() {
     var item = MM.App.current;
     if (item.isRoot()) {
-      var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
+      var action = new MM.Action.InsertNewItem(item, item.children.length);
     } else {
-      var parent = item.getParent();
-      var index = parent.getChildren().indexOf(item);
+      var parent = item.parent;
+      var index = parent.children.indexOf(item);
       var action = new MM.Action.InsertNewItem(parent, index + 1);
     }
     MM.App.action(action);
     MM.Command.Edit.execute();
-    MM.publish("command-sibling");
+    publish("command-sibling");
   };
   MM.Command.InsertChild = Object.create(MM.Command, {
     label: { value: "Insert a child" },
@@ -1596,14 +1610,14 @@
   });
   MM.Command.InsertChild.execute = function() {
     var item = MM.App.current;
-    var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
+    var action = new MM.Action.InsertNewItem(item, item.children.length);
     MM.App.action(action);
     MM.Command.Edit.execute();
-    MM.publish("command-child");
+    publish("command-child");
   };
   MM.Command.Delete = Object.create(MM.Command, {
     label: { value: "Delete an item" },
-    keys: { value: [{ keyCode: MM.isMac() ? 8 : 46 }] }
+    keys: { value: [{ keyCode: isMac() ? 8 : 46 }] }
   });
   MM.Command.Delete.isValid = function() {
     return MM.Command.isValid.call(this) && !MM.App.current.isRoot();
@@ -1621,7 +1635,7 @@
   });
   MM.Command.Swap.execute = function(e) {
     var current = MM.App.current;
-    if (current.isRoot() || current.getParent().getChildren().length < 2) {
+    if (current.isRoot() || current.parent.children.length < 2) {
       return;
     }
     var diff = e.keyCode == 38 ? -1 : 1;
@@ -1637,7 +1651,7 @@
   });
   MM.Command.Side.execute = function(e) {
     var current = MM.App.current;
-    if (current.isRoot() || !current.getParent().isRoot()) {
+    if (current.isRoot() || !current.parent.isRoot()) {
       return;
     }
     var side = e.keyCode == 37 ? "left" : "right";
@@ -1682,7 +1696,7 @@
     }
     var map = new MM.Map();
     MM.App.setMap(map);
-    MM.publish("map-new", this);
+    publish("map-new", this);
   };
   MM.Command.ZoomIn = Object.create(MM.Command, {
     label: { value: "Zoom in" },
@@ -1846,7 +1860,7 @@
     var br = document.createElement("br");
     range.insertNode(br);
     range.setStartAfter(br);
-    MM.App.current.updateSubtree();
+    MM.App.current.update({ parent: true, children: true });
   };
   MM.Command.Cancel = Object.create(MM.Command, {
     editMode: { value: true },
@@ -1872,7 +1886,7 @@
       MM.Command.Edit.execute();
       var selection = getSelection();
       var range = selection.getRangeAt(0);
-      range.selectNodeContents(MM.App.current.getDOM().text);
+      range.selectNodeContents(MM.App.current.dom.text);
       selection.removeAllRanges();
       selection.addRange(range);
       this.execute();
@@ -1977,11 +1991,11 @@
   MM.Command.SelectRoot.execute = function() {
     var item = MM.App.current;
     while (!item.isRoot()) {
-      item = item.getParent();
+      item = item.parent;
     }
     MM.App.select(item);
   };
-  if (!MM.isMac()) {
+  if (!isMac()) {
     MM.Command.SelectParent = Object.create(MM.Command, {
       label: { value: "Select parent" },
       keys: { value: [{ keyCode: 8 }] }
@@ -1990,7 +2004,7 @@
       if (MM.App.current.isRoot()) {
         return;
       }
-      MM.App.select(MM.App.current.getParent());
+      MM.App.select(MM.App.current.parent);
     };
   }
 
@@ -2017,7 +2031,7 @@
       bottom: "top"
     };
     if (!item.isCollapsed()) {
-      var children = item.getChildren();
+      var children = item.children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
         if (this.getChildDirection(child) == dir) {
@@ -2028,12 +2042,12 @@
     if (item.isRoot()) {
       return item;
     }
-    var parentLayout = item.getParent().getLayout();
+    var parentLayout = item.parent.getLayout();
     var thisChildDirection = parentLayout.getChildDirection(item);
     if (thisChildDirection == dir) {
       return item;
     } else if (thisChildDirection == opposite[dir]) {
-      return item.getParent();
+      return item.parent;
     } else {
       return parentLayout.pickSibling(item, dir == "left" || dir == "top" ? -1 : 1);
     }
@@ -2042,21 +2056,16 @@
     if (item.isRoot()) {
       return item;
     }
-    var children = item.getParent().getChildren();
+    var children = item.parent.children;
     var index = children.indexOf(item);
     index += dir;
     index = (index + children.length) % children.length;
     return children[index];
   };
-  MM.Layout._anchorCanvas = function(item) {
-    var dom = item.getDOM();
-    dom.canvas.width = dom.node.offsetWidth;
-    dom.canvas.height = dom.node.offsetHeight;
-  };
   MM.Layout._anchorToggle = function(item, x, y, side) {
-    var node = item.getDOM().toggle;
-    var w = node.offsetWidth;
-    var h = node.offsetHeight;
+    var node2 = item.dom.toggle;
+    var w = node2.offsetWidth;
+    var h = node2.offsetHeight;
     var l = x;
     var t = y;
     switch (side) {
@@ -2075,18 +2084,18 @@
         l -= w / 2;
         break;
     }
-    node.style.left = Math.round(l) + "px";
-    node.style.top = Math.round(t) + "px";
+    node2.style.left = Math.round(l) + "px";
+    node2.style.top = Math.round(t) + "px";
   };
   MM.Layout._getChildAnchor = function(item, side) {
-    var dom = item.getDOM();
+    let { position, dom } = item;
     if (side == "left" || side == "right") {
-      var pos = dom.node.offsetLeft + dom.content.offsetLeft;
+      var pos = position[0] + dom.content.offsetLeft;
       if (side == "left") {
         pos += dom.content.offsetWidth;
       }
     } else {
-      var pos = dom.node.offsetTop + dom.content.offsetTop;
+      var pos = position[1] + dom.content.offsetTop;
       if (side == "top") {
         pos += dom.content.offsetHeight;
       }
@@ -2096,19 +2105,18 @@
   MM.Layout._computeChildrenBBox = function(children, childIndex) {
     var bbox = [0, 0];
     var rankIndex = (childIndex + 1) % 2;
-    children.forEach(function(child, index) {
-      var node = child.getDOM().node;
-      var childSize = [node.offsetWidth, node.offsetHeight];
-      bbox[rankIndex] = Math.max(bbox[rankIndex], childSize[rankIndex]);
-      bbox[childIndex] += childSize[childIndex];
-    }, this);
+    children.forEach((child) => {
+      const { size } = child;
+      bbox[rankIndex] = Math.max(bbox[rankIndex], size[rankIndex]);
+      bbox[childIndex] += size[childIndex];
+    });
     if (children.length > 1) {
       bbox[childIndex] += this.SPACING_CHILD * (children.length - 1);
     }
     return bbox;
   };
   MM.Layout._alignItem = function(item, side) {
-    var dom = item.getDOM();
+    var dom = item.dom;
     switch (side) {
       case "left":
         dom.content.insertBefore(dom.icon, dom.content.firstChild);
@@ -2143,7 +2151,7 @@
   MM.Layout.Graph.update = function(item) {
     var side = this.childDirection;
     if (!item.isRoot()) {
-      side = item.getParent().getLayout().getChildDirection(item);
+      side = item.parent.getLayout().getChildDirection(item);
     }
     this._alignItem(item, side);
     this._layoutItem(item, this.childDirection);
@@ -2155,24 +2163,20 @@
     return this;
   };
   MM.Layout.Graph._layoutItem = function(item, rankDirection) {
-    var sizeProps = ["width", "height"];
     var posProps = ["left", "top"];
     var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
     var childIndex = (rankIndex + 1) % 2;
     var rankPosProp = posProps[rankIndex];
     var childPosProp = posProps[childIndex];
-    var rankSizeProp = sizeProps[rankIndex];
-    var childSizeProp = sizeProps[childIndex];
-    var dom = item.getDOM();
+    var dom = item.dom;
     var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
-    var bbox = this._computeChildrenBBox(item.getChildren(), childIndex);
+    var bbox = this._computeChildrenBBox(item.children, childIndex);
     var rankSize = contentSize[rankIndex];
     if (bbox[rankIndex]) {
       rankSize += bbox[rankIndex] + this.SPACING_RANK;
     }
     var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
-    dom.node.style[rankSizeProp] = rankSize + "px";
-    dom.node.style[childSizeProp] = childSize + "px";
+    item.size = rankIndex == 0 ? [rankSize, childSize] : [childSize, rankSize];
     var offset = [0, 0];
     if (rankDirection == "right") {
       offset[0] = contentSize[0] + this.SPACING_RANK;
@@ -2181,7 +2185,7 @@
       offset[1] = contentSize[1] + this.SPACING_RANK;
     }
     offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
-    this._layoutChildren(item.getChildren(), rankDirection, offset, bbox);
+    this._layoutChildren(item.children, rankDirection, offset, bbox);
     var labelPos = 0;
     if (rankDirection == "left") {
       labelPos = rankSize - contentSize[0];
@@ -2199,34 +2203,31 @@
     var childIndex = (rankIndex + 1) % 2;
     var rankPosProp = posProps[rankIndex];
     var childPosProp = posProps[childIndex];
-    children.forEach(function(child, index) {
-      var node = child.getDOM().node;
-      var childSize = [node.offsetWidth, node.offsetHeight];
+    children.forEach((child) => {
+      const { size, dom } = child;
       if (rankDirection == "left") {
-        offset[0] = bbox[0] - childSize[0];
+        offset[0] = bbox[0] - size[0];
       }
       if (rankDirection == "top") {
-        offset[1] = bbox[1] - childSize[1];
+        offset[1] = bbox[1] - size[1];
       }
-      node.style[childPosProp] = offset[childIndex] + "px";
-      node.style[rankPosProp] = offset[rankIndex] + "px";
-      offset[childIndex] += childSize[childIndex] + this.SPACING_CHILD;
-    }, this);
+      dom.node.style[childPosProp] = offset[childIndex] + "px";
+      dom.node.style[rankPosProp] = offset[rankIndex] + "px";
+      offset[childIndex] += size[childIndex] + this.SPACING_CHILD;
+    });
     return bbox;
   };
   MM.Layout.Graph._drawLinesHorizontal = function(item, side) {
-    this._anchorCanvas(item);
-    this._drawHorizontalConnectors(item, side, item.getChildren());
+    this._drawHorizontalConnectors(item, side, item.children);
   };
   MM.Layout.Graph._drawLinesVertical = function(item, side) {
-    this._anchorCanvas(item);
-    this._drawVerticalConnectors(item, side, item.getChildren());
+    this._drawVerticalConnectors(item, side, item.children);
   };
   MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
     if (children.length == 0) {
       return;
     }
-    var dom = item.getDOM();
+    var dom = item.dom;
     var canvas = dom.canvas;
     var ctx = canvas.getContext("2d");
     ctx.strokeStyle = item.getColor();
@@ -2243,7 +2244,8 @@
     }
     if (children.length == 1) {
       var child = children[0];
-      var y2 = child.getShape().getVerticalAnchor(child) + child.getDOM().node.offsetTop;
+      const { position } = child;
+      var y2 = child.getShape().getVerticalAnchor(child) + position[1];
       var x2 = this._getChildAnchor(child, side);
       ctx.beginPath();
       ctx.moveTo(x1, y1);
@@ -2264,8 +2266,10 @@
     var c2 = children[children.length - 1];
     var x = x2;
     var xx = x + (side == "left" ? -R : R);
-    var y1 = c1.getShape().getVerticalAnchor(c1) + c1.getDOM().node.offsetTop;
-    var y2 = c2.getShape().getVerticalAnchor(c2) + c2.getDOM().node.offsetTop;
+    let p1 = c1.position;
+    let p2 = c2.position;
+    var y1 = c1.getShape().getVerticalAnchor(c1) + p1[1];
+    var y2 = c2.getShape().getVerticalAnchor(c2) + p2[1];
     var x1 = this._getChildAnchor(c1, side);
     var x2 = this._getChildAnchor(c2, side);
     ctx.beginPath();
@@ -2277,7 +2281,8 @@
     ctx.lineTo(x2, y2);
     for (var i = 1; i < children.length - 1; i++) {
       var c = children[i];
-      var y = c.getShape().getVerticalAnchor(c) + c.getDOM().node.offsetTop;
+      const { position } = c;
+      var y = c.getShape().getVerticalAnchor(c) + position[1];
       ctx.moveTo(x, y);
       ctx.lineTo(this._getChildAnchor(c, side), y);
     }
@@ -2287,7 +2292,7 @@
     if (children.length == 0) {
       return;
     }
-    var dom = item.getDOM();
+    var dom = item.dom;
     var canvas = dom.canvas;
     var ctx = canvas.getContext("2d");
     ctx.strokeStyle = item.getColor();
@@ -2314,8 +2319,10 @@
     var c2 = children[children.length - 1];
     var offset = dom.content.offsetHeight + height;
     var y = Math.round(side == "top" ? canvas.height - offset : offset) + 0.5;
-    var x1 = c1.getShape().getHorizontalAnchor(c1) + c1.getDOM().node.offsetLeft;
-    var x2 = c2.getShape().getHorizontalAnchor(c2) + c2.getDOM().node.offsetLeft;
+    const p1 = c1.position;
+    const p2 = c2.position;
+    var x1 = c1.getShape().getHorizontalAnchor(c1) + p1[0];
+    var x2 = c2.getShape().getHorizontalAnchor(c2) + p2[0];
     var y1 = this._getChildAnchor(c1, side);
     var y2 = this._getChildAnchor(c2, side);
     ctx.beginPath();
@@ -2325,7 +2332,8 @@
     ctx.arcTo(x2, y, x2, y2, R);
     for (var i = 1; i < children.length - 1; i++) {
       var c = children[i];
-      var x = c.getShape().getHorizontalAnchor(c) + c.getDOM().node.offsetLeft;
+      const { position } = c;
+      var x = c.getShape().getHorizontalAnchor(c) + position[0];
       ctx.moveTo(x, y);
       ctx.lineTo(x, this._getChildAnchor(c, side));
     }
@@ -2356,31 +2364,29 @@
   MM.Layout.Tree.update = function(item) {
     var side = this.childDirection;
     if (!item.isRoot()) {
-      side = item.getParent().getLayout().getChildDirection(item);
+      side = item.parent.getLayout().getChildDirection(item);
     }
     this._alignItem(item, side);
     this._layoutItem(item, this.childDirection);
-    this._anchorCanvas(item);
     this._drawLines(item, this.childDirection);
     return this;
   };
   MM.Layout.Tree._layoutItem = function(item, rankDirection) {
-    var dom = item.getDOM();
+    var dom = item.dom;
     var contentSize = [dom.content.offsetWidth, dom.content.offsetHeight];
-    var bbox = this._computeChildrenBBox(item.getChildren(), 1);
+    var bbox = this._computeChildrenBBox(item.children, 1);
     var rankSize = contentSize[0];
     var childSize = bbox[1] + contentSize[1];
     if (bbox[0]) {
       rankSize = Math.max(rankSize, bbox[0] + this.SPACING_RANK);
       childSize += this.SPACING_CHILD;
     }
-    dom.node.style.width = rankSize + "px";
-    dom.node.style.height = childSize + "px";
+    item.size = [rankSize, childSize];
     var offset = [this.SPACING_RANK, contentSize[1] + this.SPACING_CHILD];
     if (rankDirection == "left") {
       offset[0] = rankSize - bbox[0] - this.SPACING_RANK;
     }
-    this._layoutChildren(item.getChildren(), rankDirection, offset, bbox);
+    this._layoutChildren(item.children, rankDirection, offset, bbox);
     var labelPos = 0;
     if (rankDirection == "left") {
       labelPos = rankSize - contentSize[0];
@@ -2390,26 +2396,24 @@
     return this;
   };
   MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox) {
-    children.forEach(function(child, index) {
-      var node = child.getDOM().node;
-      var childSize = [node.offsetWidth, node.offsetHeight];
+    children.forEach((child) => {
+      const { size } = child;
       var left = offset[0];
       if (rankDirection == "left") {
-        left += bbox[0] - childSize[0];
+        left += bbox[0] - size[0];
       }
-      node.style.left = left + "px";
-      node.style.top = offset[1] + "px";
-      offset[1] += childSize[1] + this.SPACING_CHILD;
-    }, this);
+      child.position = [left, offset[1]];
+      offset[1] += size[1] + this.SPACING_CHILD;
+    });
     return bbox;
   };
   MM.Layout.Tree._drawLines = function(item, side) {
-    var dom = item.getDOM();
+    var dom = item.dom;
     var canvas = dom.canvas;
     var R = this.SPACING_RANK / 4;
     var x = (side == "left" ? canvas.width - 2 * R : 2 * R) + 0.5;
     this._anchorToggle(item, x, dom.content.offsetHeight, "bottom");
-    var children = item.getChildren();
+    var children = item.children;
     if (children.length == 0 || item.isCollapsed()) {
       return;
     }
@@ -2417,13 +2421,13 @@
     ctx.strokeStyle = item.getColor();
     var y1 = item.getShape().getVerticalAnchor(item);
     var last = children[children.length - 1];
-    var y2 = last.getShape().getVerticalAnchor(last) + last.getDOM().node.offsetTop;
+    var y2 = last.getShape().getVerticalAnchor(last) + last.position[1];
     ctx.beginPath();
     ctx.moveTo(x, y1);
     ctx.lineTo(x, y2 - R);
     for (var i = 0; i < children.length; i++) {
       var c = children[i];
-      var y = c.getShape().getVerticalAnchor(c) + c.getDOM().node.offsetTop;
+      var y = c.getShape().getVerticalAnchor(c) + c.position[1];
       var anchor = this._getChildAnchor(c, side);
       ctx.moveTo(x, y - R);
       ctx.arcTo(x, y, anchor, y, R);
@@ -2451,15 +2455,15 @@
     }
   };
   MM.Layout.Map.getChildDirection = function(child) {
-    while (!child.getParent().isRoot()) {
-      child = child.getParent();
+    while (!child.parent.isRoot()) {
+      child = child.parent;
     }
     var side = child.getSide();
     if (side) {
       return side;
     }
     var counts = { left: 0, right: 0 };
-    var children = child.getParent().getChildren();
+    var children = child.parent.children;
     for (var i = 0; i < children.length; i++) {
       var side = children[i].getSide();
       if (!side) {
@@ -2474,8 +2478,8 @@
     if (item.isRoot()) {
       return item;
     }
-    var parent = item.getParent();
-    var children = parent.getChildren();
+    var parent = item.parent;
+    var children = parent.children;
     if (parent.isRoot()) {
       var side = this.getChildDirection(item);
       children = children.filter(function(child) {
@@ -2489,19 +2493,18 @@
   };
   MM.Layout.Map._layoutRoot = function(item) {
     this._alignItem(item, "right");
-    var dom = item.getDOM();
-    var children = item.getChildren();
+    var dom = item.dom;
+    var children = item.children;
     var childrenLeft = [];
     var childrenRight = [];
-    children.forEach(function(child, index) {
-      var node = child.getDOM().node;
+    children.forEach((child) => {
       var side = this.getChildDirection(child);
       if (side == "left") {
         childrenLeft.push(child);
       } else {
         childrenRight.push(child);
       }
-    }, this);
+    });
     var bboxLeft = this._computeChildrenBBox(childrenLeft, 1);
     var bboxRight = this._computeChildrenBBox(childrenRight, 1);
     var height = Math.max(bboxLeft[1], bboxRight[1], dom.content.offsetHeight);
@@ -2519,9 +2522,7 @@
     this._layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
     left += bboxRight[0];
     dom.content.style.top = Math.round((height - dom.content.offsetHeight) / 2) + "px";
-    dom.node.style.height = height + "px";
-    dom.node.style.width = left + "px";
-    this._anchorCanvas(item);
+    item.size = [left, height];
     this._drawRootConnectors(item, "left", childrenLeft);
     this._drawRootConnectors(item, "right", childrenRight);
   };
@@ -2529,7 +2530,7 @@
     if (children.length == 0 || item.isCollapsed()) {
       return;
     }
-    var dom = item.getDOM();
+    var dom = item.dom;
     var canvas = dom.canvas;
     var ctx = canvas.getContext("2d");
     var R = this.SPACING_RANK / 2;
@@ -2539,7 +2540,7 @@
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       var x2 = this._getChildAnchor(child, side);
-      var y2 = child.getShape().getVerticalAnchor(child) + child.getDOM().node.offsetTop;
+      var y2 = child.getShape().getVerticalAnchor(child) + child.position[1];
       var angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
       var dx = Math.cos(angle) * half;
       var dy = Math.sin(angle) * half;
@@ -2558,24 +2559,24 @@
     VERTICAL_OFFSET: { value: 0.5 }
   });
   MM.Shape.set = function(item) {
-    item.getDOM().node.classList.add("shape-" + this.id);
+    item.dom.node.classList.add("shape-" + this.id);
     return this;
   };
   MM.Shape.unset = function(item) {
-    item.getDOM().node.classList.remove("shape-" + this.id);
+    item.dom.node.classList.remove("shape-" + this.id);
     return this;
   };
   MM.Shape.update = function(item) {
-    item.getDOM().content.style.borderColor = item.getColor();
+    item.dom.content.style.borderColor = item.getColor();
     return this;
   };
   MM.Shape.getHorizontalAnchor = function(item) {
-    var node = item.getDOM().content;
-    return Math.round(node.offsetLeft + node.offsetWidth / 2) + 0.5;
+    var node2 = item.dom.content;
+    return Math.round(node2.offsetLeft + node2.offsetWidth / 2) + 0.5;
   };
   MM.Shape.getVerticalAnchor = function(item) {
-    var node = item.getDOM().content;
-    return node.offsetTop + Math.round(node.offsetHeight * this.VERTICAL_OFFSET) + 0.5;
+    var node2 = item.dom.content;
+    return node2.offsetTop + Math.round(node2.offsetHeight * this.VERTICAL_OFFSET) + 0.5;
   };
 
   // .js/shape/shape.underline.js
@@ -2585,7 +2586,7 @@
     VERTICAL_OFFSET: { value: -3 }
   });
   MM.Shape.Underline.update = function(item) {
-    var dom = item.getDOM();
+    var dom = item.dom;
     var ctx = dom.canvas.getContext("2d");
     ctx.strokeStyle = item.getColor();
     var left = dom.content.offsetLeft;
@@ -2597,8 +2598,8 @@
     ctx.stroke();
   };
   MM.Shape.Underline.getVerticalAnchor = function(item) {
-    var node = item.getDOM().content;
-    return node.offsetTop + node.offsetHeight + this.VERTICAL_OFFSET + 0.5;
+    var node2 = item.dom.content;
+    return node2.offsetTop + node2.offsetHeight + this.VERTICAL_OFFSET + 0.5;
   };
 
   // .js/shape/shape.box.js
@@ -2715,36 +2716,36 @@
     }
     return elm;
   };
-  MM.Format.FreeMind._parseNode = function(node, parent) {
-    var json = this._parseAttributes(node, parent);
-    for (var i = 0; i < node.childNodes.length; i++) {
-      var child = node.childNodes[i];
+  MM.Format.FreeMind._parseNode = function(node2, parent) {
+    var json = this._parseAttributes(node2, parent);
+    for (var i = 0; i < node2.childNodes.length; i++) {
+      var child = node2.childNodes[i];
       if (child.nodeName.toLowerCase() == "node") {
         json.children.push(this._parseNode(child, json));
       }
     }
     return json;
   };
-  MM.Format.FreeMind._parseAttributes = function(node, parent) {
+  MM.Format.FreeMind._parseAttributes = function(node2, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node.getAttribute("TEXT") || ""),
-      id: node.getAttribute("ID")
+      text: MM.Format.nl2br(node2.getAttribute("TEXT") || ""),
+      id: node2.getAttribute("ID")
     };
-    var position = node.getAttribute("POSITION");
+    var position = node2.getAttribute("POSITION");
     if (position) {
       json.side = position;
     }
-    var style = node.getAttribute("STYLE");
+    var style = node2.getAttribute("STYLE");
     if (style == "bubble") {
       json.shape = "box";
     } else {
       json.shape = parent.shape;
     }
-    if (node.getAttribute("FOLDED") == "true") {
+    if (node2.getAttribute("FOLDED") == "true") {
       json.collapsed = 1;
     }
-    var children = node.children;
+    var children = node2.children;
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeName.toLowerCase()) {
@@ -2776,23 +2777,23 @@
     label: { value: "Mind Map Architect" },
     extension: { value: "mma" }
   });
-  MM.Format.MMA._parseAttributes = function(node, parent) {
+  MM.Format.MMA._parseAttributes = function(node2, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node.getAttribute("title") || ""),
+      text: MM.Format.nl2br(node2.getAttribute("title") || ""),
       shape: "box"
     };
-    if (node.getAttribute("expand") == "false") {
+    if (node2.getAttribute("expand") == "false") {
       json.collapsed = 1;
     }
-    var direction = node.getAttribute("direction");
+    var direction = node2.getAttribute("direction");
     if (direction == "0") {
       json.side = "left";
     }
     if (direction == "1") {
       json.side = "right";
     }
-    var color = node.getAttribute("color");
+    var color = node2.getAttribute("color");
     if (color) {
       var re = color.match(/^#(....)(....)(....)$/);
       if (re) {
@@ -2805,7 +2806,7 @@
       }
       json.color = "#" + [r, g, b].join("");
     }
-    json.icon = node.getAttribute("icon");
+    json.icon = node2.getAttribute("icon");
     return json;
   };
   MM.Format.MMA._serializeAttributes = function(doc, json) {
@@ -3134,7 +3135,7 @@
     firebase.initializeApp(config);
     this.ref = firebase.database().ref();
     this.ref.child("names").on("value", function(snap) {
-      MM.publish("firebase-list", this, snap.val() || {});
+      publish("firebase-list", this, snap.val() || {});
     }, this);
     if (auth) {
       return this._login(auth);
@@ -3264,7 +3265,7 @@
       clearTimeout(this._changeTimeout);
     }
     this._changeTimeout = setTimeout(function() {
-      MM.publish("firebase-change", this, this._current.data);
+      publish("firebase-change", this, this._current.data);
     }.bind(this), 200);
   };
   MM.Backend.Firebase._login = function(type) {
@@ -3447,8 +3448,8 @@
     this._color = new MM.UI.Color();
     this._value = new MM.UI.Value();
     this._status = new MM.UI.Status();
-    MM.subscribe("item-select", this);
-    MM.subscribe("item-change", this);
+    subscribe("item-select", this);
+    subscribe("item-change", this);
     this._node.addEventListener("click", this);
     this._node.addEventListener("change", this);
     this.toggle();
@@ -3475,14 +3476,14 @@
           this.toggle();
           return;
         }
-        var node = e.target;
-        while (node != document) {
-          var command = node.getAttribute("data-command");
+        var node2 = e.target;
+        while (node2 != document) {
+          var command = node2.getAttribute("data-command");
           if (command) {
             MM.Command[command].execute();
             return;
           }
-          node = node.parentNode;
+          node2 = node2.parentNode;
         }
         break;
       case "change":
@@ -3492,7 +3493,7 @@
   };
   MM.UI.prototype.toggle = function() {
     this._node.classList.toggle("visible");
-    MM.publish("ui-change", this);
+    publish("ui-change", this);
   };
   MM.UI.prototype.getWidth = function() {
     return this._node.classList.contains("visible") ? this._node.offsetWidth : 0;
@@ -3538,10 +3539,10 @@
     return this._select.querySelector("option[value='" + value + "']");
   };
   MM.UI.Layout.prototype._buildGroup = function(label) {
-    var node = document.createElement("optgroup");
-    node.label = label;
-    this._select.appendChild(node);
-    return node;
+    var node2 = document.createElement("optgroup");
+    node2.label = label;
+    this._select.appendChild(node2);
+    return node2;
   };
 
   // .js/ui/ui.shape.js
@@ -3766,11 +3767,11 @@
       MM.Clipboard.focus();
     }
   };
-  MM.UI.Notes.prototype.update = function(html) {
-    if (html.trim().length === 0) {
+  MM.UI.Notes.prototype.update = function(html2) {
+    if (html2.trim().length === 0) {
       MM.App.current._notes = null;
     } else {
-      MM.App.current._notes = html;
+      MM.App.current._notes = html2;
     }
     MM.App.current.update();
   };
@@ -3792,9 +3793,9 @@
     }, this);
     this._backend.value = localStorage.getItem(this._prefix + "backend") || MM.Backend.File.id;
     this._backend.addEventListener("change", this);
-    MM.subscribe("map-new", this);
-    MM.subscribe("save-done", this);
-    MM.subscribe("load-done", this);
+    subscribe("map-new", this);
+    subscribe("save-done", this);
+    subscribe("load-done", this);
   };
   MM.UI.IO.prototype.restore = function() {
     var parts = {};
@@ -3877,11 +3878,8 @@
     }
   };
   MM.UI.IO.prototype._syncBackend = function() {
-    var all = this._node.querySelectorAll("div[id]");
-    [].slice.apply(all).forEach(function(node) {
-      node.style.display = "none";
-    });
-    this._node.querySelector("#" + this._backend.value).style.display = "";
+    [...this._node.querySelectorAll("div[id]")].forEach((node2) => node2.hidden = true);
+    this._node.querySelector("#" + this._backend.value).hidden = false;
     this._backends[this._backend.value].show(this._mode);
   };
   MM.UI.IO.prototype._setCurrentBackend = function(backend) {
@@ -3947,14 +3945,8 @@
   MM.UI.Backend.show = function(mode) {
     this._mode = mode;
     this._go.innerHTML = mode.charAt(0).toUpperCase() + mode.substring(1);
-    var all = this._node.querySelectorAll("[data-for]");
-    [].concat.apply([], all).forEach(function(node) {
-      node.style.display = "none";
-    });
-    var visible = this._node.querySelectorAll("[data-for~=" + mode + "]");
-    [].concat.apply([], visible).forEach(function(node) {
-      node.style.display = "";
-    });
+    [...this._node.querySelectorAll("[data-for]")].forEach((node2) => node2.hidden = true);
+    [...this._node.querySelectorAll(`[data-for~=${mode}]`)].forEach((node2) => node2.hidden = false);
     this._go.focus();
   };
   MM.UI.Backend._action = function() {
@@ -3969,13 +3961,13 @@
   };
   MM.UI.Backend._saveDone = function() {
     MM.App.setThrobber(false);
-    MM.publish("save-done", this);
+    publish("save-done", this);
   };
   MM.UI.Backend._loadDone = function(json) {
     MM.App.setThrobber(false);
     try {
       MM.App.setMap(MM.Map.fromJSON(json));
-      MM.publish("load-done", this);
+      publish("load-done", this);
     } catch (e) {
       this._error(e);
     }
@@ -4201,8 +4193,8 @@
     this._remove = this._node.querySelector(".remove");
     this._remove.addEventListener("click", this);
     this._go.disabled = false;
-    MM.subscribe("firebase-list", this);
-    MM.subscribe("firebase-change", this);
+    subscribe("firebase-list", this);
+    subscribe("firebase-change", this);
   };
   MM.UI.Backend.Firebase.setState = function(data) {
     this._connect(data.s, data.a).then(this._load.bind(this, data.id), this._error.bind(this));
@@ -4252,9 +4244,9 @@
         break;
       case "firebase-change":
         if (data) {
-          MM.unsubscribe("item-change", this);
+          unsubscribe("item-change", this);
           MM.App.map.mergeWith(data);
-          MM.subscribe("item-change", this);
+          subscribe("item-change", this);
         } else {
           console.log("remote data disappeared");
         }
@@ -4269,7 +4261,7 @@
   };
   MM.UI.Backend.Firebase.reset = function() {
     this._backend.reset();
-    MM.unsubscribe("item-change", this);
+    unsubscribe("item-change", this);
   };
   MM.UI.Backend.Firebase._itemChange = function() {
     var map = MM.App.map;
@@ -4327,11 +4319,11 @@
     this._go.innerHTML = this._mode.charAt(0).toUpperCase() + this._mode.substring(1);
   };
   MM.UI.Backend.Firebase._loadDone = function() {
-    MM.subscribe("item-change", this);
+    subscribe("item-change", this);
     MM.UI.Backend._loadDone.apply(this, arguments);
   };
   MM.UI.Backend.Firebase._saveDone = function() {
-    MM.subscribe("item-change", this);
+    subscribe("item-change", this);
     MM.UI.Backend._saveDone.apply(this, arguments);
   };
 
@@ -4560,7 +4552,7 @@
     this._item = null;
   };
   MM.Mouse._buildGhost = function() {
-    var content = this._item.getDOM().content;
+    var content = this._item.dom.content;
     this._ghost = content.cloneNode(true);
     this._ghost.classList.add("ghost");
     this._pos[0] = content.offsetLeft;
@@ -4582,9 +4574,9 @@
         var action = new MM.Action.MoveItem(this._item, target);
         break;
       case "sibling":
-        var index = target.getParent().getChildren().indexOf(target);
+        var index = target.parent.children.indexOf(target);
         var targetIndex = index + (state.direction == "right" || state.direction == "bottom" ? 1 : 0);
-        var action = new MM.Action.MoveItem(this._item, target.getParent(), targetIndex, target.getSide());
+        var action = new MM.Action.MoveItem(this._item, target.parent, targetIndex, target.getSide());
         break;
       default:
         return;
@@ -4606,13 +4598,13 @@
       if (tmp == this._item) {
         return state;
       }
-      tmp = tmp.getParent();
+      tmp = tmp.parent;
     }
-    var w1 = this._item.getDOM().content.offsetWidth;
-    var w2 = target.getDOM().content.offsetWidth;
+    var w1 = this._item.dom.content.offsetWidth;
+    var w2 = target.dom.content.offsetWidth;
     var w = Math.max(w1, w2);
-    var h1 = this._item.getDOM().content.offsetHeight;
-    var h2 = target.getDOM().content.offsetHeight;
+    var h1 = this._item.dom.content.offsetHeight;
+    var h2 = target.dom.content.offsetHeight;
     var h = Math.max(h1, h2);
     if (target.isRoot()) {
       state.result = "append";
@@ -4620,7 +4612,7 @@
       state.result = "append";
     } else {
       state.result = "sibling";
-      var childDirection = target.getParent().getLayout().getChildDirection(target);
+      var childDirection = target.parent.getLayout().getChildDirection(target);
       var diff = -1 * (childDirection == "top" || childDirection == "bottom" ? closest.dx : closest.dy);
       if (childDirection == "left" || childDirection == "right") {
         state.direction = closest.dy < 0 ? "bottom" : "top";
@@ -4636,13 +4628,13 @@
     }
     if (this._oldDragState) {
       var item = this._oldDragState.item;
-      var node = item.getDOM().content;
-      node.style.boxShadow = "";
+      var node2 = item.dom.content;
+      node2.style.boxShadow = "";
     }
     this._oldDragState = state;
     if (state) {
       var item = state.item;
-      var node = item.getDOM().content;
+      var node2 = item.dom.content;
       var x = 0;
       var y = 0;
       var offset = 5;
@@ -4661,7 +4653,7 @@
         }
       }
       var spread = x || y ? -2 : 2;
-      node.style.boxShadow = x * offset + "px " + y * offset + "px 2px " + spread + "px #000";
+      node2.style.boxShadow = x * offset + "px " + y * offset + "px 2px " + spread + "px #000";
     }
   };
 
@@ -4722,7 +4714,7 @@
           this._syncPort();
           break;
         case "item-change":
-          if (publisher.isRoot() && publisher.getMap() == this.map) {
+          if (publisher.isRoot() && publisher.map == this.map) {
             document.title = this.map.getName() + " :: My Mind";
           }
           break;
@@ -4776,8 +4768,8 @@
       window.addEventListener("beforeunload", this);
       window.addEventListener("keyup", this);
       window.addEventListener("message", this, false);
-      MM.subscribe("ui-change", this);
-      MM.subscribe("item-change", this);
+      subscribe("ui-change", this);
+      subscribe("item-change", this);
       this._syncPort();
       this.setMap(new MM.Map());
     },

@@ -1,3 +1,11 @@
+import * as pubsub from "../pubsub.js";
+
+
+export function isMac() {
+	return !!navigator.platform.match(/mac/i);
+}
+
+
 MM.Command = Object.create(MM.Repo, {
 	keys: {value: []},
 	editMode: {value: false},
@@ -54,17 +62,17 @@ MM.Command.InsertSibling = Object.create(MM.Command, {
 MM.Command.InsertSibling.execute = function() {
 	var item = MM.App.current;
 	if (item.isRoot()) {
-		var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
+		var action = new MM.Action.InsertNewItem(item, item.children.length);
 	} else {
-		var parent = item.getParent();
-		var index = parent.getChildren().indexOf(item);
+		var parent = item.parent;
+		var index = parent.children.indexOf(item);
 		var action = new MM.Action.InsertNewItem(parent, index+1);
 	}
 	MM.App.action(action);
 
 	MM.Command.Edit.execute();
 
-	MM.publish("command-sibling");
+	pubsub.publish("command-sibling");
 }
 
 MM.Command.InsertChild = Object.create(MM.Command, {
@@ -76,17 +84,17 @@ MM.Command.InsertChild = Object.create(MM.Command, {
 });
 MM.Command.InsertChild.execute = function() {
 	var item = MM.App.current;
-	var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
+	var action = new MM.Action.InsertNewItem(item, item.children.length);
 	MM.App.action(action);
 
 	MM.Command.Edit.execute();
 
-	MM.publish("command-child");
+	pubsub.publish("command-child");
 }
 
 MM.Command.Delete = Object.create(MM.Command, {
 	label: {value: "Delete an item"},
-	keys: {value: [{keyCode: MM.isMac() ? 8 : 46}]} // Mac keyboards' "delete" button generates 8 (backspace)
+	keys: {value: [{keyCode: isMac() ? 8 : 46}]} // Mac keyboards' "delete" button generates 8 (backspace)
 });
 MM.Command.Delete.isValid = function() {
 	return MM.Command.isValid.call(this) && !MM.App.current.isRoot();
@@ -105,7 +113,7 @@ MM.Command.Swap = Object.create(MM.Command, {
 });
 MM.Command.Swap.execute = function(e) {
 	var current = MM.App.current;
-	if (current.isRoot() || current.getParent().getChildren().length < 2) { return; }
+	if (current.isRoot() || current.parent.children.length < 2) { return; }
 
 	var diff = (e.keyCode == 38 ? -1 : 1);
 	var action = new MM.Action.Swap(MM.App.current, diff);
@@ -121,7 +129,7 @@ MM.Command.Side = Object.create(MM.Command, {
 });
 MM.Command.Side.execute = function(e) {
 	var current = MM.App.current;
-	if (current.isRoot() || !current.getParent().isRoot()) { return; }
+	if (current.isRoot() || !current.parent.isRoot()) { return; }
 
 	var side = (e.keyCode == 37 ? "left" : "right");
 	var action = new MM.Action.SetSide(MM.App.current, side);
@@ -168,7 +176,7 @@ MM.Command.New.execute = function() {
 	if (!confirm("Throw away your current map and start a new one?")) { return; }
 	var map = new MM.Map();
 	MM.App.setMap(map);
-	MM.publish("map-new", this);
+	pubsub.publish("map-new", this);
 }
 
 MM.Command.ZoomIn = Object.create(MM.Command, {

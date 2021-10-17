@@ -1,3 +1,6 @@
+import * as pubsub from "../pubsub.js";
+
+
 MM.Backend.Firebase = Object.create(MM.Backend, {
 	label: {value: "Firebase"},
 	id: {value: "firebase"},
@@ -22,9 +25,9 @@ MM.Backend.Firebase.connect = function(server, auth) {
 	firebase.initializeApp(config);
 
 	this.ref = firebase.database().ref();
-	
+
 	this.ref.child("names").on("value", function(snap) {
-		MM.publish("firebase-list", this, snap.val() || {});
+		pubsub.publish("firebase-list", this, snap.val() || {});
 	}, this);
 
 	if (auth) {
@@ -55,7 +58,7 @@ MM.Backend.Firebase.save = function(data, id, name) {
 
 MM.Backend.Firebase.load = function(id) {
 	var promise = new Promise();
-	
+
 	this.ref.child("data/" + id).once("value", function(snap) {
 		var data = snap.val();
 		if (data) {
@@ -187,7 +190,7 @@ MM.Backend.Firebase._valueChange = function(snap) {
 	this._current.data = snap.val();
 	if (this._changeTimeout) { clearTimeout(this._changeTimeout); }
 	this._changeTimeout = setTimeout(function() {
-		MM.publish("firebase-change", this, this._current.data);
+		pubsub.publish("firebase-change", this, this._current.data);
 	}.bind(this), 200);
 }
 

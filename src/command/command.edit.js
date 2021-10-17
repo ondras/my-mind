@@ -38,7 +38,7 @@ MM.Command.Newline.execute = function() {
 	var br = document.createElement("br");
 	range.insertNode(br);
 	range.setStartAfter(br);
-	MM.App.current.updateSubtree();
+	MM.App.current.update({parent:true, children:true});
 }
 
 MM.Command.Cancel = Object.create(MM.Command, {
@@ -67,7 +67,7 @@ MM.Command.Style.execute = function() {
 		MM.Command.Edit.execute();
 		var selection = getSelection();
 		var range = selection.getRangeAt(0);
-		range.selectNodeContents(MM.App.current.getDOM().text);
+		range.selectNodeContents(MM.App.current.dom.text);
 		selection.removeAllRanges();
 		selection.addRange(range);
 		this.execute();

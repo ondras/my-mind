@@ -172,7 +172,7 @@ MM.Mouse._endDrag = function() {
 }
 
 MM.Mouse._buildGhost = function() {
-	var content = this._item.getDOM().content;
+	var content = this._item.dom.content;
 	this._ghost = content.cloneNode(true);
 	this._ghost.classList.add("ghost");
 	this._pos[0] = content.offsetLeft;
@@ -199,9 +199,9 @@ MM.Mouse._finishDragDrop = function(state) {
 		break;
 
 		case "sibling":
-			var index = target.getParent().getChildren().indexOf(target);
+			var index = target.parent.children.indexOf(target);
 			var targetIndex = index + (state.direction == "right" || state.direction == "bottom" ? 1 : 0);
-			var action = new MM.Action.MoveItem(this._item, target.getParent(), targetIndex, target.getSide());
+			var action = new MM.Action.MoveItem(this._item, target.parent, targetIndex, target.getSide());
 		break;
 
 		default:
@@ -229,14 +229,14 @@ MM.Mouse._computeDragState = function() {
 	var tmp = target;
 	while (!tmp.isRoot()) {
 		if (tmp == this._item) { return state; } /* drop on a child or self */
-		tmp = tmp.getParent();
+		tmp = tmp.parent;
 	}
 
-	var w1 = this._item.getDOM().content.offsetWidth;
-	var w2 = target.getDOM().content.offsetWidth;
+	var w1 = this._item.dom.content.offsetWidth;
+	var w2 = target.dom.content.offsetWidth;
 	var w = Math.max(w1, w2);
-	var h1 = this._item.getDOM().content.offsetHeight;
-	var h2 = target.getDOM().content.offsetHeight;
+	var h1 = this._item.dom.content.offsetHeight;
+	var h2 = target.dom.content.offsetHeight;
 	var h = Math.max(h1, h2);
 
 	if (target.isRoot()) { /* append here */
@@ -245,7 +245,7 @@ MM.Mouse._computeDragState = function() {
 		state.result = "append";
 	} else {
 		state.result = "sibling";
-		var childDirection = target.getParent().getLayout().getChildDirection(target);
+		var childDirection = target.parent.getLayout().getChildDirection(target);
 		var diff = -1 * (childDirection == "top" || childDirection == "bottom" ? closest.dx : closest.dy);
 
 		if (childDirection == "left" || childDirection == "right") {
@@ -263,7 +263,7 @@ MM.Mouse._visualizeDragState = function(state) {
 
 	if (this._oldDragState) { /* remove old vis */
 		var item = this._oldDragState.item;
-		var node = item.getDOM().content;
+		var node = item.dom.content;
 		node.style.boxShadow = "";
 	}
 
@@ -271,7 +271,7 @@ MM.Mouse._visualizeDragState = function(state) {
 
 	if (state) { /* show new vis */
 		var item = state.item;
-		var node = item.getDOM().content;
+		var node = item.dom.content;
 
 		var x = 0;
 		var y = 0;

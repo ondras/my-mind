@@ -1,10 +1,13 @@
+import * as pubsub from "../../pubsub.js";
+
+
 MM.UI.Backend.Firebase = Object.create(MM.UI.Backend, {
 	id: {value: "firebase"}
 });
 
 MM.UI.Backend.Firebase.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
-	
+
 	this._online = false;
 	this._itemChangeTimeout = null;
 	this._list = this._node.querySelector(".list");
@@ -18,8 +21,8 @@ MM.UI.Backend.Firebase.init = function(select) {
 	this._remove.addEventListener("click", this);
 
 	this._go.disabled = false;
-	MM.subscribe("firebase-list", this);
-	MM.subscribe("firebase-change", this);
+	pubsub.subscribe("firebase-list", this);
+	pubsub.subscribe("firebase-change", this);
 }
 
 MM.UI.Backend.Firebase.setState = function(data) {
@@ -76,9 +79,9 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 
 		case "firebase-change":
 			if (data) {
-				MM.unsubscribe("item-change", this);
+				pubsub.unsubscribe("item-change", this);
 				MM.App.map.mergeWith(data);
-				MM.subscribe("item-change", this);
+				pubsub.subscribe("item-change", this);
 			} else { /* FIXME */
 				console.log("remote data disappeared");
 			}
@@ -93,7 +96,7 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 
 MM.UI.Backend.Firebase.reset = function() {
 	this._backend.reset();
-	MM.unsubscribe("item-change", this);
+	pubsub.unsubscribe("item-change", this);
 }
 
 MM.UI.Backend.Firebase._itemChange = function() {
@@ -106,7 +109,7 @@ MM.UI.Backend.Firebase._action = function() {
 		this._connect(this._server.value, this._auth.value);
 		return;
 	}
-	
+
 	MM.UI.Backend._action.call(this);
 }
 
@@ -176,11 +179,11 @@ MM.UI.Backend.Firebase._sync = function() {
 }
 
 MM.UI.Backend.Firebase._loadDone = function() {
-	MM.subscribe("item-change", this);
+	pubsub.subscribe("item-change", this);
 	MM.UI.Backend._loadDone.apply(this, arguments);
 }
 
 MM.UI.Backend.Firebase._saveDone = function() {
-	MM.subscribe("item-change", this);
+	pubsub.subscribe("item-change", this);
 	MM.UI.Backend._saveDone.apply(this, arguments);
 }

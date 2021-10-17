@@ -13,7 +13,7 @@ MM.Repo = {
 		return all;
 	},
 	getByProperty: function(property, value) {
-		return this.getAll().filter(function(item) {
+		return this.getAll().filter(item => {
 			return item[property] == value;
 		})[0] || null;
 	},

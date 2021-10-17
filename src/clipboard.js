@@ -45,7 +45,7 @@ MM.Clipboard.paste = function(targetItem) {
 MM.Clipboard._pasteItem = function(sourceItem, targetItem) {
 	switch (this._mode) {
 		case "cut":
-			if (sourceItem == targetItem || sourceItem.getParent() == targetItem) { /* abort by pasting on the same node or the parent */
+			if (sourceItem == targetItem || sourceItem.parent == targetItem) { /* abort by pasting on the same node or the parent */
 				this._endCut();
 				return;
 			}
@@ -53,7 +53,7 @@ MM.Clipboard._pasteItem = function(sourceItem, targetItem) {
 			var item = targetItem;
 			while (!item.isRoot()) {
 				if (item == sourceItem) { return; } /* moving to a child => forbidden */
-				item = item.getParent();
+				item = item.parent;
 			}
 
 			var action = new MM.Action.MoveItem(sourceItem, targetItem);
@@ -80,7 +80,7 @@ MM.Clipboard._pastePlaintext = function(plaintext, targetItem) {
 		var action = new MM.Action.AppendItem(targetItem, root);
 		MM.App.action(action);
 	} else {
-		var actions = root.getChildren().map(function(item) {
+		var actions = root.children.map(function(item) {
 			return new MM.Action.AppendItem(targetItem, item);
 		});
 		var action = new MM.Action.Multi(actions);
@@ -92,7 +92,7 @@ MM.Clipboard.cut = function(sourceItem) {
 	this._endCut();
 
 	this._item = sourceItem;
-	this._item.getDOM().node.classList.add("cut");
+	this._item.dom.node.classList.add("cut");
 	this._mode = "cut";
 
 	this._expose();
@@ -120,7 +120,7 @@ MM.Clipboard._empty = function() {
 MM.Clipboard._endCut = function() {
 	if (this._mode != "cut") { return; }
 
-	this._item.getDOM().node.classList.remove("cut");
+	this._item.dom.node.classList.remove("cut");
 	this._item = null;
 	this._mode = "";
 }

@@ -25,7 +25,7 @@ MM.Action.InsertNewItem = function(parent, index) {
 MM.Action.InsertNewItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.InsertNewItem.prototype.perform = function() {
 	this._parent.expand(); /* FIXME remember? */
-	this._item = this._parent.insertChild(this._item, this._index);
+	this._parent.insertChild(this._item, this._index);
 	MM.App.select(this._item);
 }
 MM.Action.InsertNewItem.prototype.undo = function() {
@@ -49,8 +49,8 @@ MM.Action.AppendItem.prototype.undo = function() {
 
 MM.Action.RemoveItem = function(item) {
 	this._item = item;
-	this._parent = item.getParent();
-	this._index = this._parent.getChildren().indexOf(this._item);
+	this._parent = item.parent;
+	this._index = this._parent.children.indexOf(this._item);
 }
 MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.RemoveItem.prototype.perform = function() {
@@ -67,8 +67,8 @@ MM.Action.MoveItem = function(item, newParent, newIndex, newSide) {
 	this._newParent = newParent;
 	this._newIndex = (arguments.length < 3 ? null : newIndex);
 	this._newSide = newSide || "";
-	this._oldParent = item.getParent();
-	this._oldIndex = this._oldParent.getChildren().indexOf(item);
+	this._oldParent = item.parent;
+	this._oldIndex = this._oldParent.children.indexOf(item);
 	this._oldSide = item.getSide();
 }
 MM.Action.MoveItem.prototype = Object.create(MM.Action.prototype);
@@ -89,9 +89,9 @@ MM.Action.MoveItem.prototype.undo = function() {
 
 MM.Action.Swap = function(item, diff) {
 	this._item = item;
-	this._parent = item.getParent();
+	this._parent = item.parent;
 
-	var children = this._parent.getChildren();
+	var children = this._parent.children;
 	var sibling = this._parent.getLayout().pickSibling(this._item, diff);
 
 	this._sourceIndex = children.indexOf(this._item);
@@ -208,9 +208,9 @@ MM.Action.SetSide = function(item, side) {
 MM.Action.SetSide.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetSide.prototype.perform = function() {
 	this._item.setSide(this._side);
-	this._item.getMap().update();
+	this._item.map.update();
 }
 MM.Action.SetSide.prototype.undo = function() {
 	this._item.setSide(this._oldSide);
-	this._item.getMap().update();
+	this._item.map.update();
 }

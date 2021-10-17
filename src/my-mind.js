@@ -52,6 +52,8 @@ import "./ui/backend/ui.backend.firebase.js";
 import "./ui/backend/ui.backend.gdrive.js";
 import "./mouse.js";
 
+import * as pubsub from "./pubsub.js";
+
 
 /*
 setInterval(function() {
@@ -149,7 +151,7 @@ MM.App = {
 			break;
 
 			case "item-change":
-				if (publisher.isRoot() && publisher.getMap() == this.map) {
+				if (publisher.isRoot() && publisher.map == this.map) {
 					document.title = this.map.getName() + " :: My Mind";
 				}
 			break;
@@ -213,8 +215,8 @@ MM.App = {
 		window.addEventListener("beforeunload", this);
 		window.addEventListener("keyup", this);
 		window.addEventListener("message", this, false);
-		MM.subscribe("ui-change", this);
-		MM.subscribe("item-change", this);
+		pubsub.subscribe("ui-change", this);
+		pubsub.subscribe("item-change", this);
 
 		this._syncPort();
 		this.setMap(new MM.Map());

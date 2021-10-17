@@ -19,8 +19,8 @@ MM.Layout.Map.update = function(item) {
  * @param {MM.Item} child Child node
  */
 MM.Layout.Map.getChildDirection = function(child) {
-	while (!child.getParent().isRoot()) {
-		child = child.getParent();
+	while (!child.parent.isRoot()) {
+		child = child.parent;
 	}
 	/* child is now the sub-root node */
 
@@ -28,7 +28,7 @@ MM.Layout.Map.getChildDirection = function(child) {
 	if (side) { return side; }
 
 	var counts = {left:0, right:0};
-	var children = child.getParent().getChildren();
+	var children = child.parent.children;
 	for (var i=0;i<children.length;i++) {
 		var side = children[i].getSide();
 		if (!side) {
@@ -44,15 +44,15 @@ MM.Layout.Map.getChildDirection = function(child) {
 MM.Layout.Map.pickSibling = function(item, dir) {
 	if (item.isRoot()) { return item; }
 
-	var parent = item.getParent();
-	var children = parent.getChildren();
+	var parent = item.parent;
+	var children = parent.children;
 	if (parent.isRoot()) {
 		var side = this.getChildDirection(item);
 		children = children.filter(function(child) {
 			return (this.getChildDirection(child) == side);
 		}, this);
 	}
-	
+
 	var index = children.indexOf(item);
 	index += dir;
 	index = (index+children.length) % children.length;
@@ -62,22 +62,21 @@ MM.Layout.Map.pickSibling = function(item, dir) {
 MM.Layout.Map._layoutRoot = function(item) {
 	this._alignItem(item, "right");
 
-	var dom = item.getDOM();
+	var dom = item.dom;
 
-	var children = item.getChildren();
+	var children = item.children;
 	var childrenLeft = [];
 	var childrenRight = [];
 
-	children.forEach(function(child, index) {
-		var node = child.getDOM().node;
+	children.forEach(child => {
 		var side = this.getChildDirection(child);
-		
+
 		if (side == "left") {
 			childrenLeft.push(child);
 		} else {
 			childrenRight.push(child);
 		}
-	}, this);
+	});
 
 	var bboxLeft = this._computeChildrenBBox(childrenLeft, 1);
 	var bboxRight = this._computeChildrenBBox(childrenRight, 1);
@@ -96,10 +95,8 @@ MM.Layout.Map._layoutRoot = function(item) {
 	left += bboxRight[0];
 
 	dom.content.style.top = Math.round((height - dom.content.offsetHeight)/2) + "px";
-	dom.node.style.height = height + "px";
-	dom.node.style.width = left + "px";
 
-	this._anchorCanvas(item);
+	item.size = [left, height];
 	this._drawRootConnectors(item, "left", childrenLeft);
 	this._drawRootConnectors(item, "right", childrenRight);
 }
@@ -107,7 +104,7 @@ MM.Layout.Map._layoutRoot = function(item) {
 MM.Layout.Map._drawRootConnectors = function(item, side, children) {
 	if (children.length == 0 || item.isCollapsed()) { return; }
 
-	var dom = item.getDOM();
+	var dom = item.dom;
 	var canvas = dom.canvas;
 	var ctx = canvas.getContext("2d");
 	var R = this.SPACING_RANK/2;
@@ -120,7 +117,7 @@ MM.Layout.Map._drawRootConnectors = function(item, side, children) {
 		var child = children[i];
 
 		var x2 = this._getChildAnchor(child, side);
-		var y2 = child.getShape().getVerticalAnchor(child) + child.getDOM().node.offsetTop;
+		var y2 = child.getShape().getVerticalAnchor(child) + child.position[1];
 		var angle = Math.atan2(y2-y1, x2-x1) + Math.PI/2;
 		var dx = Math.cos(angle) * half;
 		var dy = Math.sin(angle) * half;
