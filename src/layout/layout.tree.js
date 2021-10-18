@@ -17,16 +17,17 @@ MM.Layout.Tree.create = function(direction, id, label) {
 	return layout;
 }
 
-MM.Layout.Tree.update = function(item) {
-	var side = this.childDirection;
-	if (!item.isRoot()) {
-		side = item.parent.resolvedLayout.getChildDirection(item);
+MM.Layout.Tree.computeAlignment = function(item) {
+	if (item.isRoot()) {
+		return this.childDirection;
+	} else {
+		return item.parent.resolvedLayout.getChildDirection(item);
 	}
-	this._alignItem(item, side);
+}
 
+MM.Layout.Tree.update = function(item) {
 	this._layoutItem(item, this.childDirection);
 	this._drawLines(item, this.childDirection);
-	return this;
 }
 
 /**
@@ -56,8 +57,6 @@ MM.Layout.Tree._layoutItem = function(item, rankDirection) {
 	if (rankDirection == "left") { labelPos = rankSize - contentSize[0]; }
 
 	item.contentPosition = [labelPos, 0];
-
-	return this;
 }
 
 MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox) {

@@ -25,6 +25,10 @@ ul {
 	list-style: none;
 }
 
+svg {
+	position: absolute;
+}
+
 #port {
 	overflow: hidden;
 	font-size: 15px;

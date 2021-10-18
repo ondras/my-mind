@@ -1,4 +1,5 @@
 import Item from "./item.js";
+import * as svg from "./svg.js";
 
 
 MM.Map = function(options) {
@@ -10,6 +11,7 @@ MM.Map = function(options) {
 	this._root = null;
 	this._visible = false;
 	this._position = [0, 0];
+	this._svg = svg.node("svg");
 
 	let root = new Item();
 	root.text = o.root;
@@ -89,9 +91,15 @@ MM.Map.prototype.update = function() {
 }
 
 MM.Map.prototype.show = function(where) {
-	where.appendChild(this._root.dom.node);
+	where.append(this._svg);
+	this._svg.append(this._root.dom.node);
 	this._visible = true;
 	this._root.update({parent:true, children:true});
+
+	const { size } = this._root;
+	this._svg.setAttribute("width", size[0]);
+	this._svg.setAttribute("height", size[1]);
+
 	this.center();
 	MM.App.select(this._root);
 	return this;
@@ -259,7 +267,8 @@ MM.Map.prototype._getPickCandidates = function(currentRect, item, direction, can
 
 MM.Map.prototype._moveTo = function(left, top) {
 	this._position = [left, top];
-	this._root.position = this._position;
+	this._svg.style.left = `${left}px`;
+	this._svg.style.top = `${top}px`;
 }
 
 MM.Map.prototype._setRoot = function(item) {

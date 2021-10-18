@@ -121,6 +121,10 @@ MM.Layout._computeChildrenBBox = function(children, childIndex) {
 	return bbox;
 }
 
+MM.Layout.computeAlignment = function(item) {
+	return "right";
+}
+
 MM.Layout._alignItem = function(item, side) {
 	// FIXME move to Item ? Use flexbox order instead?
 	var dom = item.dom;

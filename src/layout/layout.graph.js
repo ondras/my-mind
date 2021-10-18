@@ -17,13 +17,15 @@ MM.Layout.Graph.create = function(direction, id, label) {
 	return layout;
 }
 
-MM.Layout.Graph.update = function(item) {
-	var side = this.childDirection;
-	if (!item.isRoot()) {
-		side = item.parent.resolvedLayout.getChildDirection(item);
+MM.Layout.Graph.computeAlignment = function(item) {
+	if (item.isRoot()) {
+		return this.childDirection;
+	} else {
+		return item.parent.resolvedLayout.getChildDirection(item);
 	}
-	this._alignItem(item, side);
+}
 
+MM.Layout.Graph.update = function(item) {
 	this._layoutItem(item, this.childDirection);
 
 	if (this.childDirection == "left" || this.childDirection == "right") {
@@ -31,8 +33,6 @@ MM.Layout.Graph.update = function(item) {
 	} else {
 		this._drawLinesVertical(item, this.childDirection);
 	}
-
-	return this;
 }
 
 
@@ -71,8 +71,6 @@ MM.Layout.Graph._layoutItem = function(item, rankDirection) {
 	let contentPosition = [Math.round((childSize - contentSize[childIndex])/2), labelPos];
 	if (rankIndex == 0) { contentPosition = contentPosition.reverse(); }
 	item.contentPosition = contentPosition;
-
-	return this;
 }
 
 MM.Layout.Graph._layoutChildren = function(children, rankDirection, offset, bbox) {
@@ -204,7 +202,6 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 	ctx.moveTo(x, y1);
 	ctx.lineTo(x, y2);
 	ctx.stroke();
-
 
 	if (children.length == 1) { return; }
 

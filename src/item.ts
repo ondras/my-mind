@@ -48,14 +48,13 @@ export default class Item {
 	protected _layout: Layout = null;
 
 	dom = {
-		node: html.node("li"),
+		node: svg.group(),
 		content: html.node("div"),
 		notes: html.node("div"),
 		status: html.node("span"),
 		icon: html.node("span"),
 		value: html.node("span"),
 		text: html.node("div"),
-		children: html.node("ul"),
 		toggle: html.node("div"),
 		canvas: html.node("canvas")
 	}
@@ -79,11 +78,16 @@ export default class Item {
 		dom.value.classList.add("value");
 		dom.text.classList.add("text");
 		dom.toggle.classList.add("toggle");
-		dom.children.classList.add("children");
 		dom.icon.classList.add("icon");
 
-		dom.node.append(dom.canvas, dom.content);
-		dom.content.append(dom.text, dom.notes); /* status+value are appended in layout */
+		let foCanvas = svg.foreignObject();
+		let foContent = svg.foreignObject();
+		dom.node.append(foCanvas, foContent);
+
+		foCanvas.append(dom.canvas);
+		foContent.append(dom.content);
+
+		dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
 		/* toggle+children are appended when children exist */
 
 		dom.toggle.addEventListener("click", this);
@@ -100,52 +104,47 @@ export default class Item {
 	// fixme zrusit
 	get ctx() { return this.dom.canvas.getContext("2d"); }
 
-	get metrics() { // FIXME bud tohle, nebo size/position
-		const { dom } = this, { node } = dom;
-		return {
-			left: node.offsetLeft,
-			top: node.offsetTop,
-			width: node.offsetWidth,
-			height: node.offsetHeight,
-		}
-	}
-
 	get size() {
-		const { node } = this.dom;
-		return [node.offsetWidth, node.offsetHeight];
+		const { canvas } = this.dom;
+		return [canvas.width, canvas.height];
 	}
 	set size(size: number[]) {
 		const { node, canvas } = this.dom;
-		node.style.width = `${size[0]}px`;
-		node.style.height = `${size[1]}px`;
-
 		canvas.width = size[0];
 		canvas.height = size[1];
+
+		let fo = canvas.parentNode as SVGForeignObjectElement;
+		fo.setAttribute("width", String(size[0]));
+		fo.setAttribute("height", String(size[1]));
 	}
 
 	get position() {
 		const { node } = this.dom;
-		return [node.offsetLeft, node.offsetTop];
+		const transform = node.getAttribute("transform");
+		return transform.match(/\d+/g).map(Number);
 	}
 	set position(position: number[]) {
 		const { node } = this.dom;
-		node.style.left = `${position[0]}px`;
-		node.style.top = `${position[1]}px`;
+		const transform = `translate(${position.join(" ")})`;
+		node.setAttribute("transform", transform);
 	}
 
 	get contentSize() {
 		const { content } = this.dom;
-		return [content.offsetWidth, content.offsetHeight];
+		const fo = content.parentNode as SVGForeignObjectElement;
+		return [fo.getAttribute("width"), fo.getAttribute("height")].map(Number);
 	}
 
 	get contentPosition() {
 		const { content } = this.dom;
-		return [content.offsetLeft, content.offsetTop];
+		const fo = content.parentNode as SVGForeignObjectElement;
+		return [fo.getAttribute("x"), fo.getAttribute("y")].map(Number);
 	}
 	set contentPosition(position: number[]) {
 		const { content } = this.dom;
-		content.style.left = `${position[0]}px`;
-		content.style.top = `${position[1]}px`;
+		const fo = content.parentNode as SVGForeignObjectElement;
+		fo.setAttribute("x", String(position[0]));
+		fo.setAttribute("y", String(position[1]));
 	}
 
 	toJSON() {
@@ -305,12 +304,13 @@ export default class Item {
 	update(options: Partial<typeof UPDATE_OPTIONS> = {}) {
 		options = Object.assign({}, UPDATE_OPTIONS, options);
 
-		var map = this.map;
+		const { map, children } = this;
+
 		if (!map || !map.isVisible()) { return; }
 
 		if (options.children) { // recurse downwards?
 			let childUpdateOptions = { parent: false, children: true };
-			this.children.forEach(child => child.update(childUpdateOptions));
+			children.forEach(child => child.update(childUpdateOptions));
 		}
 
 		pubsub.publish("item-change", this);
@@ -319,12 +319,23 @@ export default class Item {
 		this.updateIcon();
 		this.updateValue();
 
-		this.dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
-		this.dom.node.classList.toggle("collapsed", this._collapsed);
 
-		this.dom.node.dataset.shape = this.resolvedShape.id; // applies css => modifies dimensions (necessary for layout)
-		this.resolvedLayout.update(this);
-		this.resolvedShape.update(this); // draws into canvas -> must be called after layout FIXME refactor after svg
+		const { resolvedLayout, resolvedShape, dom } = this;
+
+		dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
+		dom.node.classList.toggle("collapsed", this._collapsed);
+		dom.node.dataset.shape = resolvedShape.id; // applies css => modifies dimensions (necessary for layout)
+		dom.node.dataset.align = resolvedLayout.computeAlignment(this); // applies css => modifies dimensions (necessary for layout)
+
+		let fo = dom.content.parentNode as SVGForeignObjectElement;
+		console.log(dom.content.offsetHeight, dom.text.textContent);
+		fo.setAttribute("width", String(dom.content.offsetWidth));
+		fo.setAttribute("height", String(dom.content.offsetHeight));
+
+//		if (this.id == "ezwvmtko") debugger;
+
+		resolvedLayout.update(this);
+		resolvedShape.update(this); // draws into canvas -> must be called after layout FIXME refactor after svg
 
 		// recurse upwards?
 		if (options.parent && !this.isRoot()) { this.parent.update(); }
@@ -481,14 +492,13 @@ export default class Item {
 
 		if (!this.children.length) {
 			this.dom.node.appendChild(this.dom.toggle);
-			this.dom.node.appendChild(this.dom.children);
 		}
 
 		if (arguments.length < 2) { index = this.children.length; }
 
 		var next = null;
 		if (index < this.children.length) { next = this.children[index].dom.node; }
-		this.dom.children.insertBefore(child.dom.node, next);
+		this.dom.node.insertBefore(child.dom.node, next);
 		this.children.splice(index, 0, child);
 
 		child.parent = this;
@@ -504,7 +514,6 @@ export default class Item {
 
 		if (!this.children.length) {
 			this.dom.toggle.parentNode.removeChild(this.dom.toggle);
-			this.dom.children.parentNode.removeChild(this.dom.children);
 		}
 
 		this.update();

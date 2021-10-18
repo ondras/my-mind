@@ -59,9 +59,15 @@ MM.Layout.Map.pickSibling = function(item, dir) {
 	return children[index];
 }
 
-MM.Layout.Map._layoutRoot = function(item) {
-	this._alignItem(item, "right");
+MM.Layout.Map.computeAlignment = function(item) {
+	if (item.isRoot()) {
+		return "right";
+	} else {
+		return "FIXME";
+	}
+}
 
+MM.Layout.Map._layoutRoot = function(item) {
 	const { children, contentSize } = item;
 	var childrenLeft = [];
 	var childrenRight = [];
@@ -127,5 +133,4 @@ MM.Layout.Map._drawRootConnectors = function(item, side, children) {
 		ctx.fill();
 		ctx.stroke();
 	}
-
 }

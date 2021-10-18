@@ -1,28 +1,24 @@
-.item {
-	position: absolute;
-}
-
 .item.cut {
 	opacity: 0.5;
 }
 
-.item.collapsed .children {
+.item.collapsed .item {
 	display: none;
 }
 
 .content {
 	position: relative;
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
 	white-space: nowrap;
 	cursor: pointer;
 }
 
 .content > * {
-	vertical-align: middle;
+	flex: none;
 }
 
 .text {
-	display: inline-block;
 	text-align: center;
 	min-width: 0.5em;
 	min-height: 1.3em;

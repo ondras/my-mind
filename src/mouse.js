@@ -184,8 +184,6 @@ MM.Mouse._moveGhost = function(dx, dy) {
 	this._pos[1] += dy;
 	this._ghost.style.left = this._pos[0] + "px";
 	this._ghost.style.top = this._pos[1] + "px";
-
-	var state = this._computeDragState();
 }
 
 MM.Mouse._finishDragDrop = function(state) {

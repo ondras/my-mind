@@ -120,9 +120,25 @@
 
   // .js/html.js
   function node(name, attrs) {
-    let node2 = document.createElement(name);
-    Object.assign(node2, attrs);
-    return node2;
+    let node3 = document.createElement(name);
+    Object.assign(node3, attrs);
+    return node3;
+  }
+
+  // .js/svg.js
+  var NS = "http://www.w3.org/2000/svg";
+  function node2(name) {
+    let node3 = document.createElementNS(NS, name);
+    return node3;
+  }
+  function group() {
+    return node2("g");
+  }
+  function foreignObject() {
+    let fo = node2("foreignObject");
+    fo.setAttribute("width", "1");
+    fo.setAttribute("height", "1");
+    return fo;
   }
 
   // .js/pubsub.js
@@ -172,14 +188,13 @@
       this._shape = null;
       this._layout = null;
       this.dom = {
-        node: node("li"),
+        node: group(),
         content: node("div"),
         notes: node("div"),
         status: node("span"),
         icon: node("span"),
         value: node("span"),
         text: node("div"),
-        children: node("ul"),
         toggle: node("div"),
         canvas: node("canvas")
       };
@@ -194,10 +209,13 @@
       dom.value.classList.add("value");
       dom.text.classList.add("text");
       dom.toggle.classList.add("toggle");
-      dom.children.classList.add("children");
       dom.icon.classList.add("icon");
-      dom.node.append(dom.canvas, dom.content);
-      dom.content.append(dom.text, dom.notes);
+      let foCanvas = foreignObject();
+      let foContent = foreignObject();
+      dom.node.append(foCanvas, foContent);
+      foCanvas.append(dom.canvas);
+      foContent.append(dom.content);
+      dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
       dom.toggle.addEventListener("click", this);
     }
     static fromJSON(data) {
@@ -216,47 +234,43 @@
     get ctx() {
       return this.dom.canvas.getContext("2d");
     }
-    get metrics() {
-      const { dom } = this, { node: node2 } = dom;
-      return {
-        left: node2.offsetLeft,
-        top: node2.offsetTop,
-        width: node2.offsetWidth,
-        height: node2.offsetHeight
-      };
-    }
     get size() {
-      const { node: node2 } = this.dom;
-      return [node2.offsetWidth, node2.offsetHeight];
+      const { canvas } = this.dom;
+      return [canvas.width, canvas.height];
     }
     set size(size) {
-      const { node: node2, canvas } = this.dom;
-      node2.style.width = `${size[0]}px`;
-      node2.style.height = `${size[1]}px`;
+      const { node: node3, canvas } = this.dom;
       canvas.width = size[0];
       canvas.height = size[1];
+      let fo = canvas.parentNode;
+      fo.setAttribute("width", String(size[0]));
+      fo.setAttribute("height", String(size[1]));
     }
     get position() {
-      const { node: node2 } = this.dom;
-      return [node2.offsetLeft, node2.offsetTop];
+      const { node: node3 } = this.dom;
+      const transform = node3.getAttribute("transform");
+      return transform.match(/\d+/g).map(Number);
     }
     set position(position) {
-      const { node: node2 } = this.dom;
-      node2.style.left = `${position[0]}px`;
-      node2.style.top = `${position[1]}px`;
+      const { node: node3 } = this.dom;
+      const transform = `translate(${position.join(" ")})`;
+      node3.setAttribute("transform", transform);
     }
     get contentSize() {
       const { content } = this.dom;
-      return [content.offsetWidth, content.offsetHeight];
+      const fo = content.parentNode;
+      return [fo.getAttribute("width"), fo.getAttribute("height")].map(Number);
     }
     get contentPosition() {
       const { content } = this.dom;
-      return [content.offsetLeft, content.offsetTop];
+      const fo = content.parentNode;
+      return [fo.getAttribute("x"), fo.getAttribute("y")].map(Number);
     }
     set contentPosition(position) {
       const { content } = this.dom;
-      content.style.left = `${position[0]}px`;
-      content.style.top = `${position[1]}px`;
+      const fo = content.parentNode;
+      fo.setAttribute("x", String(position[0]));
+      fo.setAttribute("y", String(position[1]));
     }
     toJSON() {
       let data = {
@@ -425,23 +439,29 @@
     }
     update(options = {}) {
       options = Object.assign({}, UPDATE_OPTIONS, options);
-      var map = this.map;
+      const { map, children } = this;
       if (!map || !map.isVisible()) {
         return;
       }
       if (options.children) {
         let childUpdateOptions = { parent: false, children: true };
-        this.children.forEach((child) => child.update(childUpdateOptions));
+        children.forEach((child) => child.update(childUpdateOptions));
       }
       publish("item-change", this);
       this.updateStatus();
       this.updateIcon();
       this.updateValue();
-      this.dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
-      this.dom.node.classList.toggle("collapsed", this._collapsed);
-      this.dom.node.dataset.shape = this.resolvedShape.id;
-      this.resolvedLayout.update(this);
-      this.resolvedShape.update(this);
+      const { resolvedLayout, resolvedShape, dom } = this;
+      dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
+      dom.node.classList.toggle("collapsed", this._collapsed);
+      dom.node.dataset.shape = resolvedShape.id;
+      dom.node.dataset.align = resolvedLayout.computeAlignment(this);
+      let fo = dom.content.parentNode;
+      console.log(dom.content.offsetHeight, dom.text.textContent);
+      fo.setAttribute("width", String(dom.content.offsetWidth));
+      fo.setAttribute("height", String(dom.content.offsetHeight));
+      resolvedLayout.update(this);
+      resolvedShape.update(this);
       if (options.parent && !this.isRoot()) {
         this.parent.update();
       }
@@ -577,10 +597,10 @@
         return this._shape;
       }
       let depth = 0;
-      let node2 = this;
-      while (!node2.isRoot()) {
+      let node3 = this;
+      while (!node3.isRoot()) {
         depth++;
-        node2 = node2.parent;
+        node3 = node3.parent;
       }
       switch (depth) {
         case 0:
@@ -612,7 +632,6 @@
       }
       if (!this.children.length) {
         this.dom.node.appendChild(this.dom.toggle);
-        this.dom.node.appendChild(this.dom.children);
       }
       if (arguments.length < 2) {
         index = this.children.length;
@@ -621,19 +640,18 @@
       if (index < this.children.length) {
         next = this.children[index].dom.node;
       }
-      this.dom.children.insertBefore(child.dom.node, next);
+      this.dom.node.insertBefore(child.dom.node, next);
       this.children.splice(index, 0, child);
       child.parent = this;
     }
     removeChild(child) {
       var index = this.children.indexOf(child);
       this.children.splice(index, 1);
-      var node2 = child.dom.node;
-      node2.parentNode.removeChild(node2);
+      var node3 = child.dom.node;
+      node3.parentNode.removeChild(node3);
       child.parent = null;
       if (!this.children.length) {
         this.dom.toggle.parentNode.removeChild(this.dom.toggle);
-        this.dom.children.parentNode.removeChild(this.dom.children);
       }
       this.update();
     }
@@ -723,8 +741,8 @@
       }
     }
   };
-  function findLinks(node2) {
-    var children = [].slice.call(node2.childNodes);
+  function findLinks(node3) {
+    var children = [].slice.call(node3.childNodes);
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeType) {
@@ -742,14 +760,14 @@
             var link = document.createElement("a");
             link.innerHTML = link.href = result[0];
             if (before) {
-              node2.insertBefore(document.createTextNode(before), child);
+              node3.insertBefore(document.createTextNode(before), child);
             }
-            node2.insertBefore(link, child);
+            node3.insertBefore(link, child);
             if (after) {
               child.nodeValue = after;
               i--;
             } else {
-              node2.removeChild(child);
+              node3.removeChild(child);
             }
           }
           break;
@@ -778,6 +796,7 @@
     this._root = null;
     this._visible = false;
     this._position = [0, 0];
+    this._svg = node2("svg");
     let root = new Item();
     root.text = o.root;
     root.setLayout(o.layout);
@@ -799,20 +818,20 @@
   MM.Map.prototype.mergeWith = function(data) {
     var ids = [];
     var current = MM.App.current;
-    var node2 = current;
-    while (node2 != this) {
-      ids.push(node2.id);
-      node2 = node2.parent;
+    var node3 = current;
+    while (node3 != this) {
+      ids.push(node3.id);
+      node3 = node3.parent;
     }
     this._root.mergeWith(data.root);
     if (current.map) {
-      var node2 = current.parent;
+      var node3 = current.parent;
       var hidden = false;
-      while (node2 != this) {
-        if (node2.isCollapsed()) {
+      while (node3 != this) {
+        if (node3.isCollapsed()) {
           hidden = true;
         }
-        node2 = node2.parent;
+        node3 = node3.parent;
       }
       if (!hidden) {
         return;
@@ -843,9 +862,13 @@
     return this;
   };
   MM.Map.prototype.show = function(where) {
-    where.appendChild(this._root.dom.node);
+    where.append(this._svg);
+    this._svg.append(this._root.dom.node);
     this._visible = true;
     this._root.update({ parent: true, children: true });
+    const { size } = this._root;
+    this._svg.setAttribute("width", size[0]);
+    this._svg.setAttribute("height", size[1]);
     this.center();
     MM.App.select(this._root);
     return this;
@@ -889,33 +912,33 @@
     });
     return all[0];
   };
-  MM.Map.prototype.getItemFor = function(node2) {
+  MM.Map.prototype.getItemFor = function(node3) {
     var port = this._root.dom.node.parentNode;
-    while (node2 != port && !node2.classList.contains("content")) {
-      node2 = node2.parentNode;
+    while (node3 != port && !node3.classList.contains("content")) {
+      node3 = node3.parentNode;
     }
-    if (node2 == port) {
+    if (node3 == port) {
       return null;
     }
-    var scan = function(item, node3) {
-      if (item.dom.content == node3) {
+    var scan = function(item, node4) {
+      if (item.dom.content == node4) {
         return item;
       }
       var children = item.children;
       for (var i = 0; i < children.length; i++) {
-        var result = scan(children[i], node3);
+        var result = scan(children[i], node4);
         if (result) {
           return result;
         }
       }
       return null;
     };
-    return scan(this._root, node2);
+    return scan(this._root, node3);
   };
   MM.Map.prototype.ensureItemVisibility = function(item) {
     var padding = 10;
-    var node2 = item.dom.content;
-    var itemRect = node2.getBoundingClientRect();
+    var node3 = item.dom.content;
+    var itemRect = node3.getBoundingClientRect();
     var root = this._root.dom.node;
     var parentRect = root.parentNode.getBoundingClientRect();
     var delta = [0, 0];
@@ -970,8 +993,8 @@
         this._getPickCandidates(currentRect, child, direction, candidates);
       }, this);
     }
-    var node2 = item.dom.content;
-    var rect = node2.getBoundingClientRect();
+    var node3 = item.dom.content;
+    var rect = node3.getBoundingClientRect();
     if (direction == "left" || direction == "right") {
       var x1 = currentRect.left + currentRect.width / 2;
       var x2 = rect.left + rect.width / 2;
@@ -1008,7 +1031,8 @@
   };
   MM.Map.prototype._moveTo = function(left, top) {
     this._position = [left, top];
-    this._root.position = this._position;
+    this._svg.style.left = `${left}px`;
+    this._svg.style.top = `${top}px`;
   };
   MM.Map.prototype._setRoot = function(item) {
     this._root = item;
@@ -1022,12 +1046,12 @@
     window.addEventListener("keypress", this);
   };
   MM.Keyboard.handleEvent = function(e) {
-    var node2 = document.activeElement;
-    while (node2 && node2 != document) {
-      if (node2.classList.contains("ui")) {
+    var node3 = document.activeElement;
+    while (node3 && node3 != document) {
+      if (node3.classList.contains("ui")) {
         return;
       }
-      node2 = node2.parentNode;
+      node3 = node3.parentNode;
     }
     var commands = MM.Command.getAll();
     for (var i = 0; i < commands.length; i++) {
@@ -1980,9 +2004,9 @@
     return children[index];
   };
   MM.Layout._anchorToggle = function(item, x, y, side) {
-    var node2 = item.dom.toggle;
-    var w = node2.offsetWidth;
-    var h = node2.offsetHeight;
+    var node3 = item.dom.toggle;
+    var w = node3.offsetWidth;
+    var h = node3.offsetHeight;
     var l = x;
     var t = y;
     switch (side) {
@@ -2001,8 +2025,8 @@
         l -= w / 2;
         break;
     }
-    node2.style.left = Math.round(l) + "px";
-    node2.style.top = Math.round(t) + "px";
+    node3.style.left = Math.round(l) + "px";
+    node3.style.top = Math.round(t) + "px";
   };
   MM.Layout._getChildAnchor = function(item, side) {
     let { position, contentPosition, contentSize } = item;
@@ -2031,6 +2055,9 @@
       bbox[childIndex] += this.SPACING_CHILD * (children.length - 1);
     }
     return bbox;
+  };
+  MM.Layout.computeAlignment = function(item) {
+    return "right";
   };
   MM.Layout._alignItem = function(item, side) {
     var dom = item.dom;
@@ -2065,19 +2092,20 @@
     MM.Layout.ALL.push(layout);
     return layout;
   };
-  MM.Layout.Graph.update = function(item) {
-    var side = this.childDirection;
-    if (!item.isRoot()) {
-      side = item.parent.resolvedLayout.getChildDirection(item);
+  MM.Layout.Graph.computeAlignment = function(item) {
+    if (item.isRoot()) {
+      return this.childDirection;
+    } else {
+      return item.parent.resolvedLayout.getChildDirection(item);
     }
-    this._alignItem(item, side);
+  };
+  MM.Layout.Graph.update = function(item) {
     this._layoutItem(item, this.childDirection);
     if (this.childDirection == "left" || this.childDirection == "right") {
       this._drawLinesHorizontal(item, this.childDirection);
     } else {
       this._drawLinesVertical(item, this.childDirection);
     }
-    return this;
   };
   MM.Layout.Graph._layoutItem = function(item, rankDirection) {
     var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
@@ -2115,7 +2143,6 @@
       contentPosition = contentPosition.reverse();
     }
     item.contentPosition = contentPosition;
-    return this;
   };
   MM.Layout.Graph._layoutChildren = function(children, rankDirection, offset, bbox) {
     var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
@@ -2277,15 +2304,16 @@
     MM.Layout.ALL.push(layout);
     return layout;
   };
-  MM.Layout.Tree.update = function(item) {
-    var side = this.childDirection;
-    if (!item.isRoot()) {
-      side = item.parent.resolvedLayout.getChildDirection(item);
+  MM.Layout.Tree.computeAlignment = function(item) {
+    if (item.isRoot()) {
+      return this.childDirection;
+    } else {
+      return item.parent.resolvedLayout.getChildDirection(item);
     }
-    this._alignItem(item, side);
+  };
+  MM.Layout.Tree.update = function(item) {
     this._layoutItem(item, this.childDirection);
     this._drawLines(item, this.childDirection);
-    return this;
   };
   MM.Layout.Tree._layoutItem = function(item, rankDirection) {
     const { contentSize } = item;
@@ -2307,7 +2335,6 @@
       labelPos = rankSize - contentSize[0];
     }
     item.contentPosition = [labelPos, 0];
-    return this;
   };
   MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox) {
     children.forEach((child) => {
@@ -2403,8 +2430,14 @@
     index = (index + children.length) % children.length;
     return children[index];
   };
+  MM.Layout.Map.computeAlignment = function(item) {
+    if (item.isRoot()) {
+      return "right";
+    } else {
+      return "FIXME";
+    }
+  };
   MM.Layout.Map._layoutRoot = function(item) {
-    this._alignItem(item, "right");
     const { children, contentSize } = item;
     var childrenLeft = [];
     var childrenRight = [];
@@ -2616,36 +2649,36 @@
     }
     return elm;
   };
-  MM.Format.FreeMind._parseNode = function(node2, parent) {
-    var json = this._parseAttributes(node2, parent);
-    for (var i = 0; i < node2.childNodes.length; i++) {
-      var child = node2.childNodes[i];
+  MM.Format.FreeMind._parseNode = function(node3, parent) {
+    var json = this._parseAttributes(node3, parent);
+    for (var i = 0; i < node3.childNodes.length; i++) {
+      var child = node3.childNodes[i];
       if (child.nodeName.toLowerCase() == "node") {
         json.children.push(this._parseNode(child, json));
       }
     }
     return json;
   };
-  MM.Format.FreeMind._parseAttributes = function(node2, parent) {
+  MM.Format.FreeMind._parseAttributes = function(node3, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node2.getAttribute("TEXT") || ""),
-      id: node2.getAttribute("ID")
+      text: MM.Format.nl2br(node3.getAttribute("TEXT") || ""),
+      id: node3.getAttribute("ID")
     };
-    var position = node2.getAttribute("POSITION");
+    var position = node3.getAttribute("POSITION");
     if (position) {
       json.side = position;
     }
-    var style = node2.getAttribute("STYLE");
+    var style = node3.getAttribute("STYLE");
     if (style == "bubble") {
       json.shape = "box";
     } else {
       json.shape = parent.shape;
     }
-    if (node2.getAttribute("FOLDED") == "true") {
+    if (node3.getAttribute("FOLDED") == "true") {
       json.collapsed = 1;
     }
-    var children = node2.children;
+    var children = node3.children;
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeName.toLowerCase()) {
@@ -2677,23 +2710,23 @@
     label: { value: "Mind Map Architect" },
     extension: { value: "mma" }
   });
-  MM.Format.MMA._parseAttributes = function(node2, parent) {
+  MM.Format.MMA._parseAttributes = function(node3, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node2.getAttribute("title") || ""),
+      text: MM.Format.nl2br(node3.getAttribute("title") || ""),
       shape: "box"
     };
-    if (node2.getAttribute("expand") == "false") {
+    if (node3.getAttribute("expand") == "false") {
       json.collapsed = 1;
     }
-    var direction = node2.getAttribute("direction");
+    var direction = node3.getAttribute("direction");
     if (direction == "0") {
       json.side = "left";
     }
     if (direction == "1") {
       json.side = "right";
     }
-    var color = node2.getAttribute("color");
+    var color = node3.getAttribute("color");
     if (color) {
       var re = color.match(/^#(....)(....)(....)$/);
       if (re) {
@@ -2706,7 +2739,7 @@
       }
       json.color = "#" + [r, g, b].join("");
     }
-    json.icon = node2.getAttribute("icon");
+    json.icon = node3.getAttribute("icon");
     return json;
   };
   MM.Format.MMA._serializeAttributes = function(doc, json) {
@@ -3380,14 +3413,14 @@
           this.toggle();
           return;
         }
-        var node2 = e.target;
-        while (node2 != document) {
-          var command = node2.getAttribute("data-command");
+        var node3 = e.target;
+        while (node3 != document) {
+          var command = node3.getAttribute("data-command");
           if (command) {
             MM.Command[command].execute();
             return;
           }
-          node2 = node2.parentNode;
+          node3 = node3.parentNode;
         }
         break;
       case "change":
@@ -3443,10 +3476,10 @@
     return this._select.querySelector("option[value='" + value + "']");
   };
   MM.UI.Layout.prototype._buildGroup = function(label) {
-    var node2 = document.createElement("optgroup");
-    node2.label = label;
-    this._select.appendChild(node2);
-    return node2;
+    var node3 = document.createElement("optgroup");
+    node3.label = label;
+    this._select.appendChild(node3);
+    return node3;
   };
 
   // .js/ui/ui.shape.js
@@ -3799,7 +3832,7 @@
     }
   };
   MM.UI.IO.prototype._syncBackend = function() {
-    [...this._node.querySelectorAll("div[id]")].forEach((node2) => node2.hidden = true);
+    [...this._node.querySelectorAll("div[id]")].forEach((node3) => node3.hidden = true);
     this._node.querySelector("#" + this._backend.value).hidden = false;
     this._backends[this._backend.value].show(this._mode);
   };
@@ -3866,8 +3899,8 @@
   MM.UI.Backend.show = function(mode) {
     this._mode = mode;
     this._go.innerHTML = mode.charAt(0).toUpperCase() + mode.substring(1);
-    [...this._node.querySelectorAll("[data-for]")].forEach((node2) => node2.hidden = true);
-    [...this._node.querySelectorAll(`[data-for~=${mode}]`)].forEach((node2) => node2.hidden = false);
+    [...this._node.querySelectorAll("[data-for]")].forEach((node3) => node3.hidden = true);
+    [...this._node.querySelectorAll(`[data-for~=${mode}]`)].forEach((node3) => node3.hidden = false);
     this._go.focus();
   };
   MM.UI.Backend._action = function() {
@@ -4484,7 +4517,6 @@
     this._pos[1] += dy;
     this._ghost.style.left = this._pos[0] + "px";
     this._ghost.style.top = this._pos[1] + "px";
-    var state = this._computeDragState();
   };
   MM.Mouse._finishDragDrop = function(state) {
     this._visualizeDragState(null);
@@ -4545,13 +4577,13 @@
     }
     if (this._oldDragState) {
       var item = this._oldDragState.item;
-      var node2 = item.dom.content;
-      node2.style.boxShadow = "";
+      var node3 = item.dom.content;
+      node3.style.boxShadow = "";
     }
     this._oldDragState = state;
     if (state) {
       var item = state.item;
-      var node2 = item.dom.content;
+      var node3 = item.dom.content;
       var x = 0;
       var y = 0;
       var offset = 5;
@@ -4570,7 +4602,7 @@
         }
       }
       var spread = x || y ? -2 : 2;
-      node2.style.boxShadow = x * offset + "px " + y * offset + "px 2px " + spread + "px #000";
+      node3.style.boxShadow = x * offset + "px " + y * offset + "px 2px " + spread + "px #000";
     }
   };
 
