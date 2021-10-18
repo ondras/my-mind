@@ -2492,7 +2492,6 @@
     var left = contentPosition[0];
     var right = left + contentSize[0];
     var top = this.getVerticalAnchor(item);
-    console.log(left, right, top, item.resolvedColor);
     ctx.beginPath();
     ctx.moveTo(left, top);
     ctx.lineTo(right, top);
