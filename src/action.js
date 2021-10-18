@@ -69,11 +69,11 @@ MM.Action.MoveItem = function(item, newParent, newIndex, newSide) {
 	this._newSide = newSide || "";
 	this._oldParent = item.parent;
 	this._oldIndex = this._oldParent.children.indexOf(item);
-	this._oldSide = item.getSide();
+	this._oldSide = item.side;
 }
 MM.Action.MoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.MoveItem.prototype.perform = function() {
-	this._item.setSide(this._newSide);
+	this._item.side = this._newSide;
 	if (this._newIndex === null) {
 		this._newParent.insertChild(this._item);
 	} else {
@@ -82,7 +82,7 @@ MM.Action.MoveItem.prototype.perform = function() {
 	MM.App.select(this._item);
 }
 MM.Action.MoveItem.prototype.undo = function() {
-	this._item.setSide(this._oldSide);
+	this._item.side = this._oldSide;
 	this._oldParent.insertChild(this._item, this._oldIndex);
 	MM.App.select(this._newParent);
 }
@@ -92,7 +92,7 @@ MM.Action.Swap = function(item, diff) {
 	this._parent = item.parent;
 
 	var children = this._parent.children;
-	var sibling = this._parent.getLayout().pickSibling(this._item, diff);
+	var sibling = this._parent.resolvedLayout.pickSibling(this._item, diff);
 
 	this._sourceIndex = children.indexOf(this._item);
 	this._targetIndex = children.indexOf(sibling);
@@ -108,7 +108,7 @@ MM.Action.Swap.prototype.undo = function() {
 MM.Action.SetLayout = function(item, layout) {
 	this._item = item;
 	this._layout = layout;
-	this._oldLayout = item.getOwnLayout();
+	this._oldLayout = item.layout;
 }
 MM.Action.SetLayout.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetLayout.prototype.perform = function() {
@@ -121,27 +121,27 @@ MM.Action.SetLayout.prototype.undo = function() {
 MM.Action.SetShape = function(item, shape) {
 	this._item = item;
 	this._shape = shape;
-	this._oldShape = item.getOwnShape();
+	this._oldShape = item.shape;
 }
 MM.Action.SetShape.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetShape.prototype.perform = function() {
-	this._item.setShape(this._shape);
+	this._item.shape = this._shape;
 }
 MM.Action.SetShape.prototype.undo = function() {
-	this._item.setShape(this._oldShape);
+	this._item.shape = this._oldShape;
 }
 
 MM.Action.SetColor = function(item, color) {
 	this._item = item;
 	this._color = color;
-	this._oldColor = item.getOwnColor();
+	this._oldColor = item.color;
 }
 MM.Action.SetColor.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetColor.prototype.perform = function() {
-	this._item.setColor(this._color);
+	this._item.color = this._color;
 }
 MM.Action.SetColor.prototype.undo = function() {
-	this._item.setColor(this._oldColor);
+	this._item.color = this._oldColor;
 }
 
 MM.Action.SetText = function(item, text) {
@@ -203,14 +203,14 @@ MM.Action.SetIcon.prototype.undo = function() {
 MM.Action.SetSide = function(item, side) {
 	this._item = item;
 	this._side = side;
-	this._oldSide = item.getSide();
+	this._oldSide = item.side;
 }
 MM.Action.SetSide.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetSide.prototype.perform = function() {
-	this._item.setSide(this._side);
+	this._item.side = this._side;
 	this._item.map.update();
 }
 MM.Action.SetSide.prototype.undo = function() {
-	this._item.setSide(this._oldSide);
+	this._item.side = this._oldSide;
 	this._item.map.update();
 }

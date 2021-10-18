@@ -19,8 +19,8 @@ MM.Command.Select.execute = function(e) {
 	}
 	var dir = dirs[e.keyCode];
 
-	var layout = MM.App.current.getLayout();
-	var item = /*MM.App.map*/layout.pick(MM.App.current, dir);
+	var layout = MM.App.current.resolvedLayout;
+	var item = layout.pick(MM.App.current, dir);
 	MM.App.select(item);
 }
 

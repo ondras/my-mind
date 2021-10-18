@@ -167,6 +167,10 @@
       this._notes = null;
       this._value = null;
       this._status = null;
+      this._color = null;
+      this._side = null;
+      this._shape = null;
+      this._layout = null;
       this.dom = {
         node: node("li"),
         content: node("div"),
@@ -180,15 +184,7 @@
         canvas: node("canvas")
       };
       this.children = [];
-      this._layout = null;
-      this._shape = null;
-      this._autoShape = true;
-      this._color = null;
-      this._side = null;
-      this._oldText = "";
-      this._computed = {
-        status: null
-      };
+      this.originalText = "";
       const { dom } = this;
       dom.node.classList.add("item");
       dom.content.classList.add("content");
@@ -199,6 +195,7 @@
       dom.text.classList.add("text");
       dom.toggle.classList.add("toggle");
       dom.children.classList.add("children");
+      dom.icon.classList.add("icon");
       dom.node.append(dom.canvas, dom.content);
       dom.content.append(dom.text, dom.notes);
       dom.toggle.addEventListener("click", this);
@@ -285,7 +282,7 @@
       if (this._layout) {
         data.layout = this._layout.id;
       }
-      if (!this._autoShape) {
+      if (this._shape) {
         data.shape = this._shape.id;
       }
       if (this._collapsed) {
@@ -332,7 +329,7 @@
         this._layout = MM.Layout.getById(data.layout);
       }
       if (data.shape) {
-        this.setShape(MM.Shape.getById(data.shape));
+        this.shape = MM.Shape.getById(data.shape);
       }
       (data.children || []).forEach((child) => {
         this.insertChild(Item.fromJSON(child));
@@ -367,13 +364,12 @@
       if (this._collapsed != !!data.collapsed) {
         this[this._collapsed ? "expand" : "collapse"]();
       }
-      if (this.getOwnLayout() != data.layout) {
+      if (this.layout != data.layout) {
         this._layout = MM.Layout.getById(data.layout);
         dirty = 2;
       }
-      var s = this._autoShape ? null : this._shape.id;
-      if (s != data.shape) {
-        this.setShape(MM.Shape.getById(data.shape));
+      if (this.shape != data.shape) {
+        this.shape = MM.Shape.getById(data.shape);
       }
       (data.children || []).forEach((child, index) => {
         if (index >= this.children.length) {
@@ -438,23 +434,14 @@
         this.children.forEach((child) => child.update(childUpdateOptions));
       }
       publish("item-change", this);
-      if (this._autoShape) {
-        var autoShape = this._getAutoShape();
-        if (autoShape != this._shape) {
-          if (this._shape) {
-            this._shape.unset(this);
-          }
-          this._shape = autoShape;
-          this._shape.set(this);
-        }
-      }
-      this._updateStatus();
-      this._updateIcon();
+      this.updateStatus();
+      this.updateIcon();
+      this.updateValue();
       this.dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
-      this._updateValue();
       this.dom.node.classList.toggle("collapsed", this._collapsed);
-      this.getLayout().update(this);
-      this.getShape().update(this);
+      this.dom.node.dataset.shape = this.resolvedShape.id;
+      this.resolvedLayout.update(this);
+      this.resolvedShape.update(this);
       if (options.parent && !this.isRoot()) {
         this.parent.update();
       }
@@ -492,6 +479,13 @@
     isCollapsed() {
       return this._collapsed;
     }
+    get value() {
+      return this._value;
+    }
+    set value(value) {
+      this._value = value;
+      this.update();
+    }
     get resolvedValue() {
       const value = this._value;
       if (typeof value == "number") {
@@ -517,11 +511,11 @@
           break;
       }
     }
-    get value() {
-      return this._value;
+    get status() {
+      return this._status;
     }
-    set value(value) {
-      this._value = value;
+    set status(status) {
+      this._status = status;
       this.update();
     }
     get resolvedStatus() {
@@ -534,13 +528,6 @@
         return status;
       }
     }
-    get status() {
-      return this._status;
-    }
-    set status(status) {
-      this._status = status;
-      this.update();
-    }
     get icon() {
       return this._icon;
     }
@@ -548,52 +535,61 @@
       this._icon = icon;
       this.update();
     }
-    setSide(side) {
-      this._side = side;
-      return this;
-    }
-    getSide() {
+    get side() {
       return this._side;
     }
-    setColor(color) {
+    set side(side) {
+      this._side = side;
+    }
+    get color() {
+      return this._color;
+    }
+    set color(color) {
       this._color = color;
       this.update({ children: true });
     }
-    getColor() {
-      return this._color || (this.isRoot() ? COLOR : this.parent.getColor());
+    get resolvedColor() {
+      return this._color || (this.isRoot() ? COLOR : this.parent.resolvedColor);
     }
-    getOwnColor() {
-      return this._color;
-    }
-    getLayout() {
-      return this._layout || this.parent.getLayout();
-    }
-    getOwnLayout() {
+    get layout() {
       return this._layout;
+    }
+    set layout(layout) {
+      this._layout = layout;
+      this.update({ children: true });
+    }
+    get resolvedLayout() {
+      return this._layout || this.parent.resolvedLayout;
     }
     setLayout(layout) {
       this._layout = layout;
       this.update({ children: true });
     }
-    getShape() {
+    get shape() {
       return this._shape;
     }
-    getOwnShape() {
-      return this._autoShape ? null : this._shape;
-    }
-    setShape(shape) {
-      if (this._shape) {
-        this._shape.unset(this);
-      }
-      if (shape) {
-        this._autoShape = false;
-        this._shape = shape;
-      } else {
-        this._autoShape = true;
-        this._shape = this._getAutoShape();
-      }
-      this._shape.set(this);
+    set shape(shape) {
+      this._shape = shape;
       this.update();
+    }
+    get resolvedShape() {
+      if (this._shape) {
+        return this._shape;
+      }
+      let depth = 0;
+      let node2 = this;
+      while (!node2.isRoot()) {
+        depth++;
+        node2 = node2.parent;
+      }
+      switch (depth) {
+        case 0:
+          return MM.Shape.Ellipse;
+        case 1:
+          return MM.Shape.Box;
+        default:
+          return MM.Shape.Underline;
+      }
     }
     get map() {
       let item = this.parent;
@@ -642,7 +638,7 @@
       this.update();
     }
     startEditing() {
-      this._oldText = this.text;
+      this.originalText = this.text;
       this.dom.text.contentEditable = "true";
       this.dom.text.focus();
       document.execCommand("styleWithCSS", null, "false");
@@ -657,8 +653,8 @@
       this.dom.text.blur();
       this.dom.text.contentEditable = "false";
       var result = this.dom.text.innerHTML;
-      this.dom.text.innerHTML = this._oldText;
-      this._oldText = "";
+      this.dom.text.innerHTML = this.originalText;
+      this.originalText = "";
       this.update();
       MM.Clipboard.focus();
       return result;
@@ -687,23 +683,7 @@
           break;
       }
     }
-    _getAutoShape() {
-      let depth = 0;
-      let node2 = this;
-      while (!node2.isRoot()) {
-        depth++;
-        node2 = node2.parent;
-      }
-      switch (depth) {
-        case 0:
-          return MM.Shape.Ellipse;
-        case 1:
-          return MM.Shape.Box;
-        default:
-          return MM.Shape.Underline;
-      }
-    }
-    _updateStatus() {
+    updateStatus() {
       const { resolvedStatus, dom } = this;
       dom.status.className = "status";
       dom.status.hidden = false;
@@ -719,7 +699,7 @@
           break;
       }
     }
-    _updateIcon() {
+    updateIcon() {
       var icon = this._icon;
       this.dom.icon.className = "icon";
       this.dom.icon.hidden = !icon;
@@ -728,7 +708,7 @@
         this.dom.icon.classList.add(icon);
       }
     }
-    _updateValue() {
+    updateValue() {
       const { dom, _value } = this;
       if (_value === null) {
         dom.value.hidden = true;
@@ -1174,11 +1154,11 @@
     this._newSide = newSide || "";
     this._oldParent = item.parent;
     this._oldIndex = this._oldParent.children.indexOf(item);
-    this._oldSide = item.getSide();
+    this._oldSide = item.side;
   };
   MM.Action.MoveItem.prototype = Object.create(MM.Action.prototype);
   MM.Action.MoveItem.prototype.perform = function() {
-    this._item.setSide(this._newSide);
+    this._item.side = this._newSide;
     if (this._newIndex === null) {
       this._newParent.insertChild(this._item);
     } else {
@@ -1187,7 +1167,7 @@
     MM.App.select(this._item);
   };
   MM.Action.MoveItem.prototype.undo = function() {
-    this._item.setSide(this._oldSide);
+    this._item.side = this._oldSide;
     this._oldParent.insertChild(this._item, this._oldIndex);
     MM.App.select(this._newParent);
   };
@@ -1195,7 +1175,7 @@
     this._item = item;
     this._parent = item.parent;
     var children = this._parent.children;
-    var sibling = this._parent.getLayout().pickSibling(this._item, diff);
+    var sibling = this._parent.resolvedLayout.pickSibling(this._item, diff);
     this._sourceIndex = children.indexOf(this._item);
     this._targetIndex = children.indexOf(sibling);
   };
@@ -1209,7 +1189,7 @@
   MM.Action.SetLayout = function(item, layout) {
     this._item = item;
     this._layout = layout;
-    this._oldLayout = item.getOwnLayout();
+    this._oldLayout = item.layout;
   };
   MM.Action.SetLayout.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetLayout.prototype.perform = function() {
@@ -1221,26 +1201,26 @@
   MM.Action.SetShape = function(item, shape) {
     this._item = item;
     this._shape = shape;
-    this._oldShape = item.getOwnShape();
+    this._oldShape = item.shape;
   };
   MM.Action.SetShape.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetShape.prototype.perform = function() {
-    this._item.setShape(this._shape);
+    this._item.shape = this._shape;
   };
   MM.Action.SetShape.prototype.undo = function() {
-    this._item.setShape(this._oldShape);
+    this._item.shape = this._oldShape;
   };
   MM.Action.SetColor = function(item, color) {
     this._item = item;
     this._color = color;
-    this._oldColor = item.getOwnColor();
+    this._oldColor = item.color;
   };
   MM.Action.SetColor.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetColor.prototype.perform = function() {
-    this._item.setColor(this._color);
+    this._item.color = this._color;
   };
   MM.Action.SetColor.prototype.undo = function() {
-    this._item.setColor(this._oldColor);
+    this._item.color = this._oldColor;
   };
   MM.Action.SetText = function(item, text) {
     this._item = item;
@@ -1299,15 +1279,15 @@
   MM.Action.SetSide = function(item, side) {
     this._item = item;
     this._side = side;
-    this._oldSide = item.getSide();
+    this._oldSide = item.side;
   };
   MM.Action.SetSide.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetSide.prototype.perform = function() {
-    this._item.setSide(this._side);
+    this._item.side = this._side;
     this._item.map.update();
   };
   MM.Action.SetSide.prototype.undo = function() {
-    this._item.setSide(this._oldSide);
+    this._item.side = this._oldSide;
     this._item.map.update();
   };
 
@@ -1917,7 +1897,7 @@
       40: "bottom"
     };
     var dir = dirs[e.keyCode];
-    var layout = MM.App.current.getLayout();
+    var layout = MM.App.current.resolvedLayout;
     var item = layout.pick(MM.App.current, dir);
     MM.App.select(item);
   };
@@ -1979,7 +1959,7 @@
     if (item.isRoot()) {
       return item;
     }
-    var parentLayout = item.parent.getLayout();
+    var parentLayout = item.parent.resolvedLayout;
     var thisChildDirection = parentLayout.getChildDirection(item);
     if (thisChildDirection == dir) {
       return item;
@@ -2088,7 +2068,7 @@
   MM.Layout.Graph.update = function(item) {
     var side = this.childDirection;
     if (!item.isRoot()) {
-      side = item.parent.getLayout().getChildDirection(item);
+      side = item.parent.resolvedLayout.getChildDirection(item);
     }
     this._alignItem(item, side);
     this._layoutItem(item, this.childDirection);
@@ -2167,10 +2147,10 @@
     if (children.length == 0) {
       return;
     }
-    const { contentPosition, contentSize, ctx } = item;
-    ctx.strokeStyle = item.getColor();
+    const { contentPosition, contentSize, ctx, resolvedShape } = item;
+    ctx.strokeStyle = item.resolvedColor;
     var R = this.SPACING_RANK / 2;
-    var y1 = item.getShape().getVerticalAnchor(item);
+    var y1 = resolvedShape.getVerticalAnchor(item);
     if (side == "left") {
       var x1 = contentPosition[0] - 0.5;
     } else {
@@ -2183,7 +2163,7 @@
     if (children.length == 1) {
       var child = children[0];
       const { position } = child;
-      var y2 = child.getShape().getVerticalAnchor(child) + position[1];
+      var y2 = child.resolvedShape.getVerticalAnchor(child) + position[1];
       var x2 = this._getChildAnchor(child, side);
       ctx.beginPath();
       ctx.moveTo(x1, y1);
@@ -2206,8 +2186,8 @@
     var xx = x + (side == "left" ? -R : R);
     let p1 = c1.position;
     let p2 = c2.position;
-    var y1 = c1.getShape().getVerticalAnchor(c1) + p1[1];
-    var y2 = c2.getShape().getVerticalAnchor(c2) + p2[1];
+    var y1 = c1.resolvedShape.getVerticalAnchor(c1) + p1[1];
+    var y2 = c2.resolvedShape.getVerticalAnchor(c2) + p2[1];
     var x1 = this._getChildAnchor(c1, side);
     var x2 = this._getChildAnchor(c2, side);
     ctx.beginPath();
@@ -2220,7 +2200,7 @@
     for (var i = 1; i < children.length - 1; i++) {
       var c = children[i];
       const { position } = c;
-      var y = c.getShape().getVerticalAnchor(c) + position[1];
+      var y = c.resolvedShape.getVerticalAnchor(c) + position[1];
       ctx.moveTo(x, y);
       ctx.lineTo(this._getChildAnchor(c, side), y);
     }
@@ -2230,17 +2210,17 @@
     if (children.length == 0) {
       return;
     }
-    const { contentSize, size, ctx } = item;
-    ctx.strokeStyle = item.getColor();
+    const { contentSize, size, ctx, resolvedShape } = item;
+    ctx.strokeStyle = item.resolvedColor;
     var R = this.SPACING_RANK / 2;
-    var x = item.getShape().getHorizontalAnchor(item);
+    var x = resolvedShape.getHorizontalAnchor(item);
     var height = children.length == 1 ? 2 * R : R;
     if (side == "top") {
       var y1 = size[1] - contentSize[1];
       var y2 = y1 - height;
       this._anchorToggle(item, x, y1, side);
     } else {
-      var y1 = item.getShape().getVerticalAnchor(item);
+      var y1 = resolvedShape.getVerticalAnchor(item);
       var y2 = contentSize[1] + height;
       this._anchorToggle(item, x, contentSize[1], side);
     }
@@ -2257,8 +2237,8 @@
     var y = Math.round(side == "top" ? size[1] - offset : offset) + 0.5;
     const p1 = c1.position;
     const p2 = c2.position;
-    var x1 = c1.getShape().getHorizontalAnchor(c1) + p1[0];
-    var x2 = c2.getShape().getHorizontalAnchor(c2) + p2[0];
+    var x1 = c1.resolvedShape.getHorizontalAnchor(c1) + p1[0];
+    var x2 = c2.resolvedShape.getHorizontalAnchor(c2) + p2[0];
     var y1 = this._getChildAnchor(c1, side);
     var y2 = this._getChildAnchor(c2, side);
     ctx.beginPath();
@@ -2269,7 +2249,7 @@
     for (var i = 1; i < children.length - 1; i++) {
       var c = children[i];
       const { position } = c;
-      var x = c.getShape().getHorizontalAnchor(c) + position[0];
+      var x = c.resolvedShape.getHorizontalAnchor(c) + position[0];
       ctx.moveTo(x, y);
       ctx.lineTo(x, this._getChildAnchor(c, side));
     }
@@ -2300,7 +2280,7 @@
   MM.Layout.Tree.update = function(item) {
     var side = this.childDirection;
     if (!item.isRoot()) {
-      side = item.parent.getLayout().getChildDirection(item);
+      side = item.parent.resolvedLayout.getChildDirection(item);
     }
     this._alignItem(item, side);
     this._layoutItem(item, this.childDirection);
@@ -2342,7 +2322,7 @@
     return bbox;
   };
   MM.Layout.Tree._drawLines = function(item, side) {
-    const { contentSize, size, ctx } = item;
+    const { contentSize, size, ctx, resolvedShape } = item;
     var R = this.SPACING_RANK / 4;
     var x = (side == "left" ? size[0] - 2 * R : 2 * R) + 0.5;
     this._anchorToggle(item, x, contentSize[1], "bottom");
@@ -2350,16 +2330,16 @@
     if (children.length == 0 || item.isCollapsed()) {
       return;
     }
-    ctx.strokeStyle = item.getColor();
-    var y1 = item.getShape().getVerticalAnchor(item);
+    ctx.strokeStyle = item.resolvedColor;
+    var y1 = resolvedShape.getVerticalAnchor(item);
     var last = children[children.length - 1];
-    var y2 = last.getShape().getVerticalAnchor(last) + last.position[1];
+    var y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
     ctx.beginPath();
     ctx.moveTo(x, y1);
     ctx.lineTo(x, y2 - R);
     for (var i = 0; i < children.length; i++) {
       var c = children[i];
-      var y = c.getShape().getVerticalAnchor(c) + c.position[1];
+      var y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
       var anchor = this._getChildAnchor(c, side);
       ctx.moveTo(x, y - R);
       ctx.arcTo(x, y, anchor, y, R);
@@ -2390,21 +2370,21 @@
     while (!child.parent.isRoot()) {
       child = child.parent;
     }
-    var side = child.getSide();
+    var side = child.side;
     if (side) {
       return side;
     }
     var counts = { left: 0, right: 0 };
     var children = child.parent.children;
     for (var i = 0; i < children.length; i++) {
-      var side = children[i].getSide();
+      var side = children[i].side;
       if (!side) {
         side = counts.right > counts.left ? "left" : "right";
-        children[i].setSide(side);
+        children[i].side = side;
       }
       counts[side]++;
     }
-    return child.getSide();
+    return child.side;
   };
   MM.Layout.Map.pickSibling = function(item, dir) {
     if (item.isRoot()) {
@@ -2463,18 +2443,18 @@
     if (children.length == 0 || item.isCollapsed()) {
       return;
     }
-    const { contentSize, contentPosition, ctx } = item;
+    const { contentSize, contentPosition, ctx, resolvedShape } = item;
     var x1 = contentPosition[0] + contentSize[0] / 2;
-    var y1 = item.getShape().getVerticalAnchor(item);
+    var y1 = resolvedShape.getVerticalAnchor(item);
     var half = this.LINE_THICKNESS / 2;
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       var x2 = this._getChildAnchor(child, side);
-      var y2 = child.getShape().getVerticalAnchor(child) + child.position[1];
+      var y2 = child.resolvedShape.getVerticalAnchor(child) + child.position[1];
       var angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
       var dx = Math.cos(angle) * half;
       var dy = Math.sin(angle) * half;
-      ctx.fillStyle = ctx.strokeStyle = child.getColor();
+      ctx.fillStyle = ctx.strokeStyle = child.resolvedColor;
       ctx.beginPath();
       ctx.moveTo(x1 - dx, y1 - dy);
       ctx.quadraticCurveTo((x2 + x1) / 2, y2, x2, y2);
@@ -2488,14 +2468,8 @@
   MM.Shape = Object.create(MM.Repo, {
     VERTICAL_OFFSET: { value: 0.5 }
   });
-  MM.Shape.set = function(item) {
-    item.dom.node.classList.add("shape-" + this.id);
-  };
-  MM.Shape.unset = function(item) {
-    item.dom.node.classList.remove("shape-" + this.id);
-  };
   MM.Shape.update = function(item) {
-    item.dom.content.style.borderColor = item.getColor();
+    item.dom.content.style.borderColor = item.resolvedColor;
   };
   MM.Shape.getHorizontalAnchor = function(item) {
     const { contentPosition, contentSize } = item;
@@ -2514,10 +2488,11 @@
   });
   MM.Shape.Underline.update = function(item) {
     const { contentPosition, contentSize, ctx } = item;
-    ctx.strokeStyle = item.getColor();
+    ctx.strokeStyle = item.resolvedColor;
     var left = contentPosition[0];
     var right = left + contentSize[0];
     var top = this.getVerticalAnchor(item);
+    console.log(left, right, top, item.resolvedColor);
     ctx.beginPath();
     ctx.moveTo(left, top);
     ctx.lineTo(right, top);
@@ -3452,7 +3427,7 @@
   };
   MM.UI.Layout.prototype.update = function() {
     var value = "";
-    var layout = MM.App.current.getOwnLayout();
+    var layout = MM.App.current.layout;
     if (layout) {
       value = layout.id;
     }
@@ -3485,7 +3460,7 @@
   };
   MM.UI.Shape.prototype.update = function() {
     var value = "";
-    var shape = MM.App.current.getOwnShape();
+    var shape = MM.App.current.shape;
     if (shape) {
       value = shape.id;
     }
@@ -4522,7 +4497,7 @@
       case "sibling":
         var index = target.parent.children.indexOf(target);
         var targetIndex = index + (state.direction == "right" || state.direction == "bottom" ? 1 : 0);
-        var action = new MM.Action.MoveItem(this._item, target.parent, targetIndex, target.getSide());
+        var action = new MM.Action.MoveItem(this._item, target.parent, targetIndex, target.side);
         break;
       default:
         return;
@@ -4556,7 +4531,7 @@
       state.result = "append";
     } else {
       state.result = "sibling";
-      var childDirection = target.parent.getLayout().getChildDirection(target);
+      var childDirection = target.parent.resolvedLayout.getChildDirection(target);
       if (childDirection == "left" || childDirection == "right") {
         state.direction = closest.dy < 0 ? "bottom" : "top";
       } else {

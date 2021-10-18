@@ -20,7 +20,7 @@ MM.Layout.Tree.create = function(direction, id, label) {
 MM.Layout.Tree.update = function(item) {
 	var side = this.childDirection;
 	if (!item.isRoot()) {
-		side = item.parent.getLayout().getChildDirection(item);
+		side = item.parent.resolvedLayout.getChildDirection(item);
 	}
 	this._alignItem(item, side);
 
@@ -76,7 +76,7 @@ MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox)
 }
 
 MM.Layout.Tree._drawLines = function(item, side) {
-	const { contentSize, size, ctx } = item;
+	const { contentSize, size, ctx, resolvedShape } = item;
 
 	var R = this.SPACING_RANK/4;
 	// FIXME canvas.width nahradit za item.size[0] ?
@@ -86,11 +86,11 @@ MM.Layout.Tree._drawLines = function(item, side) {
 	var children = item.children;
 	if (children.length == 0 || item.isCollapsed()) { return; }
 
-	ctx.strokeStyle = item.getColor();
+	ctx.strokeStyle = item.resolvedColor;
 
-	var y1 = item.getShape().getVerticalAnchor(item);
+	var y1 = resolvedShape.getVerticalAnchor(item);
 	var last = children[children.length-1];
-	var y2 = last.getShape().getVerticalAnchor(last) + last.position[1];
+	var y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
 
 	ctx.beginPath();
 	ctx.moveTo(x, y1);
@@ -99,7 +99,7 @@ MM.Layout.Tree._drawLines = function(item, side) {
 	/* rounded connectors */
 	for (var i=0; i<children.length; i++) {
 		var c = children[i];
-		var y = c.getShape().getVerticalAnchor(c) + c.position[1];
+		var y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
 		var anchor = this._getChildAnchor(c, side);
 
 		ctx.moveTo(x, y - R);

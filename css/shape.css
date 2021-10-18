@@ -1,11 +1,11 @@
-.shape-box > .content {
+[data-shape=box] > .content {
 	padding: 0.15em 0.4em;
 	background-color: #fff;
 	border: 1px solid #666;
 	border-radius: 3px;
 }
 
-.shape-ellipse > .content {
+[data-shape=ellipse] > .content {
 	background-color: #fff;
 	border: 1px solid #666;
 	border-radius: 50%;

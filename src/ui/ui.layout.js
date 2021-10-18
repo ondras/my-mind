@@ -12,16 +12,16 @@ MM.UI.Layout = function() {
 	var label = this._buildGroup("Tree");
 	label.appendChild(MM.Layout.Tree.Right.buildOption());
 	label.appendChild(MM.Layout.Tree.Left.buildOption());
-	
+
 	this._select.addEventListener("change", this);
 }
 
 MM.UI.Layout.prototype.update = function() {
 	var value = "";
-	var layout = MM.App.current.getOwnLayout();
+	var layout = MM.App.current.layout;
 	if (layout) { value = layout.id; }
 	this._select.value = value;
-	
+
 	this._getOption("").disabled = MM.App.current.isRoot();
 	this._getOption(MM.Layout.Map.id).disabled = !MM.App.current.isRoot();
 }

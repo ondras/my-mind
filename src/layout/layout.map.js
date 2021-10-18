@@ -24,21 +24,21 @@ MM.Layout.Map.getChildDirection = function(child) {
 	}
 	/* child is now the sub-root node */
 
-	var side = child.getSide();
+	var side = child.side;
 	if (side) { return side; }
 
 	var counts = {left:0, right:0};
 	var children = child.parent.children;
 	for (var i=0;i<children.length;i++) {
-		var side = children[i].getSide();
+		var side = children[i].side;
 		if (!side) {
 			side = (counts.right > counts.left ? "left" : "right");
-			children[i].setSide(side);
+			children[i].side = side;
 		}
 		counts[side]++;
 	}
 
-	return child.getSide();
+	return child.side;
 }
 
 MM.Layout.Map.pickSibling = function(item, dir) {
@@ -104,22 +104,22 @@ MM.Layout.Map._layoutRoot = function(item) {
 MM.Layout.Map._drawRootConnectors = function(item, side, children) {
 	if (children.length == 0 || item.isCollapsed()) { return; }
 
-	const { contentSize, contentPosition, ctx } = item;
+	const { contentSize, contentPosition, ctx, resolvedShape } = item;
 
 	var x1 = contentPosition[0] + contentSize[0]/2;
-	var y1 = item.getShape().getVerticalAnchor(item);
+	var y1 = resolvedShape.getVerticalAnchor(item);
 	var half = this.LINE_THICKNESS/2;
 
 	for (var i=0;i<children.length;i++) {
 		var child = children[i];
 
 		var x2 = this._getChildAnchor(child, side);
-		var y2 = child.getShape().getVerticalAnchor(child) + child.position[1];
+		var y2 = child.resolvedShape.getVerticalAnchor(child) + child.position[1];
 		var angle = Math.atan2(y2-y1, x2-x1) + Math.PI/2;
 		var dx = Math.cos(angle) * half;
 		var dy = Math.sin(angle) * half;
 
-		ctx.fillStyle = ctx.strokeStyle = child.getColor();
+		ctx.fillStyle = ctx.strokeStyle = child.resolvedColor;
 		ctx.beginPath();
 		ctx.moveTo(x1-dx, y1-dy);
 		ctx.quadraticCurveTo((x2+x1)/2, y2, x2, y2);

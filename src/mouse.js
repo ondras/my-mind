@@ -200,7 +200,7 @@ MM.Mouse._finishDragDrop = function(state) {
 		case "sibling":
 			var index = target.parent.children.indexOf(target);
 			var targetIndex = index + (state.direction == "right" || state.direction == "bottom" ? 1 : 0);
-			var action = new MM.Action.MoveItem(this._item, target.parent, targetIndex, target.getSide());
+			var action = new MM.Action.MoveItem(this._item, target.parent, targetIndex, target.side);
 		break;
 
 		default:
@@ -242,7 +242,7 @@ MM.Mouse._computeDragState = function() {
 		state.result = "append";
 	} else {
 		state.result = "sibling";
-		var childDirection = target.parent.getLayout().getChildDirection(target);
+		var childDirection = target.parent.resolvedLayout.getChildDirection(target);
 
 		if (childDirection == "left" || childDirection == "right") {
 			state.direction = (closest.dy < 0 ? "bottom" : "top");

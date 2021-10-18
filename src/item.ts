@@ -10,6 +10,10 @@ declare global {
 
 export type ValueType = string | number | null;
 export type StatusType = "computed" | boolean | null;
+export type Side = "left" | "right";
+
+type Layout = any | null; // FIXME
+type Shape = any | null; // FIXME
 
 const COLOR = "#999";
 
@@ -38,6 +42,10 @@ export default class Item {
 	protected _notes: string | null = null;
 	protected _value: ValueType = null;
 	protected _status: StatusType = null;
+	protected _color: string | null = null;
+	protected _side: Side | null = null; // side preference
+	protected _shape: Shape = null;
+	protected _layout: Layout = null;
 
 	dom = {
 		node: html.node("li"),
@@ -55,15 +63,7 @@ export default class Item {
 	readonly children: Item[] = [];
 
 	// todo
-	protected _layout = null;
-	protected _shape = null;
-	protected _autoShape = true;
-	protected _color = null;
-	protected _side = null; /* side preference */
-	protected _oldText = "";
-	protected _computed = {
-		status: null
-	}
+	protected originalText = "";
 
 	static fromJSON(data) {
 		return new this().fromJSON(data);
@@ -80,6 +80,7 @@ export default class Item {
 		dom.text.classList.add("text");
 		dom.toggle.classList.add("toggle");
 		dom.children.classList.add("children");
+		dom.icon.classList.add("icon");
 
 		dom.node.append(dom.canvas, dom.content);
 		dom.content.append(dom.text, dom.notes); /* status+value are appended in layout */
@@ -160,7 +161,7 @@ export default class Item {
 		if (this._value) { data.value = this._value; }
 		if (this._status) { data.status = this._status; }
 		if (this._layout) { data.layout = this._layout.id; }
-		if (!this._autoShape) { data.shape = this._shape.id; }
+		if (this._shape) { data.shape = this._shape.id; }
 		if (this._collapsed) { data.collapsed = 1; }
 		if (this.children.length) {
 			data.children = this.children.map(child => child.toJSON());
@@ -193,7 +194,7 @@ export default class Item {
 		}
 		if (data.collapsed) { this.collapse(); }
 		if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
-		if (data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
+		if (data.shape) { this.shape = MM.Shape.getById(data.shape); }
 
 		(data.children || []).forEach(child => {
 			this.insertChild(Item.fromJSON(child));
@@ -234,13 +235,12 @@ export default class Item {
 
 		if (this._collapsed != !!data.collapsed) { this[this._collapsed ? "expand" : "collapse"](); }
 
-		if (this.getOwnLayout() != data.layout) {
+		if (this.layout != data.layout) {
 			this._layout = MM.Layout.getById(data.layout);
 			dirty = 2;
 		}
 
-		var s = (this._autoShape ? null : this._shape.id);
-		if (s != data.shape) { this.setShape(MM.Shape.getById(data.shape)); }
+		if (this.shape != data.shape) { this.shape = MM.Shape.getById(data.shape); }
 
 		(data.children || []).forEach((child, index) => {
 			if (index >= this.children.length) { /* new child */
@@ -256,7 +256,7 @@ export default class Item {
 			}
 		});
 
-		/* remove dead children */
+		// remove dead children
 		var newLength = (data.children || []).length;
 		while (this.children.length > newLength) { this.removeChild(this.children[this.children.length-1]); }
 
@@ -315,25 +315,16 @@ export default class Item {
 
 		pubsub.publish("item-change", this);
 
-		if (this._autoShape) { /* check for changed auto-shape */
-			var autoShape = this._getAutoShape();
-			if (autoShape != this._shape) {
-				if (this._shape) { this._shape.unset(this); }
-				this._shape = autoShape;
-				this._shape.set(this);
-			}
-		}
+		this.updateStatus();
+		this.updateIcon();
+		this.updateValue();
 
-		this._updateStatus();
-		this._updateIcon();
 		this.dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
-
-		this._updateValue();
-
 		this.dom.node.classList.toggle("collapsed", this._collapsed);
 
-		this.getLayout().update(this);
-		this.getShape().update(this);
+		this.dom.node.dataset.shape = this.resolvedShape.id; // applies css => modifies dimensions (necessary for layout)
+		this.resolvedLayout.update(this);
+		this.resolvedShape.update(this); // draws into canvas -> must be called after layout FIXME refactor after svg
 
 		// recurse upwards?
 		if (options.parent && !this.isRoot()) { this.parent.update(); }
@@ -369,6 +360,11 @@ export default class Item {
 		return this._collapsed;
 	}
 
+	get value() { return this._value; }
+	set value(value: ValueType) {
+		this._value = value;
+		this.update();
+	}
 	get resolvedValue(): number {
 		const value = this._value;
 
@@ -390,12 +386,11 @@ export default class Item {
 		}
 	}
 
-	get value() { return this._value; }
-	set value(value: ValueType) {
-		this._value = value;
+	get status() { return this._status; }
+	set status(status: StatusType) {
+		this._status = status;
 		this.update();
 	}
-
 	get resolvedStatus(): boolean | null {
 		let status = this._status;
 		if (status == "computed") {
@@ -407,47 +402,34 @@ export default class Item {
 		}
 	}
 
-	get status() { return this._status; }
-	set status(status: StatusType) {
-		this._status = status;
-		this.update();
-	}
-
 	get icon() { return this._icon; }
 	set icon(icon: string) {
 		this._icon = icon;
 		this.update();
 	}
 
-	setSide(side) {
+	get side() { return this._side; }
+	set side(side: Side) {
 		this._side = side;
-		// FIXME no .update() call, because the whole map needs updating?
-		return this;
+		// no .update() call, because the whole map needs updating
 	}
 
-	getSide() {
-		return this._side;
-	}
-
-	setColor(color) {
+	get color() { return this._color; }
+	set color(color: string | null) {
 		this._color = color;
 		this.update({children:true});
 	}
-
-	getColor() {
-		return this._color || (this.isRoot() ? COLOR : this.parent.getColor());
+	get resolvedColor(): string {
+		return this._color || (this.isRoot() ? COLOR : this.parent.resolvedColor);
 	}
 
-	getOwnColor() {
-		return this._color;
+	get layout() { return this._layout; }
+	set layout(layout: Layout) {
+		this._layout = layout;
+		this.update({children:true});
 	}
-
-	getLayout() {
-		return this._layout || this.parent.getLayout();
-	}
-
-	getOwnLayout() {
-		return this._layout;
+	get resolvedLayout() {
+		return this._layout || this.parent.resolvedLayout;
 	}
 
 	setLayout(layout) {
@@ -455,27 +437,25 @@ export default class Item {
 		this.update({children:true});
 	}
 
-	getShape() {
-		return this._shape;
+	get shape() { return this._shape; }
+	set shape(shape: Shape) {
+		this._shape = shape;
+		this.update()
 	}
+	get resolvedShape() {
+		if (this._shape) { return this._shape; }
 
-	getOwnShape() {
-		return (this._autoShape ? null : this._shape);
-	}
-
-	setShape(shape) {
-		if (this._shape) { this._shape.unset(this); }
-
-		if (shape) {
-			this._autoShape = false;
-			this._shape = shape;
-		} else {
-			this._autoShape = true;
-			this._shape = this._getAutoShape();
+		let depth = 0;
+		let node: Item | null = this;
+		while (!node.isRoot()) {
+			depth++;
+			node = node.parent;
 		}
-
-		this._shape.set(this);
-		this.update();
+		switch (depth) {
+			case 0: return MM.Shape.Ellipse;
+			case 1: return MM.Shape.Box;
+			default: return MM.Shape.Underline;
+		}
 	}
 
 	get map() {
@@ -531,7 +511,7 @@ export default class Item {
 	}
 
 	startEditing() {
-		this._oldText = this.text;
+		this.originalText = this.text;
 		this.dom.text.contentEditable = "true";
 		this.dom.text.focus(); /* switch to 2b */
 		document.execCommand("styleWithCSS", null, "false");
@@ -549,8 +529,8 @@ export default class Item {
 		this.dom.text.blur();
 		this.dom.text.contentEditable = "false";
 		var result = this.dom.text.innerHTML;
-		this.dom.text.innerHTML = this._oldText;
-		this._oldText = "";
+		this.dom.text.innerHTML = this.originalText;
+		this.originalText = "";
 
 		this.update(); /* text changed */
 
@@ -581,21 +561,7 @@ export default class Item {
 		}
 	}
 
-	_getAutoShape() {
-		let depth = 0;
-		let node: Item | null = this;
-		while (!node.isRoot()) {
-			depth++;
-			node = node.parent;
-		}
-		switch (depth) {
-			case 0: return MM.Shape.Ellipse;
-			case 1: return MM.Shape.Box;
-			default: return MM.Shape.Underline;
-		}
-	}
-
-	_updateStatus() {
+	protected updateStatus() {
 		const { resolvedStatus, dom } = this;
 		dom.status.className = "status";
 		dom.status.hidden = false;
@@ -607,19 +573,19 @@ export default class Item {
 		}
 	}
 
-	_updateIcon() {
+	protected updateIcon() {
 		var icon = this._icon;
 
-		this.dom.icon.className = "icon";
+		this.dom.icon.className = "icon"; // completely reset
 		this.dom.icon.hidden = !icon;
 
 		if (icon) {
-			this.dom.icon.classList.add('fa');
+			this.dom.icon.classList.add("fa");
 			this.dom.icon.classList.add(icon);
 		}
 	}
 
-	_updateValue() {
+	protected updateValue() {
 		const { dom, _value } = this;
 
 		if (_value === null) {

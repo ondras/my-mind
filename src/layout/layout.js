@@ -41,7 +41,7 @@ MM.Layout.pick = function(item, dir) {
 
 	if (item.isRoot()) { return item; }
 
-	var parentLayout = item.parent.getLayout();
+	var parentLayout = item.parent.resolvedLayout;
 	var thisChildDirection = parentLayout.getChildDirection(item);
 	if (thisChildDirection == dir) {
 		return item;
@@ -122,6 +122,7 @@ MM.Layout._computeChildrenBBox = function(children, childIndex) {
 }
 
 MM.Layout._alignItem = function(item, side) {
+	// FIXME move to Item ? Use flexbox order instead?
 	var dom = item.dom;
 
 	switch (side) {

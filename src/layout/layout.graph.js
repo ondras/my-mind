@@ -20,7 +20,7 @@ MM.Layout.Graph.create = function(direction, id, label) {
 MM.Layout.Graph.update = function(item) {
 	var side = this.childDirection;
 	if (!item.isRoot()) {
-		side = item.parent.getLayout().getChildDirection(item);
+		side = item.parent.resolvedLayout.getChildDirection(item);
 	}
 	this._alignItem(item, side);
 
@@ -106,13 +106,13 @@ MM.Layout.Graph._drawLinesVertical = function(item, side) {
 MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	if (children.length == 0) { return; }
 
-	const { contentPosition, contentSize, ctx } = item;
+	const { contentPosition, contentSize, ctx, resolvedShape } = item;
 
-	ctx.strokeStyle = item.getColor();
+	ctx.strokeStyle = item.resolvedColor;
 	var R = this.SPACING_RANK/2;
 
 	/* first part */
-	var y1 = item.getShape().getVerticalAnchor(item);
+	var y1 = resolvedShape.getVerticalAnchor(item);
 	if (side == "left") {
 		var x1 = contentPosition[0] - 0.5;
 	} else {
@@ -125,7 +125,7 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	if (children.length == 1) {
 		var child = children[0];
 		const { position } = child;
-		var y2 = child.getShape().getVerticalAnchor(child) + position[1];
+		var y2 = child.resolvedShape.getVerticalAnchor(child) + position[1];
 		var x2 = this._getChildAnchor(child, side);
 		ctx.beginPath();
 		ctx.moveTo(x1, y1);
@@ -154,8 +154,8 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	let p1 = c1.position;
 	let p2 = c2.position;
 
-	var y1 = c1.getShape().getVerticalAnchor(c1) + p1[1];
-	var y2 = c2.getShape().getVerticalAnchor(c2) + p2[1];
+	var y1 = c1.resolvedShape.getVerticalAnchor(c1) + p1[1];
+	var y2 = c2.resolvedShape.getVerticalAnchor(c2) + p2[1];
 	var x1 = this._getChildAnchor(c1, side);
 	var x2 = this._getChildAnchor(c2, side);
 
@@ -170,7 +170,7 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 	for (var i=1; i<children.length-1; i++) {
 		var c = children[i];
 		const { position } = c;
-		var y = c.getShape().getVerticalAnchor(c) + position[1];
+		var y = c.resolvedShape.getVerticalAnchor(c) + position[1];
 		ctx.moveTo(x, y);
 		ctx.lineTo(this._getChildAnchor(c, side), y);
 	}
@@ -180,14 +180,14 @@ MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
 MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 	if (children.length == 0) { return; }
 
-	const { contentSize, size, ctx } = item;
+	const { contentSize, size, ctx, resolvedShape } = item;
 
-	ctx.strokeStyle = item.getColor();
+	ctx.strokeStyle = item.resolvedColor;
 
 	/* first part */
 	var R = this.SPACING_RANK/2;
 
-	var x = item.getShape().getHorizontalAnchor(item);
+	var x = resolvedShape.getHorizontalAnchor(item);
 	var height = (children.length == 1 ? 2*R : R);
 
 	if (side == "top") {
@@ -195,7 +195,7 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 		var y2 = y1 - height;
 		this._anchorToggle(item, x, y1, side);
 	} else {
-		var y1 = item.getShape().getVerticalAnchor(item);
+		var y1 = resolvedShape.getVerticalAnchor(item);
 		var y2 = contentSize[1] + height;
 		this._anchorToggle(item, x, contentSize[1], side);
 	}
@@ -217,8 +217,8 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 	const p1 = c1.position;
 	const p2 = c2.position;
 
-	var x1 = c1.getShape().getHorizontalAnchor(c1) + p1[0];
-	var x2 = c2.getShape().getHorizontalAnchor(c2) + p2[0];
+	var x1 = c1.resolvedShape.getHorizontalAnchor(c1) + p1[0];
+	var x2 = c2.resolvedShape.getHorizontalAnchor(c2) + p2[0];
 	var y1 = this._getChildAnchor(c1, side);
 	var y2 = this._getChildAnchor(c2, side);
 
@@ -231,7 +231,7 @@ MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
 	for (var i=1; i<children.length-1; i++) {
 		var c = children[i];
 		const { position } = c;
-		var x = c.getShape().getHorizontalAnchor(c) + position[0];
+		var x = c.resolvedShape.getHorizontalAnchor(c) + position[0];
 		ctx.moveTo(x, y);
 		ctx.lineTo(x, this._getChildAnchor(c, side));
 	}

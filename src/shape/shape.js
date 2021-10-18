@@ -2,16 +2,8 @@ MM.Shape = Object.create(MM.Repo, {
 	VERTICAL_OFFSET: {value: 0.5},
 });
 
-MM.Shape.set = function(item) {
-	item.dom.node.classList.add("shape-"+this.id);
-}
-
-MM.Shape.unset = function(item) {
-	item.dom.node.classList.remove("shape-"+this.id);
-}
-
 MM.Shape.update = function(item) {
-	item.dom.content.style.borderColor = item.getColor();
+	item.dom.content.style.borderColor = item.resolvedColor;
 }
 
 MM.Shape.getHorizontalAnchor = function(item) {
