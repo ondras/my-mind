@@ -177,14 +177,14 @@ MM.Action.SetValue.prototype.undo = function() {
 MM.Action.SetStatus = function(item, status) {
 	this._item = item;
 	this._status = status;
-	this._oldStatus = item.getStatus();
+	this._oldStatus = item.status;
 }
 MM.Action.SetStatus.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetStatus.prototype.perform = function() {
-	this._item.setStatus(this._status);
+	this._item.status = this._status;
 }
 MM.Action.SetStatus.prototype.undo = function() {
-	this._item.setStatus(this._oldStatus);
+	this._item.status = this._oldStatus;
 }
 
 MM.Action.SetIcon = function(item, icon) {

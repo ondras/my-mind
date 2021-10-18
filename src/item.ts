@@ -8,6 +8,8 @@ declare global {
 	}
 }
 
+export type ValueType = string | number | null;
+export type StatusType = "computed" | boolean | null;
 
 const COLOR = "#999";
 
@@ -34,7 +36,8 @@ export default class Item {
 	protected _collapsed = false;
 	protected _icon: string | null = null;
 	protected _notes: string | null = null;
-	protected _value: string | number | null = null;
+	protected _value: ValueType = null;
+	protected _status: StatusType = null;
 
 	dom = {
 		node: html.node("li"),
@@ -56,7 +59,6 @@ export default class Item {
 	protected _shape = null;
 	protected _autoShape = true;
 	protected _color = null;
-	protected _status = null;
 	protected _side = null; /* side preference */
 	protected _oldText = "";
 	protected _computed = {
@@ -180,8 +182,14 @@ export default class Item {
 		if (data.icon) { this._icon = data.icon; }
 		if (data.value) { this._value = data.value; }
 		if (data.status) {
-			this._status = data.status;
-			if (this._status == "maybe") { this._status = "computed"; }
+			// backwards compatibility for yes/no
+			if (data.status == "yes") {
+				this._status = true;
+			} else if (data.status == "no") {
+				this._status = false;
+			} else {
+				this._status = data.status;
+			}
 		}
 		if (data.collapsed) { this.collapse(); }
 		if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
@@ -383,28 +391,32 @@ export default class Item {
 	}
 
 	get value() { return this._value; }
-	set value(value: string | number | null) {
+	set value(value: ValueType) {
 		this._value = value;
 		this.update();
 	}
 
-	setStatus(status) {
-		this._status = status;
-		this.update();
+	get resolvedStatus(): boolean | null {
+		let status = this._status;
+		if (status == "computed") {
+			return this.children.every(child => {
+				return (child.resolvedStatus !== false);
+			});
+		} else {
+			return status;
+		}
 	}
 
-	getStatus() {
-		return this._status;
+	get status() { return this._status; }
+	set status(status: StatusType) {
+		this._status = status;
+		this.update();
 	}
 
 	get icon() { return this._icon; }
 	set icon(icon: string) {
 		this._icon = icon;
 		this.update();
-	}
-
-	getComputedStatus() {
-		return this._computed.status;
 	}
 
 	setSide(side) {
@@ -584,32 +596,14 @@ export default class Item {
 	}
 
 	_updateStatus() {
-		this.dom.status.className = "status";
-		this.dom.status.hidden = false;
+		const { resolvedStatus, dom } = this;
+		dom.status.className = "status";
+		dom.status.hidden = false;
 
-		var status = this._status;
-		if (this._status == "computed") {
-			var childrenStatus = this.children.every(function(child) {
-				return (child.getComputedStatus() !== false);
-			});
-			status = (childrenStatus ? "yes" : "no");
-		}
-
-		switch (status) {
-			case "yes":
-				this.dom.status.classList.add("yes");
-				this._computed.status = true;
-			break;
-
-			case "no":
-				this.dom.status.classList.add("no");
-				this._computed.status = false;
-			break;
-
-			default:
-				this._computed.status = null;
-				this.dom.status.hidden = true;
-			break;
+		switch (resolvedStatus) {
+			case true: dom.status.classList.add("yes"); break;
+			case false: dom.status.classList.add("no"); break;
+			default: dom.status.hidden = true; break;
 		}
 	}
 

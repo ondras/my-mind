@@ -166,6 +166,7 @@
       this._icon = null;
       this._notes = null;
       this._value = null;
+      this._status = null;
       this.dom = {
         node: node("li"),
         content: node("div"),
@@ -183,11 +184,9 @@
       this._shape = null;
       this._autoShape = true;
       this._color = null;
-      this._status = null;
       this._side = null;
       this._oldText = "";
       this._computed = {
-        value: 0,
         status: null
       };
       const { dom } = this;
@@ -318,9 +317,12 @@
         this._value = data.value;
       }
       if (data.status) {
-        this._status = data.status;
-        if (this._status == "maybe") {
-          this._status = "computed";
+        if (data.status == "yes") {
+          this._status = true;
+        } else if (data.status == "no") {
+          this._status = false;
+        } else {
+          this._status = data.status;
         }
       }
       if (data.collapsed) {
@@ -522,12 +524,22 @@
       this._value = value;
       this.update();
     }
-    setStatus(status) {
+    get resolvedStatus() {
+      let status = this._status;
+      if (status == "computed") {
+        return this.children.every((child) => {
+          return child.resolvedStatus !== false;
+        });
+      } else {
+        return status;
+      }
+    }
+    get status() {
+      return this._status;
+    }
+    set status(status) {
       this._status = status;
       this.update();
-    }
-    getStatus() {
-      return this._status;
     }
     get icon() {
       return this._icon;
@@ -535,9 +547,6 @@
     set icon(icon) {
       this._icon = icon;
       this.update();
-    }
-    getComputedStatus() {
-      return this._computed.status;
     }
     setSide(side) {
       this._side = side;
@@ -695,27 +704,18 @@
       }
     }
     _updateStatus() {
-      this.dom.status.className = "status";
-      this.dom.status.hidden = false;
-      var status = this._status;
-      if (this._status == "computed") {
-        var childrenStatus = this.children.every(function(child) {
-          return child.getComputedStatus() !== false;
-        });
-        status = childrenStatus ? "yes" : "no";
-      }
-      switch (status) {
-        case "yes":
-          this.dom.status.classList.add("yes");
-          this._computed.status = true;
+      const { resolvedStatus, dom } = this;
+      dom.status.className = "status";
+      dom.status.hidden = false;
+      switch (resolvedStatus) {
+        case true:
+          dom.status.classList.add("yes");
           break;
-        case "no":
-          this.dom.status.classList.add("no");
-          this._computed.status = false;
+        case false:
+          dom.status.classList.add("no");
           break;
         default:
-          this._computed.status = null;
-          this.dom.status.hidden = true;
+          dom.status.hidden = true;
           break;
       }
     }
@@ -1275,14 +1275,14 @@
   MM.Action.SetStatus = function(item, status) {
     this._item = item;
     this._status = status;
-    this._oldStatus = item.getStatus();
+    this._oldStatus = item.status;
   };
   MM.Action.SetStatus.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetStatus.prototype.perform = function() {
-    this._item.setStatus(this._status);
+    this._item.status = this._status;
   };
   MM.Action.SetStatus.prototype.undo = function() {
-    this._item.setStatus(this._oldStatus);
+    this._item.status = this._oldStatus;
   };
   MM.Action.SetIcon = function(item, icon) {
     this._item = item;
@@ -1874,7 +1874,7 @@
   });
   MM.Command.Yes.execute = function() {
     var item = MM.App.current;
-    var status = item.getStatus() == "yes" ? null : "yes";
+    var status = item.status === true ? null : true;
     var action = new MM.Action.SetStatus(item, status);
     MM.App.action(action);
   };
@@ -1884,7 +1884,7 @@
   });
   MM.Command.No.execute = function() {
     var item = MM.App.current;
-    var status = item.getStatus() == "no" ? null : "no";
+    var status = item.status === false ? null : false;
     var action = new MM.Action.SetStatus(item, status);
     MM.App.action(action);
   };
@@ -1894,7 +1894,7 @@
   });
   MM.Command.Computed.execute = function() {
     var item = MM.App.current;
-    var status = item.getStatus() == "computed" ? null : "computed";
+    var status = item.status == "computed" ? null : "computed";
     var action = new MM.Action.SetStatus(item, status);
     MM.App.action(action);
   };
@@ -3523,15 +3523,32 @@
   };
 
   // .js/ui/ui.status.js
+  var STATUS_MAP = {
+    "yes": true,
+    "no": false,
+    "": null
+  };
+  function statusToString(status) {
+    for (let key in STATUS_MAP) {
+      if (STATUS_MAP[key] === status) {
+        return key;
+      }
+    }
+    return status;
+  }
+  function stringToStatus(str) {
+    return str in STATUS_MAP ? STATUS_MAP[str] : str;
+  }
   MM.UI.Status = function() {
     this._select = document.querySelector("#status");
     this._select.addEventListener("change", this);
   };
   MM.UI.Status.prototype.update = function() {
-    this._select.value = MM.App.current.getStatus() || "";
+    this._select.value = statusToString(MM.App.current.status);
   };
   MM.UI.Status.prototype.handleEvent = function(e) {
-    var action = new MM.Action.SetStatus(MM.App.current, this._select.value || null);
+    let status = stringToStatus(this._select.value);
+    var action = new MM.Action.SetStatus(MM.App.current, status);
     MM.App.action(action);
   };
 

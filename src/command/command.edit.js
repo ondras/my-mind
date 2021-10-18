@@ -122,7 +122,7 @@ MM.Command.Yes = Object.create(MM.Command, {
 });
 MM.Command.Yes.execute = function() {
 	var item = MM.App.current;
-	var status = (item.getStatus() == "yes" ? null : "yes");
+	var status = (item.status === true ? null : true);
 	var action = new MM.Action.SetStatus(item, status);
 	MM.App.action(action);
 }
@@ -133,7 +133,7 @@ MM.Command.No = Object.create(MM.Command, {
 });
 MM.Command.No.execute = function() {
 	var item = MM.App.current;
-	var status = (item.getStatus() == "no" ? null : "no");
+	var status = (item.status === false ? null : false);
 	var action = new MM.Action.SetStatus(item, status);
 	MM.App.action(action);
 }
@@ -144,7 +144,7 @@ MM.Command.Computed = Object.create(MM.Command, {
 });
 MM.Command.Computed.execute = function() {
 	var item = MM.App.current;
-	var status = (item.getStatus() == "computed" ? null : "computed");
+	var status = (item.status == "computed" ? null : "computed");
 	var action = new MM.Action.SetStatus(item, status);
 	MM.App.action(action);
 }
