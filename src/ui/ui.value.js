@@ -4,7 +4,7 @@ MM.UI.Value = function() {
 }
 
 MM.UI.Value.prototype.update = function() {
-	var value = MM.App.current.getValue();
+	var value = MM.App.current.value;
 	if (value === null) { value = ""; }
 	if (typeof(value) == "number") { value = "num" }
 

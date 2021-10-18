@@ -105,7 +105,7 @@ MM.Command.Value = Object.create(MM.Command, {
 });
 MM.Command.Value.execute = function() {
 	var item = MM.App.current;
-	var oldValue = item.getValue();
+	var oldValue = item.value;
 	var newValue = prompt("Set item value", oldValue);
 	if (newValue == null) { return; }
 

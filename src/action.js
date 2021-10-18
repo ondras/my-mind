@@ -148,30 +148,30 @@ MM.Action.SetText = function(item, text) {
 	this._item = item;
 	this._text = text;
 	this._oldText = item.text;
-	this._oldValue = item.getValue(); /* adjusting text can also modify value! */
+	this._oldValue = item.value; /* adjusting text can also modify value! FIXME why/when?*/
 }
 MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetText.prototype.perform = function() {
 	this._item.text = this._text;
 	var numText = Number(this._text);
-	if (numText == this._text) { this._item.setValue(numText); }
+	if (numText == this._text) { this._item.value = numText; }
 }
 MM.Action.SetText.prototype.undo = function() {
 	this._item.text = this._oldText;
-	this._item.setValue(this._oldValue);
+	this._item.value = this._oldValue;
 }
 
 MM.Action.SetValue = function(item, value) {
 	this._item = item;
 	this._value = value;
-	this._oldValue = item.getValue();
+	this._oldValue = item.value;
 }
 MM.Action.SetValue.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetValue.prototype.perform = function() {
-	this._item.setValue(this._value);
+	this._item.value = this._value;
 }
 MM.Action.SetValue.prototype.undo = function() {
-	this._item.setValue(this._oldValue);
+	this._item.value = this._oldValue;
 }
 
 MM.Action.SetStatus = function(item, status) {

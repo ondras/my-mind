@@ -34,6 +34,7 @@ export default class Item {
 	protected _collapsed = false;
 	protected _icon: string | null = null;
 	protected _notes: string | null = null;
+	protected _value: string | number | null = null;
 
 	dom = {
 		node: html.node("li"),
@@ -55,12 +56,10 @@ export default class Item {
 	protected _shape = null;
 	protected _autoShape = true;
 	protected _color = null;
-	protected _value = null;
 	protected _status = null;
 	protected _side = null; /* side preference */
 	protected _oldText = "";
 	protected _computed = {
-		value: 0,
 		status: null
 	}
 
@@ -362,17 +361,31 @@ export default class Item {
 		return this._collapsed;
 	}
 
-	setValue(value) {
+	get resolvedValue(): number {
+		const value = this._value;
+
+		if (typeof(value) == "number") { return value; }
+
+		let childValues = this.children.map(child => child.resolvedValue);
+
+		switch (value) {
+			case "max": return Math.max(...childValues); break;
+			case "min": return Math.min(...childValues); break;
+			case "sum": return childValues.reduce((prev, cur) => prev+cur, 0); break;
+
+			case "avg":
+				var sum = childValues.reduce((prev, cur) => prev+cur, 0);
+				return (childValues.length ? sum/childValues.length : 0);
+			break;
+
+			default: return 0; break;
+		}
+	}
+
+	get value() { return this._value; }
+	set value(value: string | number | null) {
 		this._value = value;
 		this.update();
-	}
-
-	getValue() {
-		return this._value;
-	}
-
-	getComputedValue() {
-		return this._computed.value;
 	}
 
 	setStatus(status) {
@@ -613,46 +626,21 @@ export default class Item {
 	}
 
 	_updateValue() {
-		this.dom.value.hidden = false;
+		const { dom, _value } = this;
 
-		if (typeof(this._value) == "number") {
-			this._computed.value = this._value;
-			this.dom.value.textContent = String(this._value);
+		if (_value === null) {
+			dom.value.hidden = true;
 			return;
 		}
 
-		var childValues = this.children.map(function(child) {
-			return child.getComputedValue();
-		});
+		dom.value.hidden = false;
 
-		var result = 0;
-		switch (this._value) {
-			case "sum":
-				result = childValues.reduce((prev, cur) => prev+cur, 0);
-			break;
-
-			case "avg":
-				var sum = childValues.reduce((prev, cur) => prev+cur, 0);
-				result = (childValues.length ? sum/childValues.length : 0);
-			break;
-
-			case "max":
-				result = Math.max(...childValues);
-			break;
-
-			case "min":
-				result = Math.min(...childValues);
-			break;
-
-			default:
-				this._computed.value = 0;
-				this.dom.value.innerHTML = "";
-				this.dom.value.hidden = true;
-				return;
-			break;
+		if (typeof(_value) == "number") { // exact values are not rounded
+			dom.value.textContent = String(_value);
+		} else {
+			let resolved = this.resolvedValue; // computed values are rounded to 3 decimals if need rounding
+			dom.value.textContent = String(Math.round(resolved) == resolved ? resolved : resolved.toFixed(3));
 		}
-		this._computed.value = result;
-		this.dom.value.innerHTML = String(Math.round(result) == result ? result : result.toFixed(3));
 	}
 }
 

@@ -165,6 +165,7 @@
       this._collapsed = false;
       this._icon = null;
       this._notes = null;
+      this._value = null;
       this.dom = {
         node: node("li"),
         content: node("div"),
@@ -182,7 +183,6 @@
       this._shape = null;
       this._autoShape = true;
       this._color = null;
-      this._value = null;
       this._status = null;
       this._side = null;
       this._oldText = "";
@@ -490,15 +490,37 @@
     isCollapsed() {
       return this._collapsed;
     }
-    setValue(value) {
-      this._value = value;
-      this.update();
+    get resolvedValue() {
+      const value = this._value;
+      if (typeof value == "number") {
+        return value;
+      }
+      let childValues = this.children.map((child) => child.resolvedValue);
+      switch (value) {
+        case "max":
+          return Math.max(...childValues);
+          break;
+        case "min":
+          return Math.min(...childValues);
+          break;
+        case "sum":
+          return childValues.reduce((prev, cur) => prev + cur, 0);
+          break;
+        case "avg":
+          var sum = childValues.reduce((prev, cur) => prev + cur, 0);
+          return childValues.length ? sum / childValues.length : 0;
+          break;
+        default:
+          return 0;
+          break;
+      }
     }
-    getValue() {
+    get value() {
       return this._value;
     }
-    getComputedValue() {
-      return this._computed.value;
+    set value(value) {
+      this._value = value;
+      this.update();
     }
     setStatus(status) {
       this._status = status;
@@ -707,39 +729,18 @@
       }
     }
     _updateValue() {
-      this.dom.value.hidden = false;
-      if (typeof this._value == "number") {
-        this._computed.value = this._value;
-        this.dom.value.textContent = String(this._value);
+      const { dom, _value } = this;
+      if (_value === null) {
+        dom.value.hidden = true;
         return;
       }
-      var childValues = this.children.map(function(child) {
-        return child.getComputedValue();
-      });
-      var result = 0;
-      switch (this._value) {
-        case "sum":
-          result = childValues.reduce((prev, cur) => prev + cur, 0);
-          break;
-        case "avg":
-          var sum = childValues.reduce((prev, cur) => prev + cur, 0);
-          result = childValues.length ? sum / childValues.length : 0;
-          break;
-        case "max":
-          result = Math.max(...childValues);
-          break;
-        case "min":
-          result = Math.min(...childValues);
-          break;
-        default:
-          this._computed.value = 0;
-          this.dom.value.innerHTML = "";
-          this.dom.value.hidden = true;
-          return;
-          break;
+      dom.value.hidden = false;
+      if (typeof _value == "number") {
+        dom.value.textContent = String(_value);
+      } else {
+        let resolved = this.resolvedValue;
+        dom.value.textContent = String(Math.round(resolved) == resolved ? resolved : resolved.toFixed(3));
       }
-      this._computed.value = result;
-      this.dom.value.innerHTML = String(Math.round(result) == result ? result : result.toFixed(3));
     }
   };
   function findLinks(node2) {
@@ -1245,31 +1246,31 @@
     this._item = item;
     this._text = text;
     this._oldText = item.text;
-    this._oldValue = item.getValue();
+    this._oldValue = item.value;
   };
   MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetText.prototype.perform = function() {
     this._item.text = this._text;
     var numText = Number(this._text);
     if (numText == this._text) {
-      this._item.setValue(numText);
+      this._item.value = numText;
     }
   };
   MM.Action.SetText.prototype.undo = function() {
     this._item.text = this._oldText;
-    this._item.setValue(this._oldValue);
+    this._item.value = this._oldValue;
   };
   MM.Action.SetValue = function(item, value) {
     this._item = item;
     this._value = value;
-    this._oldValue = item.getValue();
+    this._oldValue = item.value;
   };
   MM.Action.SetValue.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetValue.prototype.perform = function() {
-    this._item.setValue(this._value);
+    this._item.value = this._value;
   };
   MM.Action.SetValue.prototype.undo = function() {
-    this._item.setValue(this._oldValue);
+    this._item.value = this._oldValue;
   };
   MM.Action.SetStatus = function(item, status) {
     this._item = item;
@@ -1855,7 +1856,7 @@
   });
   MM.Command.Value.execute = function() {
     var item = MM.App.current;
-    var oldValue = item.getValue();
+    var oldValue = item.value;
     var newValue = prompt("Set item value", oldValue);
     if (newValue == null) {
       return;
@@ -2446,7 +2447,7 @@
       left += this.SPACING_RANK;
     }
     contentPosition[0] = left;
-    left += contentSize[1];
+    left += contentSize[0];
     if (childrenRight.length) {
       left += this.SPACING_RANK;
     }
@@ -3502,7 +3503,7 @@
     this._select.addEventListener("change", this);
   };
   MM.UI.Value.prototype.update = function() {
-    var value = MM.App.current.getValue();
+    var value = MM.App.current.value;
     if (value === null) {
       value = "";
     }

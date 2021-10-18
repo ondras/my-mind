@@ -87,7 +87,7 @@ MM.Layout.Map._layoutRoot = function(item) {
 
 	if (childrenLeft.length) { left += this.SPACING_RANK; }
 	contentPosition[0] = left;
-	left += contentSize[1];
+	left += contentSize[0];
 
 	if (childrenRight.length) { left += this.SPACING_RANK; }
 	this._layoutChildren(childrenRight, "right", [left, Math.round((height-bboxRight[1])/2)], bboxRight);
