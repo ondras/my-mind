@@ -20,7 +20,7 @@ MM.UI.Shape.prototype.update = function() {
 }
 
 MM.UI.Shape.prototype.handleEvent = function(e) {
-	var shape = MM.Shape.getById(this._select.value);
+	var shape = repo.get(this._select.value);
 
 	var action = new MM.Action.SetShape(MM.App.current, shape);
 	MM.App.action(action);

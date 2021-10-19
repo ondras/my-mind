@@ -1,17 +1,24 @@
+import { repo } from "../layout/layout.js";
+
+
 MM.UI.Layout = function() {
 	this._select = document.querySelector("#layout");
-
-	this._select.appendChild(MM.Layout.Map.buildOption());
+	let layout = repo.get("map");
+	this._select.append(new Option(layout.label, layout.id));
 
 	var label = this._buildGroup("Graph");
-	label.appendChild(MM.Layout.Graph.Right.buildOption());
-	label.appendChild(MM.Layout.Graph.Left.buildOption());
-	label.appendChild(MM.Layout.Graph.Down.buildOption());
-	label.appendChild(MM.Layout.Graph.Up.buildOption());
+	let graphOptions = ["right", "left", "bottom", "top"].map(name => {
+		let layout = repo.get(`graph-${name}`);
+		return new Option(layout.label, layout.id);
+	});
+	label.append(...graphOptions);
 
 	var label = this._buildGroup("Tree");
-	label.appendChild(MM.Layout.Tree.Right.buildOption());
-	label.appendChild(MM.Layout.Tree.Left.buildOption());
+	let treeOptions = ["right", "left"].map(name => {
+		let layout = repo.get(`tree-${name}`);
+		return new Option(layout.label, layout.id);
+	});
+	label.append(...treeOptions);
 
 	this._select.addEventListener("change", this);
 }
@@ -23,11 +30,11 @@ MM.UI.Layout.prototype.update = function() {
 	this._select.value = value;
 
 	this._getOption("").disabled = MM.App.current.isRoot();
-	this._getOption(MM.Layout.Map.id).disabled = !MM.App.current.isRoot();
+	this._getOption("map").disabled = !MM.App.current.isRoot();
 }
 
 MM.UI.Layout.prototype.handleEvent = function(e) {
-	var layout = MM.Layout.getById(this._select.value);
+	var layout = repo.get(this._select.value);
 
 	var action = new MM.Action.SetLayout(MM.App.current, layout);
 	MM.App.action(action);

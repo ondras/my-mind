@@ -2,6 +2,7 @@ import * as html from "./html.js";
 import * as svg from "./svg.js";
 import * as pubsub from "./pubsub.js";
 import Shape, { repo as shapeRepo } from "./shape/shape.js";
+import Layout, { repo as layoutRepo } from "./layout/layout.js";
 
 declare global {
 	interface Window {
@@ -12,8 +13,6 @@ declare global {
 export type ValueType = string | number | null;
 export type StatusType = "computed" | boolean | null;
 export type Side = "left" | "right";
-
-type Layout = any | null; // FIXME
 
 const COLOR = "#999";
 
@@ -34,7 +33,6 @@ const UPDATE_OPTIONS = {
 }
 
 export default class Item {
-	// these have getters/setters
 	protected _id = generateId();
 	protected _parent: Item | null = null;
 	protected _collapsed = false;
@@ -45,10 +43,12 @@ export default class Item {
 	protected _color: string | null = null;
 	protected _side: Side | null = null; // side preference
 	protected _shape: Shape | null = null;
-	protected _layout: Layout = null;
+	protected _layout: Layout | null = null;
+	protected originalText = "";
 
 	dom = {
 		node: svg.group(),
+		connectors: svg.group(),
 		content: html.node("div"),
 		notes: html.node("div"),
 		status: html.node("span"),
@@ -60,9 +60,6 @@ export default class Item {
 	}
 
 	readonly children: Item[] = [];
-
-	// todo
-	protected originalText = "";
 
 	static fromJSON(data) {
 		return new this().fromJSON(data);
@@ -82,7 +79,7 @@ export default class Item {
 
 		let foCanvas = svg.foreignObject();
 		let foContent = svg.foreignObject();
-		dom.node.append(foCanvas, foContent);
+		dom.node.append(dom.connectors, foCanvas, foContent);
 
 		foCanvas.append(dom.canvas);
 		foContent.append(dom.content);
@@ -193,7 +190,7 @@ export default class Item {
 			}
 		}
 		if (data.collapsed) { this.collapse(); }
-		if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
+		if (data.layout) { this._layout = layoutRepo.get(data.layout); }
 		if (data.shape) { this.shape = shapeRepo.get(data.shape); }
 
 		(data.children || []).forEach(child => {
@@ -236,7 +233,7 @@ export default class Item {
 		if (this._collapsed != !!data.collapsed) { this[this._collapsed ? "expand" : "collapse"](); }
 
 		if (this.layout != data.layout) {
-			this._layout = MM.Layout.getById(data.layout);
+			this._layout = layoutRepo.get(data.layout);
 			dirty = 2;
 		}
 
@@ -436,7 +433,7 @@ export default class Item {
 	}
 
 	get layout() { return this._layout; }
-	set layout(layout: Layout) {
+	set layout(layout: Layout | null) {
 		this._layout = layout;
 		this.update({children:true});
 	}

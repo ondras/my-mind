@@ -1,11 +1,12 @@
 import Item from "./item.js";
 import * as svg from "./svg.js";
+import { repo as layoutRepo } from "./layout/layout.js";
 
 
 MM.Map = function(options) {
 	var o = {
 		root: "My Mind Map",
-		layout: MM.Layout.Map
+		layout: layoutRepo.get("map")
 	}
 	for (var p in options) { o[p] = options[p]; }
 	this._root = null;

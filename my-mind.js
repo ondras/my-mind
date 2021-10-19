@@ -127,8 +127,11 @@
 
   // .js/svg.js
   var NS = "http://www.w3.org/2000/svg";
-  function node2(name) {
+  function node2(name, attrs) {
     let node3 = document.createElementNS(NS, name);
+    for (let attr in attrs) {
+      node3.setAttribute(attr, attrs[attr]);
+    }
     return node3;
   }
   function group() {
@@ -189,6 +192,121 @@
   };
   var repo = new Map();
 
+  // .js/layout/layout.js
+  var Layout = class {
+    constructor(id, label, childDirection = "right") {
+      this.id = id;
+      this.label = label;
+      this.childDirection = childDirection;
+      this.SPACING_RANK = 4;
+      this.SPACING_CHILD = 4;
+      repo2.set(this.id, this);
+    }
+    getChildDirection(_child) {
+      return this.childDirection;
+    }
+    computeAlignment(item) {
+      let direction = item.isRoot() ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item);
+      if (direction == "left") {
+        return "right";
+      }
+      return "left";
+    }
+    pick(item, dir) {
+      var opposite = {
+        left: "right",
+        right: "left",
+        top: "bottom",
+        bottom: "top"
+      };
+      if (!item.isCollapsed()) {
+        var children = item.children;
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          if (this.getChildDirection(child) == dir) {
+            return child;
+          }
+        }
+      }
+      if (item.isRoot()) {
+        return item;
+      }
+      var parentLayout = item.parent.resolvedLayout;
+      var thisChildDirection = parentLayout.getChildDirection(item);
+      if (thisChildDirection == dir) {
+        return item;
+      } else if (thisChildDirection == opposite[dir]) {
+        return item.parent;
+      } else {
+        return parentLayout.pickSibling(item, dir == "left" || dir == "top" ? -1 : 1);
+      }
+    }
+    pickSibling(item, dir) {
+      if (item.isRoot()) {
+        return item;
+      }
+      var children = item.parent.children;
+      var index = children.indexOf(item);
+      index += dir;
+      index = (index + children.length) % children.length;
+      return children[index];
+    }
+    anchorToggle(item, x, y, side) {
+      var node3 = item.dom.toggle;
+      var w = node3.offsetWidth;
+      var h = node3.offsetHeight;
+      var l = x;
+      var t = y;
+      switch (side) {
+        case "left":
+          t -= h / 2;
+          l -= w;
+          break;
+        case "right":
+          t -= h / 2;
+          break;
+        case "top":
+          l -= w / 2;
+          t -= h;
+          break;
+        case "bottom":
+          l -= w / 2;
+          break;
+      }
+      node3.style.left = Math.round(l) + "px";
+      node3.style.top = Math.round(t) + "px";
+    }
+    getChildAnchor(item, side) {
+      let { position, contentPosition, contentSize } = item;
+      if (side == "left" || side == "right") {
+        var pos = position[0] + contentPosition[0];
+        if (side == "left") {
+          pos += contentSize[0];
+        }
+      } else {
+        var pos = position[1] + contentPosition[1];
+        if (side == "top") {
+          pos += contentSize[1];
+        }
+      }
+      return pos;
+    }
+    computeChildrenBBox(children, childIndex) {
+      var bbox = [0, 0];
+      var rankIndex = (childIndex + 1) % 2;
+      children.forEach((child) => {
+        const { size } = child;
+        bbox[rankIndex] = Math.max(bbox[rankIndex], size[rankIndex]);
+        bbox[childIndex] += size[childIndex];
+      });
+      if (children.length > 1) {
+        bbox[childIndex] += this.SPACING_CHILD * (children.length - 1);
+      }
+      return bbox;
+    }
+  };
+  var repo2 = new Map();
+
   // .js/item.js
   var COLOR = "#999";
   var RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
@@ -209,8 +327,10 @@
       this._side = null;
       this._shape = null;
       this._layout = null;
+      this.originalText = "";
       this.dom = {
         node: group(),
+        connectors: group(),
         content: node("div"),
         notes: node("div"),
         status: node("span"),
@@ -221,7 +341,6 @@
         canvas: node("canvas")
       };
       this.children = [];
-      this.originalText = "";
       const { dom } = this;
       dom.node.classList.add("item");
       dom.content.classList.add("content");
@@ -234,7 +353,7 @@
       dom.icon.classList.add("icon");
       let foCanvas = foreignObject();
       let foContent = foreignObject();
-      dom.node.append(foCanvas, foContent);
+      dom.node.append(dom.connectors, foCanvas, foContent);
       foCanvas.append(dom.canvas);
       foContent.append(dom.content);
       dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
@@ -362,7 +481,7 @@
         this.collapse();
       }
       if (data.layout) {
-        this._layout = MM.Layout.getById(data.layout);
+        this._layout = repo2.get(data.layout);
       }
       if (data.shape) {
         this.shape = repo.get(data.shape);
@@ -401,7 +520,7 @@
         this[this._collapsed ? "expand" : "collapse"]();
       }
       if (this.layout != data.layout) {
-        this._layout = MM.Layout.getById(data.layout);
+        this._layout = repo2.get(data.layout);
         dirty = 2;
       }
       if (this.shape != data.shape) {
@@ -806,7 +925,7 @@
   MM.Map = function(options) {
     var o = {
       root: "My Mind Map",
-      layout: MM.Layout.Map
+      layout: repo2.get("map")
     };
     for (var p in options) {
       o[p] = options[p];
@@ -1967,515 +2086,384 @@
     };
   }
 
-  // .js/layout/layout.js
-  MM.Layout = Object.create(MM.Repo, {
-    ALL: { value: [] },
-    SPACING_RANK: { value: 4 },
-    SPACING_CHILD: { value: 4 },
-    childDirection: { value: "right" }
-  });
-  MM.Layout.getAll = function() {
-    return this.ALL;
-  };
-  MM.Layout.update = function(item) {
-  };
-  MM.Layout.getChildDirection = function(child) {
-    return this.childDirection;
-  };
-  MM.Layout.pick = function(item, dir) {
-    var opposite = {
-      left: "right",
-      right: "left",
-      top: "bottom",
-      bottom: "top"
-    };
-    if (!item.isCollapsed()) {
-      var children = item.children;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        if (this.getChildDirection(child) == dir) {
-          return child;
-        }
+  // .js/layout/graph.js
+  var GraphLayout = class extends Layout {
+    constructor() {
+      super(...arguments);
+      this.SPACING_RANK = 16;
+    }
+    update(item) {
+      this.layoutItem(item, this.childDirection);
+      if (this.childDirection == "left" || this.childDirection == "right") {
+        this.drawLinesHorizontal(item, this.childDirection);
+      } else {
+        this.drawLinesVertical(item, this.childDirection);
       }
     }
-    if (item.isRoot()) {
-      return item;
-    }
-    var parentLayout = item.parent.resolvedLayout;
-    var thisChildDirection = parentLayout.getChildDirection(item);
-    if (thisChildDirection == dir) {
-      return item;
-    } else if (thisChildDirection == opposite[dir]) {
-      return item.parent;
-    } else {
-      return parentLayout.pickSibling(item, dir == "left" || dir == "top" ? -1 : 1);
-    }
-  };
-  MM.Layout.pickSibling = function(item, dir) {
-    if (item.isRoot()) {
-      return item;
-    }
-    var children = item.parent.children;
-    var index = children.indexOf(item);
-    index += dir;
-    index = (index + children.length) % children.length;
-    return children[index];
-  };
-  MM.Layout._anchorToggle = function(item, x, y, side) {
-    var node3 = item.dom.toggle;
-    var w = node3.offsetWidth;
-    var h = node3.offsetHeight;
-    var l = x;
-    var t = y;
-    switch (side) {
-      case "left":
-        t -= h / 2;
-        l -= w;
-        break;
-      case "right":
-        t -= h / 2;
-        break;
-      case "top":
-        l -= w / 2;
-        t -= h;
-        break;
-      case "bottom":
-        l -= w / 2;
-        break;
-    }
-    node3.style.left = Math.round(l) + "px";
-    node3.style.top = Math.round(t) + "px";
-  };
-  MM.Layout._getChildAnchor = function(item, side) {
-    let { position, contentPosition, contentSize } = item;
-    if (side == "left" || side == "right") {
-      var pos = position[0] + contentPosition[0];
-      if (side == "left") {
-        pos += contentSize[0];
+    layoutItem(item, rankDirection) {
+      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
+      var childIndex = (rankIndex + 1) % 2;
+      const { contentSize } = item;
+      var bbox = this.computeChildrenBBox(item.children, childIndex);
+      var rankSize = contentSize[rankIndex];
+      if (bbox[rankIndex]) {
+        rankSize += bbox[rankIndex] + this.SPACING_RANK;
       }
-    } else {
-      var pos = position[1] + contentPosition[1];
-      if (side == "top") {
-        pos += contentSize[1];
+      var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
+      let size = [rankSize, childSize];
+      if (rankIndex == 1) {
+        size = size.reverse();
       }
-    }
-    return pos;
-  };
-  MM.Layout._computeChildrenBBox = function(children, childIndex) {
-    var bbox = [0, 0];
-    var rankIndex = (childIndex + 1) % 2;
-    children.forEach((child) => {
-      const { size } = child;
-      bbox[rankIndex] = Math.max(bbox[rankIndex], size[rankIndex]);
-      bbox[childIndex] += size[childIndex];
-    });
-    if (children.length > 1) {
-      bbox[childIndex] += this.SPACING_CHILD * (children.length - 1);
-    }
-    return bbox;
-  };
-  MM.Layout.computeAlignment = function(item) {
-    let direction = item.isRoot() ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item);
-    if (direction == "left") {
-      return "right";
-    }
-    return "left";
-  };
-
-  // .js/layout/layout.graph.js
-  MM.Layout.Graph = Object.create(MM.Layout, {
-    SPACING_RANK: { value: 16 }
-  });
-  MM.Layout.Graph.create = function(direction, id, label) {
-    var layout = Object.create(this, {
-      childDirection: { value: direction },
-      id: { value: id },
-      label: { value: label }
-    });
-    MM.Layout.ALL.push(layout);
-    return layout;
-  };
-  MM.Layout.Graph.update = function(item) {
-    this._layoutItem(item, this.childDirection);
-    if (this.childDirection == "left" || this.childDirection == "right") {
-      this._drawLinesHorizontal(item, this.childDirection);
-    } else {
-      this._drawLinesVertical(item, this.childDirection);
-    }
-  };
-  MM.Layout.Graph._layoutItem = function(item, rankDirection) {
-    var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
-    var childIndex = (rankIndex + 1) % 2;
-    const { contentSize } = item;
-    var bbox = this._computeChildrenBBox(item.children, childIndex);
-    var rankSize = contentSize[rankIndex];
-    if (bbox[rankIndex]) {
-      rankSize += bbox[rankIndex] + this.SPACING_RANK;
-    }
-    var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
-    let size = [rankSize, childSize];
-    if (rankIndex == 1) {
-      size = size.reverse();
-    }
-    item.size = size;
-    var offset = [0, 0];
-    if (rankDirection == "right") {
-      offset[0] = contentSize[0] + this.SPACING_RANK;
-    }
-    if (rankDirection == "bottom") {
-      offset[1] = contentSize[1] + this.SPACING_RANK;
-    }
-    offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
-    this._layoutChildren(item.children, rankDirection, offset, bbox);
-    var labelPos = 0;
-    if (rankDirection == "left") {
-      labelPos = rankSize - contentSize[0];
-    }
-    if (rankDirection == "top") {
-      labelPos = rankSize - contentSize[1];
-    }
-    let contentPosition = [Math.round((childSize - contentSize[childIndex]) / 2), labelPos];
-    if (rankIndex == 0) {
-      contentPosition = contentPosition.reverse();
-    }
-    item.contentPosition = contentPosition;
-  };
-  MM.Layout.Graph._layoutChildren = function(children, rankDirection, offset, bbox) {
-    var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
-    var childIndex = (rankIndex + 1) % 2;
-    children.forEach((child) => {
-      const { size } = child;
+      item.size = size;
+      var offset = [0, 0];
+      if (rankDirection == "right") {
+        offset[0] = contentSize[0] + this.SPACING_RANK;
+      }
+      if (rankDirection == "bottom") {
+        offset[1] = contentSize[1] + this.SPACING_RANK;
+      }
+      offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
+      this.layoutChildren(item.children, rankDirection, offset, bbox);
+      var labelPos = 0;
       if (rankDirection == "left") {
-        offset[0] = bbox[0] - size[0];
+        labelPos = rankSize - contentSize[0];
       }
       if (rankDirection == "top") {
-        offset[1] = bbox[1] - size[1];
+        labelPos = rankSize - contentSize[1];
       }
-      let childPosition = offset.slice();
-      if (rankIndex == 1) {
-        childPosition = childPosition.reverse();
+      let contentPosition = [Math.round((childSize - contentSize[childIndex]) / 2), labelPos];
+      if (rankIndex == 0) {
+        contentPosition = contentPosition.reverse();
       }
-      child.position = childPosition;
-      offset[childIndex] += size[childIndex] + this.SPACING_CHILD;
-    });
-    return bbox;
-  };
-  MM.Layout.Graph._drawLinesHorizontal = function(item, side) {
-    this._drawHorizontalConnectors(item, side, item.children);
-  };
-  MM.Layout.Graph._drawLinesVertical = function(item, side) {
-    this._drawVerticalConnectors(item, side, item.children);
-  };
-  MM.Layout.Graph._drawHorizontalConnectors = function(item, side, children) {
-    if (children.length == 0) {
-      return;
+      item.contentPosition = contentPosition;
     }
-    const { contentPosition, contentSize, ctx, resolvedShape } = item;
-    ctx.strokeStyle = item.resolvedColor;
-    var R = this.SPACING_RANK / 2;
-    var y1 = resolvedShape.getVerticalAnchor(item);
-    if (side == "left") {
-      var x1 = contentPosition[0] - 0.5;
-    } else {
-      var x1 = contentPosition[0] + contentSize[0] + 0.5;
+    layoutChildren(children, rankDirection, offset, bbox) {
+      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
+      var childIndex = (rankIndex + 1) % 2;
+      children.forEach((child) => {
+        const { size } = child;
+        if (rankDirection == "left") {
+          offset[0] = bbox[0] - size[0];
+        }
+        if (rankDirection == "top") {
+          offset[1] = bbox[1] - size[1];
+        }
+        child.position = offset;
+        offset[childIndex] += size[childIndex] + this.SPACING_CHILD;
+      });
+      return bbox;
     }
-    this._anchorToggle(item, x1, y1, side);
-    if (item.isCollapsed()) {
-      return;
-    }
-    if (children.length == 1) {
-      var child = children[0];
-      const { position } = child;
-      var y2 = child.resolvedShape.getVerticalAnchor(child) + position[1];
-      var x2 = this._getChildAnchor(child, side);
+    drawLinesHorizontal(item, side) {
+      const { contentPosition, contentSize, ctx, resolvedShape, children } = item;
+      if (children.length == 0) {
+        return;
+      }
+      ctx.strokeStyle = item.resolvedColor;
+      var R = this.SPACING_RANK / 2;
+      var y1 = resolvedShape.getVerticalAnchor(item);
+      let x1;
+      if (side == "left") {
+        x1 = contentPosition[0] - 0.5;
+      } else {
+        x1 = contentPosition[0] + contentSize[0] + 0.5;
+      }
+      this.anchorToggle(item, x1, y1, side);
+      if (item.isCollapsed()) {
+        return;
+      }
+      if (children.length == 1) {
+        var child = children[0];
+        const { position } = child;
+        var y2 = child.resolvedShape.getVerticalAnchor(child) + position[1];
+        let x22 = this.getChildAnchor(child, side);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.bezierCurveTo((x1 + x22) / 2, y1, (x1 + x22) / 2, y2, x22, y2);
+        ctx.stroke();
+        return;
+      }
+      let x2;
+      if (side == "left") {
+        x2 = x1 - R;
+      } else {
+        x2 = x1 + R;
+      }
       ctx.beginPath();
       ctx.moveTo(x1, y1);
-      ctx.bezierCurveTo((x1 + x2) / 2, y1, (x1 + x2) / 2, y2, x2, y2);
+      ctx.lineTo(x2, y1);
       ctx.stroke();
-      return;
-    }
-    if (side == "left") {
-      var x2 = x1 - R;
-    } else {
-      var x2 = x1 + R;
-    }
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y1);
-    ctx.stroke();
-    var c1 = children[0];
-    var c2 = children[children.length - 1];
-    var x = x2;
-    var xx = x + (side == "left" ? -R : R);
-    let p1 = c1.position;
-    let p2 = c2.position;
-    var y1 = c1.resolvedShape.getVerticalAnchor(c1) + p1[1];
-    var y2 = c2.resolvedShape.getVerticalAnchor(c2) + p2[1];
-    var x1 = this._getChildAnchor(c1, side);
-    var x2 = this._getChildAnchor(c2, side);
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(xx, y1);
-    ctx.arcTo(x, y1, x, y1 + R, R);
-    ctx.lineTo(x, y2 - R);
-    ctx.arcTo(x, y2, xx, y2, R);
-    ctx.lineTo(x2, y2);
-    for (var i = 1; i < children.length - 1; i++) {
-      var c = children[i];
-      const { position } = c;
-      var y = c.resolvedShape.getVerticalAnchor(c) + position[1];
-      ctx.moveTo(x, y);
-      ctx.lineTo(this._getChildAnchor(c, side), y);
-    }
-    ctx.stroke();
-  };
-  MM.Layout.Graph._drawVerticalConnectors = function(item, side, children) {
-    if (children.length == 0) {
-      return;
-    }
-    const { contentSize, size, ctx, resolvedShape } = item;
-    ctx.strokeStyle = item.resolvedColor;
-    var R = this.SPACING_RANK / 2;
-    var x = resolvedShape.getHorizontalAnchor(item);
-    var height = children.length == 1 ? 2 * R : R;
-    if (side == "top") {
-      var y1 = size[1] - contentSize[1];
-      var y2 = y1 - height;
-      this._anchorToggle(item, x, y1, side);
-    } else {
-      var y1 = resolvedShape.getVerticalAnchor(item);
-      var y2 = contentSize[1] + height;
-      this._anchorToggle(item, x, contentSize[1], side);
-    }
-    ctx.beginPath();
-    ctx.moveTo(x, y1);
-    ctx.lineTo(x, y2);
-    ctx.stroke();
-    if (children.length == 1) {
-      return;
-    }
-    var c1 = children[0];
-    var c2 = children[children.length - 1];
-    var offset = contentSize[1] + height;
-    var y = Math.round(side == "top" ? size[1] - offset : offset) + 0.5;
-    const p1 = c1.position;
-    const p2 = c2.position;
-    var x1 = c1.resolvedShape.getHorizontalAnchor(c1) + p1[0];
-    var x2 = c2.resolvedShape.getHorizontalAnchor(c2) + p2[0];
-    var y1 = this._getChildAnchor(c1, side);
-    var y2 = this._getChildAnchor(c2, side);
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.arcTo(x1, y, x1 + R, y, R);
-    ctx.lineTo(x2 - R, y);
-    ctx.arcTo(x2, y, x2, y2, R);
-    for (var i = 1; i < children.length - 1; i++) {
-      var c = children[i];
-      const { position } = c;
-      var x = c.resolvedShape.getHorizontalAnchor(c) + position[0];
-      ctx.moveTo(x, y);
-      ctx.lineTo(x, this._getChildAnchor(c, side));
-    }
-    ctx.stroke();
-  };
-  MM.Layout.Graph.Down = MM.Layout.Graph.create("bottom", "graph-bottom", "Bottom");
-  MM.Layout.Graph.Up = MM.Layout.Graph.create("top", "graph-top", "Top");
-  MM.Layout.Graph.Left = MM.Layout.Graph.create("left", "graph-left", "Left");
-  MM.Layout.Graph.Right = MM.Layout.Graph.create("right", "graph-right", "Right");
-
-  // .js/layout/layout.tree.js
-  MM.Layout.Tree = Object.create(MM.Layout, {
-    SPACING_RANK: { value: 32 }
-  });
-  MM.Layout.Tree.create = function(direction, id, label) {
-    var layout = Object.create(this, {
-      childDirection: { value: direction },
-      id: { value: id },
-      label: { value: label }
-    });
-    MM.Layout.ALL.push(layout);
-    return layout;
-  };
-  MM.Layout.Tree.update = function(item) {
-    this._layoutItem(item, this.childDirection);
-    this._drawLines(item, this.childDirection);
-  };
-  MM.Layout.Tree._layoutItem = function(item, rankDirection) {
-    const { contentSize } = item;
-    var bbox = this._computeChildrenBBox(item.children, 1);
-    var rankSize = contentSize[0];
-    var childSize = bbox[1] + contentSize[1];
-    if (bbox[0]) {
-      rankSize = Math.max(rankSize, bbox[0] + this.SPACING_RANK);
-      childSize += this.SPACING_CHILD;
-    }
-    item.size = [rankSize, childSize];
-    var offset = [this.SPACING_RANK, contentSize[1] + this.SPACING_CHILD];
-    if (rankDirection == "left") {
-      offset[0] = rankSize - bbox[0] - this.SPACING_RANK;
-    }
-    this._layoutChildren(item.children, rankDirection, offset, bbox);
-    var labelPos = 0;
-    if (rankDirection == "left") {
-      labelPos = rankSize - contentSize[0];
-    }
-    item.contentPosition = [labelPos, 0];
-  };
-  MM.Layout.Tree._layoutChildren = function(children, rankDirection, offset, bbox) {
-    children.forEach((child) => {
-      const { size } = child;
-      var left = offset[0];
-      if (rankDirection == "left") {
-        left += bbox[0] - size[0];
-      }
-      child.position = [left, offset[1]];
-      offset[1] += size[1] + this.SPACING_CHILD;
-    });
-    return bbox;
-  };
-  MM.Layout.Tree._drawLines = function(item, side) {
-    const { contentSize, size, ctx, resolvedShape } = item;
-    var R = this.SPACING_RANK / 4;
-    var x = (side == "left" ? size[0] - 2 * R : 2 * R) + 0.5;
-    this._anchorToggle(item, x, contentSize[1], "bottom");
-    var children = item.children;
-    if (children.length == 0 || item.isCollapsed()) {
-      return;
-    }
-    ctx.strokeStyle = item.resolvedColor;
-    var y1 = resolvedShape.getVerticalAnchor(item);
-    var last = children[children.length - 1];
-    var y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
-    ctx.beginPath();
-    ctx.moveTo(x, y1);
-    ctx.lineTo(x, y2 - R);
-    for (var i = 0; i < children.length; i++) {
-      var c = children[i];
-      var y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
-      var anchor = this._getChildAnchor(c, side);
-      ctx.moveTo(x, y - R);
-      ctx.arcTo(x, y, anchor, y, R);
-      ctx.lineTo(anchor, y);
-    }
-    ctx.stroke();
-  };
-  MM.Layout.Tree.Left = MM.Layout.Tree.create("left", "tree-left", "Left");
-  MM.Layout.Tree.Right = MM.Layout.Tree.create("right", "tree-right", "Right");
-
-  // .js/layout/layout.map.js
-  MM.Layout.Map = Object.create(MM.Layout.Graph, {
-    id: { value: "map" },
-    label: { value: "Map" },
-    LINE_THICKNESS: { value: 8 }
-  });
-  MM.Layout.ALL.push(MM.Layout.Map);
-  MM.Layout.Map.update = function(item) {
-    if (item.isRoot()) {
-      this._layoutRoot(item);
-    } else {
-      var side = this.getChildDirection(item);
-      var name = side.charAt(0).toUpperCase() + side.substring(1);
-      MM.Layout.Graph[name].update(item);
-    }
-  };
-  MM.Layout.Map.getChildDirection = function(child) {
-    while (!child.parent.isRoot()) {
-      child = child.parent;
-    }
-    var side = child.side;
-    if (side) {
-      return side;
-    }
-    var counts = { left: 0, right: 0 };
-    var children = child.parent.children;
-    for (var i = 0; i < children.length; i++) {
-      var side = children[i].side;
-      if (!side) {
-        side = counts.right > counts.left ? "left" : "right";
-        children[i].side = side;
-      }
-      counts[side]++;
-    }
-    return child.side;
-  };
-  MM.Layout.Map.pickSibling = function(item, dir) {
-    if (item.isRoot()) {
-      return item;
-    }
-    var parent = item.parent;
-    var children = parent.children;
-    if (parent.isRoot()) {
-      var side = this.getChildDirection(item);
-      children = children.filter(function(child) {
-        return this.getChildDirection(child) == side;
-      }, this);
-    }
-    var index = children.indexOf(item);
-    index += dir;
-    index = (index + children.length) % children.length;
-    return children[index];
-  };
-  MM.Layout.Map._layoutRoot = function(item) {
-    const { children, contentSize } = item;
-    var childrenLeft = [];
-    var childrenRight = [];
-    let contentPosition = [0, 0];
-    children.forEach((child) => {
-      var side = this.getChildDirection(child);
-      if (side == "left") {
-        childrenLeft.push(child);
-      } else {
-        childrenRight.push(child);
-      }
-    });
-    var bboxLeft = this._computeChildrenBBox(childrenLeft, 1);
-    var bboxRight = this._computeChildrenBBox(childrenRight, 1);
-    var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
-    var left = 0;
-    this._layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
-    left += bboxLeft[0];
-    if (childrenLeft.length) {
-      left += this.SPACING_RANK;
-    }
-    contentPosition[0] = left;
-    left += contentSize[0];
-    if (childrenRight.length) {
-      left += this.SPACING_RANK;
-    }
-    this._layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
-    left += bboxRight[0];
-    contentPosition[1] = Math.round((height - contentSize[1]) / 2);
-    item.contentPosition = contentPosition;
-    item.size = [left, height];
-    this._drawRootConnectors(item, "left", childrenLeft);
-    this._drawRootConnectors(item, "right", childrenRight);
-  };
-  MM.Layout.Map._drawRootConnectors = function(item, side, children) {
-    if (children.length == 0 || item.isCollapsed()) {
-      return;
-    }
-    const { contentSize, contentPosition, ctx, resolvedShape } = item;
-    var x1 = contentPosition[0] + contentSize[0] / 2;
-    var y1 = resolvedShape.getVerticalAnchor(item);
-    var half = this.LINE_THICKNESS / 2;
-    for (var i = 0; i < children.length; i++) {
-      var child = children[i];
-      var x2 = this._getChildAnchor(child, side);
-      var y2 = child.resolvedShape.getVerticalAnchor(child) + child.position[1];
-      var angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
-      var dx = Math.cos(angle) * half;
-      var dy = Math.sin(angle) * half;
-      ctx.fillStyle = ctx.strokeStyle = child.resolvedColor;
+      var c1 = children[0];
+      var c2 = children[children.length - 1];
+      var x = x2;
+      var xx = x + (side == "left" ? -R : R);
+      let p1 = c1.position;
+      let p2 = c2.position;
+      var y1 = c1.resolvedShape.getVerticalAnchor(c1) + p1[1];
+      var y2 = c2.resolvedShape.getVerticalAnchor(c2) + p2[1];
+      x1 = this.getChildAnchor(c1, side);
+      x2 = this.getChildAnchor(c2, side);
       ctx.beginPath();
-      ctx.moveTo(x1 - dx, y1 - dy);
-      ctx.quadraticCurveTo((x2 + x1) / 2, y2, x2, y2);
-      ctx.quadraticCurveTo((x2 + x1) / 2, y2, x1 + dx, y1 + dy);
-      ctx.fill();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(xx, y1);
+      ctx.arcTo(x, y1, x, y1 + R, R);
+      ctx.lineTo(x, y2 - R);
+      ctx.arcTo(x, y2, xx, y2, R);
+      ctx.lineTo(x2, y2);
+      for (var i = 1; i < children.length - 1; i++) {
+        var c = children[i];
+        const { position } = c;
+        var y = c.resolvedShape.getVerticalAnchor(c) + position[1];
+        ctx.moveTo(x, y);
+        ctx.lineTo(this.getChildAnchor(c, side), y);
+      }
+      ctx.stroke();
+    }
+    drawLinesVertical(item, side) {
+      const { contentSize, size, ctx, resolvedShape, children } = item;
+      if (children.length == 0) {
+        return;
+      }
+      ctx.strokeStyle = item.resolvedColor;
+      var R = this.SPACING_RANK / 2;
+      var x = resolvedShape.getHorizontalAnchor(item);
+      var height = children.length == 1 ? 2 * R : R;
+      let y1, y2;
+      if (side == "top") {
+        y1 = size[1] - contentSize[1];
+        y2 = y1 - height;
+        this.anchorToggle(item, x, y1, side);
+      } else {
+        y1 = resolvedShape.getVerticalAnchor(item);
+        y2 = contentSize[1] + height;
+        this.anchorToggle(item, x, contentSize[1], side);
+      }
+      ctx.beginPath();
+      ctx.moveTo(x, y1);
+      ctx.lineTo(x, y2);
+      ctx.stroke();
+      if (children.length == 1) {
+        return;
+      }
+      var c1 = children[0];
+      var c2 = children[children.length - 1];
+      var offset = contentSize[1] + height;
+      var y = Math.round(side == "top" ? size[1] - offset : offset) + 0.5;
+      const p1 = c1.position;
+      const p2 = c2.position;
+      var x1 = c1.resolvedShape.getHorizontalAnchor(c1) + p1[0];
+      var x2 = c2.resolvedShape.getHorizontalAnchor(c2) + p2[0];
+      y1 = this.getChildAnchor(c1, side);
+      y2 = this.getChildAnchor(c2, side);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.arcTo(x1, y, x1 + R, y, R);
+      ctx.lineTo(x2 - R, y);
+      ctx.arcTo(x2, y, x2, y2, R);
+      for (var i = 1; i < children.length - 1; i++) {
+        var c = children[i];
+        const { position } = c;
+        var x = c.resolvedShape.getHorizontalAnchor(c) + position[0];
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, this.getChildAnchor(c, side));
+      }
       ctx.stroke();
     }
   };
+  new GraphLayout("graph-bottom", "Bottom", "bottom");
+  new GraphLayout("graph-top", "Top", "top");
+  new GraphLayout("graph-left", "Left", "left");
+  new GraphLayout("graph-right", "Right", "right");
 
-  // .js/shape/shape.box.js
+  // .js/layout/tree.js
+  var TreeLayout = class extends Layout {
+    constructor() {
+      super(...arguments);
+      this.SPACING_RANK = 32;
+    }
+    update(item) {
+      this.layoutItem(item, this.childDirection);
+      this.drawLines(item, this.childDirection);
+    }
+    layoutItem(item, rankDirection) {
+      const { contentSize } = item;
+      var bbox = this.computeChildrenBBox(item.children, 1);
+      var rankSize = contentSize[0];
+      var childSize = bbox[1] + contentSize[1];
+      if (bbox[0]) {
+        rankSize = Math.max(rankSize, bbox[0] + this.SPACING_RANK);
+        childSize += this.SPACING_CHILD;
+      }
+      item.size = [rankSize, childSize];
+      var offset = [this.SPACING_RANK, contentSize[1] + this.SPACING_CHILD];
+      if (rankDirection == "left") {
+        offset[0] = rankSize - bbox[0] - this.SPACING_RANK;
+      }
+      this.layoutChildren(item.children, rankDirection, offset, bbox);
+      var labelPos = 0;
+      if (rankDirection == "left") {
+        labelPos = rankSize - contentSize[0];
+      }
+      item.contentPosition = [labelPos, 0];
+    }
+    layoutChildren(children, rankDirection, offset, bbox) {
+      children.forEach((child) => {
+        const { size } = child;
+        var left = offset[0];
+        if (rankDirection == "left") {
+          left += bbox[0] - size[0];
+        }
+        child.position = [left, offset[1]];
+        offset[1] += size[1] + this.SPACING_CHILD;
+      });
+      return bbox;
+    }
+    drawLines(item, side) {
+      const { contentSize, size, ctx, resolvedShape } = item;
+      var R = this.SPACING_RANK / 4;
+      var x = (side == "left" ? size[0] - 2 * R : 2 * R) + 0.5;
+      this.anchorToggle(item, x, contentSize[1], "bottom");
+      var children = item.children;
+      if (children.length == 0 || item.isCollapsed()) {
+        return;
+      }
+      ctx.strokeStyle = item.resolvedColor;
+      var y1 = resolvedShape.getVerticalAnchor(item);
+      var last = children[children.length - 1];
+      var y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
+      ctx.beginPath();
+      ctx.moveTo(x, y1);
+      ctx.lineTo(x, y2 - R);
+      for (var i = 0; i < children.length; i++) {
+        var c = children[i];
+        var y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
+        var anchor = this.getChildAnchor(c, side);
+        ctx.moveTo(x, y - R);
+        ctx.arcTo(x, y, anchor, y, R);
+        ctx.lineTo(anchor, y);
+      }
+      ctx.stroke();
+    }
+  };
+  new TreeLayout("tree-left", "Left", "left");
+  new TreeLayout("tree-right", "Right", "right");
+
+  // .js/layout/map.js
+  var MapLayout = class extends GraphLayout {
+    constructor() {
+      super(...arguments);
+      this.LINE_THICKNESS = 8;
+    }
+    update(item) {
+      if (item.isRoot()) {
+        this.layoutRoot(item);
+      } else {
+        var side = this.getChildDirection(item);
+        repo2.get(`graph-${side}`).update(item);
+      }
+    }
+    getChildDirection(child) {
+      while (!child.parent.isRoot()) {
+        child = child.parent;
+      }
+      var side = child.side;
+      if (side) {
+        return side;
+      }
+      var counts = { left: 0, right: 0 };
+      var children = child.parent.children;
+      for (var i = 0; i < children.length; i++) {
+        var side = children[i].side;
+        if (!side) {
+          side = counts.right > counts.left ? "left" : "right";
+          children[i].side = side;
+        }
+        counts[side]++;
+      }
+      return child.side;
+    }
+    pickSibling(item, dir) {
+      if (item.isRoot()) {
+        return item;
+      }
+      var parent = item.parent;
+      var children = parent.children;
+      if (parent.isRoot()) {
+        var side = this.getChildDirection(item);
+        children = children.filter((child) => this.getChildDirection(child) == side);
+      }
+      var index = children.indexOf(item);
+      index += dir;
+      index = (index + children.length) % children.length;
+      return children[index];
+    }
+    layoutRoot(item) {
+      const { children, contentSize } = item;
+      let childrenLeft = [];
+      let childrenRight = [];
+      let contentPosition = [0, 0];
+      children.forEach((child) => {
+        var side = this.getChildDirection(child);
+        if (side == "left") {
+          childrenLeft.push(child);
+        } else {
+          childrenRight.push(child);
+        }
+      });
+      var bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
+      var bboxRight = this.computeChildrenBBox(childrenRight, 1);
+      var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
+      var left = 0;
+      this.layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
+      left += bboxLeft[0];
+      if (childrenLeft.length) {
+        left += this.SPACING_RANK;
+      }
+      contentPosition[0] = left;
+      left += contentSize[0];
+      if (childrenRight.length) {
+        left += this.SPACING_RANK;
+      }
+      this.layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
+      left += bboxRight[0];
+      contentPosition[1] = Math.round((height - contentSize[1]) / 2);
+      item.contentPosition = contentPosition;
+      item.dom.connectors.innerHTML = "";
+      this.drawRootConnectors(item, "left", childrenLeft);
+      this.drawRootConnectors(item, "right", childrenRight);
+    }
+    drawRootConnectors(item, side, children) {
+      if (children.length == 0 || item.isCollapsed()) {
+        return;
+      }
+      const { contentSize, contentPosition, resolvedShape, dom } = item;
+      let x1 = contentPosition[0] + contentSize[0] / 2;
+      let y1 = resolvedShape.getVerticalAnchor(item);
+      const half = this.LINE_THICKNESS / 2;
+      let paths = children.map((child) => {
+        const { resolvedColor, resolvedShape: resolvedShape2, position } = child;
+        let x2 = this.getChildAnchor(child, side);
+        let y2 = resolvedShape2.getVerticalAnchor(child) + position[1];
+        let angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
+        let dx = Math.cos(angle) * half;
+        let dy = Math.sin(angle) * half;
+        let d = [
+          `M ${x1 - dx} ${y1 - dy}`,
+          `Q ${(x2 + x1) / 2} ${y2} ${x2} ${y2}`,
+          `Q ${(x2 + x1) / 2} ${y2} ${x1 + dx} ${y1 + dy}`
+        ];
+        let attrs = {
+          d: d.join(" "),
+          fill: resolvedColor,
+          stroke: resolvedColor
+        };
+        return node2("path", attrs);
+      });
+      dom.connectors.append(...paths);
+    }
+  };
+  new MapLayout("map", "Map");
+
+  // .js/shape/box.js
   var Box = class extends Shape {
     constructor() {
       super("box", "Box");
@@ -2483,7 +2471,7 @@
   };
   new Box();
 
-  // .js/shape/shape.ellipse.js
+  // .js/shape/ellipse.js
   var Ellipse = class extends Shape {
     constructor() {
       super("ellipse", "Ellipse");
@@ -2491,7 +2479,7 @@
   };
   new Ellipse();
 
-  // .js/shape/shape.underline.js
+  // .js/shape/underline.js
   var VERTICAL_OFFSET2 = -3;
   var Underline = class extends Shape {
     constructor() {
@@ -3414,15 +3402,20 @@
   // .js/ui/ui.layout.js
   MM.UI.Layout = function() {
     this._select = document.querySelector("#layout");
-    this._select.appendChild(MM.Layout.Map.buildOption());
+    let layout = repo2.get("map");
+    this._select.append(new Option(layout.label, layout.id));
     var label = this._buildGroup("Graph");
-    label.appendChild(MM.Layout.Graph.Right.buildOption());
-    label.appendChild(MM.Layout.Graph.Left.buildOption());
-    label.appendChild(MM.Layout.Graph.Down.buildOption());
-    label.appendChild(MM.Layout.Graph.Up.buildOption());
+    let graphOptions = ["right", "left", "bottom", "top"].map((name) => {
+      let layout2 = repo2.get(`graph-${name}`);
+      return new Option(layout2.label, layout2.id);
+    });
+    label.append(...graphOptions);
     var label = this._buildGroup("Tree");
-    label.appendChild(MM.Layout.Tree.Right.buildOption());
-    label.appendChild(MM.Layout.Tree.Left.buildOption());
+    let treeOptions = ["right", "left"].map((name) => {
+      let layout2 = repo2.get(`tree-${name}`);
+      return new Option(layout2.label, layout2.id);
+    });
+    label.append(...treeOptions);
     this._select.addEventListener("change", this);
   };
   MM.UI.Layout.prototype.update = function() {
@@ -3433,10 +3426,10 @@
     }
     this._select.value = value;
     this._getOption("").disabled = MM.App.current.isRoot();
-    this._getOption(MM.Layout.Map.id).disabled = !MM.App.current.isRoot();
+    this._getOption("map").disabled = !MM.App.current.isRoot();
   };
   MM.UI.Layout.prototype.handleEvent = function(e) {
-    var layout = MM.Layout.getById(this._select.value);
+    var layout = repo2.get(this._select.value);
     var action = new MM.Action.SetLayout(MM.App.current, layout);
     MM.App.action(action);
   };
@@ -3467,7 +3460,7 @@
     this._select.value = value;
   };
   MM.UI.Shape.prototype.handleEvent = function(e) {
-    var shape = MM.Shape.getById(this._select.value);
+    var shape = repo.get(this._select.value);
     var action = new MM.Action.SetShape(MM.App.current, shape);
     MM.App.action(action);
   };
