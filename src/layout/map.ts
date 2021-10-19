@@ -116,7 +116,8 @@ export default class MapLayout extends GraphLayout {
 			let d = [
 				`M ${x1-dx} ${y1-dy}`,
 				`Q ${(x2+x1)/2} ${y2} ${x2} ${y2}`,
-				`Q ${(x2+x1)/2} ${y2} ${x1+dx} ${y1+dy}`
+				`Q ${(x2+x1)/2} ${y2} ${x1+dx} ${y1+dy}`,
+				`Z`
 			];
 
 			let attrs = {
