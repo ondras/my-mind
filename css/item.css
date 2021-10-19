@@ -6,6 +6,11 @@
 	display: none;
 }
 
+.item .icon {
+	font-size: x-large;
+}
+
+
 .content {
 	position: relative;
 	display: inline-flex;
@@ -26,13 +31,15 @@
 	outline: none;
 }
 
-.value, .status {
-	margin-right: 0.2em;
+[data-align=left] > foreignObject > .content > :not(.text) {
+	margin-right: 0.3em;
 }
 
-.text ~ .value, .text ~ .status {
-	margin-left: 0.2em;
-	margin-right: 0;
+[data-align=right] > foreignObject > .content {
+	flex-direction: row-reverse;
+}
+[data-align=right] > foreignObject > .content > :not(.text) {
+	margin-left: 0.3em;
 }
 
 .value {
@@ -49,7 +56,7 @@
 
 .status {
 	font-size: 150%;
-	line-height: 0.8;
+	line-height: 1;
 }
 
 .status.yes:after {

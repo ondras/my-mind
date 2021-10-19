@@ -1,6 +1,7 @@
 import * as html from "./html.js";
 import * as svg from "./svg.js";
 import * as pubsub from "./pubsub.js";
+import Shape, { repo as shapeRepo } from "./shape/shape.js";
 
 declare global {
 	interface Window {
@@ -13,7 +14,6 @@ export type StatusType = "computed" | boolean | null;
 export type Side = "left" | "right";
 
 type Layout = any | null; // FIXME
-type Shape = any | null; // FIXME
 
 const COLOR = "#999";
 
@@ -44,7 +44,7 @@ export default class Item {
 	protected _status: StatusType = null;
 	protected _color: string | null = null;
 	protected _side: Side | null = null; // side preference
-	protected _shape: Shape = null;
+	protected _shape: Shape | null = null;
 	protected _layout: Layout = null;
 
 	dom = {
@@ -105,11 +105,12 @@ export default class Item {
 	get ctx() { return this.dom.canvas.getContext("2d"); }
 
 	get size() {
-		const { canvas } = this.dom;
-		return [canvas.width, canvas.height];
+		const bbox = this.dom.node.getBBox();
+		return [bbox.width, bbox.height];
 	}
 	set size(size: number[]) {
-		const { node, canvas } = this.dom;
+		// return; FIXME nebude potreba
+		const { canvas } = this.dom;
 		canvas.width = size[0];
 		canvas.height = size[1];
 
@@ -193,7 +194,7 @@ export default class Item {
 		}
 		if (data.collapsed) { this.collapse(); }
 		if (data.layout) { this._layout = MM.Layout.getById(data.layout); }
-		if (data.shape) { this.shape = MM.Shape.getById(data.shape); }
+		if (data.shape) { this.shape = shapeRepo.get(data.shape); }
 
 		(data.children || []).forEach(child => {
 			this.insertChild(Item.fromJSON(child));
@@ -239,7 +240,7 @@ export default class Item {
 			dirty = 2;
 		}
 
-		if (this.shape != data.shape) { this.shape = MM.Shape.getById(data.shape); }
+		if (this.shape != data.shape) { this.shape = shapeRepo.get(data.shape); }
 
 		(data.children || []).forEach((child, index) => {
 			if (index >= this.children.length) { /* new child */
@@ -443,13 +444,8 @@ export default class Item {
 		return this._layout || this.parent.resolvedLayout;
 	}
 
-	setLayout(layout) {
-		this._layout = layout;
-		this.update({children:true});
-	}
-
 	get shape() { return this._shape; }
-	set shape(shape: Shape) {
+	set shape(shape: Shape | null) {
 		this._shape = shape;
 		this.update()
 	}
@@ -463,9 +459,9 @@ export default class Item {
 			node = node.parent;
 		}
 		switch (depth) {
-			case 0: return MM.Shape.Ellipse;
-			case 1: return MM.Shape.Box;
-			default: return MM.Shape.Underline;
+			case 0: return shapeRepo.get("ellipse");
+			case 1: return shapeRepo.get("box");
+			default: return shapeRepo.get("underline");
 		}
 	}
 

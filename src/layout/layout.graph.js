@@ -1,11 +1,6 @@
 MM.Layout.Graph = Object.create(MM.Layout, {
 	SPACING_RANK: {value: 16},
-	childDirection: {value: ""}
 });
-
-MM.Layout.Graph.getChildDirection = function(child) {
-	return this.childDirection;
-}
 
 MM.Layout.Graph.create = function(direction, id, label) {
 	var layout = Object.create(this, {
@@ -17,14 +12,6 @@ MM.Layout.Graph.create = function(direction, id, label) {
 	return layout;
 }
 
-MM.Layout.Graph.computeAlignment = function(item) {
-	if (item.isRoot()) {
-		return this.childDirection;
-	} else {
-		return item.parent.resolvedLayout.getChildDirection(item);
-	}
-}
-
 MM.Layout.Graph.update = function(item) {
 	this._layoutItem(item, this.childDirection);
 
@@ -34,7 +21,6 @@ MM.Layout.Graph.update = function(item) {
 		this._drawLinesVertical(item, this.childDirection);
 	}
 }
-
 
 /**
  * Generic graph child layout routine. Updates item's orthogonal size according to the sum of its children.
@@ -55,7 +41,7 @@ MM.Layout.Graph._layoutItem = function(item, rankDirection) {
 
 	let size = [rankSize, childSize];
 	if (rankIndex == 1) { size = size.reverse(); }
-	item.size = size;
+	item.size = size; // FIXME no longer necessary?
 
 	var offset = [0, 0];
 	if (rankDirection == "right") { offset[0] = contentSize[0] + this.SPACING_RANK; }

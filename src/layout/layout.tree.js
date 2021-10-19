@@ -1,11 +1,6 @@
 MM.Layout.Tree = Object.create(MM.Layout, {
 	SPACING_RANK: {value: 32},
-	childDirection: {value: ""}
 });
-
-MM.Layout.Tree.getChildDirection = function(child) {
-	return this.childDirection;
-}
 
 MM.Layout.Tree.create = function(direction, id, label) {
 	var layout = Object.create(this, {
@@ -15,14 +10,6 @@ MM.Layout.Tree.create = function(direction, id, label) {
 	});
 	MM.Layout.ALL.push(layout);
 	return layout;
-}
-
-MM.Layout.Tree.computeAlignment = function(item) {
-	if (item.isRoot()) {
-		return this.childDirection;
-	} else {
-		return item.parent.resolvedLayout.getChildDirection(item);
-	}
 }
 
 MM.Layout.Tree.update = function(item) {

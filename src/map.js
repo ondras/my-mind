@@ -15,7 +15,7 @@ MM.Map = function(options) {
 
 	let root = new Item();
 	root.text = o.root;
-	root.setLayout(o.layout);
+	root.layout = o.layout;
 	this._setRoot(root);
 }
 

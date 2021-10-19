@@ -112,10 +112,10 @@ MM.Action.SetLayout = function(item, layout) {
 }
 MM.Action.SetLayout.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetLayout.prototype.perform = function() {
-	this._item.setLayout(this._layout);
+	this._item.layout = this._layout;
 }
 MM.Action.SetLayout.prototype.undo = function() {
-	this._item.setLayout(this._oldLayout);
+	this._item.layout = this._oldLayout;
 }
 
 MM.Action.SetShape = function(item, shape) {

@@ -2,6 +2,7 @@ MM.Layout = Object.create(MM.Repo, {
 	ALL: {value: []},
 	SPACING_RANK: {value: 4},
 	SPACING_CHILD: {value: 4},
+	childDirection: {value:"right"}
 });
 
 MM.Layout.getAll = function() {
@@ -12,14 +13,13 @@ MM.Layout.getAll = function() {
  * Re-draw an item and its children
  */
 MM.Layout.update = function(item) {
-	return this;
 }
 
 /**
  * @param {MM.Item} child Child node (its parent uses this layout)
  */
 MM.Layout.getChildDirection = function(child) {
-	return "";
+	return this.childDirection;
 }
 
 MM.Layout.pick = function(item, dir) {
@@ -106,6 +106,7 @@ MM.Layout._getChildAnchor = function(item, side) {
 }
 
 MM.Layout._computeChildrenBBox = function(children, childIndex) {
+	// FIXME pocita i kdyz jsou skryte
 	var bbox = [0, 0];
 	var rankIndex = (childIndex+1) % 2;
 
@@ -122,23 +123,7 @@ MM.Layout._computeChildrenBBox = function(children, childIndex) {
 }
 
 MM.Layout.computeAlignment = function(item) {
-	return "right";
-}
-
-MM.Layout._alignItem = function(item, side) {
-	// FIXME move to Item ? Use flexbox order instead?
-	var dom = item.dom;
-
-	switch (side) {
-		case "left": // icon, text, value, status
-			dom.content.insertBefore(dom.icon, dom.content.firstChild);
-			dom.content.appendChild(dom.value);
-			dom.content.appendChild(dom.status);
-		break;
-		case "right": // status, value, icon, text
-			dom.content.insertBefore(dom.icon, dom.content.firstChild);
-			dom.content.insertBefore(dom.value, dom.content.firstChild);
-			dom.content.insertBefore(dom.status, dom.content.firstChild);
-		break;
-	}
+	let direction = (item.isRoot() ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item));
+	if (direction == "left") { return "right"; }
+	return "left";
 }

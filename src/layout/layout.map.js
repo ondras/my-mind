@@ -59,14 +59,6 @@ MM.Layout.Map.pickSibling = function(item, dir) {
 	return children[index];
 }
 
-MM.Layout.Map.computeAlignment = function(item) {
-	if (item.isRoot()) {
-		return "right";
-	} else {
-		return "FIXME";
-	}
-}
-
 MM.Layout.Map._layoutRoot = function(item) {
 	const { children, contentSize } = item;
 	var childrenLeft = [];
@@ -102,7 +94,7 @@ MM.Layout.Map._layoutRoot = function(item) {
 	contentPosition[1] = Math.round((height - contentSize[1])/2);
 	item.contentPosition = contentPosition;
 
-	item.size = [left, height];
+	item.size = [left, height]; // FIXME no longer necessary
 	this._drawRootConnectors(item, "left", childrenLeft);
 	this._drawRootConnectors(item, "right", childrenRight);
 }

@@ -167,6 +167,28 @@
     }
   }
 
+  // .js/shape/shape.js
+  var VERTICAL_OFFSET = 0.5;
+  var Shape = class {
+    constructor(id, label) {
+      this.id = id;
+      this.label = label;
+      repo.set(this.id, this);
+    }
+    update(item) {
+      item.dom.content.style.borderColor = item.resolvedColor;
+    }
+    getHorizontalAnchor(item) {
+      const { contentPosition, contentSize } = item;
+      return Math.round(contentPosition[0] + contentSize[0] / 2) + 0.5;
+    }
+    getVerticalAnchor(item) {
+      const { contentPosition, contentSize } = item;
+      return contentPosition[1] + Math.round(contentSize[1] * VERTICAL_OFFSET) + 0.5;
+    }
+  };
+  var repo = new Map();
+
   // .js/item.js
   var COLOR = "#999";
   var RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
@@ -235,11 +257,11 @@
       return this.dom.canvas.getContext("2d");
     }
     get size() {
-      const { canvas } = this.dom;
-      return [canvas.width, canvas.height];
+      const bbox = this.dom.node.getBBox();
+      return [bbox.width, bbox.height];
     }
     set size(size) {
-      const { node: node3, canvas } = this.dom;
+      const { canvas } = this.dom;
       canvas.width = size[0];
       canvas.height = size[1];
       let fo = canvas.parentNode;
@@ -343,7 +365,7 @@
         this._layout = MM.Layout.getById(data.layout);
       }
       if (data.shape) {
-        this.shape = MM.Shape.getById(data.shape);
+        this.shape = repo.get(data.shape);
       }
       (data.children || []).forEach((child) => {
         this.insertChild(Item.fromJSON(child));
@@ -383,7 +405,7 @@
         dirty = 2;
       }
       if (this.shape != data.shape) {
-        this.shape = MM.Shape.getById(data.shape);
+        this.shape = repo.get(data.shape);
       }
       (data.children || []).forEach((child, index) => {
         if (index >= this.children.length) {
@@ -581,10 +603,6 @@
     get resolvedLayout() {
       return this._layout || this.parent.resolvedLayout;
     }
-    setLayout(layout) {
-      this._layout = layout;
-      this.update({ children: true });
-    }
     get shape() {
       return this._shape;
     }
@@ -604,11 +622,11 @@
       }
       switch (depth) {
         case 0:
-          return MM.Shape.Ellipse;
+          return repo.get("ellipse");
         case 1:
-          return MM.Shape.Box;
+          return repo.get("box");
         default:
-          return MM.Shape.Underline;
+          return repo.get("underline");
       }
     }
     get map() {
@@ -799,7 +817,7 @@
     this._svg = node2("svg");
     let root = new Item();
     root.text = o.root;
-    root.setLayout(o.layout);
+    root.layout = o.layout;
     this._setRoot(root);
   };
   MM.Map.fromJSON = function(data) {
@@ -1217,10 +1235,10 @@
   };
   MM.Action.SetLayout.prototype = Object.create(MM.Action.prototype);
   MM.Action.SetLayout.prototype.perform = function() {
-    this._item.setLayout(this._layout);
+    this._item.layout = this._layout;
   };
   MM.Action.SetLayout.prototype.undo = function() {
-    this._item.setLayout(this._oldLayout);
+    this._item.layout = this._oldLayout;
   };
   MM.Action.SetShape = function(item, shape) {
     this._item = item;
@@ -1953,16 +1971,16 @@
   MM.Layout = Object.create(MM.Repo, {
     ALL: { value: [] },
     SPACING_RANK: { value: 4 },
-    SPACING_CHILD: { value: 4 }
+    SPACING_CHILD: { value: 4 },
+    childDirection: { value: "right" }
   });
   MM.Layout.getAll = function() {
     return this.ALL;
   };
   MM.Layout.update = function(item) {
-    return this;
   };
   MM.Layout.getChildDirection = function(child) {
-    return "";
+    return this.childDirection;
   };
   MM.Layout.pick = function(item, dir) {
     var opposite = {
@@ -2057,32 +2075,17 @@
     return bbox;
   };
   MM.Layout.computeAlignment = function(item) {
-    return "right";
-  };
-  MM.Layout._alignItem = function(item, side) {
-    var dom = item.dom;
-    switch (side) {
-      case "left":
-        dom.content.insertBefore(dom.icon, dom.content.firstChild);
-        dom.content.appendChild(dom.value);
-        dom.content.appendChild(dom.status);
-        break;
-      case "right":
-        dom.content.insertBefore(dom.icon, dom.content.firstChild);
-        dom.content.insertBefore(dom.value, dom.content.firstChild);
-        dom.content.insertBefore(dom.status, dom.content.firstChild);
-        break;
+    let direction = item.isRoot() ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item);
+    if (direction == "left") {
+      return "right";
     }
+    return "left";
   };
 
   // .js/layout/layout.graph.js
   MM.Layout.Graph = Object.create(MM.Layout, {
-    SPACING_RANK: { value: 16 },
-    childDirection: { value: "" }
+    SPACING_RANK: { value: 16 }
   });
-  MM.Layout.Graph.getChildDirection = function(child) {
-    return this.childDirection;
-  };
   MM.Layout.Graph.create = function(direction, id, label) {
     var layout = Object.create(this, {
       childDirection: { value: direction },
@@ -2091,13 +2094,6 @@
     });
     MM.Layout.ALL.push(layout);
     return layout;
-  };
-  MM.Layout.Graph.computeAlignment = function(item) {
-    if (item.isRoot()) {
-      return this.childDirection;
-    } else {
-      return item.parent.resolvedLayout.getChildDirection(item);
-    }
   };
   MM.Layout.Graph.update = function(item) {
     this._layoutItem(item, this.childDirection);
@@ -2289,12 +2285,8 @@
 
   // .js/layout/layout.tree.js
   MM.Layout.Tree = Object.create(MM.Layout, {
-    SPACING_RANK: { value: 32 },
-    childDirection: { value: "" }
+    SPACING_RANK: { value: 32 }
   });
-  MM.Layout.Tree.getChildDirection = function(child) {
-    return this.childDirection;
-  };
   MM.Layout.Tree.create = function(direction, id, label) {
     var layout = Object.create(this, {
       childDirection: { value: direction },
@@ -2303,13 +2295,6 @@
     });
     MM.Layout.ALL.push(layout);
     return layout;
-  };
-  MM.Layout.Tree.computeAlignment = function(item) {
-    if (item.isRoot()) {
-      return this.childDirection;
-    } else {
-      return item.parent.resolvedLayout.getChildDirection(item);
-    }
   };
   MM.Layout.Tree.update = function(item) {
     this._layoutItem(item, this.childDirection);
@@ -2430,13 +2415,6 @@
     index = (index + children.length) % children.length;
     return children[index];
   };
-  MM.Layout.Map.computeAlignment = function(item) {
-    if (item.isRoot()) {
-      return "right";
-    } else {
-      return "FIXME";
-    }
-  };
   MM.Layout.Map._layoutRoot = function(item) {
     const { children, contentSize } = item;
     var childrenLeft = [];
@@ -2497,55 +2475,45 @@
     }
   };
 
-  // .js/shape/shape.js
-  MM.Shape = Object.create(MM.Repo, {
-    VERTICAL_OFFSET: { value: 0.5 }
-  });
-  MM.Shape.update = function(item) {
-    item.dom.content.style.borderColor = item.resolvedColor;
-  };
-  MM.Shape.getHorizontalAnchor = function(item) {
-    const { contentPosition, contentSize } = item;
-    return Math.round(contentPosition[0] + contentSize[0] / 2) + 0.5;
-  };
-  MM.Shape.getVerticalAnchor = function(item) {
-    const { contentPosition, contentSize } = item;
-    return contentPosition[1] + Math.round(contentSize[1] * this.VERTICAL_OFFSET) + 0.5;
-  };
-
-  // .js/shape/shape.underline.js
-  MM.Shape.Underline = Object.create(MM.Shape, {
-    id: { value: "underline" },
-    label: { value: "Underline" },
-    VERTICAL_OFFSET: { value: -3 }
-  });
-  MM.Shape.Underline.update = function(item) {
-    const { contentPosition, contentSize, ctx } = item;
-    ctx.strokeStyle = item.resolvedColor;
-    var left = contentPosition[0];
-    var right = left + contentSize[0];
-    var top = this.getVerticalAnchor(item);
-    ctx.beginPath();
-    ctx.moveTo(left, top);
-    ctx.lineTo(right, top);
-    ctx.stroke();
-  };
-  MM.Shape.Underline.getVerticalAnchor = function(item) {
-    const { contentPosition, contentSize } = item;
-    return contentPosition[1] + contentSize[1] + this.VERTICAL_OFFSET + 0.5;
-  };
-
   // .js/shape/shape.box.js
-  MM.Shape.Box = Object.create(MM.Shape, {
-    id: { value: "box" },
-    label: { value: "Box" }
-  });
+  var Box = class extends Shape {
+    constructor() {
+      super("box", "Box");
+    }
+  };
+  new Box();
 
   // .js/shape/shape.ellipse.js
-  MM.Shape.Ellipse = Object.create(MM.Shape, {
-    id: { value: "ellipse" },
-    label: { value: "Ellipse" }
-  });
+  var Ellipse = class extends Shape {
+    constructor() {
+      super("ellipse", "Ellipse");
+    }
+  };
+  new Ellipse();
+
+  // .js/shape/shape.underline.js
+  var VERTICAL_OFFSET2 = -3;
+  var Underline = class extends Shape {
+    constructor() {
+      super("underline", "Underline");
+    }
+    update(item) {
+      const { contentPosition, contentSize, ctx } = item;
+      ctx.strokeStyle = item.resolvedColor;
+      var left = contentPosition[0];
+      var right = left + contentSize[0];
+      var top = this.getVerticalAnchor(item);
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(right, top);
+      ctx.stroke();
+    }
+    getVerticalAnchor(item) {
+      const { contentPosition, contentSize } = item;
+      return contentPosition[1] + contentSize[1] + VERTICAL_OFFSET2 + 0.5;
+    }
+  };
+  new Underline();
 
   // .js/format/format.js
   MM.Format = Object.create(MM.Repo, {
@@ -3485,9 +3453,9 @@
   // .js/ui/ui.shape.js
   MM.UI.Shape = function() {
     this._select = document.querySelector("#shape");
-    this._select.appendChild(MM.Shape.Box.buildOption());
-    this._select.appendChild(MM.Shape.Ellipse.buildOption());
-    this._select.appendChild(MM.Shape.Underline.buildOption());
+    repo.forEach((shape) => {
+      this._select.append(new Option(shape.label, shape.id));
+    });
     this._select.addEventListener("change", this);
   };
   MM.UI.Shape.prototype.update = function() {

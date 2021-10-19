@@ -1,9 +1,12 @@
+import { repo } from "../shape/shape.js";
+
+
 MM.UI.Shape = function() {
 	this._select = document.querySelector("#shape");
 
-	this._select.appendChild(MM.Shape.Box.buildOption());
-	this._select.appendChild(MM.Shape.Ellipse.buildOption());
-	this._select.appendChild(MM.Shape.Underline.buildOption());
+	repo.forEach(shape => {
+		this._select.append(new Option(shape.label, shape.id));
+	});
 
 	this._select.addEventListener("change", this);
 }
