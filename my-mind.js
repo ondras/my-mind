@@ -198,7 +198,6 @@
       this.id = id;
       this.label = label;
       this.childDirection = childDirection;
-      this.SPACING_RANK = 4;
       this.SPACING_CHILD = 4;
       repo2.set(this.id, this);
     }
@@ -2087,11 +2086,9 @@
   }
 
   // .js/layout/graph.js
+  var SPACING_RANK = 16;
+  var R = SPACING_RANK / 2;
   var GraphLayout = class extends Layout {
-    constructor() {
-      super(...arguments);
-      this.SPACING_RANK = 16;
-    }
     update(item) {
       this.layoutItem(item, this.childDirection);
       if (this.childDirection == "left" || this.childDirection == "right") {
@@ -2107,7 +2104,7 @@
       var bbox = this.computeChildrenBBox(item.children, childIndex);
       var rankSize = contentSize[rankIndex];
       if (bbox[rankIndex]) {
-        rankSize += bbox[rankIndex] + this.SPACING_RANK;
+        rankSize += bbox[rankIndex] + SPACING_RANK;
       }
       var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
       let size = [rankSize, childSize];
@@ -2117,10 +2114,10 @@
       item.size = size;
       var offset = [0, 0];
       if (rankDirection == "right") {
-        offset[0] = contentSize[0] + this.SPACING_RANK;
+        offset[0] = contentSize[0] + SPACING_RANK;
       }
       if (rankDirection == "bottom") {
-        offset[1] = contentSize[1] + this.SPACING_RANK;
+        offset[1] = contentSize[1] + SPACING_RANK;
       }
       offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
       this.layoutChildren(item.children, rankDirection, offset, bbox);
@@ -2159,7 +2156,6 @@
         return;
       }
       ctx.strokeStyle = item.resolvedColor;
-      var R = this.SPACING_RANK / 2;
       var y1 = resolvedShape.getVerticalAnchor(item);
       let x1;
       if (side == "left") {
@@ -2224,7 +2220,6 @@
         return;
       }
       ctx.strokeStyle = item.resolvedColor;
-      var R = this.SPACING_RANK / 2;
       var x = resolvedShape.getHorizontalAnchor(item);
       var height = children.length == 1 ? 2 * R : R;
       let y1, y2;
@@ -2275,31 +2270,29 @@
   new GraphLayout("graph-right", "Right", "right");
 
   // .js/layout/tree.js
+  var SPACING_RANK2 = 32;
+  var R2 = SPACING_RANK2 / 4;
   var TreeLayout = class extends Layout {
-    constructor() {
-      super(...arguments);
-      this.SPACING_RANK = 32;
-    }
     update(item) {
       this.layoutItem(item, this.childDirection);
       this.drawLines(item, this.childDirection);
     }
     layoutItem(item, rankDirection) {
-      const { contentSize } = item;
-      var bbox = this.computeChildrenBBox(item.children, 1);
-      var rankSize = contentSize[0];
-      var childSize = bbox[1] + contentSize[1];
+      const { contentSize, children } = item;
+      let bbox = this.computeChildrenBBox(children, 1);
+      let rankSize = contentSize[0];
+      let childSize = bbox[1] + contentSize[1];
       if (bbox[0]) {
-        rankSize = Math.max(rankSize, bbox[0] + this.SPACING_RANK);
+        rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK2);
         childSize += this.SPACING_CHILD;
       }
       item.size = [rankSize, childSize];
-      var offset = [this.SPACING_RANK, contentSize[1] + this.SPACING_CHILD];
+      let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
       if (rankDirection == "left") {
-        offset[0] = rankSize - bbox[0] - this.SPACING_RANK;
+        offset[0] = rankSize - bbox[0] - SPACING_RANK2;
       }
-      this.layoutChildren(item.children, rankDirection, offset, bbox);
-      var labelPos = 0;
+      this.layoutChildren(children, rankDirection, offset, bbox);
+      let labelPos = 0;
       if (rankDirection == "left") {
         labelPos = rankSize - contentSize[0];
       }
@@ -2308,37 +2301,35 @@
     layoutChildren(children, rankDirection, offset, bbox) {
       children.forEach((child) => {
         const { size } = child;
-        var left = offset[0];
+        let left = offset[0];
         if (rankDirection == "left") {
           left += bbox[0] - size[0];
         }
         child.position = [left, offset[1]];
         offset[1] += size[1] + this.SPACING_CHILD;
       });
-      return bbox;
     }
     drawLines(item, side) {
-      const { contentSize, size, ctx, resolvedShape } = item;
-      var R = this.SPACING_RANK / 4;
-      var x = (side == "left" ? size[0] - 2 * R : 2 * R) + 0.5;
+      const { contentSize, size, ctx, resolvedShape, resolvedColor } = item;
+      var x = (side == "left" ? size[0] - 2 * R2 : 2 * R2) + 0.5;
       this.anchorToggle(item, x, contentSize[1], "bottom");
       var children = item.children;
       if (children.length == 0 || item.isCollapsed()) {
         return;
       }
-      ctx.strokeStyle = item.resolvedColor;
+      ctx.strokeStyle = resolvedColor;
       var y1 = resolvedShape.getVerticalAnchor(item);
       var last = children[children.length - 1];
       var y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
       ctx.beginPath();
       ctx.moveTo(x, y1);
-      ctx.lineTo(x, y2 - R);
+      ctx.lineTo(x, y2 - R2);
       for (var i = 0; i < children.length; i++) {
         var c = children[i];
         var y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
         var anchor = this.getChildAnchor(c, side);
-        ctx.moveTo(x, y - R);
-        ctx.arcTo(x, y, anchor, y, R);
+        ctx.moveTo(x, y - R2);
+        ctx.arcTo(x, y, anchor, y, R2);
         ctx.lineTo(anchor, y);
       }
       ctx.stroke();
@@ -2416,12 +2407,12 @@
       this.layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
       left += bboxLeft[0];
       if (childrenLeft.length) {
-        left += this.SPACING_RANK;
+        left += SPACING_RANK;
       }
       contentPosition[0] = left;
       left += contentSize[0];
       if (childrenRight.length) {
-        left += this.SPACING_RANK;
+        left += SPACING_RANK;
       }
       this.layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
       left += bboxRight[0];

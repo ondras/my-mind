@@ -2,7 +2,6 @@ import Item from "../item.js";
 
 
 export default abstract class Layout {
-	protected SPACING_RANK = 4;
 	protected SPACING_CHILD = 4;
 
 	constructor(readonly id:string, readonly label:string, protected childDirection="right") {
@@ -64,7 +63,7 @@ export default abstract class Layout {
 		return children[index];
 	}
 
-	protected anchorToggle(item, x, y, side) {
+	protected anchorToggle(item: Item, x, y, side) {
 		var node = item.dom.toggle;
 		var w = node.offsetWidth;
 		var h = node.offsetHeight;

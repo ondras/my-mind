@@ -1,9 +1,11 @@
 import Layout from "./layout.js";
 import Item from "../item.js";
 
+export const SPACING_RANK = 16;
+const R = SPACING_RANK/2;
+
 
 export default class GraphLayout extends Layout {
-	protected SPACING_RANK = 16;
 
 	update(item: Item) {
 		this.layoutItem(item, this.childDirection);
@@ -29,7 +31,7 @@ export default class GraphLayout extends Layout {
 
 		/* node size */
 		var rankSize = contentSize[rankIndex];
-		if (bbox[rankIndex]) { rankSize += bbox[rankIndex] + this.SPACING_RANK; }
+		if (bbox[rankIndex]) { rankSize += bbox[rankIndex] + SPACING_RANK; }
 		var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
 
 		let size = [rankSize, childSize];
@@ -37,8 +39,8 @@ export default class GraphLayout extends Layout {
 		item.size = size; // FIXME no longer necessary?
 
 		var offset = [0, 0];
-		if (rankDirection == "right") { offset[0] = contentSize[0] + this.SPACING_RANK; }
-		if (rankDirection == "bottom") { offset[1] = contentSize[1] + this.SPACING_RANK; }
+		if (rankDirection == "right") { offset[0] = contentSize[0] + SPACING_RANK; }
+		if (rankDirection == "bottom") { offset[1] = contentSize[1] + SPACING_RANK; }
 		offset[childIndex] = Math.round((childSize - bbox[childIndex])/2);
 		this.layoutChildren(item.children, rankDirection, offset, bbox);
 
@@ -75,7 +77,6 @@ export default class GraphLayout extends Layout {
 		if (children.length == 0) { return; }
 
 		ctx.strokeStyle = item.resolvedColor;
-		var R = this.SPACING_RANK/2;
 
 		/* first part */
 		var y1 = resolvedShape.getVerticalAnchor(item);
@@ -152,7 +153,6 @@ export default class GraphLayout extends Layout {
 		ctx.strokeStyle = item.resolvedColor;
 
 		/* first part */
-		var R = this.SPACING_RANK/2;
 
 		var x = resolvedShape.getHorizontalAnchor(item);
 		var height = (children.length == 1 ? 2*R : R);

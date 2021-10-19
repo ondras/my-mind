@@ -1,4 +1,4 @@
-import GraphLayout from "./graph.js";
+import GraphLayout, { SPACING_RANK } from "./graph.js";
 import Item from "../item.js";
 import { repo } from "./layout.js";
 import * as svg from "../svg.js";
@@ -79,11 +79,11 @@ export default class MapLayout extends GraphLayout {
 		this.layoutChildren(childrenLeft, "left", [left, Math.round((height-bboxLeft[1])/2)], bboxLeft);
 		left += bboxLeft[0];
 
-		if (childrenLeft.length) { left += this.SPACING_RANK; }
+		if (childrenLeft.length) { left += SPACING_RANK; }
 		contentPosition[0] = left;
 		left += contentSize[0];
 
-		if (childrenRight.length) { left += this.SPACING_RANK; }
+		if (childrenRight.length) { left += SPACING_RANK; }
 		this.layoutChildren(childrenRight, "right", [left, Math.round((height-bboxRight[1])/2)], bboxRight);
 		left += bboxRight[0];
 

@@ -2,38 +2,37 @@ import Layout from "./layout.js";
 import Item from "../item.js";
 
 
+const SPACING_RANK = 32;
+const R = SPACING_RANK/4;
+
 export default class TreeLayout extends Layout {
-	protected SPACING_RANK = 32;
 
 	update(item: Item) {
 		this.layoutItem(item, this.childDirection);
 		this.drawLines(item, this.childDirection);
 	}
 
-	/**
-	 * Generic graph child layout routine. Updates item's orthogonal size according to the sum of its children.
-	 */
-	protected layoutItem(item, rankDirection) {
-		const { contentSize } = item;
+	protected layoutItem(item: Item, rankDirection) {
+		const { contentSize, children } = item;
 
-		/* children size */
-		var bbox = this.computeChildrenBBox(item.children, 1);
+		// children size
+		let bbox = this.computeChildrenBBox(children, 1);
 
-		/* node size */
-		var rankSize = contentSize[0];
-		var childSize = bbox[1] + contentSize[1];
+		// node size
+		let rankSize = contentSize[0];
+		let childSize = bbox[1] + contentSize[1];
 		if (bbox[0]) {
-			rankSize = Math.max(rankSize, bbox[0] + this.SPACING_RANK);
+			rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK);
 			childSize += this.SPACING_CHILD;
 		}
 		item.size = [rankSize, childSize];
 
-		var offset = [this.SPACING_RANK, contentSize[1]+this.SPACING_CHILD];
-		if (rankDirection == "left") { offset[0] = rankSize - bbox[0] - this.SPACING_RANK; }
-		this.layoutChildren(item.children, rankDirection, offset, bbox);
+		let offset = [SPACING_RANK, contentSize[1]+this.SPACING_CHILD];
+		if (rankDirection == "left") { offset[0] = rankSize - bbox[0] - SPACING_RANK; }
+		this.layoutChildren(children, rankDirection, offset, bbox);
 
-		/* label position */
-		var labelPos = 0;
+		// label position
+		let labelPos = 0;
 		if (rankDirection == "left") { labelPos = rankSize - contentSize[0]; }
 
 		item.contentPosition = [labelPos, 0];
@@ -43,29 +42,25 @@ export default class TreeLayout extends Layout {
 		children.forEach(child => {
 			const { size } = child;
 
-			var left = offset[0];
+			let left = offset[0];
 			if (rankDirection == "left") { left += (bbox[0] - size[0]); }
 
 			child.position = [left, offset[1]];
 
 			offset[1] += size[1] + this.SPACING_CHILD; /* offset for next child */
 		});
-
-		return bbox;
 	}
 
 	protected drawLines(item, side) {
-		const { contentSize, size, ctx, resolvedShape } = item;
+		const { contentSize, size, ctx, resolvedShape, resolvedColor } = item;
 
-		var R = this.SPACING_RANK/4;
-		// FIXME canvas.width nahradit za item.size[0] ?
 		var x = (side == "left" ? size[0] - 2*R : 2*R) + 0.5;
 		this.anchorToggle(item, x, contentSize[1], "bottom");
 
 		var children = item.children;
 		if (children.length == 0 || item.isCollapsed()) { return; }
 
-		ctx.strokeStyle = item.resolvedColor;
+		ctx.strokeStyle = resolvedColor;
 
 		var y1 = resolvedShape.getVerticalAnchor(item);
 		var last = children[children.length-1];
