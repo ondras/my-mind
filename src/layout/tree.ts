@@ -1,5 +1,6 @@
 import Layout from "./layout.js";
 import Item from "../item.js";
+import * as svg from "../svg.js";
 
 
 const SPACING_RANK = 32;
@@ -25,7 +26,7 @@ export default class TreeLayout extends Layout {
 			rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK);
 			childSize += this.SPACING_CHILD;
 		}
-		item.size = [rankSize, childSize];
+//		item.size = [rankSize, childSize]; FIXME neni nutne, az na podtrzeni
 
 		let offset = [SPACING_RANK, contentSize[1]+this.SPACING_CHILD];
 		if (rankDirection == "left") { offset[0] = rankSize - bbox[0] - SPACING_RANK; }
@@ -52,35 +53,38 @@ export default class TreeLayout extends Layout {
 	}
 
 	protected drawLines(item, side) {
-		const { contentSize, size, ctx, resolvedShape, resolvedColor } = item;
+		const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
 
-		var x = (side == "left" ? size[0] - 2*R : 2*R) + 0.5;
-		this.anchorToggle(item, x, contentSize[1], "bottom");
+		const lineOffset = SPACING_RANK / 2;
+		let x1 = (side == "left" ? size[0] - lineOffset : lineOffset) + 0.5;
+		this.anchorToggle(item, x1, contentSize[1], "bottom");
 
-		var children = item.children;
+		dom.connectors.innerHTML = "";
+
 		if (children.length == 0 || item.isCollapsed()) { return; }
 
-		ctx.strokeStyle = resolvedColor;
+		let y1 = resolvedShape.getVerticalAnchor(item);
+		let last = children[children.length-1];
+		let y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
 
-		var y1 = resolvedShape.getVerticalAnchor(item);
-		var last = children[children.length-1];
-		var y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
+		let d = [`M ${x1} ${y1} L ${x1} ${y2 - R}`];
+		let sweep = (side == "left" ? 1 : 0);
 
-		ctx.beginPath();
-		ctx.moveTo(x, y1);
-		ctx.lineTo(x, y2 - R);
+		children.forEach(child => {
+			const { resolvedShape, position } = child;
+			let y = resolvedShape.getVerticalAnchor(child) + position[1];
+			let anchor = this.getChildAnchor(child, side);
+			let x2 = (anchor > x1 ? x1+R : x1-R);
 
-		/* rounded connectors */
-		for (var i=0; i<children.length; i++) {
-			var c = children[i];
-			var y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
-			var anchor = this.getChildAnchor(c, side);
+			d.push(
+				`M ${x1} ${y-R}`,
+				`A ${R} ${R} 0 0 ${sweep} ${x2} ${y}`,
+				`L ${anchor} ${y}`
+			);
+		})
 
-			ctx.moveTo(x, y - R);
-			ctx.arcTo(x, y, anchor, y, R);
-			ctx.lineTo(anchor, y);
-		}
-		ctx.stroke();
+		let path = svg.node("path", {d:d.join(" "), stroke:resolvedColor, fill:"none"});
+		dom.connectors.append(path);
 	}
 }
 

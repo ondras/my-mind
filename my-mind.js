@@ -2286,7 +2286,6 @@
         rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK2);
         childSize += this.SPACING_CHILD;
       }
-      item.size = [rankSize, childSize];
       let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
       if (rankDirection == "left") {
         offset[0] = rankSize - bbox[0] - SPACING_RANK2;
@@ -2310,29 +2309,28 @@
       });
     }
     drawLines(item, side) {
-      const { contentSize, size, ctx, resolvedShape, resolvedColor } = item;
-      var x = (side == "left" ? size[0] - 2 * R2 : 2 * R2) + 0.5;
-      this.anchorToggle(item, x, contentSize[1], "bottom");
-      var children = item.children;
+      const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
+      const lineOffset = SPACING_RANK2 / 2;
+      let x1 = (side == "left" ? size[0] - lineOffset : lineOffset) + 0.5;
+      this.anchorToggle(item, x1, contentSize[1], "bottom");
+      dom.connectors.innerHTML = "";
       if (children.length == 0 || item.isCollapsed()) {
         return;
       }
-      ctx.strokeStyle = resolvedColor;
-      var y1 = resolvedShape.getVerticalAnchor(item);
-      var last = children[children.length - 1];
-      var y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
-      ctx.beginPath();
-      ctx.moveTo(x, y1);
-      ctx.lineTo(x, y2 - R2);
-      for (var i = 0; i < children.length; i++) {
-        var c = children[i];
-        var y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
-        var anchor = this.getChildAnchor(c, side);
-        ctx.moveTo(x, y - R2);
-        ctx.arcTo(x, y, anchor, y, R2);
-        ctx.lineTo(anchor, y);
-      }
-      ctx.stroke();
+      let y1 = resolvedShape.getVerticalAnchor(item);
+      let last = children[children.length - 1];
+      let y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
+      let d = [`M ${x1} ${y1} L ${x1} ${y2 - R2}`];
+      let sweep = side == "left" ? 1 : 0;
+      children.forEach((child) => {
+        const { resolvedShape: resolvedShape2, position } = child;
+        let y = resolvedShape2.getVerticalAnchor(child) + position[1];
+        let anchor = this.getChildAnchor(child, side);
+        let x2 = anchor > x1 ? x1 + R2 : x1 - R2;
+        d.push(`M ${x1} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${x2} ${y}`, `L ${anchor} ${y}`);
+      });
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
     }
   };
   new TreeLayout("tree-left", "Left", "left");
