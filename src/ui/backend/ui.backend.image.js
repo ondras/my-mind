@@ -3,11 +3,7 @@ MM.UI.Backend.Image = Object.create(MM.UI.Backend, {
 });
 
 MM.UI.Backend.Image.save = function() {
-	var name = MM.App.map.getName();
-	var json = MM.App.map.toJSON();
-	var data = MM.Format.JSON.to(json);
-
-	this._backend.save(data, name);
+	this._backend.save();
 }
 
 MM.UI.Backend.Image.load = null;

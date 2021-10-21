@@ -250,12 +250,11 @@
       index = (index + children.length) % children.length;
       return children[index];
     }
-    anchorToggle(item, x, y, side) {
+    anchorToggle(item, point, side) {
       var node3 = item.dom.toggle;
       var w = node3.offsetWidth;
       var h = node3.offsetHeight;
-      var l = x;
-      var t = y;
+      let [l, t] = point;
       switch (side) {
         case "left":
           t -= h / 2;
@@ -2158,23 +2157,14 @@
         return;
       }
       let itemAnchor = [
-        contentPosition[0] - 0.5,
+        contentPosition[0] + (side == "right" ? contentSize[0] + 0.5 : -0.5),
         resolvedShape.getVerticalAnchor(item)
       ];
-      if (side == "right") {
-        itemAnchor[0] += contentSize[0] + 1;
-      }
-      var y1 = resolvedShape.getVerticalAnchor(item);
-      let x1;
-      if (side == "left") {
-        x1 = contentPosition[0] - 0.5;
-      } else {
-        x1 = contentPosition[0] + contentSize[0] + 0.5;
-      }
-      this.anchorToggle(item, itemAnchor[0], itemAnchor[1], side);
+      this.anchorToggle(item, itemAnchor, side);
       if (item.isCollapsed()) {
         return;
       }
+      let d = [];
       if (children.length == 1) {
         var child = children[0];
         const { position, resolvedShape: resolvedShape2 } = child;
@@ -2183,36 +2173,35 @@
           resolvedShape2.getVerticalAnchor(child) + position[1]
         ];
         let mid = (itemAnchor[0] + childAnchor[0]) / 2;
-        let d2 = [
-          `M ${itemAnchor}`,
-          `C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`
-        ];
-        let path2 = node2("path", { d: d2.join(" "), stroke: resolvedColor, fill: "none" });
+        d.push(`M ${itemAnchor}`, `C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`);
+        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
         dom.connectors.append(path2);
         return;
       }
-      let x2 = side == "left" ? x1 - R : x1 + R;
-      let d = [
-        `M ${x1} ${y1}`,
-        `L ${x2} ${y1}`
+      let center = [
+        itemAnchor[0] + (side == "left" ? -R : R),
+        itemAnchor[1]
       ];
-      var c1 = children[0];
-      var c2 = children[children.length - 1];
-      var x = x2;
-      var xx = x + (side == "left" ? -R : R);
-      let sweep = xx < x ? 1 : 0;
-      let p1 = c1.position;
-      let p2 = c2.position;
-      var y1 = c1.resolvedShape.getVerticalAnchor(c1) + p1[1];
-      var y2 = c2.resolvedShape.getVerticalAnchor(c2) + p2[1];
-      x1 = this.getChildAnchor(c1, side);
-      x2 = this.getChildAnchor(c2, side);
-      d.push(`M ${x1} ${y1}`, `L ${xx} ${y1}`, `A ${R} ${R} 0 0 ${sweep} ${x} ${y1 + R}`, `L ${x} ${y2 - R}`, `A ${R} ${R} 0 0 ${sweep} ${xx} ${y2}`, `L ${x2} ${y2}`);
-      for (var i = 1; i < children.length - 1; i++) {
-        var c = children[i];
-        const { position } = c;
-        var y = c.resolvedShape.getVerticalAnchor(c) + position[1];
-        d.push(`M ${x} ${y}`, `L ${this.getChildAnchor(c, side)} ${y}`);
+      d.push(`M ${itemAnchor}`, `L ${center}`);
+      const firstChild = children[0];
+      const lastChild = children[children.length - 1];
+      const cornerEndX = center[0] + (side == "left" ? -R : R);
+      const sweep = cornerEndX < center[0] ? 1 : 0;
+      let firstAnchor = [
+        this.getChildAnchor(firstChild, side),
+        firstChild.resolvedShape.getVerticalAnchor(firstChild) + firstChild.position[1]
+      ];
+      let lastAnchor = [
+        this.getChildAnchor(lastChild, side),
+        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1]
+      ];
+      d.push(`M ${firstAnchor}`, `L ${cornerEndX} ${firstAnchor[1]}`, `A ${R} ${R} 0 0 ${sweep} ${center[0]} ${firstAnchor[1] + R}`, `L ${center[0]} ${lastAnchor[1] - R}`, `A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${lastAnchor[1]}`, `L ${lastAnchor}`);
+      for (let i = 1; i < children.length - 1; i++) {
+        const c = children[i];
+        const y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
+        let lineStart = [center[0], y];
+        let childAnchor = [this.getChildAnchor(c, side), y];
+        d.push(`M ${lineStart}`, `L ${childAnchor}`);
       }
       let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
       dom.connectors.append(path);
@@ -2222,48 +2211,45 @@
       if (children.length == 0) {
         return;
       }
-      var x = resolvedShape.getHorizontalAnchor(item);
-      var height = children.length == 1 ? 2 * R : R;
-      let y1, y2;
-      if (side == "top") {
-        y1 = size[1] - contentSize[1];
-        y2 = y1 - height;
-        this.anchorToggle(item, x, y1, side);
-      } else {
-        y1 = resolvedShape.getVerticalAnchor(item);
-        y2 = contentSize[1] + height;
-        this.anchorToggle(item, x, contentSize[1], side);
-      }
+      const height = children.length == 1 ? 2 * R : R;
+      let itemAnchor = [
+        resolvedShape.getHorizontalAnchor(item),
+        side == "top" ? size[1] - contentSize[1] : resolvedShape.getVerticalAnchor(item)
+      ];
+      let center = [
+        itemAnchor[0],
+        (side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
+      ];
+      this.anchorToggle(item, itemAnchor, side);
       if (item.isCollapsed()) {
         return;
       }
-      let d = [
-        `M ${x} ${y1}`,
-        `L ${x} ${y2}`
-      ];
+      let d = [];
+      d.push(`M ${itemAnchor}`, `L ${center}`);
       if (children.length == 1) {
         let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
         dom.connectors.append(path2);
         return;
       }
-      var c1 = children[0];
-      var c2 = children[children.length - 1];
-      var offset = contentSize[1] + height;
-      var y = Math.round(side == "top" ? size[1] - offset : offset) + 0.5;
-      var yy = y + (side == "top" ? -R : R);
-      let sweep = yy > y ? 1 : 0;
-      const p1 = c1.position;
-      const p2 = c2.position;
-      var x1 = c1.resolvedShape.getHorizontalAnchor(c1) + p1[0];
-      var x2 = c2.resolvedShape.getHorizontalAnchor(c2) + p2[0];
-      y1 = this.getChildAnchor(c1, side);
-      y2 = this.getChildAnchor(c2, side);
-      d.push(`M ${x1} ${y1}`, `L ${x1} ${yy}`, `A ${R} ${R} 0 0 ${sweep} ${x1 + R} ${y}`, `L ${x2 - R} ${y}`, `A ${R} ${R} 0 0 ${sweep} ${x2} ${yy}`, `L ${x2} ${y2}`);
+      const firstChild = children[0];
+      const lastChild = children[children.length - 1];
+      const cornerEndY = center[1] + (side == "top" ? -R : R);
+      const sweep = cornerEndY > center[1] ? 1 : 0;
+      let firstAnchor = [
+        firstChild.resolvedShape.getHorizontalAnchor(firstChild) + firstChild.position[0],
+        this.getChildAnchor(firstChild, side)
+      ];
+      let lastAnchor = [
+        lastChild.resolvedShape.getHorizontalAnchor(lastChild) + lastChild.position[0],
+        this.getChildAnchor(lastChild, side)
+      ];
+      d.push(`M ${firstAnchor}`, `L ${firstAnchor[0]} ${cornerEndY}`, `A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0] + R} ${center[1]}`, `L ${lastAnchor[0] - R} ${center[1]}`, `A ${R} ${R} 0 0 ${sweep} ${lastAnchor[0]} ${cornerEndY}`, `L ${lastAnchor}`);
       for (var i = 1; i < children.length - 1; i++) {
-        var c = children[i];
-        const { position, resolvedShape: resolvedShape2 } = c;
-        var x = resolvedShape2.getHorizontalAnchor(c) + position[0];
-        d.push(`M ${x} ${y}`, `L ${x} ${this.getChildAnchor(c, side)}`);
+        const c = children[i];
+        const x = c.resolvedShape.getHorizontalAnchor(c) + c.position[0];
+        let lineStart = [x, center[1]];
+        let childAnchor = [x, this.getChildAnchor(c, side)];
+        d.push(`M ${lineStart}`, `L ${childAnchor}`);
       }
       let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
       dom.connectors.append(path);
@@ -2317,7 +2303,7 @@
       const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
       const lineOffset = SPACING_RANK2 / 2;
       let x1 = (side == "left" ? size[0] - lineOffset : lineOffset) + 0.5;
-      this.anchorToggle(item, x1, contentSize[1], "bottom");
+      this.anchorToggle(item, [x1, contentSize[1]], "bottom");
       dom.connectors.innerHTML = "";
       if (children.length == 0 || item.isCollapsed()) {
         return;
@@ -2943,24 +2929,26 @@
     label: { value: "Image" },
     url: { value: "", writable: true }
   });
-  MM.Backend.Image.save = function(data, name) {
-    var form = document.createElement("form");
-    form.action = this.url;
-    form.method = "post";
-    form.target = "_blank";
-    var input = document.createElement("input");
-    input.type = "hidden";
-    input.name = "data";
-    input.value = data;
-    form.appendChild(input);
-    var input = document.createElement("input");
-    input.type = "hidden";
-    input.name = "name";
-    input.value = name;
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
-    form.parentNode.removeChild(form);
+  MM.Backend.Image.save = function() {
+    let serializer = new XMLSerializer();
+    let xml = serializer.serializeToString(MM.App.map._svg);
+    let base64 = btoa(xml);
+    let img = new Image();
+    img.src = `data:image/svg+xml;base64,${base64}`;
+    window.img = img;
+    img.onload = () => {
+      let canvas = document.createElement("canvas");
+      window.canvas = canvas;
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        let link = document.createElement("a");
+        link.download = MM.App.map.getName();
+        link.href = URL.createObjectURL(blob);
+        link.click();
+      }, "image/png");
+    };
   };
 
   // .js/backend/backend.file.js
@@ -4005,10 +3993,7 @@
     id: { value: "image" }
   });
   MM.UI.Backend.Image.save = function() {
-    var name = MM.App.map.getName();
-    var json = MM.App.map.toJSON();
-    var data = MM.Format.JSON.to(json);
-    this._backend.save(data, name);
+    this._backend.save();
   };
   MM.UI.Backend.Image.load = null;
 

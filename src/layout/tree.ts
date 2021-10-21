@@ -57,7 +57,7 @@ export default class TreeLayout extends Layout {
 
 		const lineOffset = SPACING_RANK / 2;
 		let x1 = (side == "left" ? size[0] - lineOffset : lineOffset) + 0.5;
-		this.anchorToggle(item, x1, contentSize[1], "bottom");
+		this.anchorToggle(item, [x1, contentSize[1]], "bottom");
 
 		dom.connectors.innerHTML = "";
 

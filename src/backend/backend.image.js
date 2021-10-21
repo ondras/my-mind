@@ -4,25 +4,27 @@ MM.Backend.Image = Object.create(MM.Backend, {
 	url: {value:"", writable:true}
 });
 
-MM.Backend.Image.save = function(data, name) {
-	var form = document.createElement("form");
-	form.action = this.url;
-	form.method = "post";
-	form.target = "_blank";
+MM.Backend.Image.save = function() {
+	let serializer = new XMLSerializer();
+	let xml = serializer.serializeToString(MM.App.map._svg);
 
-	var input = document.createElement("input");
-	input.type = "hidden";
-	input.name = "data";
-	input.value = data;
-	form.appendChild(input);
+	let base64 = btoa(xml);
+	let img = new Image();
+	img.src = `data:image/svg+xml;base64,${base64}`;
+	window.img = img;
 
-	var input = document.createElement("input");
-	input.type = "hidden";
-	input.name = "name";
-	input.value = name;
-	form.appendChild(input);
+	img.onload = () => {
+		let canvas = document.createElement("canvas");
+		window.canvas= canvas;
+		canvas.width = img.width;
+		canvas.height = img.height;
+		canvas.getContext("2d").drawImage(img, 0, 0);
 
-	document.body.appendChild(form);
-	form.submit();
-	form.parentNode.removeChild(form);
+		canvas.toBlob(blob => {
+			let link = document.createElement("a");
+			link.download = MM.App.map.getName();
+			link.href = URL.createObjectURL(blob);
+			link.click();
+		}, "image/png");
+	}
 }

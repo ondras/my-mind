@@ -63,12 +63,11 @@ export default abstract class Layout {
 		return children[index];
 	}
 
-	protected anchorToggle(item: Item, x, y, side) {
+	protected anchorToggle(item: Item, point: [number, number], side) {
 		var node = item.dom.toggle;
 		var w = node.offsetWidth;
 		var h = node.offsetHeight;
-		var l = x;
-		var t = y;
+		let [l, t] = point;
 
 		switch (side) {
 			case "left":
