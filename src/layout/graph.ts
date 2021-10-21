@@ -1,14 +1,18 @@
 import Layout from "./layout.js";
 import Item from "../item.js";
+import * as svg from "../svg.js";
+
 
 export const SPACING_RANK = 16;
 const R = SPACING_RANK/2;
-
 
 export default class GraphLayout extends Layout {
 
 	update(item: Item) {
 		this.layoutItem(item, this.childDirection);
+
+		const { connectors } = item.dom;
+		connectors.innerHTML = "";
 
 		if (this.childDirection == "left" || this.childDirection == "right") {
 			this.drawLinesHorizontal(item, this.childDirection);
@@ -73,12 +77,16 @@ export default class GraphLayout extends Layout {
 	}
 
 	protected drawLinesHorizontal(item: Item, side) {
-		const { contentPosition, contentSize, ctx, resolvedShape, children } = item;
+		const { contentPosition, contentSize, resolvedShape, resolvedColor, children, dom } = item;
 		if (children.length == 0) { return; }
 
-		ctx.strokeStyle = item.resolvedColor;
+		// first part from this item
+		let itemAnchor = [
+			contentPosition[0] - 0.5,
+			resolvedShape.getVerticalAnchor(item)
+		];
+		if (side == "right") { itemAnchor[0] += contentSize[0] + 1; }
 
-		/* first part */
 		var y1 = resolvedShape.getVerticalAnchor(item);
 		let x1;
 		if (side == "left") {
@@ -87,38 +95,40 @@ export default class GraphLayout extends Layout {
 			x1 = contentPosition[0] + contentSize[0] + 0.5;
 		}
 
-		this.anchorToggle(item, x1, y1, side);
+		this.anchorToggle(item, itemAnchor[0], itemAnchor[1], side);
 		if (item.isCollapsed()) { return; }
 
 		if (children.length == 1) {
 			var child = children[0];
-			const { position } = child;
-			var y2 = child.resolvedShape.getVerticalAnchor(child) + position[1];
-			let x2 = this.getChildAnchor(child, side);
-			ctx.beginPath();
-			ctx.moveTo(x1, y1);
-			ctx.bezierCurveTo((x1+x2)/2, y1, (x1+x2)/2, y2, x2, y2);
-			ctx.stroke();
+			const { position, resolvedShape } = child;
+
+			let childAnchor = [
+				this.getChildAnchor(child, side),
+				resolvedShape.getVerticalAnchor(child) + position[1]
+			];
+			let mid = (itemAnchor[0] + childAnchor[0])/2;
+
+			let d = [
+				`M ${itemAnchor}`,
+				`C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`
+			];
+			let path = svg.node("path", {d:d.join(" "), stroke:resolvedColor, fill:"none"});
+			dom.connectors.append(path);
 			return;
 		}
 
-		let x2;
-		if (side == "left") {
-			x2 = x1 - R;
-		} else {
-			x2 = x1 + R;
-		}
+		let x2 = (side == "left" ? x1-R : x1+R);
+		let d = [
+			`M ${x1} ${y1}`,
+			`L ${x2} ${y1}`
+		];
 
-		ctx.beginPath();
-		ctx.moveTo(x1, y1);
-		ctx.lineTo(x2, y1);
-		ctx.stroke();
-
-		/* rounded connectors */
+		// rounded connectors for first/last child
 		var c1 = children[0];
 		var c2 = children[children.length-1];
 		var x = x2;
 		var xx = x + (side == "left" ? -R : R);
+		let sweep = (xx < x ? 1 : 0);
 
 		let p1 = c1.position;
 		let p2 = c2.position;
@@ -128,32 +138,36 @@ export default class GraphLayout extends Layout {
 		x1 = this.getChildAnchor(c1, side);
 		x2 = this.getChildAnchor(c2, side);
 
-		ctx.beginPath();
-		ctx.moveTo(x1, y1);
-		ctx.lineTo(xx, y1)
-		ctx.arcTo(x, y1, x, y1+R, R);
-		ctx.lineTo(x, y2-R);
-		ctx.arcTo(x, y2, xx, y2, R);
-		ctx.lineTo(x2, y2);
+		d.push(
+			`M ${x1} ${y1}`,
+			`L ${xx} ${y1}`,
+			`A ${R} ${R} 0 0 ${sweep} ${x} ${y1+R}`,
+			`L ${x} ${y2-R}`,
+			`A ${R} ${R} 0 0 ${sweep} ${xx} ${y2}`,
+			`L ${x2} ${y2}`
+		);
 
+		// straight connectors for others
 		for (var i=1; i<children.length-1; i++) {
 			var c = children[i];
 			const { position } = c;
 			var y = c.resolvedShape.getVerticalAnchor(c) + position[1];
-			ctx.moveTo(x, y);
-			ctx.lineTo(this.getChildAnchor(c, side), y);
+
+			d.push(
+				`M ${x} ${y}`,
+				`L ${this.getChildAnchor(c, side)} ${y}`
+			);
 		}
-		ctx.stroke();
+
+		let path = svg.node("path", {d:d.join(" "), stroke:resolvedColor, fill:"none"});
+		dom.connectors.append(path);
 	}
 
 	protected drawLinesVertical(item, side) {
-		const { contentSize, size, ctx, resolvedShape, children } = item;
+		const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
 		if (children.length == 0) { return; }
 
-		ctx.strokeStyle = item.resolvedColor;
-
-		/* first part */
-
+		// first part from this item
 		var x = resolvedShape.getHorizontalAnchor(item);
 		var height = (children.length == 1 ? 2*R : R);
 
@@ -168,19 +182,25 @@ export default class GraphLayout extends Layout {
 			this.anchorToggle(item, x, contentSize[1], side);
 		}
 
-		ctx.beginPath();
-		ctx.moveTo(x, y1);
-		ctx.lineTo(x, y2);
-		ctx.stroke();
+		if (item.isCollapsed()) { return; }
 
-		if (children.length == 1) { return; }
+		let d = [
+			`M ${x} ${y1}`,
+			`L ${x} ${y2}`
+		];
+		if (children.length == 1) {
+			let path = svg.node("path", {d:d.join(" "), stroke:resolvedColor, fill:"none"});
+			dom.connectors.append(path);
+			return;
+		}
 
-		/* rounded connectors */
+		// rounded connectors for first/last child
 		var c1 = children[0];
 		var c2 = children[children.length-1];
 		var offset = contentSize[1] + height;
 		var y = Math.round(side == "top" ? size[1] - offset : offset) + 0.5;
-
+		var yy = y + (side == "top" ? -R : R);
+		let sweep = (yy > y ? 1 : 0);
 		const p1 = c1.position;
 		const p2 = c2.position;
 
@@ -189,20 +209,27 @@ export default class GraphLayout extends Layout {
 		y1 = this.getChildAnchor(c1, side);
 		y2 = this.getChildAnchor(c2, side);
 
-		ctx.beginPath();
-		ctx.moveTo(x1, y1);
-		ctx.arcTo(x1, y, x1+R, y, R);
-		ctx.lineTo(x2-R, y);
-		ctx.arcTo(x2, y, x2, y2, R);
+		d.push(
+			`M ${x1} ${y1}`,
+			`L ${x1} ${yy}`,
+			`A ${R} ${R} 0 0 ${sweep} ${x1+R} ${y}`,
+			`L ${x2-R} ${y}`,
+			`A ${R} ${R} 0 0 ${sweep} ${x2} ${yy}`,
+			`L ${x2} ${y2}`
+		);
 
 		for (var i=1; i<children.length-1; i++) {
 			var c = children[i];
-			const { position } = c;
-			var x = c.resolvedShape.getHorizontalAnchor(c) + position[0];
-			ctx.moveTo(x, y);
-			ctx.lineTo(x, this.getChildAnchor(c, side));
+			const { position, resolvedShape } = c;
+			var x = resolvedShape.getHorizontalAnchor(c) + position[0];
+			d.push(
+				`M ${x} ${y}`,
+				`L ${x} ${this.getChildAnchor(c, side)}`
+			);
 		}
-		ctx.stroke();
+
+		let path = svg.node("path", {d:d.join(" "), stroke:resolvedColor, fill:"none"});
+		dom.connectors.append(path);
 	}
 }
 
