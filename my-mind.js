@@ -205,7 +205,7 @@
       return this.childDirection;
     }
     computeAlignment(item) {
-      let direction = item.isRoot() ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item);
+      let direction = item.isRoot ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item);
       if (direction == "left") {
         return "right";
       }
@@ -227,7 +227,7 @@
           }
         }
       }
-      if (item.isRoot()) {
+      if (item.isRoot) {
         return item;
       }
       var parentLayout = item.parent.resolvedLayout;
@@ -241,7 +241,7 @@
       }
     }
     pickSibling(item, dir) {
-      if (item.isRoot()) {
+      if (item.isRoot) {
         return item;
       }
       var children = item.parent.children;
@@ -335,8 +335,7 @@
         icon: node("span"),
         value: node("span"),
         text: node("div"),
-        toggle: node("div"),
-        canvas: node("canvas")
+        toggle: node("div")
       };
       this.children = [];
       const { dom } = this;
@@ -349,10 +348,8 @@
       dom.text.classList.add("text");
       dom.toggle.classList.add("toggle");
       dom.icon.classList.add("icon");
-      let foCanvas = foreignObject();
       let foContent = foreignObject();
-      dom.node.append(dom.connectors, foCanvas, foContent);
-      foCanvas.append(dom.canvas);
+      dom.node.append(dom.connectors, foContent);
       foContent.append(dom.content);
       dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
       dom.toggle.addEventListener("click", this);
@@ -370,20 +367,9 @@
       this._parent = parent;
       this.update({ children: true });
     }
-    get ctx() {
-      return this.dom.canvas.getContext("2d");
-    }
     get size() {
       const bbox = this.dom.node.getBBox();
       return [bbox.width, bbox.height];
-    }
-    set size(size) {
-      const { canvas } = this.dom;
-      canvas.width = size[0];
-      canvas.height = size[1];
-      let fo = canvas.parentNode;
-      fo.setAttribute("width", String(size[0]));
-      fo.setAttribute("height", String(size[1]));
     }
     get position() {
       const { node: node3 } = this.dom;
@@ -599,9 +585,10 @@
       console.log(dom.content.offsetHeight, dom.text.textContent);
       fo.setAttribute("width", String(dom.content.offsetWidth));
       fo.setAttribute("height", String(dom.content.offsetHeight));
+      dom.connectors.innerHTML = "";
       resolvedLayout.update(this);
       resolvedShape.update(this);
-      if (options.parent && !this.isRoot()) {
+      if (options.parent && !this.isRoot) {
         this.parent.update();
       }
     }
@@ -708,7 +695,7 @@
       this.update({ children: true });
     }
     get resolvedColor() {
-      return this._color || (this.isRoot() ? COLOR : this.parent.resolvedColor);
+      return this._color || (this.isRoot ? COLOR : this.parent.resolvedColor);
     }
     get layout() {
       return this._layout;
@@ -733,7 +720,7 @@
       }
       let depth = 0;
       let node3 = this;
-      while (!node3.isRoot()) {
+      while (!node3.isRoot) {
         depth++;
         node3 = node3.parent;
       }
@@ -756,7 +743,7 @@
       }
       return null;
     }
-    isRoot() {
+    get isRoot() {
       return this.parent instanceof MM.Map;
     }
     insertChild(child, index) {
@@ -1497,7 +1484,7 @@
           return;
         }
         var item = targetItem;
-        while (!item.isRoot()) {
+        while (!item.isRoot) {
           if (item == sourceItem) {
             return;
           }
@@ -1666,7 +1653,7 @@
   });
   MM.Command.InsertSibling.execute = function() {
     var item = MM.App.current;
-    if (item.isRoot()) {
+    if (item.isRoot) {
       var action = new MM.Action.InsertNewItem(item, item.children.length);
     } else {
       var parent = item.parent;
@@ -1696,7 +1683,7 @@
     keys: { value: [{ keyCode: isMac() ? 8 : 46 }] }
   });
   MM.Command.Delete.isValid = function() {
-    return MM.Command.isValid.call(this) && !MM.App.current.isRoot();
+    return MM.Command.isValid.call(this) && !MM.App.current.isRoot;
   };
   MM.Command.Delete.execute = function() {
     var action = new MM.Action.RemoveItem(MM.App.current);
@@ -1711,7 +1698,7 @@
   });
   MM.Command.Swap.execute = function(e) {
     var current = MM.App.current;
-    if (current.isRoot() || current.parent.children.length < 2) {
+    if (current.isRoot || current.parent.children.length < 2) {
       return;
     }
     var diff = e.keyCode == 38 ? -1 : 1;
@@ -1727,7 +1714,7 @@
   });
   MM.Command.Side.execute = function(e) {
     var current = MM.App.current;
-    if (current.isRoot() || !current.parent.isRoot()) {
+    if (current.isRoot || !current.parent.isRoot) {
       return;
     }
     var side = e.keyCode == 37 ? "left" : "right";
@@ -2066,7 +2053,7 @@
   });
   MM.Command.SelectRoot.execute = function() {
     var item = MM.App.current;
-    while (!item.isRoot()) {
+    while (!item.isRoot) {
       item = item.parent;
     }
     MM.App.select(item);
@@ -2077,7 +2064,7 @@
       keys: { value: [{ keyCode: 8 }] }
     });
     MM.Command.SelectParent.execute = function() {
-      if (MM.App.current.isRoot()) {
+      if (MM.App.current.isRoot) {
         return;
       }
       MM.App.select(MM.App.current.parent);
@@ -2090,8 +2077,6 @@
   var GraphLayout = class extends Layout {
     update(item) {
       this.layoutItem(item, this.childDirection);
-      const { connectors } = item.dom;
-      connectors.innerHTML = "";
       if (this.childDirection == "left" || this.childDirection == "right") {
         this.drawLinesHorizontal(item, this.childDirection);
       } else {
@@ -2108,11 +2093,6 @@
         rankSize += bbox[rankIndex] + SPACING_RANK;
       }
       var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
-      let size = [rankSize, childSize];
-      if (rankIndex == 1) {
-        size = size.reverse();
-      }
-      item.size = size;
       var offset = [0, 0];
       if (rankDirection == "right") {
         offset[0] = contentSize[0] + SPACING_RANK;
@@ -2263,6 +2243,7 @@
   // .js/layout/tree.js
   var SPACING_RANK2 = 32;
   var R2 = SPACING_RANK2 / 4;
+  var LINE_OFFSET = SPACING_RANK2 / 2;
   var TreeLayout = class extends Layout {
     update(item) {
       this.layoutItem(item, this.childDirection);
@@ -2272,10 +2253,8 @@
       const { contentSize, children } = item;
       let bbox = this.computeChildrenBBox(children, 1);
       let rankSize = contentSize[0];
-      let childSize = bbox[1] + contentSize[1];
       if (bbox[0]) {
         rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK2);
-        childSize += this.SPACING_CHILD;
       }
       let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
       if (rankDirection == "left") {
@@ -2300,25 +2279,27 @@
       });
     }
     drawLines(item, side) {
-      const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
-      const lineOffset = SPACING_RANK2 / 2;
-      let x1 = (side == "left" ? size[0] - lineOffset : lineOffset) + 0.5;
-      this.anchorToggle(item, [x1, contentSize[1]], "bottom");
-      dom.connectors.innerHTML = "";
+      const { size, resolvedShape, resolvedColor, children, dom } = item;
+      let pointAnchor = [
+        (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5,
+        resolvedShape.getVerticalAnchor(item)
+      ];
+      this.anchorToggle(item, pointAnchor, "bottom");
       if (children.length == 0 || item.isCollapsed()) {
         return;
       }
-      let y1 = resolvedShape.getVerticalAnchor(item);
-      let last = children[children.length - 1];
-      let y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
-      let d = [`M ${x1} ${y1} L ${x1} ${y2 - R2}`];
-      let sweep = side == "left" ? 1 : 0;
+      let lastChild = children[children.length - 1];
+      let lineEnd = [
+        pointAnchor[0],
+        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R2
+      ];
+      let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
+      let cornerEndX = lineEnd[0] + (side == "left" ? -R2 : R2);
+      let sweep = cornerEndX < lineEnd[0] ? 1 : 0;
       children.forEach((child) => {
         const { resolvedShape: resolvedShape2, position } = child;
-        let y = resolvedShape2.getVerticalAnchor(child) + position[1];
-        let anchor = this.getChildAnchor(child, side);
-        let x2 = anchor > x1 ? x1 + R2 : x1 - R2;
-        d.push(`M ${x1} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${x2} ${y}`, `L ${anchor} ${y}`);
+        const y = resolvedShape2.getVerticalAnchor(child) + position[1];
+        d.push(`M ${pointAnchor[0]} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${cornerEndX} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
       });
       let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
       dom.connectors.append(path);
@@ -2334,7 +2315,7 @@
       this.LINE_THICKNESS = 8;
     }
     update(item) {
-      if (item.isRoot()) {
+      if (item.isRoot) {
         this.layoutRoot(item);
       } else {
         var side = this.getChildDirection(item);
@@ -2342,7 +2323,7 @@
       }
     }
     getChildDirection(child) {
-      while (!child.parent.isRoot()) {
+      while (!child.parent.isRoot) {
         child = child.parent;
       }
       var side = child.side;
@@ -2362,12 +2343,12 @@
       return child.side;
     }
     pickSibling(item, dir) {
-      if (item.isRoot()) {
+      if (item.isRoot) {
         return item;
       }
       var parent = item.parent;
       var children = parent.children;
-      if (parent.isRoot()) {
+      if (parent.isRoot) {
         var side = this.getChildDirection(item);
         children = children.filter((child) => this.getChildDirection(child) == side);
       }
@@ -2407,7 +2388,6 @@
       left += bboxRight[0];
       contentPosition[1] = Math.round((height - contentSize[1]) / 2);
       item.contentPosition = contentPosition;
-      item.dom.connectors.innerHTML = "";
       this.drawRootConnectors(item, "left", childrenLeft);
       this.drawRootConnectors(item, "right", childrenRight);
     }
@@ -2467,15 +2447,16 @@
       super("underline", "Underline");
     }
     update(item) {
-      const { contentPosition, contentSize, ctx } = item;
-      ctx.strokeStyle = item.resolvedColor;
-      var left = contentPosition[0];
-      var right = left + contentSize[0];
-      var top = this.getVerticalAnchor(item);
-      ctx.beginPath();
-      ctx.moveTo(left, top);
-      ctx.lineTo(right, top);
-      ctx.stroke();
+      const { contentPosition, resolvedColor, contentSize, dom } = item;
+      let left = contentPosition[0];
+      let right = left + contentSize[0];
+      let top = this.getVerticalAnchor(item);
+      let d = [
+        `M ${left} ${top}`,
+        `L ${right} ${top}`
+      ];
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
     }
     getVerticalAnchor(item) {
       const { contentPosition, contentSize } = item;
@@ -3408,8 +3389,8 @@
       value = layout.id;
     }
     this._select.value = value;
-    this._getOption("").disabled = MM.App.current.isRoot();
-    this._getOption("map").disabled = !MM.App.current.isRoot();
+    this._getOption("").disabled = MM.App.current.isRoot;
+    this._getOption("map").disabled = !MM.App.current.isRoot;
   };
   MM.UI.Layout.prototype.handleEvent = function(e) {
     var layout = repo2.get(this._select.value);
@@ -4402,7 +4383,7 @@
     }
     this._cursor[0] = e.clientX;
     this._cursor[1] = e.clientY;
-    if (item && !item.isRoot()) {
+    if (item && !item.isRoot) {
       this._mode = "drag";
       this._item = item;
     } else {
@@ -4487,7 +4468,7 @@
       direction: ""
     };
     var tmp = target;
-    while (!tmp.isRoot()) {
+    while (!tmp.isRoot) {
       if (tmp == this._item) {
         return state;
       }
@@ -4497,7 +4478,7 @@
     let targetContentSize = target.contentSize;
     var w = Math.max(itemContentSize[0], targetContentSize[0]);
     var h = Math.max(itemContentSize[1], targetContentSize[1]);
-    if (target.isRoot()) {
+    if (target.isRoot) {
       state.result = "append";
     } else if (Math.abs(closest.dx) < w && Math.abs(closest.dy) < h) {
       state.result = "append";
@@ -4604,7 +4585,7 @@
           this._syncPort();
           break;
         case "item-change":
-          if (publisher.isRoot() && publisher.map == this.map) {
+          if (publisher.isRoot && publisher.map == this.map) {
             document.title = this.map.getName() + " :: My Mind";
           }
           break;

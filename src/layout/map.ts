@@ -8,7 +8,7 @@ export default class MapLayout extends GraphLayout {
 	protected LINE_THICKNESS = 8;
 
 	update(item: Item) {
-		if (item.isRoot()) {
+		if (item.isRoot) {
 			this.layoutRoot(item);
 		} else {
 			var side = this.getChildDirection(item);
@@ -17,7 +17,7 @@ export default class MapLayout extends GraphLayout {
 	}
 
 	getChildDirection(child: Item) {
-		while (!child.parent.isRoot()) {
+		while (!child.parent.isRoot) {
 			child = child.parent;
 		}
 		/* child is now the sub-root node */
@@ -40,11 +40,11 @@ export default class MapLayout extends GraphLayout {
 	}
 
 	pickSibling(item: Item, dir) {
-		if (item.isRoot()) { return item; }
+		if (item.isRoot) { return item; }
 
 		var parent = item.parent;
 		var children = parent.children;
-		if (parent.isRoot()) {
+		if (parent.isRoot) {
 			var side = this.getChildDirection(item);
 			children = children.filter(child => this.getChildDirection(child) == side);
 		}
@@ -90,7 +90,6 @@ export default class MapLayout extends GraphLayout {
 		contentPosition[1] = Math.round((height - contentSize[1])/2);
 		item.contentPosition = contentPosition;
 
-		item.dom.connectors.innerHTML = "";
 		this.drawRootConnectors(item, "left", childrenLeft);
 		this.drawRootConnectors(item, "right", childrenRight);
 	}

@@ -51,7 +51,7 @@ MM.Clipboard._pasteItem = function(sourceItem, targetItem) {
 			}
 
 			var item = targetItem;
-			while (!item.isRoot()) {
+			while (!item.isRoot) {
 				if (item == sourceItem) { return; } /* moving to a child => forbidden */
 				item = item.parent;
 			}

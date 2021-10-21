@@ -120,7 +120,7 @@ MM.Mouse._startDrag = function(e, item) {
 	this._cursor[0] = e.clientX;
 	this._cursor[1] = e.clientY;
 
-	if (item && !item.isRoot()) {
+	if (item && !item.isRoot) {
 		this._mode = "drag";
 		this._item = item;
 	} else {
@@ -224,7 +224,7 @@ MM.Mouse._computeDragState = function() {
 	}
 
 	var tmp = target;
-	while (!tmp.isRoot()) {
+	while (!tmp.isRoot) {
 		if (tmp == this._item) { return state; } /* drop on a child or self */
 		tmp = tmp.parent;
 	}
@@ -234,7 +234,7 @@ MM.Mouse._computeDragState = function() {
 	var w = Math.max(itemContentSize[0], targetContentSize[0]);
 	var h = Math.max(itemContentSize[1], targetContentSize[1]);
 
-	if (target.isRoot()) { /* append here */
+	if (target.isRoot) { /* append here */
 		state.result = "append";
 	} else if (Math.abs(closest.dx) < w && Math.abs(closest.dy) < h) { /* append here */
 		state.result = "append";

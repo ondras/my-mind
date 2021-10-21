@@ -30,7 +30,7 @@ MM.Command.SelectRoot = Object.create(MM.Command, {
 });
 MM.Command.SelectRoot.execute = function() {
 	var item = MM.App.current;
-	while (!item.isRoot()) { item = item.parent; }
+	while (!item.isRoot) { item = item.parent; }
 	MM.App.select(item);
 }
 
@@ -41,7 +41,7 @@ if (!isMac()) {
 		keys: {value: [{keyCode: 8}]}
 	});
 	MM.Command.SelectParent.execute = function() {
-		if (MM.App.current.isRoot()) { return; }
+		if (MM.App.current.isRoot) { return; }
 		MM.App.select(MM.App.current.parent);
 	}
 }

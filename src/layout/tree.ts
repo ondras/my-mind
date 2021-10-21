@@ -3,8 +3,10 @@ import Item from "../item.js";
 import * as svg from "../svg.js";
 
 
+type Point = [number, number];
 const SPACING_RANK = 32;
 const R = SPACING_RANK/4;
+const LINE_OFFSET = SPACING_RANK / 2;
 
 export default class TreeLayout extends Layout {
 
@@ -21,12 +23,9 @@ export default class TreeLayout extends Layout {
 
 		// node size
 		let rankSize = contentSize[0];
-		let childSize = bbox[1] + contentSize[1];
 		if (bbox[0]) {
 			rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK);
-			childSize += this.SPACING_CHILD;
 		}
-//		item.size = [rankSize, childSize]; FIXME neni nutne, az na podtrzeni
 
 		let offset = [SPACING_RANK, contentSize[1]+this.SPACING_CHILD];
 		if (rankDirection == "left") { offset[0] = rankSize - bbox[0] - SPACING_RANK; }
@@ -39,7 +38,7 @@ export default class TreeLayout extends Layout {
 		item.contentPosition = [labelPos, 0];
 	}
 
-	protected layoutChildren(children, rankDirection, offset, bbox) {
+	protected layoutChildren(children: Item[], rankDirection, offset, bbox) {
 		children.forEach(child => {
 			const { size } = child;
 
@@ -52,34 +51,35 @@ export default class TreeLayout extends Layout {
 		});
 	}
 
-	protected drawLines(item, side) {
-		const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
+	protected drawLines(item: Item, side) {
+		const { size, resolvedShape, resolvedColor, children, dom } = item;
 
-		const lineOffset = SPACING_RANK / 2;
-		let x1 = (side == "left" ? size[0] - lineOffset : lineOffset) + 0.5;
-		this.anchorToggle(item, [x1, contentSize[1]], "bottom");
-
-		dom.connectors.innerHTML = "";
+		let pointAnchor: Point = [
+			(side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5,
+			resolvedShape.getVerticalAnchor(item)
+		];
+		this.anchorToggle(item, pointAnchor, "bottom");
 
 		if (children.length == 0 || item.isCollapsed()) { return; }
 
-		let y1 = resolvedShape.getVerticalAnchor(item);
-		let last = children[children.length-1];
-		let y2 = last.resolvedShape.getVerticalAnchor(last) + last.position[1];
+		let lastChild = children[children.length-1];
+		let lineEnd = [
+			pointAnchor[0],
+			lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R
+		];
+		let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
 
-		let d = [`M ${x1} ${y1} L ${x1} ${y2 - R}`];
-		let sweep = (side == "left" ? 1 : 0);
+		let cornerEndX = lineEnd[0] + (side == "left" ? -R : R);
+		let sweep = (cornerEndX < lineEnd[0] ? 1 : 0);
 
 		children.forEach(child => {
 			const { resolvedShape, position } = child;
-			let y = resolvedShape.getVerticalAnchor(child) + position[1];
-			let anchor = this.getChildAnchor(child, side);
-			let x2 = (anchor > x1 ? x1+R : x1-R);
+			const y = resolvedShape.getVerticalAnchor(child) + position[1];
 
 			d.push(
-				`M ${x1} ${y-R}`,
-				`A ${R} ${R} 0 0 ${sweep} ${x2} ${y}`,
-				`L ${anchor} ${y}`
+				`M ${pointAnchor[0]} ${y-R}`,
+				`A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${y}`,
+				`L ${this.getChildAnchor(child, side)} ${y}`
 			);
 		})
 

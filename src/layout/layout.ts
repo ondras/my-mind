@@ -18,7 +18,7 @@ export default abstract class Layout {
 	}
 
 	computeAlignment(item) {
-		let direction = (item.isRoot() ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item));
+		let direction = (item.isRoot ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item));
 		if (direction == "left") { return "right"; }
 		return "left";
 	}
@@ -40,7 +40,7 @@ export default abstract class Layout {
 			}
 		}
 
-		if (item.isRoot()) { return item; }
+		if (item.isRoot) { return item; }
 
 		var parentLayout = item.parent.resolvedLayout;
 		var thisChildDirection = parentLayout.getChildDirection(item);
@@ -54,7 +54,7 @@ export default abstract class Layout {
 	}
 
 	pickSibling(item, dir) {
-		if (item.isRoot()) { return item; }
+		if (item.isRoot) { return item; }
 
 		var children = item.parent.children;
 		var index = children.indexOf(item);

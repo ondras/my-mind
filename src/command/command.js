@@ -61,7 +61,7 @@ MM.Command.InsertSibling = Object.create(MM.Command, {
 });
 MM.Command.InsertSibling.execute = function() {
 	var item = MM.App.current;
-	if (item.isRoot()) {
+	if (item.isRoot) {
 		var action = new MM.Action.InsertNewItem(item, item.children.length);
 	} else {
 		var parent = item.parent;
@@ -97,7 +97,7 @@ MM.Command.Delete = Object.create(MM.Command, {
 	keys: {value: [{keyCode: isMac() ? 8 : 46}]} // Mac keyboards' "delete" button generates 8 (backspace)
 });
 MM.Command.Delete.isValid = function() {
-	return MM.Command.isValid.call(this) && !MM.App.current.isRoot();
+	return MM.Command.isValid.call(this) && !MM.App.current.isRoot;
 }
 MM.Command.Delete.execute = function() {
 	var action = new MM.Action.RemoveItem(MM.App.current);
@@ -113,7 +113,7 @@ MM.Command.Swap = Object.create(MM.Command, {
 });
 MM.Command.Swap.execute = function(e) {
 	var current = MM.App.current;
-	if (current.isRoot() || current.parent.children.length < 2) { return; }
+	if (current.isRoot || current.parent.children.length < 2) { return; }
 
 	var diff = (e.keyCode == 38 ? -1 : 1);
 	var action = new MM.Action.Swap(MM.App.current, diff);
@@ -129,7 +129,7 @@ MM.Command.Side = Object.create(MM.Command, {
 });
 MM.Command.Side.execute = function(e) {
 	var current = MM.App.current;
-	if (current.isRoot() || !current.parent.isRoot()) { return; }
+	if (current.isRoot || !current.parent.isRoot) { return; }
 
 	var side = (e.keyCode == 37 ? "left" : "right");
 	var action = new MM.Action.SetSide(MM.App.current, side);

@@ -12,9 +12,6 @@ export default class GraphLayout extends Layout {
 	update(item: Item) {
 		this.layoutItem(item, this.childDirection);
 
-		const { connectors } = item.dom;
-		connectors.innerHTML = "";
-
 		if (this.childDirection == "left" || this.childDirection == "right") {
 			this.drawLinesHorizontal(item, this.childDirection);
 		} else {
@@ -31,17 +28,13 @@ export default class GraphLayout extends Layout {
 
 		const { contentSize } = item;
 
-		/* children size */
+		// children size
 		var bbox = this.computeChildrenBBox(item.children, childIndex);
 
-		/* node size */
+		// node size
 		var rankSize = contentSize[rankIndex];
 		if (bbox[rankIndex]) { rankSize += bbox[rankIndex] + SPACING_RANK; }
 		var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
-
-		let size = [rankSize, childSize];
-		if (rankIndex == 1) { size = size.reverse(); }
-		item.size = size; // FIXME no longer necessary?
 
 		var offset = [0, 0];
 		if (rankDirection == "right") { offset[0] = contentSize[0] + SPACING_RANK; }

@@ -55,8 +55,7 @@ export default class Item {
 		icon: html.node("span"),
 		value: html.node("span"),
 		text: html.node("div"),
-		toggle: html.node("div"),
-		canvas: html.node("canvas")
+		toggle: html.node("div")
 	}
 
 	readonly children: Item[] = [];
@@ -77,11 +76,9 @@ export default class Item {
 		dom.toggle.classList.add("toggle");
 		dom.icon.classList.add("icon");
 
-		let foCanvas = svg.foreignObject();
 		let foContent = svg.foreignObject();
-		dom.node.append(dom.connectors, foCanvas, foContent);
+		dom.node.append(dom.connectors, foContent);
 
-		foCanvas.append(dom.canvas);
 		foContent.append(dom.content);
 
 		dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
@@ -98,22 +95,9 @@ export default class Item {
 		this.update({children:true});
 	}
 
-	// fixme zrusit
-	get ctx() { return this.dom.canvas.getContext("2d"); }
-
 	get size() {
 		const bbox = this.dom.node.getBBox();
 		return [bbox.width, bbox.height];
-	}
-	set size(size: number[]) {
-		// return; FIXME nebude potreba
-		const { canvas } = this.dom;
-		canvas.width = size[0];
-		canvas.height = size[1];
-
-		let fo = canvas.parentNode as SVGForeignObjectElement;
-		fo.setAttribute("width", String(size[0]));
-		fo.setAttribute("height", String(size[1]));
 	}
 
 	get position() {
@@ -332,11 +316,12 @@ export default class Item {
 
 //		if (this.id == "ezwvmtko") debugger;
 
+		dom.connectors.innerHTML = "";
 		resolvedLayout.update(this);
-		resolvedShape.update(this); // draws into canvas -> must be called after layout FIXME refactor after svg
+		resolvedShape.update(this); // needs layout -> draws second
 
 		// recurse upwards?
-		if (options.parent && !this.isRoot()) { this.parent.update(); }
+		if (options.parent && !this.isRoot) { this.parent.update(); }
 	}
 
 	get text() { return this.dom.text.innerHTML; }
@@ -429,7 +414,7 @@ export default class Item {
 		this.update({children:true});
 	}
 	get resolvedColor(): string {
-		return this._color || (this.isRoot() ? COLOR : this.parent.resolvedColor);
+		return this._color || (this.isRoot ? COLOR : this.parent.resolvedColor);
 	}
 
 	get layout() { return this._layout; }
@@ -451,7 +436,7 @@ export default class Item {
 
 		let depth = 0;
 		let node: Item | null = this;
-		while (!node.isRoot()) {
+		while (!node.isRoot) {
 			depth++;
 			node = node.parent;
 		}
@@ -471,9 +456,7 @@ export default class Item {
 		return null;
 	}
 
-	isRoot() {
-		return (this.parent instanceof MM.Map);
-	}
+	get isRoot() { return (this.parent instanceof MM.Map); }
 
 	insertChild(child: Item, index?: number) {
 		/* Create or remove child as necessary. This must be done before computing the index (inserting own child) */
