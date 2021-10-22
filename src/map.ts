@@ -34,7 +34,7 @@ export default class Map {
 	}
 
 	toJSON() {
-		var data = {
+		let data = {
 			root: this._root.toJSON()
 		};
 		return data;
@@ -160,7 +160,7 @@ export default class Map {
 
 		scan(this._root);
 
-		all.sort(function(a, b) {
+		all.sort((a, b) => {
 			var da = a.dx*a.dx + a.dy*a.dy;
 			var db = b.dx*b.dx + b.dy*b.dy;
 			return da-db;
@@ -169,24 +169,22 @@ export default class Map {
 		return all[0];
 	}
 
-	getItemFor(node) {
-		var port = this._root.dom.node.parentNode;
-		while (node != port && !node.classList.contains("content")) {
-			node = node.parentNode;
-		}
-		if (node == port) { return null; }
+	getItemFor(node: Element): Item | null {
+		let content = node.closest(".content");
+		if (!content) { return null; }
 
-		var scan = function(item, node) {
-			if (item.dom.content == node) { return item; }
-			var children = item.children;
-			for (var i=0;i<children.length;i++) {
-				var result = scan(children[i], node);
-				if (result) { return result; }
+		function scanForContent(item: Item): Item | undefined {
+			if (item.dom.content == content) { return item; }
+
+			for (let child of item.children) {
+				let found = scanForContent(child);
+				if (found) { return found; }
 			}
+
 			return null;
 		}
 
-		return scan(this._root, node);
+		return scanForContent(this._root);
 	}
 
 	ensureItemVisibility(item: Item) {
@@ -217,16 +215,14 @@ export default class Map {
 
 	get id() { return this._root.id; }
 
-	pick(item, direction) {
+	pick(item: Item, direction) {
 		var candidates = [];
 		var currentRect = item.dom.content.getBoundingClientRect();
 
 		this._getPickCandidates(currentRect, this._root, direction, candidates);
 		if (!candidates.length) { return item; }
 
-		candidates.sort(function(a, b) {
-			return a.dist - b.dist;
-		});
+		candidates.sort((a, b) => a.dist - b.dist);
 
 		return candidates[0].item;
 	}

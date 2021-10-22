@@ -313,7 +313,6 @@ export default class Item {
 		dom.node.dataset.align = resolvedLayout.computeAlignment(this); // applies css => modifies dimensions (necessary for layout)
 
 		let fo = dom.content.parentNode as SVGForeignObjectElement;
-		console.log(dom.content.offsetHeight, dom.text.textContent);
 		fo.setAttribute("width", String(dom.content.offsetWidth));
 		fo.setAttribute("height", String(dom.content.offsetHeight));
 

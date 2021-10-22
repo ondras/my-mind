@@ -858,7 +858,6 @@
       dom.node.dataset.shape = resolvedShape.id;
       dom.node.dataset.align = resolvedLayout.computeAlignment(this);
       let fo = dom.content.parentNode;
-      console.log(dom.content.offsetHeight, dom.text.textContent);
       fo.setAttribute("width", String(dom.content.offsetWidth));
       fo.setAttribute("height", String(dom.content.offsetHeight));
       dom.connectors.innerHTML = "";
@@ -1217,7 +1216,7 @@
       return new this().fromJSON(data);
     }
     toJSON() {
-      var data = {
+      let data = {
         root: this._root.toJSON()
       };
       return data;
@@ -1324,7 +1323,7 @@
         }
       };
       scan(this._root);
-      all.sort(function(a, b) {
+      all.sort((a, b) => {
         var da = a.dx * a.dx + a.dy * a.dy;
         var db = b.dx * b.dx + b.dy * b.dy;
         return da - db;
@@ -1332,27 +1331,23 @@
       return all[0];
     }
     getItemFor(node3) {
-      var port = this._root.dom.node.parentNode;
-      while (node3 != port && !node3.classList.contains("content")) {
-        node3 = node3.parentNode;
-      }
-      if (node3 == port) {
+      let content = node3.closest(".content");
+      if (!content) {
         return null;
       }
-      var scan = function(item, node4) {
-        if (item.dom.content == node4) {
+      function scanForContent(item) {
+        if (item.dom.content == content) {
           return item;
         }
-        var children = item.children;
-        for (var i = 0; i < children.length; i++) {
-          var result = scan(children[i], node4);
-          if (result) {
-            return result;
+        for (let child of item.children) {
+          let found = scanForContent(child);
+          if (found) {
+            return found;
           }
         }
         return null;
-      };
-      return scan(this._root, node3);
+      }
+      return scanForContent(this._root);
     }
     ensureItemVisibility(item) {
       const padding = 10;
@@ -1393,9 +1388,7 @@
       if (!candidates.length) {
         return item;
       }
-      candidates.sort(function(a, b) {
-        return a.dist - b.dist;
-      });
+      candidates.sort((a, b) => a.dist - b.dist);
       return candidates[0].item;
     }
     _getPickCandidates(currentRect, item, direction, candidates) {
