@@ -4,7 +4,7 @@ MM.UI.Backend.Local = Object.create(MM.UI.Backend, {
 
 MM.UI.Backend.Local.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
-	
+
 	this._list = this._node.querySelector(".list");
 	this._remove = this._node.querySelector(".remove");
 	this._remove.addEventListener("click", this);
@@ -16,7 +16,7 @@ MM.UI.Backend.Local.handleEvent = function(e) {
 	switch (e.target) {
 		case this._remove:
 			var id = this._list.value;
-			if (!id) { break; } 
+			if (!id) { break; }
 			this._backend.remove(id);
 			this.show(this._mode);
 		break;
@@ -25,10 +25,10 @@ MM.UI.Backend.Local.handleEvent = function(e) {
 
 MM.UI.Backend.Local.show = function(mode) {
 	MM.UI.Backend.show.call(this, mode);
-	
+
 	this._go.disabled = false;
 
-	if (mode == "load") { 
+	if (mode == "load") {
 		var list = this._backend.list();
 		this._list.innerHTML = "";
 		if (Object.keys(list).length) {
@@ -52,7 +52,7 @@ MM.UI.Backend.Local.setState = function(data) {
 MM.UI.Backend.Local.getState = function() {
 	var data = {
 		b: this.id,
-		id: MM.App.map.getId()
+		id: MM.App.map.id
 	};
 	return data;
 }
@@ -62,7 +62,7 @@ MM.UI.Backend.Local.save = function() {
 	var data = MM.Format.JSON.to(json);
 
 	try {
-		this._backend.save(data, MM.App.map.getId(), MM.App.map.getName());
+		this._backend.save(data, MM.App.map.id, MM.App.map.name);
 		this._saveDone();
 	} catch (e) {
 		this._error(e);

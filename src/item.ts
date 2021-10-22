@@ -3,6 +3,8 @@ import * as svg from "./svg.js";
 import * as pubsub from "./pubsub.js";
 import Shape, { repo as shapeRepo } from "./shape/shape.js";
 import Layout, { repo as layoutRepo } from "./layout/layout.js";
+import Map from "./map.js";
+
 
 declare global {
 	interface Window {
@@ -13,6 +15,7 @@ declare global {
 export type ValueType = string | number | null;
 export type StatusType = "computed" | boolean | null;
 export type Side = "left" | "right";
+export type ChildItem = Item & { parent: Item };
 
 const COLOR = "#999";
 
@@ -34,7 +37,7 @@ const UPDATE_OPTIONS = {
 
 export default class Item {
 	protected _id = generateId();
-	protected _parent: Item | null = null;
+	protected _parent: Item | Map | null = null;
 	protected _collapsed = false;
 	protected _icon: string | null = null;
 	protected _notes: string | null = null;
@@ -58,7 +61,7 @@ export default class Item {
 		toggle: html.node("div")
 	}
 
-	readonly children: Item[] = [];
+	readonly children: ChildItem[] = [];
 
 	static fromJSON(data) {
 		return new this().fromJSON(data);
@@ -90,7 +93,7 @@ export default class Item {
 	get id() { return this._id; }
 
 	get parent() { return this._parent; }
-	set parent(parent: Item | null) {
+	set parent(parent: Item | Map | null) {
 		this._parent = parent;
 		this.update({children:true});
 	}
@@ -288,7 +291,7 @@ export default class Item {
 
 		const { map, children } = this;
 
-		if (!map || !map.isVisible()) { return; }
+		if (!map || !map.isVisible) { return; }
 
 		if (options.children) { // recurse downwards?
 			let childUpdateOptions = { parent: false, children: true };
@@ -320,7 +323,7 @@ export default class Item {
 		resolvedLayout.update(this);
 		resolvedShape.update(this); // needs layout -> draws second
 
-		// recurse upwards?
+		// recurse upwards? FIXME needs to update parent map as well
 		if (options.parent && !this.isRoot) { this.parent.update(); }
 	}
 
@@ -414,7 +417,12 @@ export default class Item {
 		this.update({children:true});
 	}
 	get resolvedColor(): string {
-		return this._color || (this.isRoot ? COLOR : this.parent.resolvedColor);
+		if (this._color) { return this._color; }
+
+		const { parent } = this;
+		if (parent instanceof Item) { return parent.resolvedColor; }
+
+		return COLOR;
 	}
 
 	get layout() { return this._layout; }
@@ -423,7 +431,12 @@ export default class Item {
 		this.update({children:true});
 	}
 	get resolvedLayout() {
-		return this._layout || this.parent.resolvedLayout;
+		if (this._layout) { return this._layout; }
+
+		const { parent } = this;
+		if (!(parent instanceof Item)) { throw new Error("Non-connected item does not have layout"); }
+
+		return parent.resolvedLayout;
 	}
 
 	get shape() { return this._shape; }
@@ -438,7 +451,7 @@ export default class Item {
 		let node: Item | null = this;
 		while (!node.isRoot) {
 			depth++;
-			node = node.parent;
+			node = node.parent as Item; // always item, cannot be Map (would be root)
 		}
 		switch (depth) {
 			case 0: return shapeRepo.get("ellipse");
@@ -450,19 +463,20 @@ export default class Item {
 	get map() {
 		let item = this.parent;
 		while (item) {
-			if (item instanceof MM.Map) { return item; }
+			if (item instanceof Map) { return item; }
 			item = item.parent;
 		}
 		return null;
 	}
 
-	get isRoot() { return (this.parent instanceof MM.Map); }
+	get isRoot() { return (this.parent instanceof Map); }
 
 	insertChild(child: Item, index?: number) {
-		/* Create or remove child as necessary. This must be done before computing the index (inserting own child) */
+		// Create or remove child as necessary. This must be done before computing the index (inserting own child)
+
 		if (!child) {
 			child = new Item();
-		} else if (child.parent && child.parent.removeChild) { /* only when the child has non-map parent */
+		} else if (child.parent && child.parent instanceof Item) { // only when the child has non-map parent
 			child.parent.removeChild(child);
 		}
 
@@ -475,13 +489,13 @@ export default class Item {
 		var next = null;
 		if (index < this.children.length) { next = this.children[index].dom.node; }
 		this.dom.node.insertBefore(child.dom.node, next);
-		this.children.splice(index, 0, child);
+		this.children.splice(index, 0, child as ChildItem);
 
 		child.parent = this;
 	}
 
 	removeChild(child: Item) {
-		var index = this.children.indexOf(child);
+		var index = this.children.indexOf(child as ChildItem);
 		this.children.splice(index, 1);
 		var node = child.dom.node;
 		node.parentNode.removeChild(node);

@@ -148,7 +148,7 @@ MM.Mouse._processDrag = function(e) {
 		break;
 
 		case "pan":
-			MM.App.map.moveBy(dx, dy);
+			MM.App.map.moveBy([dx, dy]);
 		break;
 	}
 }

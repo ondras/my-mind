@@ -7,7 +7,7 @@ MM.UI.Backend.WebDAV.init = function(select) {
 
 	this._url = this._node.querySelector(".url");
 	this._url.value = localStorage.getItem(this._prefix + "url") || "";
-	
+
 	this._current = "";
 }
 
@@ -32,7 +32,7 @@ MM.UI.Backend.WebDAV.save = function() {
 	if (url.match(/\.mymind$/)) { /* complete file name */
 	} else { /* just a path */
 		if (url.charAt(url.length-1) != "/") { url += "/"; }
-		url += map.getName() + "." + MM.Format.JSON.extension;
+		url += map.name + "." + MM.Format.JSON.extension;
 	}
 
 	this._current = url;
@@ -66,7 +66,7 @@ MM.UI.Backend.WebDAV._load = function(url) {
 MM.UI.Backend.WebDAV._loadDone = function(data) {
 	try {
 		var json = MM.Format.JSON.from(data);
-	} catch (e) { 
+	} catch (e) {
 		this._error(e);
 	}
 

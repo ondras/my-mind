@@ -34,7 +34,7 @@ MM.UI.Backend.Firebase.setState = function(data) {
 
 MM.UI.Backend.Firebase.getState = function() {
 	var data = {
-		id: MM.App.map.getId(),
+		id: MM.App.map.id,
 		b: this.id,
 		s: this._server.value
 	};
@@ -101,7 +101,7 @@ MM.UI.Backend.Firebase.reset = function() {
 
 MM.UI.Backend.Firebase._itemChange = function() {
 	var map = MM.App.map;
-	this._backend.mergeWith(map.toJSON(), map.getName());
+	this._backend.mergeWith(map.toJSON(), map.name);
 }
 
 MM.UI.Backend.Firebase._action = function() {
@@ -117,7 +117,7 @@ MM.UI.Backend.Firebase.save = function() {
 	MM.App.setThrobber(true);
 
 	var map = MM.App.map;
-	this._backend.save(map.toJSON(), map.getId(), map.getName()).then(
+	this._backend.save(map.toJSON(), map.id, map.name).then(
 		this._saveDone.bind(this),
 		this._error.bind(this)
 	);

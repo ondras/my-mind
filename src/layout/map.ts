@@ -1,5 +1,5 @@
 import GraphLayout, { SPACING_RANK } from "./graph.js";
-import Item from "../item.js";
+import Item, { ChildItem } from "../item.js";
 import { repo } from "./layout.js";
 import * as svg from "../svg.js";
 
@@ -11,14 +11,14 @@ export default class MapLayout extends GraphLayout {
 		if (item.isRoot) {
 			this.layoutRoot(item);
 		} else {
-			var side = this.getChildDirection(item);
+			var side = this.getChildDirection(item as ChildItem);
 			repo.get(`graph-${side}`).update(item);
 		}
 	}
 
-	getChildDirection(child: Item) {
+	getChildDirection(child: ChildItem) {
 		while (!child.parent.isRoot) {
-			child = child.parent;
+			child = child.parent as ChildItem;
 		}
 		/* child is now the sub-root node */
 
@@ -42,14 +42,14 @@ export default class MapLayout extends GraphLayout {
 	pickSibling(item: Item, dir) {
 		if (item.isRoot) { return item; }
 
-		var parent = item.parent;
+		const parent = item.parent as Item;
 		var children = parent.children;
 		if (parent.isRoot) {
-			var side = this.getChildDirection(item);
+			var side = this.getChildDirection(item as ChildItem);
 			children = children.filter(child => this.getChildDirection(child) == side);
 		}
 
-		var index = children.indexOf(item);
+		var index = children.indexOf(item as ChildItem);
 		index += dir;
 		index = (index+children.length) % children.length;
 		return children[index];

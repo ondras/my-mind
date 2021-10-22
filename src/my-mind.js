@@ -1,7 +1,6 @@
 import "./mm.js";
 import "./promise.js";
 import "./repo.js";
-import "./map.js";
 import "./keyboard.js";
 import "./tip.js";
 import "./action.js";
@@ -48,7 +47,9 @@ import "./ui/backend/ui.backend.firebase.js";
 import "./ui/backend/ui.backend.gdrive.js";
 import "./mouse.js";
 
+
 import * as pubsub from "./pubsub.js";
+import Map from "./map.js";
 
 
 /*
@@ -148,7 +149,7 @@ MM.App = {
 
 			case "item-change":
 				if (publisher.isRoot && publisher.map == this.map) {
-					document.title = this.map.getName() + " :: My Mind";
+					document.title = this.map.name + " :: My Mind";
 				}
 			break;
 		}
@@ -215,7 +216,7 @@ MM.App = {
 		pubsub.subscribe("item-change", this);
 
 		this._syncPort();
-		this.setMap(new MM.Map());
+		this.setMap(new Map());
 	},
 
 	_syncPort: function() {

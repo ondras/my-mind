@@ -1,3 +1,6 @@
+import Map from "./map.js";
+
+
 MM.Clipboard = {
 	_item: null,
 	_mode: "",
@@ -73,8 +76,8 @@ MM.Clipboard._pastePlaintext = function(plaintext, targetItem) {
 	if (this._mode == "cut") { this._endCut(); } /* external paste => abort cutting */
 
 	var json = MM.Format.Plaintext.from(plaintext);
-	var map = MM.Map.fromJSON(json);
-	var root = map.getRoot();
+	var map = Map.fromJSON(json);
+	var root = map.root;
 
 	if (root.text) {
 		var action = new MM.Action.AppendItem(targetItem, root);

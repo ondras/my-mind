@@ -118,31 +118,50 @@
     }
   };
 
-  // .js/html.js
-  function node(name, attrs) {
-    let node3 = document.createElement(name);
-    Object.assign(node3, attrs);
-    return node3;
-  }
-
-  // .js/svg.js
-  var NS = "http://www.w3.org/2000/svg";
-  function node2(name, attrs) {
-    let node3 = document.createElementNS(NS, name);
-    for (let attr in attrs) {
-      node3.setAttribute(attr, attrs[attr]);
+  // .js/keyboard.js
+  MM.Keyboard = {};
+  MM.Keyboard.init = function() {
+    window.addEventListener("keydown", this);
+    window.addEventListener("keypress", this);
+  };
+  MM.Keyboard.handleEvent = function(e) {
+    var node3 = document.activeElement;
+    while (node3 && node3 != document) {
+      if (node3.classList.contains("ui")) {
+        return;
+      }
+      node3 = node3.parentNode;
     }
-    return node3;
-  }
-  function group() {
-    return node2("g");
-  }
-  function foreignObject() {
-    let fo = node2("foreignObject");
-    fo.setAttribute("width", "1");
-    fo.setAttribute("height", "1");
-    return fo;
-  }
+    var commands = MM.Command.getAll();
+    for (var i = 0; i < commands.length; i++) {
+      var command = commands[i];
+      if (!command.isValid()) {
+        continue;
+      }
+      var keys = command.keys;
+      for (var j = 0; j < keys.length; j++) {
+        if (this._keyOK(keys[j], e)) {
+          command.prevent && e.preventDefault();
+          command.execute(e);
+          return;
+        }
+      }
+    }
+  };
+  MM.Keyboard._keyOK = function(key, e) {
+    if ("keyCode" in key && e.type != "keydown") {
+      return false;
+    }
+    if ("charCode" in key && e.type != "keypress") {
+      return false;
+    }
+    for (var p in key) {
+      if (key[p] != e[p]) {
+        return false;
+      }
+    }
+    return true;
+  };
 
   // .js/pubsub.js
   var subscribers = new Map();
@@ -168,6 +187,263 @@
     if (index > -1) {
       subs.splice(index, 1);
     }
+  }
+
+  // .js/tip.js
+  MM.Tip = {
+    _node: null,
+    handleEvent: function() {
+      this._hide();
+    },
+    handleMessage: function() {
+      this._hide();
+    },
+    init: function() {
+      this._node = document.querySelector("#tip");
+      this._node.addEventListener("click", this);
+      subscribe("command-child", this);
+      subscribe("command-sibling", this);
+    },
+    _hide: function() {
+      unsubscribe("command-child", this);
+      unsubscribe("command-sibling", this);
+      this._node.removeEventListener("click", this);
+      this._node.classList.add("hidden");
+      this._node = null;
+    }
+  };
+
+  // .js/action.js
+  MM.Action = function() {
+  };
+  MM.Action.prototype.perform = function() {
+  };
+  MM.Action.prototype.undo = function() {
+  };
+  MM.Action.Multi = function(actions) {
+    this._actions = actions;
+  };
+  MM.Action.Multi.prototype = Object.create(MM.Action.prototype);
+  MM.Action.Multi.prototype.perform = function() {
+    this._actions.forEach(function(action) {
+      action.perform();
+    });
+  };
+  MM.Action.Multi.prototype.undo = function() {
+    this._actions.slice().reverse().forEach(function(action) {
+      action.undo();
+    });
+  };
+  MM.Action.InsertNewItem = function(parent, index) {
+    this._parent = parent;
+    this._index = index;
+    this._item = new MM.Item();
+  };
+  MM.Action.InsertNewItem.prototype = Object.create(MM.Action.prototype);
+  MM.Action.InsertNewItem.prototype.perform = function() {
+    this._parent.expand();
+    this._parent.insertChild(this._item, this._index);
+    MM.App.select(this._item);
+  };
+  MM.Action.InsertNewItem.prototype.undo = function() {
+    this._parent.removeChild(this._item);
+    MM.App.select(this._parent);
+  };
+  MM.Action.AppendItem = function(parent, item) {
+    this._parent = parent;
+    this._item = item;
+  };
+  MM.Action.AppendItem.prototype = Object.create(MM.Action.prototype);
+  MM.Action.AppendItem.prototype.perform = function() {
+    this._parent.insertChild(this._item);
+    MM.App.select(this._item);
+  };
+  MM.Action.AppendItem.prototype.undo = function() {
+    this._parent.removeChild(this._item);
+    MM.App.select(this._parent);
+  };
+  MM.Action.RemoveItem = function(item) {
+    this._item = item;
+    this._parent = item.parent;
+    this._index = this._parent.children.indexOf(this._item);
+  };
+  MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
+  MM.Action.RemoveItem.prototype.perform = function() {
+    this._parent.removeChild(this._item);
+    MM.App.select(this._parent);
+  };
+  MM.Action.RemoveItem.prototype.undo = function() {
+    this._parent.insertChild(this._item, this._index);
+    MM.App.select(this._item);
+  };
+  MM.Action.MoveItem = function(item, newParent, newIndex, newSide) {
+    this._item = item;
+    this._newParent = newParent;
+    this._newIndex = arguments.length < 3 ? null : newIndex;
+    this._newSide = newSide || "";
+    this._oldParent = item.parent;
+    this._oldIndex = this._oldParent.children.indexOf(item);
+    this._oldSide = item.side;
+  };
+  MM.Action.MoveItem.prototype = Object.create(MM.Action.prototype);
+  MM.Action.MoveItem.prototype.perform = function() {
+    this._item.side = this._newSide;
+    if (this._newIndex === null) {
+      this._newParent.insertChild(this._item);
+    } else {
+      this._newParent.insertChild(this._item, this._newIndex);
+    }
+    MM.App.select(this._item);
+  };
+  MM.Action.MoveItem.prototype.undo = function() {
+    this._item.side = this._oldSide;
+    this._oldParent.insertChild(this._item, this._oldIndex);
+    MM.App.select(this._newParent);
+  };
+  MM.Action.Swap = function(item, diff) {
+    this._item = item;
+    this._parent = item.parent;
+    var children = this._parent.children;
+    var sibling = this._parent.resolvedLayout.pickSibling(this._item, diff);
+    this._sourceIndex = children.indexOf(this._item);
+    this._targetIndex = children.indexOf(sibling);
+  };
+  MM.Action.Swap.prototype = Object.create(MM.Action.prototype);
+  MM.Action.Swap.prototype.perform = function() {
+    this._parent.insertChild(this._item, this._targetIndex);
+  };
+  MM.Action.Swap.prototype.undo = function() {
+    this._parent.insertChild(this._item, this._sourceIndex);
+  };
+  MM.Action.SetLayout = function(item, layout) {
+    this._item = item;
+    this._layout = layout;
+    this._oldLayout = item.layout;
+  };
+  MM.Action.SetLayout.prototype = Object.create(MM.Action.prototype);
+  MM.Action.SetLayout.prototype.perform = function() {
+    this._item.layout = this._layout;
+  };
+  MM.Action.SetLayout.prototype.undo = function() {
+    this._item.layout = this._oldLayout;
+  };
+  MM.Action.SetShape = function(item, shape) {
+    this._item = item;
+    this._shape = shape;
+    this._oldShape = item.shape;
+  };
+  MM.Action.SetShape.prototype = Object.create(MM.Action.prototype);
+  MM.Action.SetShape.prototype.perform = function() {
+    this._item.shape = this._shape;
+  };
+  MM.Action.SetShape.prototype.undo = function() {
+    this._item.shape = this._oldShape;
+  };
+  MM.Action.SetColor = function(item, color) {
+    this._item = item;
+    this._color = color;
+    this._oldColor = item.color;
+  };
+  MM.Action.SetColor.prototype = Object.create(MM.Action.prototype);
+  MM.Action.SetColor.prototype.perform = function() {
+    this._item.color = this._color;
+  };
+  MM.Action.SetColor.prototype.undo = function() {
+    this._item.color = this._oldColor;
+  };
+  MM.Action.SetText = function(item, text) {
+    this._item = item;
+    this._text = text;
+    this._oldText = item.text;
+    this._oldValue = item.value;
+  };
+  MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
+  MM.Action.SetText.prototype.perform = function() {
+    this._item.text = this._text;
+    var numText = Number(this._text);
+    if (numText == this._text) {
+      this._item.value = numText;
+    }
+  };
+  MM.Action.SetText.prototype.undo = function() {
+    this._item.text = this._oldText;
+    this._item.value = this._oldValue;
+  };
+  MM.Action.SetValue = function(item, value) {
+    this._item = item;
+    this._value = value;
+    this._oldValue = item.value;
+  };
+  MM.Action.SetValue.prototype = Object.create(MM.Action.prototype);
+  MM.Action.SetValue.prototype.perform = function() {
+    this._item.value = this._value;
+  };
+  MM.Action.SetValue.prototype.undo = function() {
+    this._item.value = this._oldValue;
+  };
+  MM.Action.SetStatus = function(item, status) {
+    this._item = item;
+    this._status = status;
+    this._oldStatus = item.status;
+  };
+  MM.Action.SetStatus.prototype = Object.create(MM.Action.prototype);
+  MM.Action.SetStatus.prototype.perform = function() {
+    this._item.status = this._status;
+  };
+  MM.Action.SetStatus.prototype.undo = function() {
+    this._item.status = this._oldStatus;
+  };
+  MM.Action.SetIcon = function(item, icon) {
+    this._item = item;
+    this._icon = icon;
+    this._oldIcon = item.icon;
+  };
+  MM.Action.SetIcon.prototype = Object.create(MM.Action.prototype);
+  MM.Action.SetIcon.prototype.perform = function() {
+    this._item.icon = this._icon;
+  };
+  MM.Action.SetIcon.prototype.undo = function() {
+    this._item.icon = this._oldIcon;
+  };
+  MM.Action.SetSide = function(item, side) {
+    this._item = item;
+    this._side = side;
+    this._oldSide = item.side;
+  };
+  MM.Action.SetSide.prototype = Object.create(MM.Action.prototype);
+  MM.Action.SetSide.prototype.perform = function() {
+    this._item.side = this._side;
+    this._item.map.update();
+  };
+  MM.Action.SetSide.prototype.undo = function() {
+    this._item.side = this._oldSide;
+    this._item.map.update();
+  };
+
+  // .js/html.js
+  function node(name, attrs) {
+    let node3 = document.createElement(name);
+    Object.assign(node3, attrs);
+    return node3;
+  }
+
+  // .js/svg.js
+  var NS = "http://www.w3.org/2000/svg";
+  function node2(name, attrs) {
+    let node3 = document.createElementNS(NS, name);
+    for (let attr in attrs) {
+      node3.setAttribute(attr, attrs[attr]);
+    }
+    return node3;
+  }
+  function group() {
+    return node2("g");
+  }
+  function foreignObject() {
+    let fo = node2("foreignObject");
+    fo.setAttribute("width", "1");
+    fo.setAttribute("height", "1");
+    return fo;
   }
 
   // .js/shape/shape.js
@@ -565,7 +841,7 @@
     update(options = {}) {
       options = Object.assign({}, UPDATE_OPTIONS, options);
       const { map, children } = this;
-      if (!map || !map.isVisible()) {
+      if (!map || !map.isVisible) {
         return;
       }
       if (options.children) {
@@ -695,7 +971,14 @@
       this.update({ children: true });
     }
     get resolvedColor() {
-      return this._color || (this.isRoot ? COLOR : this.parent.resolvedColor);
+      if (this._color) {
+        return this._color;
+      }
+      const { parent } = this;
+      if (parent instanceof Item) {
+        return parent.resolvedColor;
+      }
+      return COLOR;
     }
     get layout() {
       return this._layout;
@@ -705,7 +988,14 @@
       this.update({ children: true });
     }
     get resolvedLayout() {
-      return this._layout || this.parent.resolvedLayout;
+      if (this._layout) {
+        return this._layout;
+      }
+      const { parent } = this;
+      if (!(parent instanceof Item)) {
+        throw new Error("Non-connected item does not have layout");
+      }
+      return parent.resolvedLayout;
     }
     get shape() {
       return this._shape;
@@ -736,7 +1026,7 @@
     get map() {
       let item = this.parent;
       while (item) {
-        if (item instanceof MM.Map) {
+        if (item instanceof Map2) {
           return item;
         }
         item = item.parent;
@@ -744,12 +1034,12 @@
       return null;
     }
     get isRoot() {
-      return this.parent instanceof MM.Map;
+      return this.parent instanceof Map2;
     }
     insertChild(child, index) {
       if (!child) {
         child = new Item();
-      } else if (child.parent && child.parent.removeChild) {
+      } else if (child.parent && child.parent instanceof Item) {
         child.parent.removeChild(child);
       }
       if (!this.children.length) {
@@ -907,534 +1197,255 @@
   MM.Item = Item;
 
   // .js/map.js
-  MM.Map = function(options) {
-    var o = {
-      root: "My Mind Map",
-      layout: repo2.get("map")
-    };
-    for (var p in options) {
-      o[p] = options[p];
+  var Map2 = class {
+    constructor(options) {
+      this.node = node2("svg");
+      this._position = [0, 0];
+      this._visible = false;
+      options = Object.assign({
+        root: "My Mind Map",
+        layout: repo2.get("map")
+      }, options);
+      let root = new Item();
+      root.text = options.root;
+      root.layout = options.layout;
+      this.root = root;
     }
-    this._root = null;
-    this._visible = false;
-    this._position = [0, 0];
-    this._svg = node2("svg");
-    let root = new Item();
-    root.text = o.root;
-    root.layout = o.layout;
-    this._setRoot(root);
-  };
-  MM.Map.fromJSON = function(data) {
-    return new this().fromJSON(data);
-  };
-  MM.Map.prototype.toJSON = function() {
-    var data = {
-      root: this._root.toJSON()
-    };
-    return data;
-  };
-  MM.Map.prototype.fromJSON = function(data) {
-    this._setRoot(Item.fromJSON(data.root));
-    return this;
-  };
-  MM.Map.prototype.mergeWith = function(data) {
-    var ids = [];
-    var current = MM.App.current;
-    var node3 = current;
-    while (node3 != this) {
-      ids.push(node3.id);
-      node3 = node3.parent;
+    static fromJSON(data) {
+      return new this().fromJSON(data);
     }
-    this._root.mergeWith(data.root);
-    if (current.map) {
-      var node3 = current.parent;
-      var hidden = false;
+    toJSON() {
+      var data = {
+        root: this._root.toJSON()
+      };
+      return data;
+    }
+    fromJSON(data) {
+      this.root = Item.fromJSON(data.root);
+      return this;
+    }
+    get root() {
+      return this._root;
+    }
+    set root(root) {
+      const { node: node3 } = this;
+      this._root = root;
+      node3.innerHTML = "";
+      node3.append(root.dom.node);
+      root.parent = this;
+    }
+    mergeWith(data) {
+      var ids = [];
+      var current = MM.App.current;
+      var node3 = current;
       while (node3 != this) {
-        if (node3.isCollapsed()) {
-          hidden = true;
-        }
+        ids.push(node3.id);
         node3 = node3.parent;
       }
-      if (!hidden) {
-        return;
-      }
-    }
-    if (MM.App.editing) {
-      current.stopEditing();
-    }
-    var idMap = {};
-    var scan = function(item) {
-      idMap[item.id] = item;
-      item.children.forEach(scan);
-    };
-    scan(this._root);
-    while (ids.length) {
-      var id = ids.shift();
-      if (id in idMap) {
-        MM.App.select(idMap[id]);
-        return;
-      }
-    }
-  };
-  MM.Map.prototype.isVisible = function() {
-    return this._visible;
-  };
-  MM.Map.prototype.update = function() {
-    this._root.update({ parent: true, children: true });
-    return this;
-  };
-  MM.Map.prototype.show = function(where) {
-    where.append(this._svg);
-    this._svg.append(this._root.dom.node);
-    this._visible = true;
-    this._root.update({ parent: true, children: true });
-    const { size } = this._root;
-    this._svg.setAttribute("width", size[0]);
-    this._svg.setAttribute("height", size[1]);
-    this.center();
-    MM.App.select(this._root);
-    return this;
-  };
-  MM.Map.prototype.hide = function() {
-    this._root.dom.node.remove();
-    this._visible = false;
-    return this;
-  };
-  MM.Map.prototype.center = function() {
-    let { size } = this._root;
-    var port = MM.App.portSize;
-    var left = (port[0] - size[0]) / 2;
-    var top = (port[1] - size[1]) / 2;
-    this._moveTo(Math.round(left), Math.round(top));
-    return this;
-  };
-  MM.Map.prototype.moveBy = function(dx, dy) {
-    return this._moveTo(this._position[0] + dx, this._position[1] + dy);
-  };
-  MM.Map.prototype.getClosestItem = function(x, y) {
-    var all = [];
-    var scan = function(item) {
-      var rect = item.dom.content.getBoundingClientRect();
-      var dx = rect.left + rect.width / 2 - x;
-      var dy = rect.top + rect.height / 2 - y;
-      all.push({
-        item,
-        dx,
-        dy
-      });
-      if (!item.isCollapsed()) {
-        item.children.forEach(scan);
-      }
-    };
-    scan(this._root);
-    all.sort(function(a, b) {
-      var da = a.dx * a.dx + a.dy * a.dy;
-      var db = b.dx * b.dx + b.dy * b.dy;
-      return da - db;
-    });
-    return all[0];
-  };
-  MM.Map.prototype.getItemFor = function(node3) {
-    var port = this._root.dom.node.parentNode;
-    while (node3 != port && !node3.classList.contains("content")) {
-      node3 = node3.parentNode;
-    }
-    if (node3 == port) {
-      return null;
-    }
-    var scan = function(item, node4) {
-      if (item.dom.content == node4) {
-        return item;
-      }
-      var children = item.children;
-      for (var i = 0; i < children.length; i++) {
-        var result = scan(children[i], node4);
-        if (result) {
-          return result;
+      this._root.mergeWith(data.root);
+      if (current.map) {
+        var node3 = current.parent;
+        var hidden = false;
+        while (node3 != this) {
+          if (node3.isCollapsed()) {
+            hidden = true;
+          }
+          node3 = node3.parent;
+        }
+        if (!hidden) {
+          return;
         }
       }
-      return null;
-    };
-    return scan(this._root, node3);
-  };
-  MM.Map.prototype.ensureItemVisibility = function(item) {
-    var padding = 10;
-    var node3 = item.dom.content;
-    var itemRect = node3.getBoundingClientRect();
-    var root = this._root.dom.node;
-    var parentRect = root.parentNode.getBoundingClientRect();
-    var delta = [0, 0];
-    var dx = parentRect.left - itemRect.left + padding;
-    if (dx > 0) {
-      delta[0] = dx;
-    }
-    var dx = parentRect.right - itemRect.right - padding;
-    if (dx < 0) {
-      delta[0] = dx;
-    }
-    var dy = parentRect.top - itemRect.top + padding;
-    if (dy > 0) {
-      delta[1] = dy;
-    }
-    var dy = parentRect.bottom - itemRect.bottom - padding;
-    if (dy < 0) {
-      delta[1] = dy;
-    }
-    if (delta[0] || delta[1]) {
-      this.moveBy(delta[0], delta[1]);
-    }
-  };
-  MM.Map.prototype.getParent = function() {
-    return null;
-  };
-  MM.Map.prototype.getRoot = function() {
-    return this._root;
-  };
-  MM.Map.prototype.getName = function() {
-    var name = this._root.text;
-    return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
-  };
-  MM.Map.prototype.getId = function() {
-    return this._root.id;
-  };
-  MM.Map.prototype.pick = function(item, direction) {
-    var candidates = [];
-    var currentRect = item.dom.content.getBoundingClientRect();
-    this._getPickCandidates(currentRect, this._root, direction, candidates);
-    if (!candidates.length) {
-      return item;
-    }
-    candidates.sort(function(a, b) {
-      return a.dist - b.dist;
-    });
-    return candidates[0].item;
-  };
-  MM.Map.prototype._getPickCandidates = function(currentRect, item, direction, candidates) {
-    if (!item.isCollapsed()) {
-      item.children.forEach(function(child) {
-        this._getPickCandidates(currentRect, child, direction, candidates);
-      }, this);
-    }
-    var node3 = item.dom.content;
-    var rect = node3.getBoundingClientRect();
-    if (direction == "left" || direction == "right") {
-      var x1 = currentRect.left + currentRect.width / 2;
-      var x2 = rect.left + rect.width / 2;
-      if (direction == "left" && x2 > x1) {
-        return;
+      if (MM.App.editing) {
+        current.stopEditing();
       }
-      if (direction == "right" && x2 < x1) {
-        return;
-      }
-      var diff1 = currentRect.top - rect.bottom;
-      var diff2 = rect.top - currentRect.bottom;
-      var dist = Math.abs(x2 - x1);
-    } else {
-      var y1 = currentRect.top + currentRect.height / 2;
-      var y2 = rect.top + rect.height / 2;
-      if (direction == "top" && y2 > y1) {
-        return;
-      }
-      if (direction == "bottom" && y2 < y1) {
-        return;
-      }
-      var diff1 = currentRect.left - rect.right;
-      var diff2 = rect.left - currentRect.right;
-      var dist = Math.abs(y2 - y1);
-    }
-    var diff = Math.max(diff1, diff2);
-    if (diff > 0) {
-      return;
-    }
-    if (!dist || dist < diff) {
-      return;
-    }
-    candidates.push({ item, dist });
-  };
-  MM.Map.prototype._moveTo = function(left, top) {
-    this._position = [left, top];
-    this._svg.style.left = `${left}px`;
-    this._svg.style.top = `${top}px`;
-  };
-  MM.Map.prototype._setRoot = function(item) {
-    this._root = item;
-    this._root.parent = this;
-  };
-
-  // .js/keyboard.js
-  MM.Keyboard = {};
-  MM.Keyboard.init = function() {
-    window.addEventListener("keydown", this);
-    window.addEventListener("keypress", this);
-  };
-  MM.Keyboard.handleEvent = function(e) {
-    var node3 = document.activeElement;
-    while (node3 && node3 != document) {
-      if (node3.classList.contains("ui")) {
-        return;
-      }
-      node3 = node3.parentNode;
-    }
-    var commands = MM.Command.getAll();
-    for (var i = 0; i < commands.length; i++) {
-      var command = commands[i];
-      if (!command.isValid()) {
-        continue;
-      }
-      var keys = command.keys;
-      for (var j = 0; j < keys.length; j++) {
-        if (this._keyOK(keys[j], e)) {
-          command.prevent && e.preventDefault();
-          command.execute(e);
+      var idMap = {};
+      var scan = function(item) {
+        idMap[item.id] = item;
+        item.children.forEach(scan);
+      };
+      scan(this._root);
+      while (ids.length) {
+        var id = ids.shift();
+        if (id in idMap) {
+          MM.App.select(idMap[id]);
           return;
         }
       }
     }
-  };
-  MM.Keyboard._keyOK = function(key, e) {
-    if ("keyCode" in key && e.type != "keydown") {
-      return false;
+    get isVisible() {
+      return !!this.node.parentNode;
     }
-    if ("charCode" in key && e.type != "keypress") {
-      return false;
+    update() {
+      this._root.update({ parent: true, children: true });
+      return this;
     }
-    for (var p in key) {
-      if (key[p] != e[p]) {
-        return false;
+    show(where) {
+      const { node: node3 } = this;
+      where.append(node3);
+      this._visible = true;
+      this._root.update({ parent: true, children: true });
+      const { size } = this._root;
+      node3.setAttribute("width", String(size[0]));
+      node3.setAttribute("height", String(size[1]));
+      this.center();
+      MM.App.select(this._root);
+      return this;
+    }
+    hide() {
+      this.node.remove();
+      this._visible = false;
+      return this;
+    }
+    center() {
+      let { size } = this._root;
+      var port = MM.App.portSize;
+      var left = (port[0] - size[0]) / 2;
+      var top = (port[1] - size[1]) / 2;
+      this._moveTo([Math.round(left), Math.round(top)]);
+      return this;
+    }
+    moveBy(diff) {
+      let position = this._position.map((p, i) => p + diff[i]);
+      return this._moveTo(position);
+    }
+    getClosestItem(x, y) {
+      var all = [];
+      var scan = function(item) {
+        var rect = item.dom.content.getBoundingClientRect();
+        var dx = rect.left + rect.width / 2 - x;
+        var dy = rect.top + rect.height / 2 - y;
+        all.push({
+          item,
+          dx,
+          dy
+        });
+        if (!item.isCollapsed()) {
+          item.children.forEach(scan);
+        }
+      };
+      scan(this._root);
+      all.sort(function(a, b) {
+        var da = a.dx * a.dx + a.dy * a.dy;
+        var db = b.dx * b.dx + b.dy * b.dy;
+        return da - db;
+      });
+      return all[0];
+    }
+    getItemFor(node3) {
+      var port = this._root.dom.node.parentNode;
+      while (node3 != port && !node3.classList.contains("content")) {
+        node3 = node3.parentNode;
+      }
+      if (node3 == port) {
+        return null;
+      }
+      var scan = function(item, node4) {
+        if (item.dom.content == node4) {
+          return item;
+        }
+        var children = item.children;
+        for (var i = 0; i < children.length; i++) {
+          var result = scan(children[i], node4);
+          if (result) {
+            return result;
+          }
+        }
+        return null;
+      };
+      return scan(this._root, node3);
+    }
+    ensureItemVisibility(item) {
+      const padding = 10;
+      let itemRect = item.dom.content.getBoundingClientRect();
+      var parentRect = this.node.parentNode.getBoundingClientRect();
+      var delta = [0, 0];
+      var dx = parentRect.left - itemRect.left + padding;
+      if (dx > 0) {
+        delta[0] = dx;
+      }
+      var dx = parentRect.right - itemRect.right - padding;
+      if (dx < 0) {
+        delta[0] = dx;
+      }
+      var dy = parentRect.top - itemRect.top + padding;
+      if (dy > 0) {
+        delta[1] = dy;
+      }
+      var dy = parentRect.bottom - itemRect.bottom - padding;
+      if (dy < 0) {
+        delta[1] = dy;
+      }
+      if (delta[0] || delta[1]) {
+        this.moveBy(delta);
       }
     }
-    return true;
-  };
-
-  // .js/tip.js
-  MM.Tip = {
-    _node: null,
-    handleEvent: function() {
-      this._hide();
-    },
-    handleMessage: function() {
-      this._hide();
-    },
-    init: function() {
-      this._node = document.querySelector("#tip");
-      this._node.addEventListener("click", this);
-      subscribe("command-child", this);
-      subscribe("command-sibling", this);
-    },
-    _hide: function() {
-      unsubscribe("command-child", this);
-      unsubscribe("command-sibling", this);
-      this._node.removeEventListener("click", this);
-      this._node.classList.add("hidden");
-      this._node = null;
+    get name() {
+      let name = this._root.text;
+      return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
     }
-  };
-
-  // .js/action.js
-  MM.Action = function() {
-  };
-  MM.Action.prototype.perform = function() {
-  };
-  MM.Action.prototype.undo = function() {
-  };
-  MM.Action.Multi = function(actions) {
-    this._actions = actions;
-  };
-  MM.Action.Multi.prototype = Object.create(MM.Action.prototype);
-  MM.Action.Multi.prototype.perform = function() {
-    this._actions.forEach(function(action) {
-      action.perform();
-    });
-  };
-  MM.Action.Multi.prototype.undo = function() {
-    this._actions.slice().reverse().forEach(function(action) {
-      action.undo();
-    });
-  };
-  MM.Action.InsertNewItem = function(parent, index) {
-    this._parent = parent;
-    this._index = index;
-    this._item = new MM.Item();
-  };
-  MM.Action.InsertNewItem.prototype = Object.create(MM.Action.prototype);
-  MM.Action.InsertNewItem.prototype.perform = function() {
-    this._parent.expand();
-    this._parent.insertChild(this._item, this._index);
-    MM.App.select(this._item);
-  };
-  MM.Action.InsertNewItem.prototype.undo = function() {
-    this._parent.removeChild(this._item);
-    MM.App.select(this._parent);
-  };
-  MM.Action.AppendItem = function(parent, item) {
-    this._parent = parent;
-    this._item = item;
-  };
-  MM.Action.AppendItem.prototype = Object.create(MM.Action.prototype);
-  MM.Action.AppendItem.prototype.perform = function() {
-    this._parent.insertChild(this._item);
-    MM.App.select(this._item);
-  };
-  MM.Action.AppendItem.prototype.undo = function() {
-    this._parent.removeChild(this._item);
-    MM.App.select(this._parent);
-  };
-  MM.Action.RemoveItem = function(item) {
-    this._item = item;
-    this._parent = item.parent;
-    this._index = this._parent.children.indexOf(this._item);
-  };
-  MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
-  MM.Action.RemoveItem.prototype.perform = function() {
-    this._parent.removeChild(this._item);
-    MM.App.select(this._parent);
-  };
-  MM.Action.RemoveItem.prototype.undo = function() {
-    this._parent.insertChild(this._item, this._index);
-    MM.App.select(this._item);
-  };
-  MM.Action.MoveItem = function(item, newParent, newIndex, newSide) {
-    this._item = item;
-    this._newParent = newParent;
-    this._newIndex = arguments.length < 3 ? null : newIndex;
-    this._newSide = newSide || "";
-    this._oldParent = item.parent;
-    this._oldIndex = this._oldParent.children.indexOf(item);
-    this._oldSide = item.side;
-  };
-  MM.Action.MoveItem.prototype = Object.create(MM.Action.prototype);
-  MM.Action.MoveItem.prototype.perform = function() {
-    this._item.side = this._newSide;
-    if (this._newIndex === null) {
-      this._newParent.insertChild(this._item);
-    } else {
-      this._newParent.insertChild(this._item, this._newIndex);
+    get id() {
+      return this._root.id;
     }
-    MM.App.select(this._item);
-  };
-  MM.Action.MoveItem.prototype.undo = function() {
-    this._item.side = this._oldSide;
-    this._oldParent.insertChild(this._item, this._oldIndex);
-    MM.App.select(this._newParent);
-  };
-  MM.Action.Swap = function(item, diff) {
-    this._item = item;
-    this._parent = item.parent;
-    var children = this._parent.children;
-    var sibling = this._parent.resolvedLayout.pickSibling(this._item, diff);
-    this._sourceIndex = children.indexOf(this._item);
-    this._targetIndex = children.indexOf(sibling);
-  };
-  MM.Action.Swap.prototype = Object.create(MM.Action.prototype);
-  MM.Action.Swap.prototype.perform = function() {
-    this._parent.insertChild(this._item, this._targetIndex);
-  };
-  MM.Action.Swap.prototype.undo = function() {
-    this._parent.insertChild(this._item, this._sourceIndex);
-  };
-  MM.Action.SetLayout = function(item, layout) {
-    this._item = item;
-    this._layout = layout;
-    this._oldLayout = item.layout;
-  };
-  MM.Action.SetLayout.prototype = Object.create(MM.Action.prototype);
-  MM.Action.SetLayout.prototype.perform = function() {
-    this._item.layout = this._layout;
-  };
-  MM.Action.SetLayout.prototype.undo = function() {
-    this._item.layout = this._oldLayout;
-  };
-  MM.Action.SetShape = function(item, shape) {
-    this._item = item;
-    this._shape = shape;
-    this._oldShape = item.shape;
-  };
-  MM.Action.SetShape.prototype = Object.create(MM.Action.prototype);
-  MM.Action.SetShape.prototype.perform = function() {
-    this._item.shape = this._shape;
-  };
-  MM.Action.SetShape.prototype.undo = function() {
-    this._item.shape = this._oldShape;
-  };
-  MM.Action.SetColor = function(item, color) {
-    this._item = item;
-    this._color = color;
-    this._oldColor = item.color;
-  };
-  MM.Action.SetColor.prototype = Object.create(MM.Action.prototype);
-  MM.Action.SetColor.prototype.perform = function() {
-    this._item.color = this._color;
-  };
-  MM.Action.SetColor.prototype.undo = function() {
-    this._item.color = this._oldColor;
-  };
-  MM.Action.SetText = function(item, text) {
-    this._item = item;
-    this._text = text;
-    this._oldText = item.text;
-    this._oldValue = item.value;
-  };
-  MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
-  MM.Action.SetText.prototype.perform = function() {
-    this._item.text = this._text;
-    var numText = Number(this._text);
-    if (numText == this._text) {
-      this._item.value = numText;
+    pick(item, direction) {
+      var candidates = [];
+      var currentRect = item.dom.content.getBoundingClientRect();
+      this._getPickCandidates(currentRect, this._root, direction, candidates);
+      if (!candidates.length) {
+        return item;
+      }
+      candidates.sort(function(a, b) {
+        return a.dist - b.dist;
+      });
+      return candidates[0].item;
     }
-  };
-  MM.Action.SetText.prototype.undo = function() {
-    this._item.text = this._oldText;
-    this._item.value = this._oldValue;
-  };
-  MM.Action.SetValue = function(item, value) {
-    this._item = item;
-    this._value = value;
-    this._oldValue = item.value;
-  };
-  MM.Action.SetValue.prototype = Object.create(MM.Action.prototype);
-  MM.Action.SetValue.prototype.perform = function() {
-    this._item.value = this._value;
-  };
-  MM.Action.SetValue.prototype.undo = function() {
-    this._item.value = this._oldValue;
-  };
-  MM.Action.SetStatus = function(item, status) {
-    this._item = item;
-    this._status = status;
-    this._oldStatus = item.status;
-  };
-  MM.Action.SetStatus.prototype = Object.create(MM.Action.prototype);
-  MM.Action.SetStatus.prototype.perform = function() {
-    this._item.status = this._status;
-  };
-  MM.Action.SetStatus.prototype.undo = function() {
-    this._item.status = this._oldStatus;
-  };
-  MM.Action.SetIcon = function(item, icon) {
-    this._item = item;
-    this._icon = icon;
-    this._oldIcon = item.icon;
-  };
-  MM.Action.SetIcon.prototype = Object.create(MM.Action.prototype);
-  MM.Action.SetIcon.prototype.perform = function() {
-    this._item.icon = this._icon;
-  };
-  MM.Action.SetIcon.prototype.undo = function() {
-    this._item.icon = this._oldIcon;
-  };
-  MM.Action.SetSide = function(item, side) {
-    this._item = item;
-    this._side = side;
-    this._oldSide = item.side;
-  };
-  MM.Action.SetSide.prototype = Object.create(MM.Action.prototype);
-  MM.Action.SetSide.prototype.perform = function() {
-    this._item.side = this._side;
-    this._item.map.update();
-  };
-  MM.Action.SetSide.prototype.undo = function() {
-    this._item.side = this._oldSide;
-    this._item.map.update();
+    _getPickCandidates(currentRect, item, direction, candidates) {
+      if (!item.isCollapsed()) {
+        item.children.forEach(function(child) {
+          this._getPickCandidates(currentRect, child, direction, candidates);
+        }, this);
+      }
+      var node3 = item.dom.content;
+      var rect = node3.getBoundingClientRect();
+      if (direction == "left" || direction == "right") {
+        var x1 = currentRect.left + currentRect.width / 2;
+        var x2 = rect.left + rect.width / 2;
+        if (direction == "left" && x2 > x1) {
+          return;
+        }
+        if (direction == "right" && x2 < x1) {
+          return;
+        }
+        var diff1 = currentRect.top - rect.bottom;
+        var diff2 = rect.top - currentRect.bottom;
+        var dist = Math.abs(x2 - x1);
+      } else {
+        var y1 = currentRect.top + currentRect.height / 2;
+        var y2 = rect.top + rect.height / 2;
+        if (direction == "top" && y2 > y1) {
+          return;
+        }
+        if (direction == "bottom" && y2 < y1) {
+          return;
+        }
+        var diff1 = currentRect.left - rect.right;
+        var diff2 = rect.left - currentRect.right;
+        var dist = Math.abs(y2 - y1);
+      }
+      var diff = Math.max(diff1, diff2);
+      if (diff > 0) {
+        return;
+      }
+      if (!dist || dist < diff) {
+        return;
+      }
+      candidates.push({ item, dist });
+    }
+    _moveTo(point) {
+      this._position = point;
+      this.node.style.left = `${point[0]}px`;
+      this.node.style.top = `${point[1]}px`;
+    }
   };
 
   // .js/clipboard.js
@@ -1505,8 +1516,8 @@
       this._endCut();
     }
     var json = MM.Format.Plaintext.from(plaintext);
-    var map = MM.Map.fromJSON(json);
-    var root = map.getRoot();
+    var map = Map2.fromJSON(json);
+    var root = map.root;
     if (root.text) {
       var action = new MM.Action.AppendItem(targetItem, root);
       MM.App.action(action);
@@ -1601,6 +1612,7 @@
   };
 
   // .js/command/command.js
+  var PAN_AMOUNT = 15;
   function isMac() {
     return !!navigator.platform.match(/mac/i);
   }
@@ -1757,7 +1769,7 @@
     if (!confirm("Throw away your current map and start a new one?")) {
       return;
     }
-    var map = new MM.Map();
+    var map = new Map2();
     MM.App.setMap(map);
     publish("map-new", this);
   };
@@ -1819,12 +1831,12 @@
       "S": [0, -1],
       "D": [-1, 0]
     };
-    var offset = [0, 0];
-    this.chars.forEach(function(ch) {
-      offset[0] += dirs[ch][0];
-      offset[1] += dirs[ch][1];
+    let offset = [0, 0];
+    this.chars.forEach((ch) => {
+      offset[0] += dirs[ch][0] * PAN_AMOUNT;
+      offset[1] += dirs[ch][1] * PAN_AMOUNT;
     });
-    MM.App.map.moveBy(15 * offset[0], 15 * offset[1]);
+    MM.App.map.moveBy(offset);
   };
   MM.Command.Pan.handleEvent = function(e) {
     var ch = String.fromCharCode(e.keyCode);
@@ -2346,7 +2358,7 @@
       if (item.isRoot) {
         return item;
       }
-      var parent = item.parent;
+      const parent = item.parent;
       var children = parent.children;
       if (parent.isRoot) {
         var side = this.getChildDirection(item);
@@ -2912,7 +2924,7 @@
   });
   MM.Backend.Image.save = function() {
     let serializer = new XMLSerializer();
-    let xml = serializer.serializeToString(MM.App.map._svg);
+    let xml = serializer.serializeToString(MM.App.map.node);
     let base64 = btoa(xml);
     let img = new Image();
     img.src = `data:image/svg+xml;base64,${base64}`;
@@ -2925,7 +2937,7 @@
       canvas.getContext("2d").drawImage(img, 0, 0);
       canvas.toBlob((blob) => {
         let link = document.createElement("a");
-        link.download = MM.App.map.getName();
+        link.download = MM.App.map.name;
         link.href = URL.createObjectURL(blob);
         link.click();
       }, "image/png");
@@ -3845,7 +3857,7 @@
   MM.UI.Backend._loadDone = function(json) {
     MM.App.setThrobber(false);
     try {
-      MM.App.setMap(MM.Map.fromJSON(json));
+      MM.App.setMap(Map2.fromJSON(json));
       publish("load-done", this);
     } catch (e) {
       this._error(e);
@@ -3897,7 +3909,7 @@
     var format = MM.Format.getById(this._format.value);
     var json = MM.App.map.toJSON();
     var data = format.to(json);
-    var name = MM.App.map.getName() + "." + format.extension;
+    var name = MM.App.map.name + "." + format.extension;
     this._backend.save(data, name).then(this._saveDone.bind(this), this._error.bind(this));
   };
   MM.UI.Backend.File.load = function() {
@@ -3942,7 +3954,7 @@
       if (url.charAt(url.length - 1) != "/") {
         url += "/";
       }
-      url += map.getName() + "." + MM.Format.JSON.extension;
+      url += map.name + "." + MM.Format.JSON.extension;
     }
     this._current = url;
     var json = map.toJSON();
@@ -4026,7 +4038,7 @@
   MM.UI.Backend.Local.getState = function() {
     var data = {
       b: this.id,
-      id: MM.App.map.getId()
+      id: MM.App.map.id
     };
     return data;
   };
@@ -4034,7 +4046,7 @@
     var json = MM.App.map.toJSON();
     var data = MM.Format.JSON.to(json);
     try {
-      this._backend.save(data, MM.App.map.getId(), MM.App.map.getName());
+      this._backend.save(data, MM.App.map.id, MM.App.map.name);
       this._saveDone();
     } catch (e) {
       this._error(e);
@@ -4077,7 +4089,7 @@
   };
   MM.UI.Backend.Firebase.getState = function() {
     var data = {
-      id: MM.App.map.getId(),
+      id: MM.App.map.id,
       b: this.id,
       s: this._server.value
     };
@@ -4141,7 +4153,7 @@
   };
   MM.UI.Backend.Firebase._itemChange = function() {
     var map = MM.App.map;
-    this._backend.mergeWith(map.toJSON(), map.getName());
+    this._backend.mergeWith(map.toJSON(), map.name);
   };
   MM.UI.Backend.Firebase._action = function() {
     if (!this._online) {
@@ -4153,7 +4165,7 @@
   MM.UI.Backend.Firebase.save = function() {
     MM.App.setThrobber(true);
     var map = MM.App.map;
-    this._backend.save(map.toJSON(), map.getId(), map.getName()).then(this._saveDone.bind(this), this._error.bind(this));
+    this._backend.save(map.toJSON(), map.id, map.name).then(this._saveDone.bind(this), this._error.bind(this));
   };
   MM.UI.Backend.Firebase.load = function() {
     this._load(this._list.value);
@@ -4222,7 +4234,7 @@
     var format = MM.Format.getById(this._format.value);
     var json = MM.App.map.toJSON();
     var data = format.to(json);
-    var name = MM.App.map.getName();
+    var name = MM.App.map.name;
     var mime = "text/plain";
     if (format.mime) {
       mime = format.mime;
@@ -4408,7 +4420,7 @@
         this._visualizeDragState(state);
         break;
       case "pan":
-        MM.App.map.moveBy(dx, dy);
+        MM.App.map.moveBy([dx, dy]);
         break;
     }
   };
@@ -4586,7 +4598,7 @@
           break;
         case "item-change":
           if (publisher.isRoot && publisher.map == this.map) {
-            document.title = this.map.getName() + " :: My Mind";
+            document.title = this.map.name + " :: My Mind";
           }
           break;
       }
@@ -4642,7 +4654,7 @@
       subscribe("ui-change", this);
       subscribe("item-change", this);
       this._syncPort();
-      this.setMap(new MM.Map());
+      this.setMap(new Map2());
     },
     _syncPort: function() {
       this.portSize = [window.innerWidth - this.ui.getWidth(), window.innerHeight];

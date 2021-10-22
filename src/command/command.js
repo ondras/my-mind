@@ -1,5 +1,8 @@
 import * as pubsub from "../pubsub.js";
+import Map from "../map.js";
 
+
+const PAN_AMOUNT = 15;
 
 export function isMac() {
 	return !!navigator.platform.match(/mac/i);
@@ -174,7 +177,7 @@ MM.Command.New = Object.create(MM.Command, {
 });
 MM.Command.New.execute = function() {
 	if (!confirm("Throw away your current map and start a new one?")) { return; }
-	var map = new MM.Map();
+	var map = new Map();
 	MM.App.setMap(map);
 	pubsub.publish("map-new", this);
 }
@@ -242,14 +245,14 @@ MM.Command.Pan._step = function() {
 		"S": [0, -1],
 		"D": [-1, 0]
 	}
-	var offset = [0, 0];
+	let offset = [0, 0];
 
-	this.chars.forEach(function(ch) {
-		offset[0] += dirs[ch][0];
-		offset[1] += dirs[ch][1];
+	this.chars.forEach(ch => {
+		offset[0] += dirs[ch][0] * PAN_AMOUNT;
+		offset[1] += dirs[ch][1] * PAN_AMOUNT;
 	});
 
-	MM.App.map.moveBy(15*offset[0], 15*offset[1]);
+	MM.App.map.moveBy(offset);
 }
 
 MM.Command.Pan.handleEvent = function(e) {

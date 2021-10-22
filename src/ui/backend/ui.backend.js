@@ -1,4 +1,5 @@
 import * as pubsub from "../../pubsub.js";
+import Map from "../../map.js";
 
 
 MM.UI.Backend = Object.create(MM.Repo);
@@ -80,7 +81,7 @@ MM.UI.Backend._saveDone = function() {
 MM.UI.Backend._loadDone = function(json) {
 	MM.App.setThrobber(false);
 	try {
-		MM.App.setMap(MM.Map.fromJSON(json));
+		MM.App.setMap(Map.fromJSON(json));
 		pubsub.publish("load-done", this);
 	} catch (e) {
 		this._error(e);

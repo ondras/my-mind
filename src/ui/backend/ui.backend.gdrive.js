@@ -20,9 +20,9 @@ MM.UI.Backend.GDrive.save = function() {
 	var format = MM.Format.getById(this._format.value);
 	var json = MM.App.map.toJSON();
 	var data = format.to(json);
-	var name = MM.App.map.getName();
+	var name = MM.App.map.name;
 	var mime = "text/plain";
-	
+
 	if (format.mime) {
 		mime = format.mime;
 	} else {
@@ -72,7 +72,7 @@ MM.UI.Backend.GDrive._loadDone = function(data) {
 	try {
 		var format = MM.Format.getByMime(data.mime) || MM.Format.getByName(data.name) || MM.Format.JSON;
 		var json = format.from(data.data);
-	} catch (e) { 
+	} catch (e) {
 		this._error(e);
 	}
 
