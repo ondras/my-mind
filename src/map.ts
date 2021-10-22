@@ -143,30 +143,27 @@ export default class Map {
 		return this.moveTo(position);
 	}
 
-	getClosestItem(x, y) {
-		var all = [];
+	getClosestItem(point: number[]) {
+		interface DistanceRecord {
+			distance: number;
+			item: Item;
+		}
+		let all: DistanceRecord[] = [];
 
-		var scan = function(item) {
-			var rect = item.dom.content.getBoundingClientRect();
-			var dx = rect.left + rect.width/2 - x;
-			var dy = rect.top + rect.height/2 - y;
-			all.push({
-				item: item,
-				dx: dx,
-				dy: dy
-			});
+		function scan(item: Item) {
+			let rect = item.dom.content.getBoundingClientRect();
+			let dx = rect.left + rect.width/2 - point[0];
+			let dy = rect.top + rect.height/2 - point[1];
+			let distance = dx*dx+dy*dy;
+			all.push({item, distance});
 			if (!item.isCollapsed()) { item.children.forEach(scan); }
 		}
 
 		scan(this._root);
 
-		all.sort((a, b) => {
-			var da = a.dx*a.dx + a.dy*a.dy;
-			var db = b.dx*b.dx + b.dy*b.dy;
-			return da-db;
-		});
+		all.sort((a, b) => a.distance - b.distance);
 
-		return all[0];
+		return all[0].item;
 	}
 
 	getItemFor(node: Element): Item | null {

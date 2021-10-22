@@ -118,51 +118,6 @@
     }
   };
 
-  // .js/keyboard.js
-  MM.Keyboard = {};
-  MM.Keyboard.init = function() {
-    window.addEventListener("keydown", this);
-    window.addEventListener("keypress", this);
-  };
-  MM.Keyboard.handleEvent = function(e) {
-    var node3 = document.activeElement;
-    while (node3 && node3 != document) {
-      if (node3.classList.contains("ui")) {
-        return;
-      }
-      node3 = node3.parentNode;
-    }
-    var commands = MM.Command.getAll();
-    for (var i = 0; i < commands.length; i++) {
-      var command = commands[i];
-      if (!command.isValid()) {
-        continue;
-      }
-      var keys = command.keys;
-      for (var j = 0; j < keys.length; j++) {
-        if (this._keyOK(keys[j], e)) {
-          command.prevent && e.preventDefault();
-          command.execute(e);
-          return;
-        }
-      }
-    }
-  };
-  MM.Keyboard._keyOK = function(key, e) {
-    if ("keyCode" in key && e.type != "keydown") {
-      return false;
-    }
-    if ("charCode" in key && e.type != "keypress") {
-      return false;
-    }
-    for (var p in key) {
-      if (key[p] != e[p]) {
-        return false;
-      }
-    }
-    return true;
-  };
-
   // .js/pubsub.js
   var subscribers = new Map();
   function publish(message, publisher, data) {
@@ -422,19 +377,19 @@
 
   // .js/html.js
   function node(name, attrs) {
-    let node3 = document.createElement(name);
-    Object.assign(node3, attrs);
-    return node3;
+    let node4 = document.createElement(name);
+    Object.assign(node4, attrs);
+    return node4;
   }
 
   // .js/svg.js
   var NS = "http://www.w3.org/2000/svg";
   function node2(name, attrs) {
-    let node3 = document.createElementNS(NS, name);
+    let node4 = document.createElementNS(NS, name);
     for (let attr in attrs) {
-      node3.setAttribute(attr, attrs[attr]);
+      node4.setAttribute(attr, attrs[attr]);
     }
-    return node3;
+    return node4;
   }
   function group() {
     return node2("g");
@@ -527,9 +482,9 @@
       return children[index];
     }
     anchorToggle(item, point, side) {
-      var node3 = item.dom.toggle;
-      var w = node3.offsetWidth;
-      var h = node3.offsetHeight;
+      var node4 = item.dom.toggle;
+      var w = node4.offsetWidth;
+      var h = node4.offsetHeight;
       let [l, t] = point;
       switch (side) {
         case "left":
@@ -547,8 +502,8 @@
           l -= w / 2;
           break;
       }
-      node3.style.left = Math.round(l) + "px";
-      node3.style.top = Math.round(t) + "px";
+      node4.style.left = Math.round(l) + "px";
+      node4.style.top = Math.round(t) + "px";
     }
     getChildAnchor(item, side) {
       let { position, contentPosition, contentSize } = item;
@@ -648,14 +603,14 @@
       return [bbox.width, bbox.height];
     }
     get position() {
-      const { node: node3 } = this.dom;
-      const transform = node3.getAttribute("transform");
+      const { node: node4 } = this.dom;
+      const transform = node4.getAttribute("transform");
       return transform.match(/\d+/g).map(Number);
     }
     set position(position) {
-      const { node: node3 } = this.dom;
+      const { node: node4 } = this.dom;
       const transform = `translate(${position.join(" ")})`;
-      node3.setAttribute("transform", transform);
+      node4.setAttribute("transform", transform);
     }
     get contentSize() {
       const { content } = this.dom;
@@ -1008,10 +963,10 @@
         return this._shape;
       }
       let depth = 0;
-      let node3 = this;
-      while (!node3.isRoot) {
+      let node4 = this;
+      while (!node4.isRoot) {
         depth++;
-        node3 = node3.parent;
+        node4 = node4.parent;
       }
       switch (depth) {
         case 0:
@@ -1058,8 +1013,8 @@
     removeChild(child) {
       var index = this.children.indexOf(child);
       this.children.splice(index, 1);
-      var node3 = child.dom.node;
-      node3.parentNode.removeChild(node3);
+      var node4 = child.dom.node;
+      node4.parentNode.removeChild(node4);
       child.parent = null;
       if (!this.children.length) {
         this.dom.toggle.parentNode.removeChild(this.dom.toggle);
@@ -1152,8 +1107,8 @@
       }
     }
   };
-  function findLinks(node3) {
-    var children = [].slice.call(node3.childNodes);
+  function findLinks(node4) {
+    var children = [].slice.call(node4.childNodes);
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeType) {
@@ -1171,14 +1126,14 @@
             var link = document.createElement("a");
             link.innerHTML = link.href = result[0];
             if (before) {
-              node3.insertBefore(document.createTextNode(before), child);
+              node4.insertBefore(document.createTextNode(before), child);
             }
-            node3.insertBefore(link, child);
+            node4.insertBefore(link, child);
             if (after) {
               child.nodeValue = after;
               i--;
             } else {
-              node3.removeChild(child);
+              node4.removeChild(child);
             }
           }
           break;
@@ -1229,29 +1184,29 @@
       return this._root;
     }
     set root(root) {
-      const { node: node3 } = this;
+      const { node: node4 } = this;
       this._root = root;
-      node3.innerHTML = "";
-      node3.append(root.dom.node);
+      node4.innerHTML = "";
+      node4.append(root.dom.node);
       root.parent = this;
     }
     mergeWith(data) {
       var ids = [];
       var current = MM.App.current;
-      var node3 = current;
-      while (node3 != this) {
-        ids.push(node3.id);
-        node3 = node3.parent;
+      var node4 = current;
+      while (node4 != this) {
+        ids.push(node4.id);
+        node4 = node4.parent;
       }
       this._root.mergeWith(data.root);
       if (current.map) {
-        var node3 = current.parent;
+        var node4 = current.parent;
         var hidden = false;
-        while (node3 != this) {
-          if (node3.isCollapsed()) {
+        while (node4 != this) {
+          if (node4.isCollapsed()) {
             hidden = true;
           }
-          node3 = node3.parent;
+          node4 = node4.parent;
         }
         if (!hidden) {
           return;
@@ -1280,10 +1235,10 @@
     update(options) {
       options = Object.assign({}, UPDATE_OPTIONS2, options);
       options.children && this._root.update({ parent: false, children: true });
-      const { node: node3 } = this;
+      const { node: node4 } = this;
       const { size } = this._root;
-      node3.setAttribute("width", String(size[0]));
-      node3.setAttribute("height", String(size[1]));
+      node4.setAttribute("width", String(size[0]));
+      node4.setAttribute("height", String(size[1]));
     }
     show(where) {
       where.append(this.node);
@@ -1307,31 +1262,24 @@
       let position = this.position.map((p, i) => p + diff[i]);
       return this.moveTo(position);
     }
-    getClosestItem(x, y) {
-      var all = [];
-      var scan = function(item) {
-        var rect = item.dom.content.getBoundingClientRect();
-        var dx = rect.left + rect.width / 2 - x;
-        var dy = rect.top + rect.height / 2 - y;
-        all.push({
-          item,
-          dx,
-          dy
-        });
+    getClosestItem(point) {
+      let all = [];
+      function scan(item) {
+        let rect = item.dom.content.getBoundingClientRect();
+        let dx = rect.left + rect.width / 2 - point[0];
+        let dy = rect.top + rect.height / 2 - point[1];
+        let distance = dx * dx + dy * dy;
+        all.push({ item, distance });
         if (!item.isCollapsed()) {
           item.children.forEach(scan);
         }
-      };
+      }
       scan(this._root);
-      all.sort((a, b) => {
-        var da = a.dx * a.dx + a.dy * a.dy;
-        var db = b.dx * b.dx + b.dy * b.dy;
-        return da - db;
-      });
-      return all[0];
+      all.sort((a, b) => a.distance - b.distance);
+      return all[0].item;
     }
-    getItemFor(node3) {
-      let content = node3.closest(".content");
+    getItemFor(node4) {
+      let content = node4.closest(".content");
       if (!content) {
         return null;
       }
@@ -1397,8 +1345,8 @@
           this._getPickCandidates(currentRect, child, direction, candidates);
         }, this);
       }
-      var node3 = item.dom.content;
-      var rect = node3.getBoundingClientRect();
+      var node4 = item.dom.content;
+      var rect = node4.getBoundingClientRect();
       if (direction == "left" || direction == "right") {
         var x1 = currentRect.left + currentRect.width / 2;
         var x2 = rect.left + rect.width / 2;
@@ -2075,400 +2023,6 @@
     };
   }
 
-  // .js/layout/graph.js
-  var SPACING_RANK = 16;
-  var R = SPACING_RANK / 2;
-  var GraphLayout = class extends Layout {
-    update(item) {
-      this.layoutItem(item, this.childDirection);
-      if (this.childDirection == "left" || this.childDirection == "right") {
-        this.drawLinesHorizontal(item, this.childDirection);
-      } else {
-        this.drawLinesVertical(item, this.childDirection);
-      }
-    }
-    layoutItem(item, rankDirection) {
-      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
-      var childIndex = (rankIndex + 1) % 2;
-      const { contentSize } = item;
-      var bbox = this.computeChildrenBBox(item.children, childIndex);
-      var rankSize = contentSize[rankIndex];
-      if (bbox[rankIndex]) {
-        rankSize += bbox[rankIndex] + SPACING_RANK;
-      }
-      var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
-      var offset = [0, 0];
-      if (rankDirection == "right") {
-        offset[0] = contentSize[0] + SPACING_RANK;
-      }
-      if (rankDirection == "bottom") {
-        offset[1] = contentSize[1] + SPACING_RANK;
-      }
-      offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
-      this.layoutChildren(item.children, rankDirection, offset, bbox);
-      var labelPos = 0;
-      if (rankDirection == "left") {
-        labelPos = rankSize - contentSize[0];
-      }
-      if (rankDirection == "top") {
-        labelPos = rankSize - contentSize[1];
-      }
-      let contentPosition = [Math.round((childSize - contentSize[childIndex]) / 2), labelPos];
-      if (rankIndex == 0) {
-        contentPosition = contentPosition.reverse();
-      }
-      item.contentPosition = contentPosition;
-    }
-    layoutChildren(children, rankDirection, offset, bbox) {
-      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
-      var childIndex = (rankIndex + 1) % 2;
-      children.forEach((child) => {
-        const { size } = child;
-        if (rankDirection == "left") {
-          offset[0] = bbox[0] - size[0];
-        }
-        if (rankDirection == "top") {
-          offset[1] = bbox[1] - size[1];
-        }
-        child.position = offset;
-        offset[childIndex] += size[childIndex] + this.SPACING_CHILD;
-      });
-      return bbox;
-    }
-    drawLinesHorizontal(item, side) {
-      const { contentPosition, contentSize, resolvedShape, resolvedColor, children, dom } = item;
-      if (children.length == 0) {
-        return;
-      }
-      let itemAnchor = [
-        contentPosition[0] + (side == "right" ? contentSize[0] + 0.5 : -0.5),
-        resolvedShape.getVerticalAnchor(item)
-      ];
-      this.anchorToggle(item, itemAnchor, side);
-      if (item.isCollapsed()) {
-        return;
-      }
-      let d = [];
-      if (children.length == 1) {
-        var child = children[0];
-        const { position, resolvedShape: resolvedShape2 } = child;
-        let childAnchor = [
-          this.getChildAnchor(child, side),
-          resolvedShape2.getVerticalAnchor(child) + position[1]
-        ];
-        let mid = (itemAnchor[0] + childAnchor[0]) / 2;
-        d.push(`M ${itemAnchor}`, `C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`);
-        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-        dom.connectors.append(path2);
-        return;
-      }
-      let center = [
-        itemAnchor[0] + (side == "left" ? -R : R),
-        itemAnchor[1]
-      ];
-      d.push(`M ${itemAnchor}`, `L ${center}`);
-      const firstChild = children[0];
-      const lastChild = children[children.length - 1];
-      const cornerEndX = center[0] + (side == "left" ? -R : R);
-      const sweep = cornerEndX < center[0] ? 1 : 0;
-      let firstAnchor = [
-        this.getChildAnchor(firstChild, side),
-        firstChild.resolvedShape.getVerticalAnchor(firstChild) + firstChild.position[1]
-      ];
-      let lastAnchor = [
-        this.getChildAnchor(lastChild, side),
-        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1]
-      ];
-      d.push(`M ${firstAnchor}`, `L ${cornerEndX} ${firstAnchor[1]}`, `A ${R} ${R} 0 0 ${sweep} ${center[0]} ${firstAnchor[1] + R}`, `L ${center[0]} ${lastAnchor[1] - R}`, `A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${lastAnchor[1]}`, `L ${lastAnchor}`);
-      for (let i = 1; i < children.length - 1; i++) {
-        const c = children[i];
-        const y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
-        let lineStart = [center[0], y];
-        let childAnchor = [this.getChildAnchor(c, side), y];
-        d.push(`M ${lineStart}`, `L ${childAnchor}`);
-      }
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-    drawLinesVertical(item, side) {
-      const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
-      if (children.length == 0) {
-        return;
-      }
-      const height = children.length == 1 ? 2 * R : R;
-      let itemAnchor = [
-        resolvedShape.getHorizontalAnchor(item),
-        side == "top" ? size[1] - contentSize[1] : resolvedShape.getVerticalAnchor(item)
-      ];
-      let center = [
-        itemAnchor[0],
-        (side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
-      ];
-      this.anchorToggle(item, itemAnchor, side);
-      if (item.isCollapsed()) {
-        return;
-      }
-      let d = [];
-      d.push(`M ${itemAnchor}`, `L ${center}`);
-      if (children.length == 1) {
-        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-        dom.connectors.append(path2);
-        return;
-      }
-      const firstChild = children[0];
-      const lastChild = children[children.length - 1];
-      const cornerEndY = center[1] + (side == "top" ? -R : R);
-      const sweep = cornerEndY > center[1] ? 1 : 0;
-      let firstAnchor = [
-        firstChild.resolvedShape.getHorizontalAnchor(firstChild) + firstChild.position[0],
-        this.getChildAnchor(firstChild, side)
-      ];
-      let lastAnchor = [
-        lastChild.resolvedShape.getHorizontalAnchor(lastChild) + lastChild.position[0],
-        this.getChildAnchor(lastChild, side)
-      ];
-      d.push(`M ${firstAnchor}`, `L ${firstAnchor[0]} ${cornerEndY}`, `A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0] + R} ${center[1]}`, `L ${lastAnchor[0] - R} ${center[1]}`, `A ${R} ${R} 0 0 ${sweep} ${lastAnchor[0]} ${cornerEndY}`, `L ${lastAnchor}`);
-      for (var i = 1; i < children.length - 1; i++) {
-        const c = children[i];
-        const x = c.resolvedShape.getHorizontalAnchor(c) + c.position[0];
-        let lineStart = [x, center[1]];
-        let childAnchor = [x, this.getChildAnchor(c, side)];
-        d.push(`M ${lineStart}`, `L ${childAnchor}`);
-      }
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-  };
-  new GraphLayout("graph-bottom", "Bottom", "bottom");
-  new GraphLayout("graph-top", "Top", "top");
-  new GraphLayout("graph-left", "Left", "left");
-  new GraphLayout("graph-right", "Right", "right");
-
-  // .js/layout/tree.js
-  var SPACING_RANK2 = 32;
-  var R2 = SPACING_RANK2 / 4;
-  var LINE_OFFSET = SPACING_RANK2 / 2;
-  var TreeLayout = class extends Layout {
-    update(item) {
-      this.layoutItem(item, this.childDirection);
-      this.drawLines(item, this.childDirection);
-    }
-    layoutItem(item, rankDirection) {
-      const { contentSize, children } = item;
-      let bbox = this.computeChildrenBBox(children, 1);
-      let rankSize = contentSize[0];
-      if (bbox[0]) {
-        rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK2);
-      }
-      let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
-      if (rankDirection == "left") {
-        offset[0] = rankSize - bbox[0] - SPACING_RANK2;
-      }
-      this.layoutChildren(children, rankDirection, offset, bbox);
-      let labelPos = 0;
-      if (rankDirection == "left") {
-        labelPos = rankSize - contentSize[0];
-      }
-      item.contentPosition = [labelPos, 0];
-    }
-    layoutChildren(children, rankDirection, offset, bbox) {
-      children.forEach((child) => {
-        const { size } = child;
-        let left = offset[0];
-        if (rankDirection == "left") {
-          left += bbox[0] - size[0];
-        }
-        child.position = [left, offset[1]];
-        offset[1] += size[1] + this.SPACING_CHILD;
-      });
-    }
-    drawLines(item, side) {
-      const { size, resolvedShape, resolvedColor, children, dom } = item;
-      let pointAnchor = [
-        (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5,
-        resolvedShape.getVerticalAnchor(item)
-      ];
-      this.anchorToggle(item, pointAnchor, "bottom");
-      if (children.length == 0 || item.isCollapsed()) {
-        return;
-      }
-      let lastChild = children[children.length - 1];
-      let lineEnd = [
-        pointAnchor[0],
-        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R2
-      ];
-      let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
-      let cornerEndX = lineEnd[0] + (side == "left" ? -R2 : R2);
-      let sweep = cornerEndX < lineEnd[0] ? 1 : 0;
-      children.forEach((child) => {
-        const { resolvedShape: resolvedShape2, position } = child;
-        const y = resolvedShape2.getVerticalAnchor(child) + position[1];
-        d.push(`M ${pointAnchor[0]} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${cornerEndX} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
-      });
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-  };
-  new TreeLayout("tree-left", "Left", "left");
-  new TreeLayout("tree-right", "Right", "right");
-
-  // .js/layout/map.js
-  var MapLayout = class extends GraphLayout {
-    constructor() {
-      super(...arguments);
-      this.LINE_THICKNESS = 8;
-    }
-    update(item) {
-      if (item.isRoot) {
-        this.layoutRoot(item);
-      } else {
-        var side = this.getChildDirection(item);
-        repo2.get(`graph-${side}`).update(item);
-      }
-    }
-    getChildDirection(child) {
-      while (!child.parent.isRoot) {
-        child = child.parent;
-      }
-      var side = child.side;
-      if (side) {
-        return side;
-      }
-      var counts = { left: 0, right: 0 };
-      var children = child.parent.children;
-      for (var i = 0; i < children.length; i++) {
-        var side = children[i].side;
-        if (!side) {
-          side = counts.right > counts.left ? "left" : "right";
-          children[i].side = side;
-        }
-        counts[side]++;
-      }
-      return child.side;
-    }
-    pickSibling(item, dir) {
-      if (item.isRoot) {
-        return item;
-      }
-      const parent = item.parent;
-      var children = parent.children;
-      if (parent.isRoot) {
-        var side = this.getChildDirection(item);
-        children = children.filter((child) => this.getChildDirection(child) == side);
-      }
-      var index = children.indexOf(item);
-      index += dir;
-      index = (index + children.length) % children.length;
-      return children[index];
-    }
-    layoutRoot(item) {
-      const { children, contentSize } = item;
-      let childrenLeft = [];
-      let childrenRight = [];
-      let contentPosition = [0, 0];
-      children.forEach((child) => {
-        var side = this.getChildDirection(child);
-        if (side == "left") {
-          childrenLeft.push(child);
-        } else {
-          childrenRight.push(child);
-        }
-      });
-      var bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
-      var bboxRight = this.computeChildrenBBox(childrenRight, 1);
-      var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
-      var left = 0;
-      this.layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
-      left += bboxLeft[0];
-      if (childrenLeft.length) {
-        left += SPACING_RANK;
-      }
-      contentPosition[0] = left;
-      left += contentSize[0];
-      if (childrenRight.length) {
-        left += SPACING_RANK;
-      }
-      this.layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
-      left += bboxRight[0];
-      contentPosition[1] = Math.round((height - contentSize[1]) / 2);
-      item.contentPosition = contentPosition;
-      this.drawRootConnectors(item, "left", childrenLeft);
-      this.drawRootConnectors(item, "right", childrenRight);
-    }
-    drawRootConnectors(item, side, children) {
-      if (children.length == 0 || item.isCollapsed()) {
-        return;
-      }
-      const { contentSize, contentPosition, resolvedShape, dom } = item;
-      let x1 = contentPosition[0] + contentSize[0] / 2;
-      let y1 = resolvedShape.getVerticalAnchor(item);
-      const half = this.LINE_THICKNESS / 2;
-      let paths = children.map((child) => {
-        const { resolvedColor, resolvedShape: resolvedShape2, position } = child;
-        let x2 = this.getChildAnchor(child, side);
-        let y2 = resolvedShape2.getVerticalAnchor(child) + position[1];
-        let angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
-        let dx = Math.cos(angle) * half;
-        let dy = Math.sin(angle) * half;
-        let d = [
-          `M ${x1 - dx} ${y1 - dy}`,
-          `Q ${(x2 + x1) / 2} ${y2} ${x2} ${y2}`,
-          `Q ${(x2 + x1) / 2} ${y2} ${x1 + dx} ${y1 + dy}`,
-          `Z`
-        ];
-        let attrs = {
-          d: d.join(" "),
-          fill: resolvedColor,
-          stroke: resolvedColor
-        };
-        return node2("path", attrs);
-      });
-      dom.connectors.append(...paths);
-    }
-  };
-  new MapLayout("map", "Map");
-
-  // .js/shape/box.js
-  var Box = class extends Shape {
-    constructor() {
-      super("box", "Box");
-    }
-  };
-  new Box();
-
-  // .js/shape/ellipse.js
-  var Ellipse = class extends Shape {
-    constructor() {
-      super("ellipse", "Ellipse");
-    }
-  };
-  new Ellipse();
-
-  // .js/shape/underline.js
-  var VERTICAL_OFFSET2 = -3;
-  var Underline = class extends Shape {
-    constructor() {
-      super("underline", "Underline");
-    }
-    update(item) {
-      const { contentPosition, resolvedColor, contentSize, dom } = item;
-      let left = contentPosition[0];
-      let right = left + contentSize[0];
-      let top = this.getVerticalAnchor(item);
-      let d = [
-        `M ${left} ${top}`,
-        `L ${right} ${top}`
-      ];
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-    getVerticalAnchor(item) {
-      const { contentPosition, contentSize } = item;
-      return contentPosition[1] + contentSize[1] + VERTICAL_OFFSET2 + 0.5;
-    }
-  };
-  new Underline();
-
   // .js/format/format.js
   MM.Format = Object.create(MM.Repo, {
     extension: { value: "" },
@@ -2571,36 +2125,36 @@
     }
     return elm;
   };
-  MM.Format.FreeMind._parseNode = function(node3, parent) {
-    var json = this._parseAttributes(node3, parent);
-    for (var i = 0; i < node3.childNodes.length; i++) {
-      var child = node3.childNodes[i];
+  MM.Format.FreeMind._parseNode = function(node4, parent) {
+    var json = this._parseAttributes(node4, parent);
+    for (var i = 0; i < node4.childNodes.length; i++) {
+      var child = node4.childNodes[i];
       if (child.nodeName.toLowerCase() == "node") {
         json.children.push(this._parseNode(child, json));
       }
     }
     return json;
   };
-  MM.Format.FreeMind._parseAttributes = function(node3, parent) {
+  MM.Format.FreeMind._parseAttributes = function(node4, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node3.getAttribute("TEXT") || ""),
-      id: node3.getAttribute("ID")
+      text: MM.Format.nl2br(node4.getAttribute("TEXT") || ""),
+      id: node4.getAttribute("ID")
     };
-    var position = node3.getAttribute("POSITION");
+    var position = node4.getAttribute("POSITION");
     if (position) {
       json.side = position;
     }
-    var style = node3.getAttribute("STYLE");
+    var style = node4.getAttribute("STYLE");
     if (style == "bubble") {
       json.shape = "box";
     } else {
       json.shape = parent.shape;
     }
-    if (node3.getAttribute("FOLDED") == "true") {
+    if (node4.getAttribute("FOLDED") == "true") {
       json.collapsed = 1;
     }
-    var children = node3.children;
+    var children = node4.children;
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeName.toLowerCase()) {
@@ -2632,23 +2186,23 @@
     label: { value: "Mind Map Architect" },
     extension: { value: "mma" }
   });
-  MM.Format.MMA._parseAttributes = function(node3, parent) {
+  MM.Format.MMA._parseAttributes = function(node4, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node3.getAttribute("title") || ""),
+      text: MM.Format.nl2br(node4.getAttribute("title") || ""),
       shape: "box"
     };
-    if (node3.getAttribute("expand") == "false") {
+    if (node4.getAttribute("expand") == "false") {
       json.collapsed = 1;
     }
-    var direction = node3.getAttribute("direction");
+    var direction = node4.getAttribute("direction");
     if (direction == "0") {
       json.side = "left";
     }
     if (direction == "1") {
       json.side = "right";
     }
-    var color = node3.getAttribute("color");
+    var color = node4.getAttribute("color");
     if (color) {
       var re = color.match(/^#(....)(....)(....)$/);
       if (re) {
@@ -2661,7 +2215,7 @@
       }
       json.color = "#" + [r, g, b].join("");
     }
-    json.icon = node3.getAttribute("icon");
+    json.icon = node4.getAttribute("icon");
     return json;
   };
   MM.Format.MMA._serializeAttributes = function(doc, json) {
@@ -2892,14 +2446,14 @@
     return this._request("GET", url);
   };
   MM.Backend.WebDAV._request = async function(method, url, data) {
-    let init = {
+    let init2 = {
       method,
       credentials: "include"
     };
     if (data) {
-      init.body = data;
+      init2.body = data;
     }
-    let response = await fetch(url, init);
+    let response = await fetch(url, init2);
     let text = await response.text();
     if (response.status == 200) {
       return text;
@@ -3300,8 +2854,10 @@
   };
 
   // .js/ui/ui.js
+  var node3;
   MM.UI = function() {
     this._node = document.querySelector(".ui");
+    node3 = this._node;
     this._toggle = this._node.querySelector("#toggle");
     this._layout = new MM.UI.Layout();
     this._shape = new MM.UI.Shape();
@@ -3337,14 +2893,14 @@
           this.toggle();
           return;
         }
-        var node3 = e.target;
-        while (node3 != document) {
-          var command = node3.getAttribute("data-command");
+        var node4 = e.target;
+        while (node4 != document) {
+          var command = node4.getAttribute("data-command");
           if (command) {
             MM.Command[command].execute();
             return;
           }
-          node3 = node3.parentNode;
+          node4 = node4.parentNode;
         }
         break;
       case "change":
@@ -3405,10 +2961,10 @@
     return this._select.querySelector("option[value='" + value + "']");
   };
   MM.UI.Layout.prototype._buildGroup = function(label) {
-    var node3 = document.createElement("optgroup");
-    node3.label = label;
-    this._select.appendChild(node3);
-    return node3;
+    var node4 = document.createElement("optgroup");
+    node4.label = label;
+    this._select.appendChild(node4);
+    return node4;
   };
 
   // .js/ui/ui.shape.js
@@ -3670,9 +3226,9 @@
     this._backends = {};
     var ids = ["local", "firebase", "gdrive", "file", "webdav", "image"];
     ids.forEach(function(id) {
-      var ui = MM.UI.Backend.getById(id);
-      ui.init(this._backend);
-      this._backends[id] = ui;
+      var ui2 = MM.UI.Backend.getById(id);
+      ui2.init(this._backend);
+      this._backends[id] = ui2;
     }, this);
     this._backend.value = localStorage.getItem(this._prefix + "backend") || MM.Backend.File.id;
     this._backend.addEventListener("change", this);
@@ -3761,7 +3317,7 @@
     }
   };
   MM.UI.IO.prototype._syncBackend = function() {
-    [...this._node.querySelectorAll("div[id]")].forEach((node3) => node3.hidden = true);
+    [...this._node.querySelectorAll("div[id]")].forEach((node4) => node4.hidden = true);
     this._node.querySelector("#" + this._backend.value).hidden = false;
     this._backends[this._backend.value].show(this._mode);
   };
@@ -3828,8 +3384,8 @@
   MM.UI.Backend.show = function(mode) {
     this._mode = mode;
     this._go.innerHTML = mode.charAt(0).toUpperCase() + mode.substring(1);
-    [...this._node.querySelectorAll("[data-for]")].forEach((node3) => node3.hidden = true);
-    [...this._node.querySelectorAll(`[data-for~=${mode}]`)].forEach((node3) => node3.hidden = false);
+    [...this._node.querySelectorAll("[data-for]")].forEach((node4) => node4.hidden = true);
+    [...this._node.querySelectorAll(`[data-for~=${mode}]`)].forEach((node4) => node4.hidden = false);
     this._go.focus();
   };
   MM.UI.Backend._action = function() {
@@ -4464,8 +4020,9 @@
     MM.App.action(action);
   };
   MM.Mouse._computeDragState = function() {
-    var rect = this._ghost.getBoundingClientRect();
-    var closest = MM.App.map.getClosestItem(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    let rect = this._ghost.getBoundingClientRect();
+    let point = [rect.left + rect.width / 2, rect.top + rect.height / 2];
+    let closest = MM.App.map.getClosestItem(point);
     var target = closest.item;
     var state = {
       result: "",
@@ -4504,13 +4061,13 @@
     }
     if (this._oldDragState) {
       var item = this._oldDragState.item;
-      var node3 = item.dom.content;
-      node3.style.boxShadow = "";
+      var node4 = item.dom.content;
+      node4.style.boxShadow = "";
     }
     this._oldDragState = state;
     if (state) {
       var item = state.item;
-      var node3 = item.dom.content;
+      var node4 = item.dom.content;
       var x = 0;
       var y = 0;
       var offset = 5;
@@ -4529,9 +4086,438 @@
         }
       }
       var spread = x || y ? -2 : 2;
-      node3.style.boxShadow = x * offset + "px " + y * offset + "px 2px " + spread + "px #000";
+      node4.style.boxShadow = x * offset + "px " + y * offset + "px 2px " + spread + "px #000";
     }
   };
+
+  // .js/layout/graph.js
+  var SPACING_RANK = 16;
+  var R = SPACING_RANK / 2;
+  var GraphLayout = class extends Layout {
+    update(item) {
+      this.layoutItem(item, this.childDirection);
+      if (this.childDirection == "left" || this.childDirection == "right") {
+        this.drawLinesHorizontal(item, this.childDirection);
+      } else {
+        this.drawLinesVertical(item, this.childDirection);
+      }
+    }
+    layoutItem(item, rankDirection) {
+      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
+      var childIndex = (rankIndex + 1) % 2;
+      const { contentSize } = item;
+      var bbox = this.computeChildrenBBox(item.children, childIndex);
+      var rankSize = contentSize[rankIndex];
+      if (bbox[rankIndex]) {
+        rankSize += bbox[rankIndex] + SPACING_RANK;
+      }
+      var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
+      var offset = [0, 0];
+      if (rankDirection == "right") {
+        offset[0] = contentSize[0] + SPACING_RANK;
+      }
+      if (rankDirection == "bottom") {
+        offset[1] = contentSize[1] + SPACING_RANK;
+      }
+      offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
+      this.layoutChildren(item.children, rankDirection, offset, bbox);
+      var labelPos = 0;
+      if (rankDirection == "left") {
+        labelPos = rankSize - contentSize[0];
+      }
+      if (rankDirection == "top") {
+        labelPos = rankSize - contentSize[1];
+      }
+      let contentPosition = [Math.round((childSize - contentSize[childIndex]) / 2), labelPos];
+      if (rankIndex == 0) {
+        contentPosition = contentPosition.reverse();
+      }
+      item.contentPosition = contentPosition;
+    }
+    layoutChildren(children, rankDirection, offset, bbox) {
+      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
+      var childIndex = (rankIndex + 1) % 2;
+      children.forEach((child) => {
+        const { size } = child;
+        if (rankDirection == "left") {
+          offset[0] = bbox[0] - size[0];
+        }
+        if (rankDirection == "top") {
+          offset[1] = bbox[1] - size[1];
+        }
+        child.position = offset;
+        offset[childIndex] += size[childIndex] + this.SPACING_CHILD;
+      });
+      return bbox;
+    }
+    drawLinesHorizontal(item, side) {
+      const { contentPosition, contentSize, resolvedShape, resolvedColor, children, dom } = item;
+      if (children.length == 0) {
+        return;
+      }
+      let itemAnchor = [
+        contentPosition[0] + (side == "right" ? contentSize[0] + 0.5 : -0.5),
+        resolvedShape.getVerticalAnchor(item)
+      ];
+      this.anchorToggle(item, itemAnchor, side);
+      if (item.isCollapsed()) {
+        return;
+      }
+      let d = [];
+      if (children.length == 1) {
+        var child = children[0];
+        const { position, resolvedShape: resolvedShape2 } = child;
+        let childAnchor = [
+          this.getChildAnchor(child, side),
+          resolvedShape2.getVerticalAnchor(child) + position[1]
+        ];
+        let mid = (itemAnchor[0] + childAnchor[0]) / 2;
+        d.push(`M ${itemAnchor}`, `C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`);
+        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+        dom.connectors.append(path2);
+        return;
+      }
+      let center = [
+        itemAnchor[0] + (side == "left" ? -R : R),
+        itemAnchor[1]
+      ];
+      d.push(`M ${itemAnchor}`, `L ${center}`);
+      const firstChild = children[0];
+      const lastChild = children[children.length - 1];
+      const cornerEndX = center[0] + (side == "left" ? -R : R);
+      const sweep = cornerEndX < center[0] ? 1 : 0;
+      let firstAnchor = [
+        this.getChildAnchor(firstChild, side),
+        firstChild.resolvedShape.getVerticalAnchor(firstChild) + firstChild.position[1]
+      ];
+      let lastAnchor = [
+        this.getChildAnchor(lastChild, side),
+        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1]
+      ];
+      d.push(`M ${firstAnchor}`, `L ${cornerEndX} ${firstAnchor[1]}`, `A ${R} ${R} 0 0 ${sweep} ${center[0]} ${firstAnchor[1] + R}`, `L ${center[0]} ${lastAnchor[1] - R}`, `A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${lastAnchor[1]}`, `L ${lastAnchor}`);
+      for (let i = 1; i < children.length - 1; i++) {
+        const c = children[i];
+        const y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
+        let lineStart = [center[0], y];
+        let childAnchor = [this.getChildAnchor(c, side), y];
+        d.push(`M ${lineStart}`, `L ${childAnchor}`);
+      }
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+    drawLinesVertical(item, side) {
+      const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
+      if (children.length == 0) {
+        return;
+      }
+      const height = children.length == 1 ? 2 * R : R;
+      let itemAnchor = [
+        resolvedShape.getHorizontalAnchor(item),
+        side == "top" ? size[1] - contentSize[1] : resolvedShape.getVerticalAnchor(item)
+      ];
+      let center = [
+        itemAnchor[0],
+        (side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
+      ];
+      this.anchorToggle(item, itemAnchor, side);
+      if (item.isCollapsed()) {
+        return;
+      }
+      let d = [];
+      d.push(`M ${itemAnchor}`, `L ${center}`);
+      if (children.length == 1) {
+        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+        dom.connectors.append(path2);
+        return;
+      }
+      const firstChild = children[0];
+      const lastChild = children[children.length - 1];
+      const cornerEndY = center[1] + (side == "top" ? -R : R);
+      const sweep = cornerEndY > center[1] ? 1 : 0;
+      let firstAnchor = [
+        firstChild.resolvedShape.getHorizontalAnchor(firstChild) + firstChild.position[0],
+        this.getChildAnchor(firstChild, side)
+      ];
+      let lastAnchor = [
+        lastChild.resolvedShape.getHorizontalAnchor(lastChild) + lastChild.position[0],
+        this.getChildAnchor(lastChild, side)
+      ];
+      d.push(`M ${firstAnchor}`, `L ${firstAnchor[0]} ${cornerEndY}`, `A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0] + R} ${center[1]}`, `L ${lastAnchor[0] - R} ${center[1]}`, `A ${R} ${R} 0 0 ${sweep} ${lastAnchor[0]} ${cornerEndY}`, `L ${lastAnchor}`);
+      for (var i = 1; i < children.length - 1; i++) {
+        const c = children[i];
+        const x = c.resolvedShape.getHorizontalAnchor(c) + c.position[0];
+        let lineStart = [x, center[1]];
+        let childAnchor = [x, this.getChildAnchor(c, side)];
+        d.push(`M ${lineStart}`, `L ${childAnchor}`);
+      }
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+  };
+  new GraphLayout("graph-bottom", "Bottom", "bottom");
+  new GraphLayout("graph-top", "Top", "top");
+  new GraphLayout("graph-left", "Left", "left");
+  new GraphLayout("graph-right", "Right", "right");
+
+  // .js/layout/tree.js
+  var SPACING_RANK2 = 32;
+  var R2 = SPACING_RANK2 / 4;
+  var LINE_OFFSET = SPACING_RANK2 / 2;
+  var TreeLayout = class extends Layout {
+    update(item) {
+      this.layoutItem(item, this.childDirection);
+      this.drawLines(item, this.childDirection);
+    }
+    layoutItem(item, rankDirection) {
+      const { contentSize, children } = item;
+      let bbox = this.computeChildrenBBox(children, 1);
+      let rankSize = contentSize[0];
+      if (bbox[0]) {
+        rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK2);
+      }
+      let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
+      if (rankDirection == "left") {
+        offset[0] = rankSize - bbox[0] - SPACING_RANK2;
+      }
+      this.layoutChildren(children, rankDirection, offset, bbox);
+      let labelPos = 0;
+      if (rankDirection == "left") {
+        labelPos = rankSize - contentSize[0];
+      }
+      item.contentPosition = [labelPos, 0];
+    }
+    layoutChildren(children, rankDirection, offset, bbox) {
+      children.forEach((child) => {
+        const { size } = child;
+        let left = offset[0];
+        if (rankDirection == "left") {
+          left += bbox[0] - size[0];
+        }
+        child.position = [left, offset[1]];
+        offset[1] += size[1] + this.SPACING_CHILD;
+      });
+    }
+    drawLines(item, side) {
+      const { size, resolvedShape, resolvedColor, children, dom } = item;
+      let pointAnchor = [
+        (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5,
+        resolvedShape.getVerticalAnchor(item)
+      ];
+      this.anchorToggle(item, pointAnchor, "bottom");
+      if (children.length == 0 || item.isCollapsed()) {
+        return;
+      }
+      let lastChild = children[children.length - 1];
+      let lineEnd = [
+        pointAnchor[0],
+        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R2
+      ];
+      let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
+      let cornerEndX = lineEnd[0] + (side == "left" ? -R2 : R2);
+      let sweep = cornerEndX < lineEnd[0] ? 1 : 0;
+      children.forEach((child) => {
+        const { resolvedShape: resolvedShape2, position } = child;
+        const y = resolvedShape2.getVerticalAnchor(child) + position[1];
+        d.push(`M ${pointAnchor[0]} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${cornerEndX} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
+      });
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+  };
+  new TreeLayout("tree-left", "Left", "left");
+  new TreeLayout("tree-right", "Right", "right");
+
+  // .js/layout/map.js
+  var MapLayout = class extends GraphLayout {
+    constructor() {
+      super(...arguments);
+      this.LINE_THICKNESS = 8;
+    }
+    update(item) {
+      if (item.isRoot) {
+        this.layoutRoot(item);
+      } else {
+        var side = this.getChildDirection(item);
+        repo2.get(`graph-${side}`).update(item);
+      }
+    }
+    getChildDirection(child) {
+      while (!child.parent.isRoot) {
+        child = child.parent;
+      }
+      var side = child.side;
+      if (side) {
+        return side;
+      }
+      var counts = { left: 0, right: 0 };
+      var children = child.parent.children;
+      for (var i = 0; i < children.length; i++) {
+        var side = children[i].side;
+        if (!side) {
+          side = counts.right > counts.left ? "left" : "right";
+          children[i].side = side;
+        }
+        counts[side]++;
+      }
+      return child.side;
+    }
+    pickSibling(item, dir) {
+      if (item.isRoot) {
+        return item;
+      }
+      const parent = item.parent;
+      var children = parent.children;
+      if (parent.isRoot) {
+        var side = this.getChildDirection(item);
+        children = children.filter((child) => this.getChildDirection(child) == side);
+      }
+      var index = children.indexOf(item);
+      index += dir;
+      index = (index + children.length) % children.length;
+      return children[index];
+    }
+    layoutRoot(item) {
+      const { children, contentSize } = item;
+      let childrenLeft = [];
+      let childrenRight = [];
+      let contentPosition = [0, 0];
+      children.forEach((child) => {
+        var side = this.getChildDirection(child);
+        if (side == "left") {
+          childrenLeft.push(child);
+        } else {
+          childrenRight.push(child);
+        }
+      });
+      var bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
+      var bboxRight = this.computeChildrenBBox(childrenRight, 1);
+      var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
+      var left = 0;
+      this.layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
+      left += bboxLeft[0];
+      if (childrenLeft.length) {
+        left += SPACING_RANK;
+      }
+      contentPosition[0] = left;
+      left += contentSize[0];
+      if (childrenRight.length) {
+        left += SPACING_RANK;
+      }
+      this.layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
+      left += bboxRight[0];
+      contentPosition[1] = Math.round((height - contentSize[1]) / 2);
+      item.contentPosition = contentPosition;
+      this.drawRootConnectors(item, "left", childrenLeft);
+      this.drawRootConnectors(item, "right", childrenRight);
+    }
+    drawRootConnectors(item, side, children) {
+      if (children.length == 0 || item.isCollapsed()) {
+        return;
+      }
+      const { contentSize, contentPosition, resolvedShape, dom } = item;
+      let x1 = contentPosition[0] + contentSize[0] / 2;
+      let y1 = resolvedShape.getVerticalAnchor(item);
+      const half = this.LINE_THICKNESS / 2;
+      let paths = children.map((child) => {
+        const { resolvedColor, resolvedShape: resolvedShape2, position } = child;
+        let x2 = this.getChildAnchor(child, side);
+        let y2 = resolvedShape2.getVerticalAnchor(child) + position[1];
+        let angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
+        let dx = Math.cos(angle) * half;
+        let dy = Math.sin(angle) * half;
+        let d = [
+          `M ${x1 - dx} ${y1 - dy}`,
+          `Q ${(x2 + x1) / 2} ${y2} ${x2} ${y2}`,
+          `Q ${(x2 + x1) / 2} ${y2} ${x1 + dx} ${y1 + dy}`,
+          `Z`
+        ];
+        let attrs = {
+          d: d.join(" "),
+          fill: resolvedColor,
+          stroke: resolvedColor
+        };
+        return node2("path", attrs);
+      });
+      dom.connectors.append(...paths);
+    }
+  };
+  new MapLayout("map", "Map");
+
+  // .js/shape/box.js
+  var Box = class extends Shape {
+    constructor() {
+      super("box", "Box");
+    }
+  };
+  new Box();
+
+  // .js/shape/ellipse.js
+  var Ellipse = class extends Shape {
+    constructor() {
+      super("ellipse", "Ellipse");
+    }
+  };
+  new Ellipse();
+
+  // .js/shape/underline.js
+  var VERTICAL_OFFSET2 = -3;
+  var Underline = class extends Shape {
+    constructor() {
+      super("underline", "Underline");
+    }
+    update(item) {
+      const { contentPosition, resolvedColor, contentSize, dom } = item;
+      let left = contentPosition[0];
+      let right = left + contentSize[0];
+      let top = this.getVerticalAnchor(item);
+      let d = [
+        `M ${left} ${top}`,
+        `L ${right} ${top}`
+      ];
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+    getVerticalAnchor(item) {
+      const { contentPosition, contentSize } = item;
+      return contentPosition[1] + contentSize[1] + VERTICAL_OFFSET2 + 0.5;
+    }
+  };
+  new Underline();
+
+  // .js/keyboard.js
+  function handleEvent(e) {
+    if (node3.contains(document.activeElement)) {
+      return;
+    }
+    let command = MM.Command.getAll().find((command2) => {
+      if (!command2.isValid()) {
+        return false;
+      }
+      return command2.keys.find((key) => keyOK(key, e));
+    });
+    if (command) {
+      command.prevent && e.preventDefault();
+      command.execute(e);
+    }
+  }
+  function init() {
+    window.addEventListener("keydown", handleEvent);
+    window.addEventListener("keypress", handleEvent);
+  }
+  function keyOK(key, e) {
+    if ("keyCode" in key && e.type != "keydown") {
+      return false;
+    }
+    if ("charCode" in key && e.type != "keypress") {
+      return false;
+    }
+    for (let p in key) {
+      if (key[p] != e[p]) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   // .js/my-mind.js
   MM.App = {
@@ -4636,7 +4622,7 @@
       this.help = new MM.UI.Help();
       this.notes = new MM.UI.Notes();
       MM.Tip.init();
-      MM.Keyboard.init();
+      init();
       MM.Menu.init(this._port);
       MM.Mouse.init(this._port);
       MM.Clipboard.init();

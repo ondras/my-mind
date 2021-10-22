@@ -214,8 +214,9 @@ MM.Mouse._finishDragDrop = function(state) {
  * Compute a state object for a drag: current result (""/"append"/"sibling"), parent/sibling, direction
  */
 MM.Mouse._computeDragState = function() {
-	var rect = this._ghost.getBoundingClientRect();
-	var closest = MM.App.map.getClosestItem(rect.left + rect.width/2, rect.top + rect.height/2);
+	let rect = this._ghost.getBoundingClientRect();
+	let point = [rect.left + rect.width/2, rect.top + rect.height/2];
+	let closest = MM.App.map.getClosestItem(point);
 	var target = closest.item;
 
 	var state = {

@@ -1,7 +1,6 @@
 import "./mm.js";
 import "./promise.js";
 import "./repo.js";
-import "./keyboard.js";
 import "./tip.js";
 import "./action.js";
 import "./clipboard.js";
@@ -9,12 +8,6 @@ import "./menu.js";
 import "./command/command.js";
 import "./command/command.edit.js";
 import "./command/command.select.js";
-import "./layout/graph.js";
-import "./layout/tree.js";
-import "./layout/map.js";
-import "./shape/box.js";
-import "./shape/ellipse.js";
-import "./shape/underline.js";
 import "./format/format.js";
 import "./format/format.json.js";
 import "./format/format.freemind.js";
@@ -48,8 +41,16 @@ import "./ui/backend/ui.backend.gdrive.js";
 import "./mouse.js";
 
 
+import "./layout/graph.js";
+import "./layout/tree.js";
+import "./layout/map.js";
+import "./shape/box.js";
+import "./shape/ellipse.js";
+import "./shape/underline.js";
+
 import * as pubsub from "./pubsub.js";
 import Map from "./map.js";
+import * as keyboard from "./keyboard.js";
 
 
 /*
@@ -203,7 +204,7 @@ MM.App = {
 		this.notes = new MM.UI.Notes();
 
 		MM.Tip.init();
-		MM.Keyboard.init();
+		keyboard.init();
 		MM.Menu.init(this._port);
 		MM.Mouse.init(this._port);
 		MM.Clipboard.init();

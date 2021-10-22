@@ -1,8 +1,11 @@
 import * as pubsub from "../pubsub.js";
 
 
+export let node;
+
 MM.UI = function() {
 	this._node = document.querySelector(".ui");
+	node = this._node;
 
 	this._toggle = this._node.querySelector("#toggle");
 
