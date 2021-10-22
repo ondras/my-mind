@@ -3,19 +3,19 @@ import * as svg from "./svg.js";
 import Layout, { repo as layoutRepo } from "./layout/layout.js";
 
 
+const UPDATE_OPTIONS = {
+	children: true
+}
+
 interface Options {
 	root: string;
 	layout: Layout;
 }
 
-
 export default class Map {
 	readonly node = svg.node("svg");
 	protected _root: Item;
-
-	// fixme
-	_position = [0, 0];
-	_visible = false;
+	protected position = [0, 0];
 
 	constructor(options?: Partial<Options>) {
 		options = Object.assign({
@@ -104,49 +104,43 @@ export default class Map {
 
 	get isVisible() { return !!this.node.parentNode; }
 
-	update() {
-		this._root.update({parent:true, children:true});
-		return this;
-	}
+	update(options?: Partial<typeof UPDATE_OPTIONS>) {
+		options = Object.assign({}, UPDATE_OPTIONS, options);
 
-	show(where: HTMLElement) {
+		options.children && this._root.update({parent:false, children:true});
+
 		const { node } = this;
-
-		where.append(node);
-		this._visible = true;
-		this._root.update({parent:true, children:true});
-
-		// fixme presunout do update od potomka
 		const { size } = this._root;
 		node.setAttribute("width", String(size[0]));
 		node.setAttribute("height", String(size[1]));
+	}
 
+	show(where: HTMLElement) {
+		where.append(this.node);
+		this.update();
 		this.center();
 		MM.App.select(this._root);
-
-		return this;
 	}
 
 	hide() {
 		this.node.remove();
-		this._visible = false;
-		return this;
 	}
 
 	center() {
 		let { size } = this._root;
-		var port = MM.App.portSize;
-		var left = (port[0] - size[0])/2;
-		var top = (port[1] - size[1])/2;
+		const port = MM.App.portSize;
 
-		this._moveTo([Math.round(left), Math.round(top)]);
+		let position = [
+			(port[0] - size[0])/2,
+			(port[1] - size[1])/2
+		].map(Math.round);
 
-		return this;
+		this.moveTo(position);
 	}
 
 	moveBy(diff: number[]) {
-		let position = this._position.map((p, i) => p + diff[i]);
-		return this._moveTo(position);
+		let position = this.position.map((p, i) => p + diff[i]);
+		return this.moveTo(position);
 	}
 
 	getClosestItem(x, y) {
@@ -274,8 +268,8 @@ export default class Map {
 		candidates.push({item:item, dist:dist});
 	}
 
-	_moveTo(point: number[]) {
-		this._position = point;
+	protected moveTo(point: number[]) {
+		this.position = point;
 		this.node.style.left = `${point[0]}px`;
 		this.node.style.top = `${point[1]}px`;
 	}

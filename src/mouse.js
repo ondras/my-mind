@@ -131,24 +131,25 @@ MM.Mouse._startDrag = function(e, item) {
 
 MM.Mouse._processDrag = function(e) {
 	e.preventDefault();
-	var dx = e.clientX - this._cursor[0];
-	var dy = e.clientY - this._cursor[1];
-	this._cursor[0] = e.clientX;
-	this._cursor[1] = e.clientY;
+	let delta = [
+		e.clientX - this._cursor[0],
+		e.clientY - this._cursor[1]
+	];
+	this._cursor = [e.clientX, e.clientY];
 
 	switch (this._mode) {
 		case "drag":
 			if (!this._ghost) {
 				this._port.style.cursor = "move";
-				this._buildGhost(dx, dy);
+				this._buildGhost();
 			}
-			this._moveGhost(dx, dy);
+			this._moveGhost(delta);
 			var state = this._computeDragState();
 			this._visualizeDragState(state);
 		break;
 
 		case "pan":
-			MM.App.map.moveBy([dx, dy]);
+			MM.App.map.moveBy(delta);
 		break;
 	}
 }
@@ -179,9 +180,9 @@ MM.Mouse._buildGhost = function() {
 	content.parentNode.appendChild(this._ghost);
 }
 
-MM.Mouse._moveGhost = function(dx, dy) {
-	this._pos[0] += dx;
-	this._pos[1] += dy;
+MM.Mouse._moveGhost = function(delta) {
+	this._pos[0] += delta[0];
+	this._pos[1] += delta[1];
 	this._ghost.style.left = this._pos[0] + "px";
 	this._ghost.style.top = this._pos[1] + "px";
 }

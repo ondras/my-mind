@@ -840,7 +840,7 @@
     }
     update(options = {}) {
       options = Object.assign({}, UPDATE_OPTIONS, options);
-      const { map, children } = this;
+      const { map, children, parent } = this;
       if (!map || !map.isVisible) {
         return;
       }
@@ -864,8 +864,8 @@
       dom.connectors.innerHTML = "";
       resolvedLayout.update(this);
       resolvedShape.update(this);
-      if (options.parent && !this.isRoot) {
-        this.parent.update();
+      if (options.parent) {
+        parent.update({ children: false });
       }
     }
     get text() {
@@ -1197,11 +1197,13 @@
   MM.Item = Item;
 
   // .js/map.js
+  var UPDATE_OPTIONS2 = {
+    children: true
+  };
   var Map2 = class {
     constructor(options) {
       this.node = node2("svg");
-      this._position = [0, 0];
-      this._visible = false;
+      this.position = [0, 0];
       options = Object.assign({
         root: "My Mind Map",
         layout: repo2.get("map")
@@ -1276,38 +1278,35 @@
     get isVisible() {
       return !!this.node.parentNode;
     }
-    update() {
-      this._root.update({ parent: true, children: true });
-      return this;
-    }
-    show(where) {
+    update(options) {
+      options = Object.assign({}, UPDATE_OPTIONS2, options);
+      options.children && this._root.update({ parent: false, children: true });
       const { node: node3 } = this;
-      where.append(node3);
-      this._visible = true;
-      this._root.update({ parent: true, children: true });
       const { size } = this._root;
       node3.setAttribute("width", String(size[0]));
       node3.setAttribute("height", String(size[1]));
+    }
+    show(where) {
+      where.append(this.node);
+      this.update();
       this.center();
       MM.App.select(this._root);
-      return this;
     }
     hide() {
       this.node.remove();
-      this._visible = false;
-      return this;
     }
     center() {
       let { size } = this._root;
-      var port = MM.App.portSize;
-      var left = (port[0] - size[0]) / 2;
-      var top = (port[1] - size[1]) / 2;
-      this._moveTo([Math.round(left), Math.round(top)]);
-      return this;
+      const port = MM.App.portSize;
+      let position = [
+        (port[0] - size[0]) / 2,
+        (port[1] - size[1]) / 2
+      ].map(Math.round);
+      this.moveTo(position);
     }
     moveBy(diff) {
-      let position = this._position.map((p, i) => p + diff[i]);
-      return this._moveTo(position);
+      let position = this.position.map((p, i) => p + diff[i]);
+      return this.moveTo(position);
     }
     getClosestItem(x, y) {
       var all = [];
@@ -1441,8 +1440,8 @@
       }
       candidates.push({ item, dist });
     }
-    _moveTo(point) {
-      this._position = point;
+    moveTo(point) {
+      this.position = point;
       this.node.style.left = `${point[0]}px`;
       this.node.style.top = `${point[1]}px`;
     }
@@ -4405,22 +4404,23 @@
   };
   MM.Mouse._processDrag = function(e) {
     e.preventDefault();
-    var dx = e.clientX - this._cursor[0];
-    var dy = e.clientY - this._cursor[1];
-    this._cursor[0] = e.clientX;
-    this._cursor[1] = e.clientY;
+    let delta = [
+      e.clientX - this._cursor[0],
+      e.clientY - this._cursor[1]
+    ];
+    this._cursor = [e.clientX, e.clientY];
     switch (this._mode) {
       case "drag":
         if (!this._ghost) {
           this._port.style.cursor = "move";
-          this._buildGhost(dx, dy);
+          this._buildGhost();
         }
-        this._moveGhost(dx, dy);
+        this._moveGhost(delta);
         var state = this._computeDragState();
         this._visualizeDragState(state);
         break;
       case "pan":
-        MM.App.map.moveBy([dx, dy]);
+        MM.App.map.moveBy(delta);
         break;
     }
   };
@@ -4446,9 +4446,9 @@
     this._pos = this._item.contentPosition;
     content.parentNode.appendChild(this._ghost);
   };
-  MM.Mouse._moveGhost = function(dx, dy) {
-    this._pos[0] += dx;
-    this._pos[1] += dy;
+  MM.Mouse._moveGhost = function(delta) {
+    this._pos[0] += delta[0];
+    this._pos[1] += delta[1];
     this._ghost.style.left = this._pos[0] + "px";
     this._ghost.style.top = this._pos[1] + "px";
   };

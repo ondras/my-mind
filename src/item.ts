@@ -289,7 +289,7 @@ export default class Item {
 	update(options: Partial<typeof UPDATE_OPTIONS> = {}) {
 		options = Object.assign({}, UPDATE_OPTIONS, options);
 
-		const { map, children } = this;
+		const { map, children, parent } = this;
 
 		if (!map || !map.isVisible) { return; }
 
@@ -323,8 +323,8 @@ export default class Item {
 		resolvedLayout.update(this);
 		resolvedShape.update(this); // needs layout -> draws second
 
-		// recurse upwards? FIXME needs to update parent map as well
-		if (options.parent && !this.isRoot) { this.parent.update(); }
+		// recurse upwards?
+		if (options.parent) { parent.update({children:false}); } // explicit children:false when the parent is a Map
 	}
 
 	get text() { return this.dom.text.innerHTML; }
