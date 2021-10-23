@@ -1192,15 +1192,15 @@
     }
     mergeWith(data) {
       var ids = [];
-      var current = MM.App.current;
-      var node4 = current;
+      var current2 = MM.App.current;
+      var node4 = current2;
       while (node4 != this) {
         ids.push(node4.id);
         node4 = node4.parent;
       }
       this._root.mergeWith(data.root);
-      if (current.map) {
-        var node4 = current.parent;
+      if (current2.map) {
+        var node4 = current2.parent;
         var hidden = false;
         while (node4 != this) {
           if (node4.isCollapsed()) {
@@ -1213,7 +1213,7 @@
         }
       }
       if (MM.App.editing) {
-        current.stopEditing();
+        current2.stopEditing();
       }
       var idMap = {};
       var scan = function(item) {
@@ -1251,10 +1251,10 @@
     }
     center() {
       let { size } = this._root;
-      const port = MM.App.portSize;
+      const port2 = MM.App.portSize;
       let position = [
-        (port[0] - size[0]) / 2,
-        (port[1] - size[1]) / 2
+        (port2[0] - size[0]) / 2,
+        (port2[1] - size[1]) / 2
       ].map(Math.round);
       this.moveTo(position);
     }
@@ -1269,14 +1269,14 @@
         let dx = rect.left + rect.width / 2 - point[0];
         let dy = rect.top + rect.height / 2 - point[1];
         let distance = dx * dx + dy * dy;
-        all.push({ item, distance });
+        all.push({ dx, dy, item, distance });
         if (!item.isCollapsed()) {
           item.children.forEach(scan);
         }
       }
       scan(this._root);
       all.sort((a, b) => a.distance - b.distance);
-      return all[0].item;
+      return all[0];
     }
     getItemFor(node4) {
       let content = node4.closest(".content");
@@ -1538,8 +1538,8 @@
       command.execute();
       this.close();
     },
-    init: function(port) {
-      this._port = port;
+    init: function(port2) {
+      this._port = port2;
       this._dom.node = document.querySelector("#menu");
       var buttons = this._dom.node.querySelectorAll("[data-command]");
       [].slice.call(buttons).forEach(function(button) {
@@ -1649,8 +1649,8 @@
     ] }
   });
   MM.Command.Swap.execute = function(e) {
-    var current = MM.App.current;
-    if (current.isRoot || current.parent.children.length < 2) {
+    var current2 = MM.App.current;
+    if (current2.isRoot || current2.parent.children.length < 2) {
       return;
     }
     var diff = e.keyCode == 38 ? -1 : 1;
@@ -1665,8 +1665,8 @@
     ] }
   });
   MM.Command.Side.execute = function(e) {
-    var current = MM.App.current;
-    if (current.isRoot || !current.parent.isRoot) {
+    var current2 = MM.App.current;
+    if (current2.isRoot || !current2.parent.isRoot) {
       return;
     }
     var side = e.keyCode == 37 ? "left" : "right";
@@ -2446,14 +2446,14 @@
     return this._request("GET", url);
   };
   MM.Backend.WebDAV._request = async function(method, url, data) {
-    let init2 = {
+    let init3 = {
       method,
       credentials: "include"
     };
     if (data) {
-      init2.body = data;
+      init3.body = data;
     }
-    let response = await fetch(url, init2);
+    let response = await fetch(url, init3);
     let text = await response.text();
     if (response.status == 200) {
       return text;
@@ -3823,273 +3823,6 @@
     MM.UI.Backend._loadDone.call(this, json);
   };
 
-  // .js/mouse.js
-  MM.Mouse = {
-    TOUCH_DELAY: 500,
-    _port: null,
-    _cursor: [0, 0],
-    _pos: [0, 0],
-    _mode: "",
-    _item: null,
-    _ghost: null,
-    _oldDragState: null,
-    _touchTimeout: null
-  };
-  MM.Mouse.init = function(port) {
-    this._port = port;
-    this._port.addEventListener("touchstart", this);
-    this._port.addEventListener("mousedown", this);
-    this._port.addEventListener("click", this);
-    this._port.addEventListener("dblclick", this);
-    this._port.addEventListener("wheel", this);
-    this._port.addEventListener("mousewheel", this);
-    this._port.addEventListener("contextmenu", this);
-  };
-  MM.Mouse.handleEvent = function(e) {
-    switch (e.type) {
-      case "click":
-        var item = MM.App.map.getItemFor(e.target);
-        if (MM.App.editing && item == MM.App.current) {
-          return;
-        }
-        if (item) {
-          MM.App.select(item);
-        }
-        break;
-      case "dblclick":
-        var item = MM.App.map.getItemFor(e.target);
-        if (item) {
-          MM.Command.Edit.execute();
-        }
-        break;
-      case "contextmenu":
-        this._endDrag();
-        e.preventDefault();
-        var item = MM.App.map.getItemFor(e.target);
-        item && MM.App.select(item);
-        MM.Menu.open(e.clientX, e.clientY);
-        break;
-      case "touchstart":
-        if (e.touches.length > 1) {
-          return;
-        }
-        e.clientX = e.touches[0].clientX;
-        e.clientY = e.touches[0].clientY;
-      case "mousedown":
-        var item = MM.App.map.getItemFor(e.target);
-        if (MM.App.editing) {
-          if (item == MM.App.current) {
-            return;
-          }
-          MM.Command.Finish.execute();
-        }
-        if (e.type == "mousedown") {
-          e.preventDefault();
-        }
-        if (e.type == "touchstart") {
-          this._touchTimeout = setTimeout(function() {
-            item && MM.App.select(item);
-            MM.Menu.open(e.clientX, e.clientY);
-          }, this.TOUCH_DELAY);
-        }
-        this._startDrag(e, item);
-        break;
-      case "touchmove":
-        if (e.touches.length > 1) {
-          return;
-        }
-        e.clientX = e.touches[0].clientX;
-        e.clientY = e.touches[0].clientY;
-        clearTimeout(this._touchTimeout);
-      case "mousemove":
-        this._processDrag(e);
-        break;
-      case "touchend":
-        clearTimeout(this._touchTimeout);
-      case "mouseup":
-        this._endDrag();
-        break;
-      case "wheel":
-      case "mousewheel":
-        var dir = 0;
-        if (e.wheelDelta) {
-          if (e.wheelDelta < 0) {
-            dir = -1;
-          } else if (e.wheelDelta > 0) {
-            dir = 1;
-          }
-        }
-        if (e.deltaY) {
-          if (e.deltaY > 0) {
-            dir = -1;
-          } else if (e.deltaY < 0) {
-            dir = 1;
-          }
-        }
-        if (dir) {
-          MM.App.adjustFontSize(dir);
-        }
-        break;
-    }
-  };
-  MM.Mouse._startDrag = function(e, item) {
-    if (e.type == "mousedown") {
-      e.preventDefault();
-      this._port.addEventListener("mousemove", this);
-      this._port.addEventListener("mouseup", this);
-    } else {
-      this._port.addEventListener("touchmove", this);
-      this._port.addEventListener("touchend", this);
-    }
-    this._cursor[0] = e.clientX;
-    this._cursor[1] = e.clientY;
-    if (item && !item.isRoot) {
-      this._mode = "drag";
-      this._item = item;
-    } else {
-      this._mode = "pan";
-      this._port.style.cursor = "move";
-    }
-  };
-  MM.Mouse._processDrag = function(e) {
-    e.preventDefault();
-    let delta = [
-      e.clientX - this._cursor[0],
-      e.clientY - this._cursor[1]
-    ];
-    this._cursor = [e.clientX, e.clientY];
-    switch (this._mode) {
-      case "drag":
-        if (!this._ghost) {
-          this._port.style.cursor = "move";
-          this._buildGhost();
-        }
-        this._moveGhost(delta);
-        var state = this._computeDragState();
-        this._visualizeDragState(state);
-        break;
-      case "pan":
-        MM.App.map.moveBy(delta);
-        break;
-    }
-  };
-  MM.Mouse._endDrag = function() {
-    this._port.style.cursor = "";
-    this._port.removeEventListener("mousemove", this);
-    this._port.removeEventListener("mouseup", this);
-    if (this._mode == "pan") {
-      return;
-    }
-    if (this._ghost) {
-      var state = this._computeDragState();
-      this._finishDragDrop(state);
-      this._ghost.parentNode.removeChild(this._ghost);
-      this._ghost = null;
-    }
-    this._item = null;
-  };
-  MM.Mouse._buildGhost = function() {
-    var content = this._item.dom.content;
-    this._ghost = content.cloneNode(true);
-    this._ghost.classList.add("ghost");
-    this._pos = this._item.contentPosition;
-    content.parentNode.appendChild(this._ghost);
-  };
-  MM.Mouse._moveGhost = function(delta) {
-    this._pos[0] += delta[0];
-    this._pos[1] += delta[1];
-    this._ghost.style.left = this._pos[0] + "px";
-    this._ghost.style.top = this._pos[1] + "px";
-  };
-  MM.Mouse._finishDragDrop = function(state) {
-    this._visualizeDragState(null);
-    var target = state.item;
-    switch (state.result) {
-      case "append":
-        var action = new MM.Action.MoveItem(this._item, target);
-        break;
-      case "sibling":
-        var index = target.parent.children.indexOf(target);
-        var targetIndex = index + (state.direction == "right" || state.direction == "bottom" ? 1 : 0);
-        var action = new MM.Action.MoveItem(this._item, target.parent, targetIndex, target.side);
-        break;
-      default:
-        return;
-        break;
-    }
-    MM.App.action(action);
-  };
-  MM.Mouse._computeDragState = function() {
-    let rect = this._ghost.getBoundingClientRect();
-    let point = [rect.left + rect.width / 2, rect.top + rect.height / 2];
-    let closest = MM.App.map.getClosestItem(point);
-    var target = closest.item;
-    var state = {
-      result: "",
-      item: target,
-      direction: ""
-    };
-    var tmp = target;
-    while (!tmp.isRoot) {
-      if (tmp == this._item) {
-        return state;
-      }
-      tmp = tmp.parent;
-    }
-    let itemContentSize = this._item.contentSize;
-    let targetContentSize = target.contentSize;
-    var w = Math.max(itemContentSize[0], targetContentSize[0]);
-    var h = Math.max(itemContentSize[1], targetContentSize[1]);
-    if (target.isRoot) {
-      state.result = "append";
-    } else if (Math.abs(closest.dx) < w && Math.abs(closest.dy) < h) {
-      state.result = "append";
-    } else {
-      state.result = "sibling";
-      var childDirection = target.parent.resolvedLayout.getChildDirection(target);
-      if (childDirection == "left" || childDirection == "right") {
-        state.direction = closest.dy < 0 ? "bottom" : "top";
-      } else {
-        state.direction = closest.dx < 0 ? "right" : "left";
-      }
-    }
-    return state;
-  };
-  MM.Mouse._visualizeDragState = function(state) {
-    if (this._oldState && state && this._oldState.item == state.item && this._oldState.result == state.result) {
-      return;
-    }
-    if (this._oldDragState) {
-      var item = this._oldDragState.item;
-      var node4 = item.dom.content;
-      node4.style.boxShadow = "";
-    }
-    this._oldDragState = state;
-    if (state) {
-      var item = state.item;
-      var node4 = item.dom.content;
-      var x = 0;
-      var y = 0;
-      var offset = 5;
-      if (state.result == "sibling") {
-        if (state.direction == "left") {
-          x = -1;
-        }
-        if (state.direction == "right") {
-          x = 1;
-        }
-        if (state.direction == "top") {
-          y = -1;
-        }
-        if (state.direction == "bottom") {
-          y = 1;
-        }
-      }
-      var spread = x || y ? -2 : 2;
-      node4.style.boxShadow = x * offset + "px " + y * offset + "px 2px " + spread + "px #000";
-    }
-  };
-
   // .js/layout/graph.js
   var SPACING_RANK = 16;
   var R = SPACING_RANK / 2;
@@ -4519,6 +4252,240 @@
     return true;
   }
 
+  // .js/mouse.js
+  var TOUCH_DELAY = 500;
+  var SHADOW_OFFSET = 5;
+  var touchContextTimeout = null;
+  var current = {
+    mode: "",
+    cursor: [],
+    item: null,
+    ghost: null,
+    ghostPosition: [],
+    previousDragState: null
+  };
+  var port;
+  function init2(_port) {
+    port = _port;
+    port.addEventListener("touchstart", onDragStart);
+    port.addEventListener("mousedown", onDragStart);
+    port.addEventListener("click", (e) => {
+      let item = MM.App.map.getItemFor(e.target);
+      if (MM.App.editing && item == MM.App.current) {
+        return;
+      }
+      item && MM.App.select(item);
+    });
+    port.addEventListener("dblclick", (e) => {
+      let item = MM.App.map.getItemFor(e.target);
+      item && MM.Command.Edit.execute();
+    });
+    port.addEventListener("wheel", (e) => {
+      const { deltaY } = e;
+      if (!deltaY) {
+        return;
+      }
+      let dir = deltaY > 0 ? -1 : 1;
+      MM.App.adjustFontSize(dir);
+    });
+    port.addEventListener("contextmenu", (e) => {
+      onDragEnd(e);
+      e.preventDefault();
+      let item = MM.App.map.getItemFor(e.target);
+      item && MM.App.select(item);
+      MM.Menu.open(e.clientX, e.clientY);
+    });
+  }
+  function onDragStart(e) {
+    let point = eventToPoint(e);
+    if (!point) {
+      return;
+    }
+    let item = MM.App.map.getItemFor(e.target);
+    if (MM.App.editing) {
+      if (item == MM.App.current) {
+        return;
+      }
+      MM.Command.Finish.execute();
+    }
+    current.cursor = point;
+    if (item && !item.isRoot) {
+      current.mode = "drag";
+      current.item = item;
+    } else {
+      current.mode = "pan";
+      port.style.cursor = "move";
+    }
+    if (e.type == "mousedown") {
+      e.preventDefault();
+      port.addEventListener("mousemove", onDragMove);
+      port.addEventListener("mouseup", onDragEnd);
+    }
+    if (e.type == "touchstart") {
+      touchContextTimeout = setTimeout(function() {
+        item && MM.App.select(item);
+        MM.Menu.open(point[0], point[1]);
+      }, TOUCH_DELAY);
+      port.addEventListener("touchmove", onDragMove);
+      port.addEventListener("touchend", onDragEnd);
+    }
+  }
+  function onDragMove(e) {
+    let point = eventToPoint(e);
+    if (!point) {
+      return;
+    }
+    clearTimeout(touchContextTimeout);
+    e.preventDefault();
+    let delta = [
+      point[0] - current.cursor[0],
+      point[1] - current.cursor[1]
+    ];
+    current.cursor = point;
+    switch (current.mode) {
+      case "drag":
+        if (!current.ghost) {
+          port.style.cursor = "move";
+          buildGhost(current.item);
+        }
+        moveGhost(delta);
+        let state = computeDragState();
+        visualizeDragState(state);
+        break;
+      case "pan":
+        MM.App.map.moveBy(delta);
+        break;
+    }
+  }
+  function onDragEnd(_e) {
+    clearTimeout(touchContextTimeout);
+    port.style.cursor = "";
+    port.removeEventListener("mousemove", onDragMove);
+    port.removeEventListener("mouseup", onDragEnd);
+    const { mode, ghost } = current;
+    if (mode == "pan") {
+      return;
+    }
+    if (ghost) {
+      let state = computeDragState();
+      finishDragDrop(state);
+      ghost.remove();
+      current.ghost = null;
+    }
+    current.item = null;
+  }
+  function buildGhost(item) {
+    const { content } = item.dom;
+    let ghost = content.cloneNode(true);
+    ghost.classList.add("ghost");
+    port.append(ghost);
+    let rect = content.getBoundingClientRect();
+    current.ghost = ghost;
+    current.ghostPosition = [rect.left, rect.top];
+  }
+  function moveGhost(delta) {
+    let { ghost, ghostPosition } = current;
+    ghostPosition[0] += delta[0];
+    ghostPosition[1] += delta[1];
+    ghost.style.left = ghostPosition[0] + "px";
+    ghost.style.top = ghostPosition[1] + "px";
+  }
+  function finishDragDrop(state) {
+    visualizeDragState(null);
+    const { target, result, direction } = state;
+    let action;
+    switch (result) {
+      case "append":
+        action = new MM.Action.MoveItem(current.item, target);
+        break;
+      case "sibling":
+        let index = target.parent.children.indexOf(target);
+        let targetIndex = index + (direction == "right" || direction == "bottom" ? 1 : 0);
+        action = new MM.Action.MoveItem(current.item, target.parent, targetIndex, target.side);
+        break;
+      default:
+        return;
+        break;
+    }
+    MM.App.action(action);
+  }
+  function computeDragState() {
+    let rect = current.ghost.getBoundingClientRect();
+    let point = [rect.left + rect.width / 2, rect.top + rect.height / 2];
+    let closest = MM.App.map.getClosestItem(point);
+    let target = closest.item;
+    let state = {
+      result: "",
+      target,
+      direction: "left"
+    };
+    let tmp = target;
+    while (!tmp.isRoot) {
+      if (tmp == current.item) {
+        return state;
+      }
+      tmp = tmp.parent;
+    }
+    let itemContentSize = current.item.contentSize;
+    let targetContentSize = target.contentSize;
+    const w = Math.max(itemContentSize[0], targetContentSize[0]);
+    const h = Math.max(itemContentSize[1], targetContentSize[1]);
+    if (target.isRoot) {
+      state.result = "append";
+    } else if (Math.abs(closest.dx) < w && Math.abs(closest.dy) < h) {
+      state.result = "append";
+    } else {
+      state.result = "sibling";
+      let childDirection = target.parent.resolvedLayout.getChildDirection(target);
+      if (childDirection == "left" || childDirection == "right") {
+        state.direction = closest.dy < 0 ? "bottom" : "top";
+      } else {
+        state.direction = closest.dx < 0 ? "right" : "left";
+      }
+    }
+    return state;
+  }
+  function visualizeDragState(state) {
+    let { previousDragState } = current;
+    if (previousDragState && state && previousDragState.target == state.target && previousDragState.result == state.result) {
+      return;
+    }
+    if (previousDragState) {
+      previousDragState.target.dom.content.style.boxShadow = "";
+    }
+    if (!state) {
+      return;
+    }
+    let x = 0, y = 0;
+    if (state.result == "sibling") {
+      if (state.direction == "left") {
+        x = -1;
+      }
+      if (state.direction == "right") {
+        x = 1;
+      }
+      if (state.direction == "top") {
+        y = -1;
+      }
+      if (state.direction == "bottom") {
+        y = 1;
+      }
+    }
+    let spread = x || y ? -2 : 2;
+    state.target.dom.content.style.boxShadow = `${x * SHADOW_OFFSET}px ${y * SHADOW_OFFSET}px 2px ${spread}px #000`;
+    current.previousDragState = state;
+  }
+  function eventToPoint(e) {
+    if ("touches" in e) {
+      if (e.touches.length > 1) {
+        return null;
+      }
+      return [e.touches[0].clientX, e.touches[0].clientY];
+    } else {
+      return [e.clientX, e.clientY];
+    }
+  }
+
   // .js/my-mind.js
   MM.App = {
     keyboard: null,
@@ -4624,7 +4591,7 @@
       MM.Tip.init();
       init();
       MM.Menu.init(this._port);
-      MM.Mouse.init(this._port);
+      init2(this._port);
       MM.Clipboard.init();
       window.addEventListener("resize", this);
       window.addEventListener("beforeunload", this);

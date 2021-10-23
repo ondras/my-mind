@@ -10,6 +10,9 @@
 	font-size: x-large;
 }
 
+.item foreignObject { /* shadow */
+	overflow: visible;
+}
 
 .content {
 	position: relative;

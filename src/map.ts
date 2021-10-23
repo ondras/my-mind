@@ -145,6 +145,8 @@ export default class Map {
 
 	getClosestItem(point: number[]) {
 		interface DistanceRecord {
+			dx: number;
+			dy: number;
 			distance: number;
 			item: Item;
 		}
@@ -155,7 +157,7 @@ export default class Map {
 			let dx = rect.left + rect.width/2 - point[0];
 			let dy = rect.top + rect.height/2 - point[1];
 			let distance = dx*dx+dy*dy;
-			all.push({item, distance});
+			all.push({dx, dy, item, distance});
 			if (!item.isCollapsed()) { item.children.forEach(scan); }
 		}
 
@@ -163,7 +165,7 @@ export default class Map {
 
 		all.sort((a, b) => a.distance - b.distance);
 
-		return all[0].item;
+		return all[0];
 	}
 
 	getItemFor(node: Element): Item | null {

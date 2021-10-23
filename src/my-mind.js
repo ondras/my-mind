@@ -38,7 +38,6 @@ import "./ui/backend/ui.backend.image.js";
 import "./ui/backend/ui.backend.local.js";
 import "./ui/backend/ui.backend.firebase.js";
 import "./ui/backend/ui.backend.gdrive.js";
-import "./mouse.js";
 
 
 import "./layout/graph.js";
@@ -51,6 +50,7 @@ import "./shape/underline.js";
 import * as pubsub from "./pubsub.js";
 import Map from "./map.js";
 import * as keyboard from "./keyboard.js";
+import * as mouse from "./mouse.js";
 
 
 /*
@@ -206,7 +206,7 @@ MM.App = {
 		MM.Tip.init();
 		keyboard.init();
 		MM.Menu.init(this._port);
-		MM.Mouse.init(this._port);
+		mouse.init(this._port);
 		MM.Clipboard.init();
 
 		window.addEventListener("resize", this);

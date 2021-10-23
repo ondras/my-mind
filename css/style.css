@@ -27,6 +27,7 @@ ul {
 
 svg {
 	position: absolute;
+	overflow: visible; /* shadow */
 }
 
 #port {
