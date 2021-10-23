@@ -1,4 +1,6 @@
 import Item, { ChildItem } from "./item.js";
+import * as menu from "./menu.js";
+
 
 // FIXME
 type Direction = "left" | "right" | "top" | "bottom";
@@ -36,8 +38,8 @@ let current: Current = {
 */
 let port: HTMLElement;
 
-export function init(_port: HTMLElement) {
-	port = _port;
+export function init(port_: HTMLElement) {
+	port = port_;
 
 	port.addEventListener("touchstart", onDragStart);
 	port.addEventListener("mousedown", onDragStart);
@@ -68,7 +70,7 @@ export function init(_port: HTMLElement) {
 		let item = MM.App.map.getItemFor(e.target);
 		item && MM.App.select(item);
 
-		MM.Menu.open(e.clientX, e.clientY);
+		menu.open([e.clientX, e.clientY]);
 	});
 }
 
@@ -105,7 +107,7 @@ function onDragStart(e: MouseEvent | TouchEvent) {
 	if (e.type == "touchstart") { // context menu here, after we have the item
 		touchContextTimeout = setTimeout(function() {
 			item && MM.App.select(item);
-			MM.Menu.open(point[0], point[1]);
+			menu.open(point);
 		}, TOUCH_DELAY);
 
 		port.addEventListener("touchmove", onDragMove);

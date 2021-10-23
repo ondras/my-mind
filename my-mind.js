@@ -377,19 +377,19 @@
 
   // .js/html.js
   function node(name, attrs) {
-    let node4 = document.createElement(name);
-    Object.assign(node4, attrs);
-    return node4;
+    let node5 = document.createElement(name);
+    Object.assign(node5, attrs);
+    return node5;
   }
 
   // .js/svg.js
   var NS = "http://www.w3.org/2000/svg";
   function node2(name, attrs) {
-    let node4 = document.createElementNS(NS, name);
+    let node5 = document.createElementNS(NS, name);
     for (let attr in attrs) {
-      node4.setAttribute(attr, attrs[attr]);
+      node5.setAttribute(attr, attrs[attr]);
     }
-    return node4;
+    return node5;
   }
   function group() {
     return node2("g");
@@ -482,9 +482,9 @@
       return children[index];
     }
     anchorToggle(item, point, side) {
-      var node4 = item.dom.toggle;
-      var w = node4.offsetWidth;
-      var h = node4.offsetHeight;
+      var node5 = item.dom.toggle;
+      var w = node5.offsetWidth;
+      var h = node5.offsetHeight;
       let [l, t] = point;
       switch (side) {
         case "left":
@@ -502,8 +502,8 @@
           l -= w / 2;
           break;
       }
-      node4.style.left = Math.round(l) + "px";
-      node4.style.top = Math.round(t) + "px";
+      node5.style.left = Math.round(l) + "px";
+      node5.style.top = Math.round(t) + "px";
     }
     getChildAnchor(item, side) {
       let { position, contentPosition, contentSize } = item;
@@ -603,14 +603,14 @@
       return [bbox.width, bbox.height];
     }
     get position() {
-      const { node: node4 } = this.dom;
-      const transform = node4.getAttribute("transform");
+      const { node: node5 } = this.dom;
+      const transform = node5.getAttribute("transform");
       return transform.match(/\d+/g).map(Number);
     }
     set position(position) {
-      const { node: node4 } = this.dom;
+      const { node: node5 } = this.dom;
       const transform = `translate(${position.join(" ")})`;
-      node4.setAttribute("transform", transform);
+      node5.setAttribute("transform", transform);
     }
     get contentSize() {
       const { content } = this.dom;
@@ -963,10 +963,10 @@
         return this._shape;
       }
       let depth = 0;
-      let node4 = this;
-      while (!node4.isRoot) {
+      let node5 = this;
+      while (!node5.isRoot) {
         depth++;
-        node4 = node4.parent;
+        node5 = node5.parent;
       }
       switch (depth) {
         case 0:
@@ -1013,8 +1013,8 @@
     removeChild(child) {
       var index = this.children.indexOf(child);
       this.children.splice(index, 1);
-      var node4 = child.dom.node;
-      node4.parentNode.removeChild(node4);
+      var node5 = child.dom.node;
+      node5.parentNode.removeChild(node5);
       child.parent = null;
       if (!this.children.length) {
         this.dom.toggle.parentNode.removeChild(this.dom.toggle);
@@ -1107,8 +1107,8 @@
       }
     }
   };
-  function findLinks(node4) {
-    var children = [].slice.call(node4.childNodes);
+  function findLinks(node5) {
+    var children = [].slice.call(node5.childNodes);
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeType) {
@@ -1126,14 +1126,14 @@
             var link = document.createElement("a");
             link.innerHTML = link.href = result[0];
             if (before) {
-              node4.insertBefore(document.createTextNode(before), child);
+              node5.insertBefore(document.createTextNode(before), child);
             }
-            node4.insertBefore(link, child);
+            node5.insertBefore(link, child);
             if (after) {
               child.nodeValue = after;
               i--;
             } else {
-              node4.removeChild(child);
+              node5.removeChild(child);
             }
           }
           break;
@@ -1184,29 +1184,29 @@
       return this._root;
     }
     set root(root) {
-      const { node: node4 } = this;
+      const { node: node5 } = this;
       this._root = root;
-      node4.innerHTML = "";
-      node4.append(root.dom.node);
+      node5.innerHTML = "";
+      node5.append(root.dom.node);
       root.parent = this;
     }
     mergeWith(data) {
       var ids = [];
       var current2 = MM.App.current;
-      var node4 = current2;
-      while (node4 != this) {
-        ids.push(node4.id);
-        node4 = node4.parent;
+      var node5 = current2;
+      while (node5 != this) {
+        ids.push(node5.id);
+        node5 = node5.parent;
       }
       this._root.mergeWith(data.root);
       if (current2.map) {
-        var node4 = current2.parent;
+        var node5 = current2.parent;
         var hidden = false;
-        while (node4 != this) {
-          if (node4.isCollapsed()) {
+        while (node5 != this) {
+          if (node5.isCollapsed()) {
             hidden = true;
           }
-          node4 = node4.parent;
+          node5 = node5.parent;
         }
         if (!hidden) {
           return;
@@ -1235,10 +1235,10 @@
     update(options) {
       options = Object.assign({}, UPDATE_OPTIONS2, options);
       options.children && this._root.update({ parent: false, children: true });
-      const { node: node4 } = this;
+      const { node: node5 } = this;
       const { size } = this._root;
-      node4.setAttribute("width", String(size[0]));
-      node4.setAttribute("height", String(size[1]));
+      node5.setAttribute("width", String(size[0]));
+      node5.setAttribute("height", String(size[1]));
     }
     show(where) {
       where.append(this.node);
@@ -1251,10 +1251,10 @@
     }
     center() {
       let { size } = this._root;
-      const port2 = MM.App.portSize;
+      const port3 = MM.App.portSize;
       let position = [
-        (port2[0] - size[0]) / 2,
-        (port2[1] - size[1]) / 2
+        (port3[0] - size[0]) / 2,
+        (port3[1] - size[1]) / 2
       ].map(Math.round);
       this.moveTo(position);
     }
@@ -1278,8 +1278,8 @@
       all.sort((a, b) => a.distance - b.distance);
       return all[0];
     }
-    getItemFor(node4) {
-      let content = node4.closest(".content");
+    getItemFor(node5) {
+      let content = node5.closest(".content");
       if (!content) {
         return null;
       }
@@ -1345,8 +1345,8 @@
           this._getPickCandidates(currentRect, child, direction, candidates);
         }, this);
       }
-      var node4 = item.dom.content;
-      var rect = node4.getBoundingClientRect();
+      var node5 = item.dom.content;
+      var rect = node5.getBoundingClientRect();
       if (direction == "left" || direction == "right") {
         var x1 = currentRect.left + currentRect.width / 2;
         var x2 = rect.left + rect.width / 2;
@@ -1496,59 +1496,6 @@
     this._item.dom.node.classList.remove("cut");
     this._item = null;
     this._mode = "";
-  };
-
-  // .js/menu.js
-  MM.Menu = {
-    _dom: {},
-    _port: null,
-    open: function(x, y) {
-      this._dom.node.style.display = "";
-      var w = this._dom.node.offsetWidth;
-      var h = this._dom.node.offsetHeight;
-      var left = x;
-      var top = y;
-      if (left > this._port.offsetWidth / 2) {
-        left -= w;
-      }
-      if (top > this._port.offsetHeight / 2) {
-        top -= h;
-      }
-      this._dom.node.style.left = left + "px";
-      this._dom.node.style.top = top + "px";
-    },
-    close: function() {
-      this._dom.node.style.display = "none";
-    },
-    handleEvent: function(e) {
-      if (e.currentTarget != this._dom.node) {
-        this.close();
-        return;
-      }
-      e.stopPropagation();
-      e.preventDefault();
-      var command = e.target.getAttribute("data-command");
-      if (!command) {
-        return;
-      }
-      command = MM.Command[command];
-      if (!command.isValid()) {
-        return;
-      }
-      command.execute();
-      this.close();
-    },
-    init: function(port2) {
-      this._port = port2;
-      this._dom.node = document.querySelector("#menu");
-      var buttons = this._dom.node.querySelectorAll("[data-command]");
-      [].slice.call(buttons).forEach(function(button) {
-        button.innerHTML = MM.Command[button.getAttribute("data-command")].label;
-      });
-      this._port.addEventListener("mousedown", this);
-      this._dom.node.addEventListener("mousedown", this);
-      this.close();
-    }
   };
 
   // .js/command/command.js
@@ -2125,36 +2072,36 @@
     }
     return elm;
   };
-  MM.Format.FreeMind._parseNode = function(node4, parent) {
-    var json = this._parseAttributes(node4, parent);
-    for (var i = 0; i < node4.childNodes.length; i++) {
-      var child = node4.childNodes[i];
+  MM.Format.FreeMind._parseNode = function(node5, parent) {
+    var json = this._parseAttributes(node5, parent);
+    for (var i = 0; i < node5.childNodes.length; i++) {
+      var child = node5.childNodes[i];
       if (child.nodeName.toLowerCase() == "node") {
         json.children.push(this._parseNode(child, json));
       }
     }
     return json;
   };
-  MM.Format.FreeMind._parseAttributes = function(node4, parent) {
+  MM.Format.FreeMind._parseAttributes = function(node5, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node4.getAttribute("TEXT") || ""),
-      id: node4.getAttribute("ID")
+      text: MM.Format.nl2br(node5.getAttribute("TEXT") || ""),
+      id: node5.getAttribute("ID")
     };
-    var position = node4.getAttribute("POSITION");
+    var position = node5.getAttribute("POSITION");
     if (position) {
       json.side = position;
     }
-    var style = node4.getAttribute("STYLE");
+    var style = node5.getAttribute("STYLE");
     if (style == "bubble") {
       json.shape = "box";
     } else {
       json.shape = parent.shape;
     }
-    if (node4.getAttribute("FOLDED") == "true") {
+    if (node5.getAttribute("FOLDED") == "true") {
       json.collapsed = 1;
     }
-    var children = node4.children;
+    var children = node5.children;
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeName.toLowerCase()) {
@@ -2186,23 +2133,23 @@
     label: { value: "Mind Map Architect" },
     extension: { value: "mma" }
   });
-  MM.Format.MMA._parseAttributes = function(node4, parent) {
+  MM.Format.MMA._parseAttributes = function(node5, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node4.getAttribute("title") || ""),
+      text: MM.Format.nl2br(node5.getAttribute("title") || ""),
       shape: "box"
     };
-    if (node4.getAttribute("expand") == "false") {
+    if (node5.getAttribute("expand") == "false") {
       json.collapsed = 1;
     }
-    var direction = node4.getAttribute("direction");
+    var direction = node5.getAttribute("direction");
     if (direction == "0") {
       json.side = "left";
     }
     if (direction == "1") {
       json.side = "right";
     }
-    var color = node4.getAttribute("color");
+    var color = node5.getAttribute("color");
     if (color) {
       var re = color.match(/^#(....)(....)(....)$/);
       if (re) {
@@ -2215,7 +2162,7 @@
       }
       json.color = "#" + [r, g, b].join("");
     }
-    json.icon = node4.getAttribute("icon");
+    json.icon = node5.getAttribute("icon");
     return json;
   };
   MM.Format.MMA._serializeAttributes = function(doc, json) {
@@ -2446,14 +2393,14 @@
     return this._request("GET", url);
   };
   MM.Backend.WebDAV._request = async function(method, url, data) {
-    let init3 = {
+    let init4 = {
       method,
       credentials: "include"
     };
     if (data) {
-      init3.body = data;
+      init4.body = data;
     }
-    let response = await fetch(url, init3);
+    let response = await fetch(url, init4);
     let text = await response.text();
     if (response.status == 200) {
       return text;
@@ -2893,14 +2840,14 @@
           this.toggle();
           return;
         }
-        var node4 = e.target;
-        while (node4 != document) {
-          var command = node4.getAttribute("data-command");
+        var node5 = e.target;
+        while (node5 != document) {
+          var command = node5.getAttribute("data-command");
           if (command) {
             MM.Command[command].execute();
             return;
           }
-          node4 = node4.parentNode;
+          node5 = node5.parentNode;
         }
         break;
       case "change":
@@ -2961,10 +2908,10 @@
     return this._select.querySelector("option[value='" + value + "']");
   };
   MM.UI.Layout.prototype._buildGroup = function(label) {
-    var node4 = document.createElement("optgroup");
-    node4.label = label;
-    this._select.appendChild(node4);
-    return node4;
+    var node5 = document.createElement("optgroup");
+    node5.label = label;
+    this._select.appendChild(node5);
+    return node5;
   };
 
   // .js/ui/ui.shape.js
@@ -3317,7 +3264,7 @@
     }
   };
   MM.UI.IO.prototype._syncBackend = function() {
-    [...this._node.querySelectorAll("div[id]")].forEach((node4) => node4.hidden = true);
+    [...this._node.querySelectorAll("div[id]")].forEach((node5) => node5.hidden = true);
     this._node.querySelector("#" + this._backend.value).hidden = false;
     this._backends[this._backend.value].show(this._mode);
   };
@@ -3384,8 +3331,8 @@
   MM.UI.Backend.show = function(mode) {
     this._mode = mode;
     this._go.innerHTML = mode.charAt(0).toUpperCase() + mode.substring(1);
-    [...this._node.querySelectorAll("[data-for]")].forEach((node4) => node4.hidden = true);
-    [...this._node.querySelectorAll(`[data-for~=${mode}]`)].forEach((node4) => node4.hidden = false);
+    [...this._node.querySelectorAll("[data-for]")].forEach((node5) => node5.hidden = true);
+    [...this._node.querySelectorAll(`[data-for~=${mode}]`)].forEach((node5) => node5.hidden = false);
     this._go.focus();
   };
   MM.UI.Backend._action = function() {
@@ -4252,6 +4199,57 @@
     return true;
   }
 
+  // .js/menu.js
+  var node4;
+  var port;
+  function init2(port_) {
+    port = port_;
+    node4 = document.querySelector("#menu");
+    [...node4.querySelectorAll("[data-command]")].forEach((button) => {
+      let commandName = button.dataset.command;
+      button.textContent = MM.Command[commandName].label;
+    });
+    port.addEventListener("mousedown", handleEvent2);
+    node4.addEventListener("mousedown", handleEvent2);
+    close();
+  }
+  function open(point) {
+    node4.hidden = false;
+    let w = node4.offsetWidth;
+    let h = node4.offsetHeight;
+    let left = point[0];
+    let top = point[1];
+    if (left > port.offsetWidth / 2) {
+      left -= w;
+    }
+    if (top > port.offsetHeight / 2) {
+      top -= h;
+    }
+    node4.style.left = `${left}px`;
+    node4.style.top = `${top}px`;
+  }
+  function handleEvent2(e) {
+    if (e.currentTarget != node4) {
+      close();
+      return;
+    }
+    e.stopPropagation();
+    e.preventDefault();
+    let commandName = e.target.dataset.command;
+    if (!commandName) {
+      return;
+    }
+    let command = MM.Command[commandName];
+    if (!command.isValid()) {
+      return;
+    }
+    command.execute();
+    close();
+  }
+  function close() {
+    node4.hidden = true;
+  }
+
   // .js/mouse.js
   var TOUCH_DELAY = 500;
   var SHADOW_OFFSET = 5;
@@ -4264,23 +4262,23 @@
     ghostPosition: [],
     previousDragState: null
   };
-  var port;
-  function init2(_port) {
-    port = _port;
-    port.addEventListener("touchstart", onDragStart);
-    port.addEventListener("mousedown", onDragStart);
-    port.addEventListener("click", (e) => {
+  var port2;
+  function init3(port_) {
+    port2 = port_;
+    port2.addEventListener("touchstart", onDragStart);
+    port2.addEventListener("mousedown", onDragStart);
+    port2.addEventListener("click", (e) => {
       let item = MM.App.map.getItemFor(e.target);
       if (MM.App.editing && item == MM.App.current) {
         return;
       }
       item && MM.App.select(item);
     });
-    port.addEventListener("dblclick", (e) => {
+    port2.addEventListener("dblclick", (e) => {
       let item = MM.App.map.getItemFor(e.target);
       item && MM.Command.Edit.execute();
     });
-    port.addEventListener("wheel", (e) => {
+    port2.addEventListener("wheel", (e) => {
       const { deltaY } = e;
       if (!deltaY) {
         return;
@@ -4288,12 +4286,12 @@
       let dir = deltaY > 0 ? -1 : 1;
       MM.App.adjustFontSize(dir);
     });
-    port.addEventListener("contextmenu", (e) => {
+    port2.addEventListener("contextmenu", (e) => {
       onDragEnd(e);
       e.preventDefault();
       let item = MM.App.map.getItemFor(e.target);
       item && MM.App.select(item);
-      MM.Menu.open(e.clientX, e.clientY);
+      open([e.clientX, e.clientY]);
     });
   }
   function onDragStart(e) {
@@ -4314,20 +4312,20 @@
       current.item = item;
     } else {
       current.mode = "pan";
-      port.style.cursor = "move";
+      port2.style.cursor = "move";
     }
     if (e.type == "mousedown") {
       e.preventDefault();
-      port.addEventListener("mousemove", onDragMove);
-      port.addEventListener("mouseup", onDragEnd);
+      port2.addEventListener("mousemove", onDragMove);
+      port2.addEventListener("mouseup", onDragEnd);
     }
     if (e.type == "touchstart") {
       touchContextTimeout = setTimeout(function() {
         item && MM.App.select(item);
-        MM.Menu.open(point[0], point[1]);
+        open(point);
       }, TOUCH_DELAY);
-      port.addEventListener("touchmove", onDragMove);
-      port.addEventListener("touchend", onDragEnd);
+      port2.addEventListener("touchmove", onDragMove);
+      port2.addEventListener("touchend", onDragEnd);
     }
   }
   function onDragMove(e) {
@@ -4345,7 +4343,7 @@
     switch (current.mode) {
       case "drag":
         if (!current.ghost) {
-          port.style.cursor = "move";
+          port2.style.cursor = "move";
           buildGhost(current.item);
         }
         moveGhost(delta);
@@ -4359,9 +4357,9 @@
   }
   function onDragEnd(_e) {
     clearTimeout(touchContextTimeout);
-    port.style.cursor = "";
-    port.removeEventListener("mousemove", onDragMove);
-    port.removeEventListener("mouseup", onDragEnd);
+    port2.style.cursor = "";
+    port2.removeEventListener("mousemove", onDragMove);
+    port2.removeEventListener("mouseup", onDragEnd);
     const { mode, ghost } = current;
     if (mode == "pan") {
       return;
@@ -4378,7 +4376,7 @@
     const { content } = item.dom;
     let ghost = content.cloneNode(true);
     ghost.classList.add("ghost");
-    port.append(ghost);
+    port2.append(ghost);
     let rect = content.getBoundingClientRect();
     current.ghost = ghost;
     current.ghostPosition = [rect.left, rect.top];
@@ -4590,8 +4588,8 @@
       this.notes = new MM.UI.Notes();
       MM.Tip.init();
       init();
-      MM.Menu.init(this._port);
       init2(this._port);
+      init3(this._port);
       MM.Clipboard.init();
       window.addEventListener("resize", this);
       window.addEventListener("beforeunload", this);

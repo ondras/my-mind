@@ -4,7 +4,6 @@ import "./repo.js";
 import "./tip.js";
 import "./action.js";
 import "./clipboard.js";
-import "./menu.js";
 import "./command/command.js";
 import "./command/command.edit.js";
 import "./command/command.select.js";
@@ -51,6 +50,7 @@ import * as pubsub from "./pubsub.js";
 import Map from "./map.js";
 import * as keyboard from "./keyboard.js";
 import * as mouse from "./mouse.js";
+import * as menu from "./menu.js";
 
 
 /*
@@ -205,7 +205,7 @@ MM.App = {
 
 		MM.Tip.init();
 		keyboard.init();
-		MM.Menu.init(this._port);
+		menu.init(this._port);
 		mouse.init(this._port);
 		MM.Clipboard.init();
 
