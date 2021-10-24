@@ -1,5 +1,7 @@
 import Item, { ChildItem } from "./item.js";
 import * as menu from "./menu.js";
+import * as app from "./my-mind.js";
+import * as actions from "./action.js";
 
 
 // FIXME
@@ -45,13 +47,13 @@ export function init(port_: HTMLElement) {
 	port.addEventListener("mousedown", onDragStart);
 
 	port.addEventListener("click", e => {
-		let item = MM.App.map.getItemFor(e.target);
-		if (MM.App.editing && item == MM.App.current) { return; } // ignore on edited node
-		item && MM.App.select(item);
+		let item = app.currentMap.getItemFor(e.target as HTMLElement);
+		if (app.editing && item == app.currentItem) { return; } // ignore on edited node
+		item && app.selectItem(item);
 	});
 
 	port.addEventListener("dblclick", e => {
-		let item = MM.App.map.getItemFor(e.target);
+		let item = app.currentMap.getItemFor(e.target as HTMLElement);
 		item && MM.Command.Edit.execute();
 	});
 
@@ -59,16 +61,16 @@ export function init(port_: HTMLElement) {
 		const { deltaY } = e;
 		if (!deltaY) { return; }
 
-		let dir = (deltaY > 0 ? -1 : 1);
-		MM.App.adjustFontSize(dir);
+		let dir: -1 | 1 = (deltaY > 0 ? -1 : 1);
+		app.adjustFontSize(dir);
 	});
 
 	port.addEventListener("contextmenu", e => {
 		onDragEnd(e);
 		e.preventDefault();
 
-		let item = MM.App.map.getItemFor(e.target);
-		item && MM.App.select(item);
+		let item = app.currentMap.getItemFor(e.target as HTMLElement);
+		item && app.selectItem(item);
 
 		menu.open([e.clientX, e.clientY]);
 	});
@@ -78,9 +80,9 @@ function onDragStart(e: MouseEvent | TouchEvent) {
 	let point = eventToPoint(e);
 	if (!point) { return; }
 
-	let item = MM.App.map.getItemFor(e.target);
-	if (MM.App.editing) {
-		if (item == MM.App.current) { return; } // ignore dnd on edited node
+	let item = app.currentMap.getItemFor(e.target as HTMLElement);
+	if (app.editing) {
+		if (item == app.currentItem) { return; } // ignore dnd on edited node
 		MM.Command.Finish.execute(); // clicked elsewhere => finalize edit
 	}
 
@@ -106,7 +108,7 @@ function onDragStart(e: MouseEvent | TouchEvent) {
 
 	if (e.type == "touchstart") { // context menu here, after we have the item
 		touchContextTimeout = setTimeout(function() {
-			item && MM.App.select(item);
+			item && app.selectItem(item);
 			menu.open(point);
 		}, TOUCH_DELAY);
 
@@ -140,7 +142,7 @@ function onDragMove(e: MouseEvent | TouchEvent) {
 		break;
 
 		case "pan":
-			MM.App.map.moveBy(delta);
+			app.currentMap.moveBy(delta);
 		break;
 	}
 }
@@ -190,22 +192,22 @@ function finishDragDrop(state: DragState) {
 
 	const { target, result, direction } = state;
 
-	let action;
+	let action: actions.Action;
 	switch (result) {
 		case "append":
-			action = new MM.Action.MoveItem(current.item, target);
+			action = new actions.MoveItem(current.item as ChildItem, target);
 		break;
 
 		case "sibling":
 			let index = (target as ChildItem).parent.children.indexOf(target as ChildItem);
 			let targetIndex = index + (direction == "right" || direction == "bottom" ? 1 : 0);
-			action = new MM.Action.MoveItem(current.item, target.parent, targetIndex, target.side);
+			action = new actions.MoveItem(current.item as ChildItem, (target as ChildItem).parent, targetIndex, target.side);
 		break;
 
 		default: return; break;
 	}
 
-	MM.App.action(action);
+	app.action(action);
 }
 
 /**
@@ -214,7 +216,7 @@ function finishDragDrop(state: DragState) {
 function computeDragState() {
 	let rect = current.ghost.getBoundingClientRect();
 	let point = [rect.left + rect.width/2, rect.top + rect.height/2];
-	let closest = MM.App.map.getClosestItem(point);
+	let closest = app.currentMap.getClosestItem(point);
 	let target = closest.item;
 
 	let state: DragState = {
@@ -226,7 +228,7 @@ function computeDragState() {
 	let tmp = target;
 	while (!tmp.isRoot) {
 		if (tmp == current.item) { return state; } // drop on a child or self
-		tmp = tmp.parent;
+		tmp = tmp.parent as Item;
 	}
 
 	let itemContentSize = current.item.contentSize;
@@ -240,7 +242,7 @@ function computeDragState() {
 		state.result = "append";
 	} else {
 		state.result = "sibling";
-		let childDirection = target.parent.resolvedLayout.getChildDirection(target);
+		let childDirection = (target as ChildItem).parent.resolvedLayout.getChildDirection(target);
 
 		if (childDirection == "left" || childDirection == "right") {
 			state.direction = (closest.dy < 0 ? "bottom" : "top");

@@ -1,3 +1,5 @@
+import * as actions from "../action.js";
+import * as app from "../my-mind.js";
 import { repo } from "../shape/shape.js";
 
 
@@ -13,7 +15,7 @@ MM.UI.Shape = function() {
 
 MM.UI.Shape.prototype.update = function() {
 	var value = "";
-	var shape = MM.App.current.shape;
+	var shape = app.currentItem.shape;
 	if (shape) { value = shape.id; }
 
 	this._select.value = value;
@@ -22,6 +24,6 @@ MM.UI.Shape.prototype.update = function() {
 MM.UI.Shape.prototype.handleEvent = function(e) {
 	var shape = repo.get(this._select.value);
 
-	var action = new MM.Action.SetShape(MM.App.current, shape);
-	MM.App.action(action);
+	var action = new actions.SetShape(app.currentItem, shape);
+	app.action(action);
 }

@@ -28,10 +28,10 @@ MM.UI.Backend.File._action = function() {
 
 MM.UI.Backend.File.save = function() {
 	var format = MM.Format.getById(this._format.value);
-	var json = MM.App.map.toJSON();
+	var json = app.currentMap.toJSON();
 	var data = format.to(json);
 
-	var name = MM.App.map.name + "." + format.extension;
+	var name = app.currentMap.name + "." + format.extension;
 	this._backend.save(data, name).then(
 		this._saveDone.bind(this),
 		this._error.bind(this)

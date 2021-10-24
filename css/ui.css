@@ -15,7 +15,8 @@ button:not(:disabled) {
 	transition: transform 500ms;
 }
 
-.ui:not(.visible) {
+.ui[hidden] {
+	display: block;
 	-webkit-transform: translate(100%, 0);
 	transform: translate(100%, 0);
 }
@@ -179,13 +180,13 @@ button:not(:disabled) {
 }
 
 .ui #toggle:after {
-	content: "←";
+	content: "→";
 	font-weight: bold;
 	font-size: 22px;
 }
 
-.ui.visible #toggle:after {
-	content: "→";
+.ui[hidden] #toggle:after {
+	content: "←";
 }
 
 .ui#help {
@@ -196,7 +197,7 @@ button:not(:disabled) {
 	width: 250px;
 }
 
-.ui#help:not(.visible) {
+.ui#help[hidden] {
 	-webkit-transform: translate(-100%, 0);
 	transform: translate(-100%, 0);
 }

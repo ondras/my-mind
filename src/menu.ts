@@ -1,9 +1,9 @@
-let node: HTMLElement;
+let node = document.querySelector("#menu") as HTMLElement;
 let port: HTMLElement;
+
 
 export function init(port_: HTMLElement) {
 	port = port_;
-	node = document.querySelector("#menu");
 
 	[...node.querySelectorAll("[data-command]")].forEach((button: HTMLElement) => {
 		let commandName = button.dataset.command;

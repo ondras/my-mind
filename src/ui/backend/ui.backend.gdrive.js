@@ -1,3 +1,6 @@
+import * as app from "../../my-mind.js";
+
+
 MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
 	id: {value: "gdrive"}
 });
@@ -15,12 +18,12 @@ MM.UI.Backend.GDrive.init = function(select) {
 }
 
 MM.UI.Backend.GDrive.save = function() {
-	MM.App.setThrobber(true);
+	app.setThrobber(true);
 
 	var format = MM.Format.getById(this._format.value);
-	var json = MM.App.map.toJSON();
+	var json = app.currentMap.toJSON();
 	var data = format.to(json);
-	var name = MM.App.map.name;
+	var name = app.currentMap.name;
 	var mime = "text/plain";
 
 	if (format.mime) {
@@ -36,7 +39,7 @@ MM.UI.Backend.GDrive.save = function() {
 }
 
 MM.UI.Backend.GDrive.load = function() {
-	MM.App.setThrobber(true);
+	app.setThrobber(true);
 
 	this._backend.pick().then(
 		this._picked.bind(this),
@@ -45,10 +48,10 @@ MM.UI.Backend.GDrive.load = function() {
 }
 
 MM.UI.Backend.GDrive._picked = function(id) {
-	MM.App.setThrobber(false);
+	app.setThrobber(false);
 	if (!id) { return;  }
 
-	MM.App.setThrobber(true);
+	app.setThrobber(true);
 
 	this._backend.load(id).then(
 		this._loadDone.bind(this),

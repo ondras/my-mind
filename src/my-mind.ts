@@ -1,9 +1,7 @@
 import "./mm.js";
 import "./promise.js";
 import "./repo.js";
-import "./tip.js";
 import "./action.js";
-import "./clipboard.js";
 import "./command/command.js";
 import "./command/command.edit.js";
 import "./command/command.select.js";
@@ -27,8 +25,6 @@ import "./ui/ui.value.js";
 import "./ui/ui.status.js";
 import "./ui/ui.color.js";
 import "./ui/ui.icon.js";
-import "./ui/ui.help.js";
-import "./ui/ui.notes.js";
 import "./ui/ui.io.js";
 import "./ui/backend/ui.backend.js";
 import "./ui/backend/ui.backend.file.js";
@@ -48,9 +44,15 @@ import "./shape/underline.js";
 
 import * as pubsub from "./pubsub.js";
 import Map from "./map.js";
+import Item from "./item.js";
 import * as keyboard from "./keyboard.js";
 import * as mouse from "./mouse.js";
 import * as menu from "./menu.js";
+import * as history from "./history.js";
+import * as help from "./ui/help.js";
+import * as notes from "./ui/notes.js";
+import * as clipboard from "./clipboard.js";
+import * as tip from "./ui/tip.js";
 
 
 /*
@@ -87,65 +89,17 @@ setInterval(function() {
  *       this calls MM.Command.Finish (3b).
  *
  */
-MM.App = {
+(MM as any).App = {
 	keyboard: null,
-	current: null,
 	editing: false,
-	history: [],
-	historyIndex: 0,
-	portSize: [0, 0],
-	map: null,
 	ui: null,
 	io: null,
-	help: null,
-	_port: null,
 	_throbber: null,
-	_drag: {
-		pos: [0, 0],
-		item: null,
-		ghost: null
-	},
-	_fontSize: 100,
-
-	action: function(action) {
-		if (this.historyIndex < this.history.length) { /* remove undoed actions */
-			this.history.splice(this.historyIndex, this.history.length-this.historyIndex);
-		}
-
-		this.history.push(action);
-		this.historyIndex++;
-
-		action.perform();
-		return this;
-	},
-
-	setMap: function(map) {
-		if (this.map) { this.map.hide(); }
-
-		this.history = [];
-		this.historyIndex = 0;
-
-		this.map = map;
-		this.map.show(this._port);
-	},
-
-	select: function(item) {
-		if (this.current && this.current != item) { this.current.deselect(); }
-		this.current = item;
-		this.current.select();
-	},
-
-	adjustFontSize: function(diff) {
-		this._fontSize = Math.max(30, this._fontSize + 10*diff);
-		this._port.style.fontSize = this._fontSize + "%";
-		this.map.update();
-		this.map.ensureItemVisibility(this.current);
-	},
 
 	handleMessage: function(message, publisher) {
 		switch (message) {
 			case "ui-change":
-				this._syncPort();
+				syncPort();
 			break;
 
 			case "item-change":
@@ -159,25 +113,27 @@ MM.App = {
 	handleEvent: function(e) {
 		switch (e.type) {
 			case "resize":
-				this._syncPort();
+				syncPort();
 				break;
 
 			case "keyup":
+				// fixme blbe
 				if (e.key === "Escape") {
-					MM.App.notes.close();
-					MM.App.help.close();
+					notes.close();
+					help.close();
 				}
 				break;
 
 			case "message":
+				// fixme blbe
 				if (e.data && e.data.action) {
 					switch (e.data.action) {
 						case "setContent":
-							MM.App.notes.update(e.data.value);
+							notes.update(e.data.value);
 							break;
 
 						case "closeEditor":
-							MM.App.notes.close();
+							notes.close();
 							break;
 					}
 				}
@@ -191,23 +147,10 @@ MM.App = {
 		}
 	},
 
-	setThrobber: function(visible) {
-		this._throbber.classList[visible ? "add" : "remove"]("visible");
-	},
-
 	init: function() {
-		this._port = document.querySelector("#port");
-		this._throbber = document.querySelector("#throbber");
 		this.ui = new MM.UI();
 		this.io = new MM.UI.IO();
-		this.help = new MM.UI.Help();
-		this.notes = new MM.UI.Notes();
 
-		MM.Tip.init();
-		keyboard.init();
-		menu.init(this._port);
-		mouse.init(this._port);
-		MM.Clipboard.init();
 
 		window.addEventListener("resize", this);
 		window.addEventListener("beforeunload", this);
@@ -216,15 +159,83 @@ MM.App = {
 		pubsub.subscribe("ui-change", this);
 		pubsub.subscribe("item-change", this);
 
-		this._syncPort();
-		this.setMap(new Map());
+		syncPort();
+		showMap(new Map());
 	},
 
-	_syncPort: function() {
-		this.portSize = [window.innerWidth - this.ui.getWidth(), window.innerHeight];
-		this._port.style.width = this.portSize[0] + "px";
-		this._port.style.height = this.portSize[1] + "px";
-		this._throbber.style.right = (20 + this.ui.getWidth())+ "px";
-		if (this.map) { this.map.ensureItemVisibility(this.current); }
-	}
 }
+
+const port = document.querySelector("#port") as HTMLElement;
+const throbber = document.querySelector("#throbber") as HTMLElement;
+let fontSize = 100;
+
+export let currentMap: Map;
+export let currentItem: Item;
+export let editing = false;
+
+export function showMap(map: Map) {
+	currentMap && currentMap.hide();
+
+	history.reset();
+	currentMap = map;
+	currentMap.show(port);
+}
+
+export function action(action) {
+	history.push(action);
+	action.do();
+}
+
+export function selectItem(item: Item) {
+	if (currentItem && currentItem != item) { currentItem.deselect(); }
+	currentItem = item;
+	currentItem.select();
+}
+
+export function adjustFontSize(diff: -1 | 1) {
+	fontSize = Math.max(30, fontSize + 10*diff);
+	port.style.fontSize = `${fontSize}%`;
+	currentMap.update();
+	currentMap.ensureItemVisibility(currentItem);
+}
+
+export function setThrobber(visible: boolean) {
+	throbber.hidden = !visible;
+}
+
+export function startEditing() {
+	editing = true;
+	currentItem.startEditing();
+}
+
+export function stopEditing() {
+	editing = false;
+	return currentItem.stopEditing();
+}
+
+function init() {
+	help.init();
+	clipboard.init();
+	tip.init();
+	keyboard.init();
+	menu.init(port);
+	mouse.init(port);
+
+	(MM as any).App.init();
+
+	window.addEventListener("load", e => {
+
+		(MM as any).App.io.restore();
+	});
+}
+
+function syncPort() { // fixme k cemu?
+	let ui = (MM as any).App.ui;
+	let portSize = [window.innerWidth - ui.getWidth(), window.innerHeight];
+	port.style.width = portSize[0] + "px";
+	port.style.height = portSize[1] + "px";
+	throbber.style.right = (20 + ui.getWidth())+ "px";
+	currentMap && currentMap.ensureItemVisibility(currentItem);
+}
+
+init();

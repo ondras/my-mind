@@ -1,5 +1,6 @@
 import Item from "./item.js";
 import * as svg from "./svg.js";
+import * as app from "./my-mind.js";
 import Layout, { repo as layoutRepo } from "./layout/layout.js";
 
 
@@ -57,24 +58,26 @@ export default class Map {
 	}
 
 	mergeWith(data) {
-		/* store a sequence of nodes to be selected when merge is over */
+		// store a sequence of nodes to be selected when merge is over
 		var ids = [];
-		var current = MM.App.current;
+		var current = app.currentItem;
 		var node = current;
-		while (node != this) {
+		while (true) {
 			ids.push(node.id);
-			node = node.parent;
+			if (node.parent == this) { break; }
+			node = node.parent as Item;
 		}
 
 		this._root.mergeWith(data.root);
 
 		if (current.map) { /* selected node still in tree, cool */
 			/* if one of the parents got collapsed, act as if the node got removed */
-			var node = current.parent;
-			var hidden = false;
-			while (node != this) {
+			let node = current;
+			let hidden = false;
+			while (true) {
+				if (node.parent == this) { break; }
+				node = node.parent as Item;
 				if (node.isCollapsed()) { hidden = true; }
-				node = node.parent;
 			}
 			if (!hidden) { return; } /* nothing bad happened, continue */
 		}
@@ -82,7 +85,7 @@ export default class Map {
 		/* previously selected node is no longer in the tree OR it is folded */
 
 		/* what if the node was being edited? */
-		if (MM.App.editing) { current.stopEditing(); }
+		app.editing && app.stopEditing();
 
 		/* get all items by their id */
 		var idMap = {};
@@ -96,7 +99,7 @@ export default class Map {
 		while (ids.length) {
 			var id = ids.shift();
 			if (id in idMap) {
-				MM.App.select(idMap[id]);
+				app.selectItem(idMap[id]);
 				return;
 			}
 		}
@@ -119,7 +122,7 @@ export default class Map {
 		where.append(this.node);
 		this.update();
 		this.center();
-		MM.App.select(this._root);
+		app.selectItem(this._root);
 	}
 
 	hide() {
@@ -128,11 +131,11 @@ export default class Map {
 
 	center() {
 		let { size } = this._root;
-		const port = MM.App.portSize;
+		let parent = this.node.parentNode as HTMLElement;
 
 		let position = [
-			(port[0] - size[0])/2,
-			(port[1] - size[1])/2
+			(parent.offsetWidth - size[0])/2,
+			(parent.offsetHeight - size[1])/2
 		].map(Math.round);
 
 		this.moveTo(position);

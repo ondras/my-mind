@@ -19,9 +19,9 @@ MM.Command.Select.execute = function(e) {
 	}
 	var dir = dirs[e.keyCode];
 
-	var layout = MM.App.current.resolvedLayout;
-	var item = layout.pick(MM.App.current, dir);
-	MM.App.select(item);
+	var layout = app.currentItem.resolvedLayout;
+	var item = layout.pick(app.currentItem, dir);
+	app.selectItem(item);
 }
 
 MM.Command.SelectRoot = Object.create(MM.Command, {
@@ -29,9 +29,9 @@ MM.Command.SelectRoot = Object.create(MM.Command, {
 	keys: {value: [{keyCode: 36}]}
 });
 MM.Command.SelectRoot.execute = function() {
-	var item = MM.App.current;
+	var item = app.currentItem;
 	while (!item.isRoot) { item = item.parent; }
-	MM.App.select(item);
+	app.selectItem(item);
 }
 
 // Macs use keyCode 8 to delete instead
@@ -41,7 +41,7 @@ if (!isMac()) {
 		keys: {value: [{keyCode: 8}]}
 	});
 	MM.Command.SelectParent.execute = function() {
-		if (MM.App.current.isRoot) { return; }
-		MM.App.select(MM.App.current.parent);
+		if (app.currentItem.isRoot) { return; }
+		app.selectItem(app.currentItem.parent);
 	}
 }

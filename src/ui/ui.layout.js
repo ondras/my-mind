@@ -1,3 +1,5 @@
+import * as actions from "../action.js";
+import * as app from "../my-mind.js";
 import { repo } from "../layout/layout.js";
 
 
@@ -25,19 +27,19 @@ MM.UI.Layout = function() {
 
 MM.UI.Layout.prototype.update = function() {
 	var value = "";
-	var layout = MM.App.current.layout;
+	var layout = app.currentItem.layout;
 	if (layout) { value = layout.id; }
 	this._select.value = value;
 
-	this._getOption("").disabled = MM.App.current.isRoot;
-	this._getOption("map").disabled = !MM.App.current.isRoot;
+	this._getOption("").disabled = app.currentItem.isRoot;
+	this._getOption("map").disabled = !app.currentItem.isRoot;
 }
 
 MM.UI.Layout.prototype.handleEvent = function(e) {
 	var layout = repo.get(this._select.value);
 
-	var action = new MM.Action.SetLayout(MM.App.current, layout);
-	MM.App.action(action);
+	var action = new actions.SetLayout(app.currentItem, layout);
+	app.action(action);
 }
 
 MM.UI.Layout.prototype._getOption = function(value) {

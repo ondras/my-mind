@@ -1,3 +1,6 @@
+import * as app from "../../my-mind.js";
+
+
 MM.UI.Backend.Local = Object.create(MM.UI.Backend, {
 	id: {value: "local"}
 });
@@ -52,17 +55,17 @@ MM.UI.Backend.Local.setState = function(data) {
 MM.UI.Backend.Local.getState = function() {
 	var data = {
 		b: this.id,
-		id: MM.App.map.id
+		id: app.currentMap.id
 	};
 	return data;
 }
 
 MM.UI.Backend.Local.save = function() {
-	var json = MM.App.map.toJSON();
+	var json = app.currentMap.toJSON();
 	var data = MM.Format.JSON.to(json);
 
 	try {
-		this._backend.save(data, MM.App.map.id, MM.App.map.name);
+		this._backend.save(data, app.currentMap.id, app.currentMap.name);
 		this._saveDone();
 	} catch (e) {
 		this._error(e);

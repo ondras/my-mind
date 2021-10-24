@@ -1,3 +1,6 @@
+import * as app from "../my-mind.js";
+
+
 MM.Backend.Image = Object.create(MM.Backend, {
 	id: {value: "image"},
 	label: {value: "Image"},
@@ -6,7 +9,7 @@ MM.Backend.Image = Object.create(MM.Backend, {
 
 MM.Backend.Image.save = function() {
 	let serializer = new XMLSerializer();
-	let xml = serializer.serializeToString(MM.App.map.node);
+	let xml = serializer.serializeToString(app.currentMap.node);
 
 	let base64 = btoa(xml);
 	let img = new Image();
@@ -22,7 +25,7 @@ MM.Backend.Image.save = function() {
 
 		canvas.toBlob(blob => {
 			let link = document.createElement("a");
-			link.download = MM.App.map.name;
+			link.download = app.currentMap.name;
 			link.href = URL.createObjectURL(blob);
 			link.click();
 		}, "image/png");

@@ -1,4 +1,9 @@
 import * as pubsub from "../pubsub.js";
+import * as history from "../history.js";
+import * as app from "../my-mind.js";
+import * as help from "../ui/help.js";
+import * as clipboard from "../clipboard.js";
+import * as actions from "../action.js";
 import Map from "../map.js";
 
 
@@ -17,7 +22,7 @@ MM.Command = Object.create(MM.Repo, {
 });
 
 MM.Command.isValid = function() {
-	return (this.editMode === null || this.editMode == MM.App.editing);
+	return (this.editMode === null || this.editMode == app.editing);
 }
 MM.Command.execute = function() {}
 
@@ -31,7 +36,7 @@ MM.Command.Notes.isValid = function() {
 }
 
 MM.Command.Notes.execute = function() {
-	MM.App.notes.toggle();
+	notes.toggle();
 }
 
 MM.Command.Undo = Object.create(MM.Command, {
@@ -39,11 +44,10 @@ MM.Command.Undo = Object.create(MM.Command, {
 	keys: {value: [{keyCode: "Z".charCodeAt(0), ctrlKey: true}]}
 });
 MM.Command.Undo.isValid = function() {
-	return MM.Command.isValid.call(this) && !!MM.App.historyIndex;
+	return MM.Command.isValid.call(this) && history.canBack();
 }
 MM.Command.Undo.execute = function() {
-	MM.App.history[MM.App.historyIndex-1].undo();
-	MM.App.historyIndex--;
+	history.back();
 }
 
 MM.Command.Redo = Object.create(MM.Command, {
@@ -51,11 +55,10 @@ MM.Command.Redo = Object.create(MM.Command, {
 	keys: {value: [{keyCode: "Y".charCodeAt(0), ctrlKey: true}]},
 });
 MM.Command.Redo.isValid = function() {
-	return (MM.Command.isValid.call(this) && MM.App.historyIndex != MM.App.history.length);
+	return (MM.Command.isValid.call(this) && history.canForward());
 }
 MM.Command.Redo.execute = function() {
-	MM.App.history[MM.App.historyIndex].perform();
-	MM.App.historyIndex++;
+	history.forward();
 }
 
 MM.Command.InsertSibling = Object.create(MM.Command, {
@@ -63,15 +66,15 @@ MM.Command.InsertSibling = Object.create(MM.Command, {
 	keys: {value: [{keyCode: 13}]}
 });
 MM.Command.InsertSibling.execute = function() {
-	var item = MM.App.current;
+	var item = app.currentItem;
 	if (item.isRoot) {
-		var action = new MM.Action.InsertNewItem(item, item.children.length);
+		var action = new actions.InsertNewItem(item, item.children.length);
 	} else {
 		var parent = item.parent;
 		var index = parent.children.indexOf(item);
-		var action = new MM.Action.InsertNewItem(parent, index+1);
+		var action = new actions.InsertNewItem(parent, index+1);
 	}
-	MM.App.action(action);
+	app.action(action);
 
 	MM.Command.Edit.execute();
 
@@ -86,9 +89,9 @@ MM.Command.InsertChild = Object.create(MM.Command, {
 	]}
 });
 MM.Command.InsertChild.execute = function() {
-	var item = MM.App.current;
-	var action = new MM.Action.InsertNewItem(item, item.children.length);
-	MM.App.action(action);
+	var item = app.currentItem;
+	var action = new actions.InsertNewItem(item, item.children.length);
+	app.action(action);
 
 	MM.Command.Edit.execute();
 
@@ -100,11 +103,11 @@ MM.Command.Delete = Object.create(MM.Command, {
 	keys: {value: [{keyCode: isMac() ? 8 : 46}]} // Mac keyboards' "delete" button generates 8 (backspace)
 });
 MM.Command.Delete.isValid = function() {
-	return MM.Command.isValid.call(this) && !MM.App.current.isRoot;
+	return MM.Command.isValid.call(this) && !app.currentItem.isRoot;
 }
 MM.Command.Delete.execute = function() {
-	var action = new MM.Action.RemoveItem(MM.App.current);
-	MM.App.action(action);
+	var action = new actions.RemoveItem(app.currentItem);
+	app.action(action);
 }
 
 MM.Command.Swap = Object.create(MM.Command, {
@@ -115,12 +118,12 @@ MM.Command.Swap = Object.create(MM.Command, {
 	]}
 });
 MM.Command.Swap.execute = function(e) {
-	var current = MM.App.current;
+	var current = app.currentItem;
 	if (current.isRoot || current.parent.children.length < 2) { return; }
 
 	var diff = (e.keyCode == 38 ? -1 : 1);
-	var action = new MM.Action.Swap(MM.App.current, diff);
-	MM.App.action(action);
+	var action = new actions.Swap(app.currentItem, diff);
+	app.action(action);
 }
 
 MM.Command.Side = Object.create(MM.Command, {
@@ -131,12 +134,12 @@ MM.Command.Side = Object.create(MM.Command, {
 	]}
 });
 MM.Command.Side.execute = function(e) {
-	var current = MM.App.current;
+	var current = app.currentItem;
 	if (current.isRoot || !current.parent.isRoot) { return; }
 
 	var side = (e.keyCode == 37 ? "left" : "right");
-	var action = new MM.Action.SetSide(MM.App.current, side);
-	MM.App.action(action);
+	var action = new actions.SetSide(app.currentItem, side);
+	app.action(action);
 }
 
 MM.Command.Save = Object.create(MM.Command, {
@@ -168,7 +171,7 @@ MM.Command.Center = Object.create(MM.Command, {
 	keys: {value: [{keyCode: 35}]}
 });
 MM.Command.Center.execute = function() {
-	MM.App.map.center();
+	app.currentMap.center();
 }
 
 MM.Command.New = Object.create(MM.Command, {
@@ -177,8 +180,7 @@ MM.Command.New = Object.create(MM.Command, {
 });
 MM.Command.New.execute = function() {
 	if (!confirm("Throw away your current map and start a new one?")) { return; }
-	var map = new Map();
-	MM.App.setMap(map);
+	app.showMap(new Map());
 	pubsub.publish("map-new", this);
 }
 
@@ -187,7 +189,7 @@ MM.Command.ZoomIn = Object.create(MM.Command, {
 	keys: {value: [{charCode:"+".charCodeAt(0)}]}
 });
 MM.Command.ZoomIn.execute = function() {
-	MM.App.adjustFontSize(1);
+	app.adjustFontSize(1);
 }
 
 MM.Command.ZoomOut = Object.create(MM.Command, {
@@ -195,7 +197,7 @@ MM.Command.ZoomOut = Object.create(MM.Command, {
 	keys: {value: [{charCode:"-".charCodeAt(0)}]}
 });
 MM.Command.ZoomOut.execute = function() {
-	MM.App.adjustFontSize(-1);
+	app.adjustFontSize(-1);
 }
 
 MM.Command.Help = Object.create(MM.Command, {
@@ -203,7 +205,7 @@ MM.Command.Help = Object.create(MM.Command, {
 	keys: {value: [{charCode: "?".charCodeAt(0)}]}
 });
 MM.Command.Help.execute = function() {
-	MM.App.help.toggle();
+	help.toggle();
 }
 
 MM.Command.UI = Object.create(MM.Command, {
@@ -252,7 +254,7 @@ MM.Command.Pan._step = function() {
 		offset[1] += dirs[ch][1] * PAN_AMOUNT;
 	});
 
-	MM.App.map.moveBy(offset);
+	app.currentMap.moveBy(offset);
 }
 
 MM.Command.Pan.handleEvent = function(e) {
@@ -276,7 +278,7 @@ MM.Command.Copy = Object.create(MM.Command, {
 	]}
 });
 MM.Command.Copy.execute = function() {
-	MM.Clipboard.copy(MM.App.current);
+	clipboard.copy(app.currentItem);
 }
 
 MM.Command.Cut = Object.create(MM.Command, {
@@ -288,7 +290,7 @@ MM.Command.Cut = Object.create(MM.Command, {
 	]}
 });
 MM.Command.Cut.execute = function() {
-	MM.Clipboard.cut(MM.App.current);
+	clipboard.cut(app.currentItem);
 }
 
 MM.Command.Paste = Object.create(MM.Command, {
@@ -300,7 +302,7 @@ MM.Command.Paste = Object.create(MM.Command, {
 	]}
 });
 MM.Command.Paste.execute = function() {
-	MM.Clipboard.paste(MM.App.current);
+	clipboard.paste(app.currentItem);
 }
 
 MM.Command.Fold = Object.create(MM.Command, {
@@ -308,7 +310,7 @@ MM.Command.Fold = Object.create(MM.Command, {
 	keys: {value: [{charCode: "f".charCodeAt(0), ctrlKey:false}]}
 });
 MM.Command.Fold.execute = function() {
-	var item = MM.App.current;
+	var item = app.currentItem;
 	if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
-	MM.App.map.ensureItemVisibility(item);
+	app.currentMap.ensureItemVisibility(item);
 }

@@ -1,4 +1,5 @@
 import * as pubsub from "../../pubsub.js";
+import * as app from "../../my-mind.js";
 
 
 MM.UI.Backend.Firebase = Object.create(MM.UI.Backend, {
@@ -34,7 +35,7 @@ MM.UI.Backend.Firebase.setState = function(data) {
 
 MM.UI.Backend.Firebase.getState = function() {
 	var data = {
-		id: MM.App.map.id,
+		id: app.currentMap.id,
 		b: this.id,
 		s: this._server.value
 	};
@@ -54,9 +55,9 @@ MM.UI.Backend.Firebase.handleEvent = function(e) {
 		case this._remove:
 			var id = this._list.value;
 			if (!id) { break; }
-			MM.App.setThrobber(true);
+			app.setThrobber(true);
 			this._backend.remove(id).then(
-				function() { MM.App.setThrobber(false); },
+				function() { app.setThrobber(false); },
 				this._error.bind(this)
 			);
 		break;
@@ -80,7 +81,7 @@ MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
 		case "firebase-change":
 			if (data) {
 				pubsub.unsubscribe("item-change", this);
-				MM.App.map.mergeWith(data);
+				app.currentMap.mergeWith(data);
 				pubsub.subscribe("item-change", this);
 			} else { /* FIXME */
 				console.log("remote data disappeared");
@@ -100,7 +101,7 @@ MM.UI.Backend.Firebase.reset = function() {
 }
 
 MM.UI.Backend.Firebase._itemChange = function() {
-	var map = MM.App.map;
+	var map = app.currentMap;
 	this._backend.mergeWith(map.toJSON(), map.name);
 }
 
@@ -114,9 +115,9 @@ MM.UI.Backend.Firebase._action = function() {
 }
 
 MM.UI.Backend.Firebase.save = function() {
-	MM.App.setThrobber(true);
+	app.setThrobber(true);
 
-	var map = MM.App.map;
+	var map = app.currentMap;
 	this._backend.save(map.toJSON(), map.id, map.name).then(
 		this._saveDone.bind(this),
 		this._error.bind(this)
@@ -128,7 +129,7 @@ MM.UI.Backend.Firebase.load = function() {
 }
 
 MM.UI.Backend.Firebase._load = function(id) {
-	MM.App.setThrobber(true);
+	app.setThrobber(true);
 	/* FIXME posere se kdyz zmenim jeden firebase na jiny, mozna */
 	this._backend.load(id).then(
 		this._loadDone.bind(this),
@@ -148,7 +149,7 @@ MM.UI.Backend.Firebase._connect = function(server, auth) {
 	localStorage.setItem(this._prefix + "auth", auth || "");
 
 	this._go.disabled = true;
-	MM.App.setThrobber(true);
+	app.setThrobber(true);
 
 	this._backend.connect(server, auth).then(
 		function() {
@@ -162,7 +163,7 @@ MM.UI.Backend.Firebase._connect = function(server, auth) {
 }
 
 MM.UI.Backend.Firebase._connected = function() {
-	MM.App.setThrobber(false);
+	app.setThrobber(false);
 	this._online = true;
 	this._sync();
 }

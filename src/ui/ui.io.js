@@ -1,4 +1,5 @@
 import * as pubsub from "../pubsub.js";
+import * as clipboard from "../clipboard.js";
 
 
 MM.UI.IO = function() {
@@ -77,7 +78,7 @@ MM.UI.IO.prototype.handleMessage = function(message, publisher) {
 
 MM.UI.IO.prototype.show = function(mode) {
 	this._mode = mode;
-	this._node.classList.add("visible");
+	this._node.hidden = false;
 	this._heading.innerHTML = mode;
 
 	this._syncBackend();
@@ -85,9 +86,9 @@ MM.UI.IO.prototype.show = function(mode) {
 }
 
 MM.UI.IO.prototype.hide = function() {
-	if (!this._node.classList.contains("visible")) { return; }
-	this._node.classList.remove("visible");
-	MM.Clipboard.focus();
+	if (this._node.hidden) { return; }
+	this._node.hidden = true;
+	clipboard.focus();
 	window.removeEventListener("keydown", this);
 }
 

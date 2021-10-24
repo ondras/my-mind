@@ -1,3 +1,7 @@
+import * as app from "../my-mind.js";
+import * as actions from "../action.js";
+
+
 MM.Command.Edit = Object.create(MM.Command, {
 	label: {value: "Edit item"},
 	keys: {value: [
@@ -6,8 +10,7 @@ MM.Command.Edit = Object.create(MM.Command, {
 	]}
 });
 MM.Command.Edit.execute = function() {
-	MM.App.current.startEditing();
-	MM.App.editing = true;
+	app.startEditing();
 }
 
 MM.Command.Finish = Object.create(MM.Command, {
@@ -15,14 +18,13 @@ MM.Command.Finish = Object.create(MM.Command, {
 	editMode: {value: true}
 });
 MM.Command.Finish.execute = function() {
-	MM.App.editing = false;
-	var text = MM.App.current.stopEditing();
+	let text = app.stopEditing();
 	if (text) {
-		var action = new MM.Action.SetText(MM.App.current, text);
+		var action = new actions.SetText(app.currentItem, text);
 	} else {
-		var action = new MM.Action.RemoveItem(MM.App.current);
+		var action = new actions.RemoveItem(app.currentItem);
 	}
-	MM.App.action(action);
+	app.action(action);
 }
 
 MM.Command.Newline = Object.create(MM.Command, {
@@ -38,7 +40,7 @@ MM.Command.Newline.execute = function() {
 	var br = document.createElement("br");
 	range.insertNode(br);
 	range.setStartAfter(br);
-	MM.App.current.update({parent:true, children:true});
+	app.currentItem.update({parent:true, children:true});
 }
 
 MM.Command.Cancel = Object.create(MM.Command, {
@@ -46,12 +48,11 @@ MM.Command.Cancel = Object.create(MM.Command, {
 	keys: {value: [{keyCode: 27}]}
 });
 MM.Command.Cancel.execute = function() {
-	MM.App.editing = false;
-	MM.App.current.stopEditing();
-	var oldText = MM.App.current.text;
+	app.stopEditing();
+	var oldText = app.currentItem.text;
 	if (!oldText) { /* newly added node */
-		var action = new MM.Action.RemoveItem(MM.App.current);
-		MM.App.action(action);
+		var action = new actions.RemoveItem(app.currentItem);
+		app.action(action);
 	}
 }
 
@@ -61,13 +62,13 @@ MM.Command.Style = Object.create(MM.Command, {
 });
 
 MM.Command.Style.execute = function() {
-	if (MM.App.editing) {
+	if (app.editing) {
 		document.execCommand(this.command, null, null);
 	} else {
 		MM.Command.Edit.execute();
 		var selection = getSelection();
 		var range = selection.getRangeAt(0);
-		range.selectNodeContents(MM.App.current.dom.text);
+		range.selectNodeContents(app.currentItem.dom.text);
 		selection.removeAllRanges();
 		selection.addRange(range);
 		this.execute();
@@ -104,7 +105,7 @@ MM.Command.Value = Object.create(MM.Command, {
 	keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
 MM.Command.Value.execute = function() {
-	var item = MM.App.current;
+	var item = app.currentItem;
 	var oldValue = item.value;
 	var newValue = prompt("Set item value", oldValue);
 	if (newValue == null) { return; }
@@ -112,8 +113,8 @@ MM.Command.Value.execute = function() {
 	if (!newValue.length) { newValue = null; }
 
 	var numValue = parseFloat(newValue);
-	var action = new MM.Action.SetValue(item, isNaN(numValue) ? newValue : numValue);
-	MM.App.action(action);
+	var action = new actions.SetValue(item, isNaN(numValue) ? newValue : numValue);
+	app.action(action);
 }
 
 MM.Command.Yes = Object.create(MM.Command, {
@@ -121,10 +122,10 @@ MM.Command.Yes = Object.create(MM.Command, {
 	keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey:false}]}
 });
 MM.Command.Yes.execute = function() {
-	var item = MM.App.current;
+	var item = app.currentItem;
 	var status = (item.status === true ? null : true);
-	var action = new MM.Action.SetStatus(item, status);
-	MM.App.action(action);
+	var action = new actions.SetStatus(item, status);
+	app.action(action);
 }
 
 MM.Command.No = Object.create(MM.Command, {
@@ -132,10 +133,10 @@ MM.Command.No = Object.create(MM.Command, {
 	keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:false}]}
 });
 MM.Command.No.execute = function() {
-	var item = MM.App.current;
+	var item = app.currentItem;
 	var status = (item.status === false ? null : false);
-	var action = new MM.Action.SetStatus(item, status);
-	MM.App.action(action);
+	var action = new actions.SetStatus(item, status);
+	app.action(action);
 }
 
 MM.Command.Computed = Object.create(MM.Command, {
@@ -143,8 +144,8 @@ MM.Command.Computed = Object.create(MM.Command, {
 	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 });
 MM.Command.Computed.execute = function() {
-	var item = MM.App.current;
+	var item = app.currentItem;
 	var status = (item.status == "computed" ? null : "computed");
-	var action = new MM.Action.SetStatus(item, status);
-	MM.App.action(action);
+	var action = new actions.SetStatus(item, status);
+	app.action(action);
 }

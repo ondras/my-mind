@@ -1,6 +1,8 @@
 import * as html from "./html.js";
 import * as svg from "./svg.js";
 import * as pubsub from "./pubsub.js";
+import * as app from "./my-mind.js";
+import * as clipboard from "./clipboard.js";
 import Shape, { repo as shapeRepo } from "./shape/shape.js";
 import Layout, { repo as layoutRepo } from "./layout/layout.js";
 import Map from "./map.js";
@@ -12,9 +14,9 @@ declare global {
 	}
 }
 
-export type ValueType = string | number | null;
-export type StatusType = "computed" | boolean | null;
-export type Side = "left" | "right";
+export type Value = string | number | null;
+export type Status = "computed" | boolean | null;
+export type Side = "" | "left" | "right";
 export type ChildItem = Item & { parent: Item };
 
 const COLOR = "#999";
@@ -41,8 +43,8 @@ export default class Item {
 	protected _collapsed = false;
 	protected _icon: string | null = null;
 	protected _notes: string | null = null;
-	protected _value: ValueType = null;
-	protected _status: StatusType = null;
+	protected _value: Value = null;
+	protected _status: Status = null;
 	protected _color: string | null = null;
 	protected _side: Side | null = null; // side preference
 	protected _shape: Shape | null = null;
@@ -270,13 +272,13 @@ export default class Item {
 			}
 		}
 		this.map.ensureItemVisibility(this);
-		MM.Clipboard.focus(); /* going to mode 2c */
+		clipboard.focus(); /* going to mode 2c */
 		pubsub.publish("item-select", this);
 	}
 
 	deselect() {
 		/* we were in 2b; finish that via 3b */
-		if (MM.App.editing) { MM.Command.Finish.execute(); }
+		if (app.editing) { MM.Command.Finish.execute(); }
 		this.dom.node.classList.remove("current");
 	}
 
@@ -357,7 +359,7 @@ export default class Item {
 	}
 
 	get value() { return this._value; }
-	set value(value: ValueType) {
+	set value(value: Value) {
 		this._value = value;
 		this.update();
 	}
@@ -383,7 +385,7 @@ export default class Item {
 	}
 
 	get status() { return this._status; }
-	set status(status: StatusType) {
+	set status(status: Status) {
 		this._status = status;
 		this.update();
 	}
@@ -429,7 +431,7 @@ export default class Item {
 		this._layout = layout;
 		this.update({children:true});
 	}
-	get resolvedLayout() {
+	get resolvedLayout(): Layout {
 		if (this._layout) { return this._layout; }
 
 		const { parent } = this;
@@ -532,7 +534,7 @@ export default class Item {
 
 		this.update(); /* text changed */
 
-		MM.Clipboard.focus();
+		clipboard.focus();
 
 		return result;
 	}
@@ -554,7 +556,7 @@ export default class Item {
 
 			case "click":
 				if (this._collapsed) { this.expand(); } else { this.collapse(); }
-				MM.App.select(this);
+				app.selectItem(this);
 			break;
 		}
 	}

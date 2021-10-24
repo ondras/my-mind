@@ -8,7 +8,6 @@
 
 		<link rel="stylesheet" type="text/css" href="/vendor/pell/css/pell.min.css">
 
-		<script src="my-mind.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-app.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-database.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-auth.js"></script>
@@ -898,7 +897,7 @@
 		</div>
 
 
-		<div id="io" class="ui">
+		<div id="io" class="ui" hidden>
 			<h3></h3>
 			<p>
 				<span>Storage</span>
@@ -988,7 +987,7 @@
 			</div>
 		</div>
 
-		<div id="help" class="ui">
+		<div id="help" class="ui" hidden>
 			<h3>Help</h3>
 
 			<p><span>Navigation</span></p>
@@ -1004,7 +1003,7 @@
 			<table class="other"></table>
 		</div>
 
-		<div id="notes" class="ui">
+		<div id="notes" class="ui" hidden>
 			<h3>Topic Notes</h3>
 			<iframe id="notes-editor" sandbox="allow-scripts" src="editor.html"></iframe>
 		</div>
@@ -1025,9 +1024,6 @@
 		</div>
 		<script>
 			window.onload = function() {
-				MM.App.init();
-				MM.App.io.restore();
-
 				window.editor = {
 					postMessage: function(action, value) {
 						var iframeElm = document.getElementById('notes-editor');
@@ -1047,6 +1043,7 @@
 			}
 		</script>
 		<script src="/vendor/pell/src/pell.min.js"></script>
+		<script src="my-mind.js"></script>
 <!--
 TODO:
   shortterm:

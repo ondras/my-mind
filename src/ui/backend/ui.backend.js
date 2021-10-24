@@ -1,4 +1,5 @@
 import * as pubsub from "../../pubsub.js";
+import * as app from "../../my-mind.js";
 import Map from "../../map.js";
 
 
@@ -74,14 +75,14 @@ MM.UI.Backend._action = function() {
 }
 
 MM.UI.Backend._saveDone = function() {
-	MM.App.setThrobber(false);
+	app.setThrobber(false);
 	pubsub.publish("save-done", this);
 }
 
 MM.UI.Backend._loadDone = function(json) {
-	MM.App.setThrobber(false);
+	app.setThrobber(false);
 	try {
-		MM.App.setMap(Map.fromJSON(json));
+		app.showMap(Map.fromJSON(json));
 		pubsub.publish("load-done", this);
 	} catch (e) {
 		this._error(e);
@@ -89,7 +90,7 @@ MM.UI.Backend._loadDone = function(json) {
 }
 
 MM.UI.Backend._error = function(e) {
-	MM.App.setThrobber(false);
+	app.setThrobber(false);
 	alert("IO error: " + e.message);
 }
 

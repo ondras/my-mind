@@ -1,4 +1,6 @@
+import * as clipboard from "../clipboard.js";
 import * as pubsub from "../pubsub.js";
+import * as app from "../my-mind.js";
 
 
 export let node;
@@ -21,8 +23,6 @@ MM.UI = function() {
 
 	this._node.addEventListener("click", this);
 	this._node.addEventListener("change", this);
-
-	this.toggle();
 }
 
 MM.UI.prototype.handleMessage = function(message, publisher) {
@@ -32,7 +32,7 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 		break;
 
 		case "item-change":
-			if (publisher == MM.App.current) { this._update(); }
+			if (publisher == app.currentItem) { this._update(); }
 		break;
 	}
 }
@@ -40,7 +40,7 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 MM.UI.prototype.handleEvent = function(e) {
 	switch (e.type) {
 		case "click":
-			if (e.target.nodeName.toLowerCase() != "select") { MM.Clipboard.focus(); } /* focus the clipboard (2c) */
+			if (e.target.nodeName.toLowerCase() != "select") { clipboard.focus(); } /* focus the clipboard (2c) */
 
 			if (e.target == this._toggle) {
 				this.toggle();
@@ -59,19 +59,19 @@ MM.UI.prototype.handleEvent = function(e) {
 		break;
 
 		case "change":
-			MM.Clipboard.focus(); /* focus the clipboard (2c) */
+			clipboard.focus(); /* focus the clipboard (2c) */
 		break;
 	}
 }
 
 MM.UI.prototype.toggle = function() {
-	this._node.classList.toggle("visible");
+	this._node.hidden = !this._node.hidden;
 	pubsub.publish("ui-change", this);
 }
 
 
 MM.UI.prototype.getWidth = function() {
-	return (this._node.classList.contains("visible") ? this._node.offsetWidth : 0);
+	return (this._node.hidden ? 0 : this._node.offsetWidth);
 }
 
 MM.UI.prototype._update = function() {

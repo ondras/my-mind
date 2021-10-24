@@ -1,12 +1,21 @@
-interface Subscriber {
-	handleMessage(message: string, publisher: any, data?: any): void;
+type SubscribeFunction = (message: string, publisher: any, data?: any) => void;
+
+interface SubscriberObject {
+	handleMessage: SubscribeFunction;
 }
+
+type Subscriber = SubscriberObject | SubscribeFunction;
+
 let subscribers = new Map<string, Subscriber[]>();
 
 export function publish(message: string, publisher: any, data?: any) {
 	let subs = subscribers.get(message) || [];
-	subs.forEach(function(subscriber) {
-		subscriber.handleMessage(message, publisher, data);
+	subs.forEach(sub => {
+		if (typeof(sub) == "function") {
+			sub(message, publisher, data);
+		} else {
+			sub.handleMessage(message, publisher, data);
+		}
 	});
 }
 

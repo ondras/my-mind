@@ -1,3 +1,6 @@
+import * as app from "../../my-mind.js";
+
+
 MM.UI.Backend.WebDAV = Object.create(MM.UI.Backend, {
 	id: {value: "webdav"}
 });
@@ -23,9 +26,9 @@ MM.UI.Backend.WebDAV.setState = function(data) {
 }
 
 MM.UI.Backend.WebDAV.save = function() {
-	MM.App.setThrobber(true);
+	app.setThrobber(true);
 
-	var map = MM.App.map;
+	var map = app.currentMap;
 	var url = this._url.value;
 	localStorage.setItem(this._prefix + "url", url);
 
@@ -51,7 +54,7 @@ MM.UI.Backend.WebDAV.load = function() {
 
 MM.UI.Backend.WebDAV._load = function(url) {
 	this._current = url;
-	MM.App.setThrobber(true);
+	app.setThrobber(true);
 
 	var lastIndex = url.lastIndexOf("/");
 	this._url.value = url.substring(0, lastIndex);

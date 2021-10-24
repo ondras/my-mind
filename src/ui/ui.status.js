@@ -1,3 +1,7 @@
+import * as actions from "../action.js";
+import * as app from "../my-mind.js";
+
+
 const STATUS_MAP = {
 	"yes": true,
 	"no": false,
@@ -14,17 +18,18 @@ function statusToString(status) {
 function stringToStatus(str) {
 	return (str in STATUS_MAP ? STATUS_MAP[str] : str);
 }
+
 MM.UI.Status = function() {
 	this._select = document.querySelector("#status");
 	this._select.addEventListener("change", this);
 }
 
 MM.UI.Status.prototype.update = function() {
-	this._select.value = statusToString(MM.App.current.status);
+	this._select.value = statusToString(app.currentItem.status);
 }
 
 MM.UI.Status.prototype.handleEvent = function(e) {
 	let status = stringToStatus(this._select.value);
-	var action = new MM.Action.SetStatus(MM.App.current, status);
-	MM.App.action(action);
+	var action = actions.SetStatus(app.currentItem, status);
+	app.action(action);
 }
