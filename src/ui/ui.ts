@@ -2,12 +2,21 @@ import * as clipboard from "../clipboard.js";
 import * as pubsub from "../pubsub.js";
 import * as app from "../my-mind.js";
 
+import * as color from "./color.js";
+import * as value from "./value.js";
+import * as layout from "./layout.js";
+import * as icon from "./icon.js";
+import * as shape from "./shape.js";
+import * as status from "./status.js";
 
-const node = document.querySelector(".ui") as HTMLElement;
+import * as help from "./help.js";
+import * as notes from "./notes.js";
+import * as tip from "./tip.js";
+
+
+const node = document.querySelector<HTMLElement>(".ui");
 
 (MM as any).UI = {};
-
-let layout, shape, icon, color, value, status;
 
 export function isActive() {
 	return node.contains(document.activeElement);
@@ -48,12 +57,8 @@ function onClick(e: MouseEvent) {
 }
 
 export function init() {
-	layout = new MM.UI.Layout();
-	shape = new MM.UI.Shape();
-	icon = new MM.UI.Icon();
-	color = new MM.UI.Color();
-	value = new MM.UI.Value();
-	status = new MM.UI.Status();
+	[layout, shape, icon, value, status, color,
+	help, tip].forEach(ui => ui.init());
 
 	pubsub.subscribe("item-select", update);
 	pubsub.subscribe("item-change", (_message: string, publisher: any) => {

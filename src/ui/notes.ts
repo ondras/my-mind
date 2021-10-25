@@ -2,7 +2,7 @@ import * as app from "../my-mind.js";
 import * as clipboard from "../clipboard.js";
 
 
-const node = document.querySelector("#notes") as HTMLElement;
+const node = document.querySelector<HTMLElement>("#notes");
 
 export function toggle() {
 	node.hidden = !node.hidden;

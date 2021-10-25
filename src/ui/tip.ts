@@ -1,7 +1,7 @@
 import * as pubsub from "../pubsub.js";
 
 
-const node = document.querySelector("#tip") as HTMLElement;
+const node = document.querySelector<HTMLElement>("#tip");
 
 export function init() {
 	node.addEventListener("click", hide);

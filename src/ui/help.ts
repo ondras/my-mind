@@ -1,4 +1,4 @@
-const node = document.querySelector("#help") as HTMLElement;
+const node = document.querySelector<HTMLElement>("#help");
 const MAP = {
 	8: "Backspace",
 	9: "Tab",
@@ -36,7 +36,7 @@ export function toggle() {
 }
 
 export function init() {
-	let t = node.querySelector(".navigation") as HTMLTableElement;
+	let t = node.querySelector<HTMLTableElement>(".navigation");
 	buildRow(t, "Pan");
 	buildRow(t, "Select");
 	buildRow(t, "SelectRoot");

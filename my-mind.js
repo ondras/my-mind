@@ -1,4 +1,12 @@
 (() => {
+  var __defProp = Object.defineProperty;
+  var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
+  var __export = (target, all) => {
+    __markAsModule(target);
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+
   // .js/mm.js
   window.MM = {};
 
@@ -13,11 +21,11 @@
     this._thenPromises = [];
     executor && executor(this.fulfill.bind(this), this.reject.bind(this));
   };
-  Promise.resolve = function(value2) {
-    return new Promise().fulfill(value2);
+  Promise.resolve = function(value) {
+    return new Promise().fulfill(value);
   };
-  Promise.reject = function(value2) {
-    return new Promise().reject(value2);
+  Promise.reject = function(value) {
+    return new Promise().reject(value);
   };
   Promise.prototype.then = function(onFulfilled, onRejected) {
     this._cb.fulfilled.push(onFulfilled);
@@ -29,21 +37,21 @@
     }
     return thenPromise;
   };
-  Promise.prototype.fulfill = function(value2) {
+  Promise.prototype.fulfill = function(value) {
     if (this._state != 0) {
       return this;
     }
     this._state = 1;
-    this._value = value2;
+    this._value = value;
     this._processQueue();
     return this;
   };
-  Promise.prototype.reject = function(value2) {
+  Promise.prototype.reject = function(value) {
     if (this._state != 0) {
       return this;
     }
     this._state = 2;
-    this._value = value2;
+    this._value = value;
     this._processQueue();
     return this;
   };
@@ -73,11 +81,11 @@
     try {
       var returned = cb(this._value);
       if (returned && typeof returned.then == "function") {
-        var fulfillThenPromise = function(value2) {
-          thenPromise.fulfill(value2);
+        var fulfillThenPromise = function(value) {
+          thenPromise.fulfill(value);
         };
-        var rejectThenPromise = function(value2) {
-          thenPromise.reject(value2);
+        var rejectThenPromise = function(value) {
+          thenPromise.reject(value);
         };
         returned.then(fulfillThenPromise, rejectThenPromise);
       } else {
@@ -102,9 +110,9 @@
       }
       return all;
     },
-    getByProperty: function(property, value2) {
+    getByProperty: function(property, value) {
       return this.getAll().filter((item) => {
-        return item[property] == value2;
+        return item[property] == value;
       })[0] || null;
     },
     getById: function(id) {
@@ -120,19 +128,19 @@
 
   // .js/html.js
   function node(name, attrs) {
-    let node9 = document.createElement(name);
-    Object.assign(node9, attrs);
-    return node9;
+    let node10 = document.createElement(name);
+    Object.assign(node10, attrs);
+    return node10;
   }
 
   // .js/svg.js
   var NS = "http://www.w3.org/2000/svg";
   function node2(name, attrs) {
-    let node9 = document.createElementNS(NS, name);
+    let node10 = document.createElementNS(NS, name);
     for (let attr in attrs) {
-      node9.setAttribute(attr, attrs[attr]);
+      node10.setAttribute(attr, attrs[attr]);
     }
-    return node9;
+    return node10;
   }
   function group() {
     return node2("g");
@@ -233,9 +241,9 @@
       return children[index2];
     }
     anchorToggle(item, point, side) {
-      var node9 = item.dom.toggle;
-      var w = node9.offsetWidth;
-      var h = node9.offsetHeight;
+      var node10 = item.dom.toggle;
+      var w = node10.offsetWidth;
+      var h = node10.offsetHeight;
       let [l, t] = point;
       switch (side) {
         case "left":
@@ -253,8 +261,8 @@
           l -= w / 2;
           break;
       }
-      node9.style.left = Math.round(l) + "px";
-      node9.style.top = Math.round(t) + "px";
+      node10.style.left = Math.round(l) + "px";
+      node10.style.top = Math.round(t) + "px";
     }
     getChildAnchor(item, side) {
       let { position, contentPosition, contentSize } = item;
@@ -321,33 +329,33 @@
       return this._root;
     }
     set root(root) {
-      const { node: node9 } = this;
+      const { node: node10 } = this;
       this._root = root;
-      node9.innerHTML = "";
-      node9.append(root.dom.node);
+      node10.innerHTML = "";
+      node10.append(root.dom.node);
       root.parent = this;
     }
     mergeWith(data) {
       var ids = [];
       var current2 = currentItem;
-      var node9 = current2;
+      var node10 = current2;
       while (true) {
-        ids.push(node9.id);
-        if (node9.parent == this) {
+        ids.push(node10.id);
+        if (node10.parent == this) {
           break;
         }
-        node9 = node9.parent;
+        node10 = node10.parent;
       }
       this._root.mergeWith(data.root);
       if (current2.map) {
-        let node10 = current2;
+        let node11 = current2;
         let hidden = false;
         while (true) {
-          if (node10.parent == this) {
+          if (node11.parent == this) {
             break;
           }
-          node10 = node10.parent;
-          if (node10.isCollapsed()) {
+          node11 = node11.parent;
+          if (node11.isCollapsed()) {
             hidden = true;
           }
         }
@@ -376,10 +384,10 @@
     update(options) {
       options = Object.assign({}, UPDATE_OPTIONS, options);
       options.children && this._root.update({ parent: false, children: true });
-      const { node: node9 } = this;
+      const { node: node10 } = this;
       const { size } = this._root;
-      node9.setAttribute("width", String(size[0]));
-      node9.setAttribute("height", String(size[1]));
+      node10.setAttribute("width", String(size[0]));
+      node10.setAttribute("height", String(size[1]));
     }
     show(where) {
       where.append(this.node);
@@ -419,8 +427,8 @@
       all.sort((a, b) => a.distance - b.distance);
       return all[0];
     }
-    getItemFor(node9) {
-      let content = node9.closest(".content");
+    getItemFor(node10) {
+      let content = node10.closest(".content");
       if (!content) {
         return null;
       }
@@ -486,8 +494,8 @@
           this._getPickCandidates(currentRect, child, direction, candidates);
         }, this);
       }
-      var node9 = item.dom.content;
-      var rect = node9.getBoundingClientRect();
+      var node10 = item.dom.content;
+      var rect = node10.getBoundingClientRect();
       if (direction == "left" || direction == "right") {
         var x1 = currentRect.left + currentRect.width / 2;
         var x2 = rect.left + rect.width / 2;
@@ -728,14 +736,14 @@
       return [bbox.width, bbox.height];
     }
     get position() {
-      const { node: node9 } = this.dom;
-      const transform = node9.getAttribute("transform");
+      const { node: node10 } = this.dom;
+      const transform = node10.getAttribute("transform");
       return transform.match(/\d+/g).map(Number);
     }
     set position(position) {
-      const { node: node9 } = this.dom;
+      const { node: node10 } = this.dom;
       const transform = `translate(${position.join(" ")})`;
-      node9.setAttribute("transform", transform);
+      node10.setAttribute("transform", transform);
     }
     get contentSize() {
       const { content } = this.dom;
@@ -983,17 +991,17 @@
     get value() {
       return this._value;
     }
-    set value(value2) {
-      this._value = value2;
+    set value(value) {
+      this._value = value;
       this.update();
     }
     get resolvedValue() {
-      const value2 = this._value;
-      if (typeof value2 == "number") {
-        return value2;
+      const value = this._value;
+      if (typeof value == "number") {
+        return value;
       }
       let childValues = this.children.map((child) => child.resolvedValue);
-      switch (value2) {
+      switch (value) {
         case "max":
           return Math.max(...childValues);
           break;
@@ -1015,25 +1023,25 @@
     get status() {
       return this._status;
     }
-    set status(status2) {
-      this._status = status2;
+    set status(status) {
+      this._status = status;
       this.update();
     }
     get resolvedStatus() {
-      let status2 = this._status;
-      if (status2 == "computed") {
+      let status = this._status;
+      if (status == "computed") {
         return this.children.every((child) => {
           return child.resolvedStatus !== false;
         });
       } else {
-        return status2;
+        return status;
       }
     }
     get icon() {
       return this._icon;
     }
-    set icon(icon2) {
-      this._icon = icon2;
+    set icon(icon) {
+      this._icon = icon;
       this.update();
     }
     get side() {
@@ -1045,8 +1053,8 @@
     get color() {
       return this._color;
     }
-    set color(color2) {
-      this._color = color2;
+    set color(color) {
+      this._color = color;
       this.update({ children: true });
     }
     get resolvedColor() {
@@ -1062,8 +1070,8 @@
     get layout() {
       return this._layout;
     }
-    set layout(layout2) {
-      this._layout = layout2;
+    set layout(layout) {
+      this._layout = layout;
       this.update({ children: true });
     }
     get resolvedLayout() {
@@ -1079,8 +1087,8 @@
     get shape() {
       return this._shape;
     }
-    set shape(shape2) {
-      this._shape = shape2;
+    set shape(shape) {
+      this._shape = shape;
       this.update();
     }
     get resolvedShape() {
@@ -1088,10 +1096,10 @@
         return this._shape;
       }
       let depth = 0;
-      let node9 = this;
-      while (!node9.isRoot) {
+      let node10 = this;
+      while (!node10.isRoot) {
         depth++;
-        node9 = node9.parent;
+        node10 = node10.parent;
       }
       switch (depth) {
         case 0:
@@ -1138,8 +1146,8 @@
     removeChild(child) {
       var index2 = this.children.indexOf(child);
       this.children.splice(index2, 1);
-      var node9 = child.dom.node;
-      node9.parentNode.removeChild(node9);
+      var node10 = child.dom.node;
+      node10.parentNode.removeChild(node10);
       child.parent = null;
       if (!this.children.length) {
         this.dom.toggle.parentNode.removeChild(this.dom.toggle);
@@ -1209,12 +1217,12 @@
       }
     }
     updateIcon() {
-      var icon2 = this._icon;
+      var icon = this._icon;
       this.dom.icon.className = "icon";
-      this.dom.icon.hidden = !icon2;
-      if (icon2) {
+      this.dom.icon.hidden = !icon;
+      if (icon) {
         this.dom.icon.classList.add("fa");
-        this.dom.icon.classList.add(icon2);
+        this.dom.icon.classList.add(icon);
       }
     }
     updateValue() {
@@ -1232,8 +1240,8 @@
       }
     }
   };
-  function findLinks(node9) {
-    var children = [].slice.call(node9.childNodes);
+  function findLinks(node10) {
+    var children = [].slice.call(node10.childNodes);
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeType) {
@@ -1251,14 +1259,14 @@
             var link = document.createElement("a");
             link.innerHTML = link.href = result[0];
             if (before) {
-              node9.insertBefore(document.createTextNode(before), child);
+              node10.insertBefore(document.createTextNode(before), child);
             }
-            node9.insertBefore(link, child);
+            node10.insertBefore(link, child);
             if (after) {
               child.nodeValue = after;
               i--;
             } else {
-              node9.removeChild(child);
+              node10.removeChild(child);
             }
           }
           break;
@@ -1376,10 +1384,10 @@
     }
   };
   var SetLayout = class extends Action {
-    constructor(item, layout2) {
+    constructor(item, layout) {
       super();
       this.item = item;
-      this.layout = layout2;
+      this.layout = layout;
       this.oldLayout = item.layout;
     }
     do() {
@@ -1390,10 +1398,10 @@
     }
   };
   var SetShape = class extends Action {
-    constructor(item, shape2) {
+    constructor(item, shape) {
       super();
       this.item = item;
-      this.shape = shape2;
+      this.shape = shape;
       this.oldShape = item.shape;
     }
     do() {
@@ -1404,10 +1412,10 @@
     }
   };
   var SetColor = class extends Action {
-    constructor(item, color2) {
+    constructor(item, color) {
       super();
       this.item = item;
-      this.color = color2;
+      this.color = color;
       this.oldColor = item.color;
     }
     do() {
@@ -1438,10 +1446,10 @@
     }
   };
   var SetValue = class extends Action {
-    constructor(item, value2) {
+    constructor(item, value) {
       super();
       this.item = item;
-      this.value = value2;
+      this.value = value;
       this.oldValue = item.value;
     }
     do() {
@@ -1452,10 +1460,10 @@
     }
   };
   var SetStatus = class extends Action {
-    constructor(item, status2) {
+    constructor(item, status) {
       super();
       this.item = item;
-      this.status = status2;
+      this.status = status;
       this.oldStatus = item.status;
     }
     do() {
@@ -1466,10 +1474,10 @@
     }
   };
   var SetIcon = class extends Action {
-    constructor(item, icon2) {
+    constructor(item, icon) {
       super();
       this.item = item;
-      this.icon = icon2;
+      this.icon = icon;
       this.oldIcon = item.icon;
     }
     do() {
@@ -1524,6 +1532,12 @@
   }
 
   // .js/ui/help.js
+  var help_exports = {};
+  __export(help_exports, {
+    close: () => close,
+    init: () => init2,
+    toggle: () => toggle
+  });
   var node4 = document.querySelector("#help");
   var MAP = {
     8: "Backspace",
@@ -1634,62 +1648,654 @@
     node4.hidden = true;
   }
 
+  // .js/ui/color.js
+  var color_exports = {};
+  __export(color_exports, {
+    init: () => init3
+  });
+  var node5 = document.querySelector("#color");
+  function init3() {
+    node5.addEventListener("click", onClick);
+    [...node5.querySelectorAll("[data-color]")].forEach((item) => {
+      item.style.backgroundColor = item.dataset.color;
+    });
+  }
+  function onClick(e) {
+    e.preventDefault();
+    let color = e.target.dataset.color || null;
+    let action2 = new SetColor(currentItem, color);
+    action(action2);
+  }
+
+  // .js/ui/value.js
+  var value_exports = {};
+  __export(value_exports, {
+    init: () => init4,
+    update: () => update
+  });
+  var select = document.querySelector("#value");
+  function init4() {
+    select.addEventListener("change", onChange);
+  }
+  function update() {
+    let value = currentItem.value;
+    if (value === null) {
+      value = "";
+    }
+    if (typeof value == "number") {
+      value = "num";
+    }
+    select.value = value;
+  }
+  function onChange() {
+    let value = select.value;
+    if (value == "num") {
+      MM.Command.Value.execute();
+    } else {
+      let action2 = new SetValue(currentItem, value || null);
+      action(action2);
+    }
+  }
+
+  // .js/ui/layout.js
+  var layout_exports = {};
+  __export(layout_exports, {
+    init: () => init5,
+    update: () => update2
+  });
+
+  // .js/layout/graph.js
+  var SPACING_RANK = 16;
+  var R = SPACING_RANK / 2;
+  var GraphLayout = class extends Layout {
+    update(item) {
+      this.layoutItem(item, this.childDirection);
+      if (this.childDirection == "left" || this.childDirection == "right") {
+        this.drawLinesHorizontal(item, this.childDirection);
+      } else {
+        this.drawLinesVertical(item, this.childDirection);
+      }
+    }
+    layoutItem(item, rankDirection) {
+      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
+      var childIndex = (rankIndex + 1) % 2;
+      const { contentSize } = item;
+      var bbox = this.computeChildrenBBox(item.children, childIndex);
+      var rankSize = contentSize[rankIndex];
+      if (bbox[rankIndex]) {
+        rankSize += bbox[rankIndex] + SPACING_RANK;
+      }
+      var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
+      var offset = [0, 0];
+      if (rankDirection == "right") {
+        offset[0] = contentSize[0] + SPACING_RANK;
+      }
+      if (rankDirection == "bottom") {
+        offset[1] = contentSize[1] + SPACING_RANK;
+      }
+      offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
+      this.layoutChildren(item.children, rankDirection, offset, bbox);
+      var labelPos = 0;
+      if (rankDirection == "left") {
+        labelPos = rankSize - contentSize[0];
+      }
+      if (rankDirection == "top") {
+        labelPos = rankSize - contentSize[1];
+      }
+      let contentPosition = [Math.round((childSize - contentSize[childIndex]) / 2), labelPos];
+      if (rankIndex == 0) {
+        contentPosition = contentPosition.reverse();
+      }
+      item.contentPosition = contentPosition;
+    }
+    layoutChildren(children, rankDirection, offset, bbox) {
+      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
+      var childIndex = (rankIndex + 1) % 2;
+      children.forEach((child) => {
+        const { size } = child;
+        if (rankDirection == "left") {
+          offset[0] = bbox[0] - size[0];
+        }
+        if (rankDirection == "top") {
+          offset[1] = bbox[1] - size[1];
+        }
+        child.position = offset;
+        offset[childIndex] += size[childIndex] + this.SPACING_CHILD;
+      });
+      return bbox;
+    }
+    drawLinesHorizontal(item, side) {
+      const { contentPosition, contentSize, resolvedShape, resolvedColor, children, dom } = item;
+      if (children.length == 0) {
+        return;
+      }
+      let itemAnchor = [
+        contentPosition[0] + (side == "right" ? contentSize[0] + 0.5 : -0.5),
+        resolvedShape.getVerticalAnchor(item)
+      ];
+      this.anchorToggle(item, itemAnchor, side);
+      if (item.isCollapsed()) {
+        return;
+      }
+      let d = [];
+      if (children.length == 1) {
+        var child = children[0];
+        const { position, resolvedShape: resolvedShape2 } = child;
+        let childAnchor = [
+          this.getChildAnchor(child, side),
+          resolvedShape2.getVerticalAnchor(child) + position[1]
+        ];
+        let mid = (itemAnchor[0] + childAnchor[0]) / 2;
+        d.push(`M ${itemAnchor}`, `C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`);
+        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+        dom.connectors.append(path2);
+        return;
+      }
+      let center = [
+        itemAnchor[0] + (side == "left" ? -R : R),
+        itemAnchor[1]
+      ];
+      d.push(`M ${itemAnchor}`, `L ${center}`);
+      const firstChild = children[0];
+      const lastChild = children[children.length - 1];
+      const cornerEndX = center[0] + (side == "left" ? -R : R);
+      const sweep = cornerEndX < center[0] ? 1 : 0;
+      let firstAnchor = [
+        this.getChildAnchor(firstChild, side),
+        firstChild.resolvedShape.getVerticalAnchor(firstChild) + firstChild.position[1]
+      ];
+      let lastAnchor = [
+        this.getChildAnchor(lastChild, side),
+        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1]
+      ];
+      d.push(`M ${firstAnchor}`, `L ${cornerEndX} ${firstAnchor[1]}`, `A ${R} ${R} 0 0 ${sweep} ${center[0]} ${firstAnchor[1] + R}`, `L ${center[0]} ${lastAnchor[1] - R}`, `A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${lastAnchor[1]}`, `L ${lastAnchor}`);
+      for (let i = 1; i < children.length - 1; i++) {
+        const c = children[i];
+        const y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
+        let lineStart = [center[0], y];
+        let childAnchor = [this.getChildAnchor(c, side), y];
+        d.push(`M ${lineStart}`, `L ${childAnchor}`);
+      }
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+    drawLinesVertical(item, side) {
+      const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
+      if (children.length == 0) {
+        return;
+      }
+      const height = children.length == 1 ? 2 * R : R;
+      let itemAnchor = [
+        resolvedShape.getHorizontalAnchor(item),
+        side == "top" ? size[1] - contentSize[1] : resolvedShape.getVerticalAnchor(item)
+      ];
+      let center = [
+        itemAnchor[0],
+        (side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
+      ];
+      this.anchorToggle(item, itemAnchor, side);
+      if (item.isCollapsed()) {
+        return;
+      }
+      let d = [];
+      d.push(`M ${itemAnchor}`, `L ${center}`);
+      if (children.length == 1) {
+        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+        dom.connectors.append(path2);
+        return;
+      }
+      const firstChild = children[0];
+      const lastChild = children[children.length - 1];
+      const cornerEndY = center[1] + (side == "top" ? -R : R);
+      const sweep = cornerEndY > center[1] ? 1 : 0;
+      let firstAnchor = [
+        firstChild.resolvedShape.getHorizontalAnchor(firstChild) + firstChild.position[0],
+        this.getChildAnchor(firstChild, side)
+      ];
+      let lastAnchor = [
+        lastChild.resolvedShape.getHorizontalAnchor(lastChild) + lastChild.position[0],
+        this.getChildAnchor(lastChild, side)
+      ];
+      d.push(`M ${firstAnchor}`, `L ${firstAnchor[0]} ${cornerEndY}`, `A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0] + R} ${center[1]}`, `L ${lastAnchor[0] - R} ${center[1]}`, `A ${R} ${R} 0 0 ${sweep} ${lastAnchor[0]} ${cornerEndY}`, `L ${lastAnchor}`);
+      for (var i = 1; i < children.length - 1; i++) {
+        const c = children[i];
+        const x = c.resolvedShape.getHorizontalAnchor(c) + c.position[0];
+        let lineStart = [x, center[1]];
+        let childAnchor = [x, this.getChildAnchor(c, side)];
+        d.push(`M ${lineStart}`, `L ${childAnchor}`);
+      }
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+  };
+  new GraphLayout("graph-bottom", "Bottom", "bottom");
+  new GraphLayout("graph-top", "Top", "top");
+  new GraphLayout("graph-left", "Left", "left");
+  new GraphLayout("graph-right", "Right", "right");
+
+  // .js/layout/tree.js
+  var SPACING_RANK2 = 32;
+  var R2 = SPACING_RANK2 / 4;
+  var LINE_OFFSET = SPACING_RANK2 / 2;
+  var TreeLayout = class extends Layout {
+    update(item) {
+      this.layoutItem(item, this.childDirection);
+      this.drawLines(item, this.childDirection);
+    }
+    layoutItem(item, rankDirection) {
+      const { contentSize, children } = item;
+      let bbox = this.computeChildrenBBox(children, 1);
+      let rankSize = contentSize[0];
+      if (bbox[0]) {
+        rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK2);
+      }
+      let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
+      if (rankDirection == "left") {
+        offset[0] = rankSize - bbox[0] - SPACING_RANK2;
+      }
+      this.layoutChildren(children, rankDirection, offset, bbox);
+      let labelPos = 0;
+      if (rankDirection == "left") {
+        labelPos = rankSize - contentSize[0];
+      }
+      item.contentPosition = [labelPos, 0];
+    }
+    layoutChildren(children, rankDirection, offset, bbox) {
+      children.forEach((child) => {
+        const { size } = child;
+        let left = offset[0];
+        if (rankDirection == "left") {
+          left += bbox[0] - size[0];
+        }
+        child.position = [left, offset[1]];
+        offset[1] += size[1] + this.SPACING_CHILD;
+      });
+    }
+    drawLines(item, side) {
+      const { size, resolvedShape, resolvedColor, children, dom } = item;
+      let pointAnchor = [
+        (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5,
+        resolvedShape.getVerticalAnchor(item)
+      ];
+      this.anchorToggle(item, pointAnchor, "bottom");
+      if (children.length == 0 || item.isCollapsed()) {
+        return;
+      }
+      let lastChild = children[children.length - 1];
+      let lineEnd = [
+        pointAnchor[0],
+        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R2
+      ];
+      let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
+      let cornerEndX = lineEnd[0] + (side == "left" ? -R2 : R2);
+      let sweep = cornerEndX < lineEnd[0] ? 1 : 0;
+      children.forEach((child) => {
+        const { resolvedShape: resolvedShape2, position } = child;
+        const y = resolvedShape2.getVerticalAnchor(child) + position[1];
+        d.push(`M ${pointAnchor[0]} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${cornerEndX} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
+      });
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+  };
+  new TreeLayout("tree-left", "Left", "left");
+  new TreeLayout("tree-right", "Right", "right");
+
+  // .js/layout/map.js
+  var MapLayout = class extends GraphLayout {
+    constructor() {
+      super(...arguments);
+      this.LINE_THICKNESS = 8;
+    }
+    update(item) {
+      if (item.isRoot) {
+        this.layoutRoot(item);
+      } else {
+        var side = this.getChildDirection(item);
+        repo.get(`graph-${side}`).update(item);
+      }
+    }
+    getChildDirection(child) {
+      while (!child.parent.isRoot) {
+        child = child.parent;
+      }
+      var side = child.side;
+      if (side) {
+        return side;
+      }
+      var counts = { left: 0, right: 0 };
+      var children = child.parent.children;
+      for (var i = 0; i < children.length; i++) {
+        var side = children[i].side;
+        if (!side) {
+          side = counts.right > counts.left ? "left" : "right";
+          children[i].side = side;
+        }
+        counts[side]++;
+      }
+      return child.side;
+    }
+    pickSibling(item, dir) {
+      if (item.isRoot) {
+        return item;
+      }
+      const parent = item.parent;
+      var children = parent.children;
+      if (parent.isRoot) {
+        var side = this.getChildDirection(item);
+        children = children.filter((child) => this.getChildDirection(child) == side);
+      }
+      var index2 = children.indexOf(item);
+      index2 += dir;
+      index2 = (index2 + children.length) % children.length;
+      return children[index2];
+    }
+    layoutRoot(item) {
+      const { children, contentSize } = item;
+      let childrenLeft = [];
+      let childrenRight = [];
+      let contentPosition = [0, 0];
+      children.forEach((child) => {
+        var side = this.getChildDirection(child);
+        if (side == "left") {
+          childrenLeft.push(child);
+        } else {
+          childrenRight.push(child);
+        }
+      });
+      var bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
+      var bboxRight = this.computeChildrenBBox(childrenRight, 1);
+      var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
+      var left = 0;
+      this.layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
+      left += bboxLeft[0];
+      if (childrenLeft.length) {
+        left += SPACING_RANK;
+      }
+      contentPosition[0] = left;
+      left += contentSize[0];
+      if (childrenRight.length) {
+        left += SPACING_RANK;
+      }
+      this.layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
+      left += bboxRight[0];
+      contentPosition[1] = Math.round((height - contentSize[1]) / 2);
+      item.contentPosition = contentPosition;
+      this.drawRootConnectors(item, "left", childrenLeft);
+      this.drawRootConnectors(item, "right", childrenRight);
+    }
+    drawRootConnectors(item, side, children) {
+      if (children.length == 0 || item.isCollapsed()) {
+        return;
+      }
+      const { contentSize, contentPosition, resolvedShape, dom } = item;
+      let x1 = contentPosition[0] + contentSize[0] / 2;
+      let y1 = resolvedShape.getVerticalAnchor(item);
+      const half = this.LINE_THICKNESS / 2;
+      let paths = children.map((child) => {
+        const { resolvedColor, resolvedShape: resolvedShape2, position } = child;
+        let x2 = this.getChildAnchor(child, side);
+        let y2 = resolvedShape2.getVerticalAnchor(child) + position[1];
+        let angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
+        let dx = Math.cos(angle) * half;
+        let dy = Math.sin(angle) * half;
+        let d = [
+          `M ${x1 - dx} ${y1 - dy}`,
+          `Q ${(x2 + x1) / 2} ${y2} ${x2} ${y2}`,
+          `Q ${(x2 + x1) / 2} ${y2} ${x1 + dx} ${y1 + dy}`,
+          `Z`
+        ];
+        let attrs = {
+          d: d.join(" "),
+          fill: resolvedColor,
+          stroke: resolvedColor
+        };
+        return node2("path", attrs);
+      });
+      dom.connectors.append(...paths);
+    }
+  };
+  new MapLayout("map", "Map");
+
+  // .js/ui/layout.js
+  var select2 = document.querySelector("#layout");
+  function init5() {
+    let layout = repo.get("map");
+    select2.append(new Option(layout.label, layout.id));
+    let label = buildGroup("Graph");
+    let graphOptions = ["right", "left", "bottom", "top"].map((name) => {
+      let layout2 = repo.get(`graph-${name}`);
+      return new Option(layout2.label, layout2.id);
+    });
+    label.append(...graphOptions);
+    label = buildGroup("Tree");
+    let treeOptions = ["right", "left"].map((name) => {
+      let layout2 = repo.get(`tree-${name}`);
+      return new Option(layout2.label, layout2.id);
+    });
+    label.append(...treeOptions);
+    select2.addEventListener("change", onChange2);
+  }
+  function update2() {
+    var value = "";
+    var layout = currentItem.layout;
+    if (layout) {
+      value = layout.id;
+    }
+    select2.value = value;
+    getOption("").disabled = currentItem.isRoot;
+    getOption("map").disabled = !currentItem.isRoot;
+  }
+  function onChange2() {
+    var layout = repo.get(select2.value);
+    var action2 = new SetLayout(currentItem, layout);
+    action(action2);
+  }
+  function getOption(value) {
+    return select2.querySelector(`option[value="${value}"]`);
+  }
+  function buildGroup(label) {
+    let node10 = document.createElement("optgroup");
+    node10.label = label;
+    select2.append(node10);
+    return node10;
+  }
+
+  // .js/ui/icon.js
+  var icon_exports = {};
+  __export(icon_exports, {
+    init: () => init6,
+    update: () => update3
+  });
+  var select3 = document.querySelector("#icons");
+  function init6() {
+    select3.addEventListener("change", onChange3);
+  }
+  function update3() {
+    select3.value = currentItem.icon || "";
+  }
+  function onChange3() {
+    let action2 = new SetIcon(currentItem, select3.value || null);
+    action(action2);
+  }
+
+  // .js/ui/shape.js
+  var shape_exports = {};
+  __export(shape_exports, {
+    init: () => init7,
+    update: () => update4
+  });
+
+  // .js/shape/box.js
+  var Box = class extends Shape {
+    constructor() {
+      super("box", "Box");
+    }
+  };
+  new Box();
+
+  // .js/shape/ellipse.js
+  var Ellipse = class extends Shape {
+    constructor() {
+      super("ellipse", "Ellipse");
+    }
+  };
+  new Ellipse();
+
+  // .js/shape/underline.js
+  var VERTICAL_OFFSET2 = -3;
+  var Underline = class extends Shape {
+    constructor() {
+      super("underline", "Underline");
+    }
+    update(item) {
+      const { contentPosition, resolvedColor, contentSize, dom } = item;
+      let left = contentPosition[0];
+      let right = left + contentSize[0];
+      let top = this.getVerticalAnchor(item);
+      let d = [
+        `M ${left} ${top}`,
+        `L ${right} ${top}`
+      ];
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+    getVerticalAnchor(item) {
+      const { contentPosition, contentSize } = item;
+      return contentPosition[1] + contentSize[1] + VERTICAL_OFFSET2 + 0.5;
+    }
+  };
+  new Underline();
+
+  // .js/ui/shape.js
+  var select4 = document.querySelector("#shape");
+  function init7() {
+    repo2.forEach((shape) => {
+      select4.append(new Option(shape.label, shape.id));
+    });
+    select4.addEventListener("change", onChange4);
+  }
+  function update4() {
+    let value = "";
+    let shape = currentItem.shape;
+    if (shape) {
+      value = shape.id;
+    }
+    select4.value = value;
+  }
+  function onChange4() {
+    let shape = repo2.get(this._select.value);
+    let action2 = new SetShape(currentItem, shape);
+    action(action2);
+  }
+
+  // .js/ui/status.js
+  var status_exports = {};
+  __export(status_exports, {
+    init: () => init8,
+    update: () => update5
+  });
+  var select5 = document.querySelector("#status");
+  var STATUS_MAP = {
+    "yes": true,
+    "no": false,
+    "": null
+  };
+  function statusToString(status) {
+    for (let key in STATUS_MAP) {
+      if (STATUS_MAP[key] === status) {
+        return key;
+      }
+    }
+    return String(status);
+  }
+  function stringToStatus(str) {
+    return str in STATUS_MAP ? STATUS_MAP[str] : str;
+  }
+  function init8() {
+    select5.addEventListener("change", onChange5);
+  }
+  function update5() {
+    select5.value = statusToString(currentItem.status);
+  }
+  function onChange5() {
+    let status = stringToStatus(select5.value);
+    let action2 = new SetStatus(currentItem, status);
+    action(action2);
+  }
+
+  // .js/ui/tip.js
+  var tip_exports = {};
+  __export(tip_exports, {
+    init: () => init9
+  });
+  var node6 = document.querySelector("#tip");
+  function init9() {
+    node6.addEventListener("click", hide);
+    subscribe("command-child", hide);
+    subscribe("command-sibling", hide);
+  }
+  function hide() {
+    unsubscribe("command-child", hide);
+    unsubscribe("command-sibling", hide);
+    node6.removeEventListener("click", hide);
+    node6.hidden = true;
+  }
+
   // .js/ui/ui.js
-  var node5 = document.querySelector(".ui");
+  var node7 = document.querySelector(".ui");
   MM.UI = {};
-  var layout;
-  var shape;
-  var icon;
-  var color;
-  var value;
-  var status;
   function isActive() {
-    return node5.contains(document.activeElement);
+    return node7.contains(document.activeElement);
   }
   function toggle2() {
-    node5.hidden = !node5.hidden;
+    node7.hidden = !node7.hidden;
     publish("ui-change", this);
   }
   function getWidth() {
-    return node5.hidden ? 0 : node5.offsetWidth;
+    return node7.hidden ? 0 : node7.offsetWidth;
   }
-  function update() {
-    [layout, shape, icon, value, status].forEach((ui4) => ui4.update());
+  function update6() {
+    [layout_exports, shape_exports, icon_exports, value_exports, status_exports].forEach((ui4) => ui4.update());
   }
-  function onClick(e) {
+  function onClick2(e) {
     let target = e.target;
     if (target.nodeName.toLowerCase() != "select") {
       focus();
     }
-    if (target == node5.querySelector("#toggle")) {
+    if (target == node7.querySelector("#toggle")) {
       this.toggle();
       return;
     }
     let current2 = target;
     while (current2 != document) {
-      let command = node5.dataset.command;
+      let command = node7.dataset.command;
       if (command) {
         MM.Command[command].execute();
         return;
       }
-      current2 = node5.parentNode;
+      current2 = node7.parentNode;
     }
   }
-  function init3() {
-    layout = new MM.UI.Layout();
-    shape = new MM.UI.Shape();
-    icon = new MM.UI.Icon();
-    color = new MM.UI.Color();
-    value = new MM.UI.Value();
-    status = new MM.UI.Status();
-    subscribe("item-select", update);
+  function init10() {
+    [
+      layout_exports,
+      shape_exports,
+      icon_exports,
+      value_exports,
+      status_exports,
+      color_exports,
+      help_exports,
+      tip_exports
+    ].forEach((ui4) => ui4.init());
+    subscribe("item-select", update6);
     subscribe("item-change", (_message, publisher) => {
       if (publisher == currentItem) {
-        update();
+        update6();
       }
     });
-    node5.addEventListener("click", onClick);
-    node5.addEventListener("change", (_) => focus());
+    node7.addEventListener("click", onClick2);
+    node7.addEventListener("change", (_) => focus());
   }
 
   // .js/command/command.js
@@ -2087,8 +2693,8 @@
   });
   MM.Command.Yes.execute = function() {
     var item = currentItem;
-    var status2 = item.status === true ? null : true;
-    var action2 = new SetStatus(item, status2);
+    var status = item.status === true ? null : true;
+    var action2 = new SetStatus(item, status);
     action(action2);
   };
   MM.Command.No = Object.create(MM.Command, {
@@ -2097,8 +2703,8 @@
   });
   MM.Command.No.execute = function() {
     var item = currentItem;
-    var status2 = item.status === false ? null : false;
-    var action2 = new SetStatus(item, status2);
+    var status = item.status === false ? null : false;
+    var action2 = new SetStatus(item, status);
     action(action2);
   };
   MM.Command.Computed = Object.create(MM.Command, {
@@ -2107,8 +2713,8 @@
   });
   MM.Command.Computed.execute = function() {
     var item = currentItem;
-    var status2 = item.status == "computed" ? null : "computed";
-    var action2 = new SetStatus(item, status2);
+    var status = item.status == "computed" ? null : "computed";
+    var action2 = new SetStatus(item, status);
     action(action2);
   };
 
@@ -2130,8 +2736,8 @@
       40: "bottom"
     };
     var dir = dirs[e.keyCode];
-    var layout2 = app.currentItem.resolvedLayout;
-    var item = layout2.pick(app.currentItem, dir);
+    var layout = app.currentItem.resolvedLayout;
+    var item = layout.pick(app.currentItem, dir);
     app.selectItem(item);
   };
   MM.Command.SelectRoot = Object.create(MM.Command, {
@@ -2260,36 +2866,36 @@
     }
     return elm;
   };
-  MM.Format.FreeMind._parseNode = function(node9, parent) {
-    var json = this._parseAttributes(node9, parent);
-    for (var i = 0; i < node9.childNodes.length; i++) {
-      var child = node9.childNodes[i];
+  MM.Format.FreeMind._parseNode = function(node10, parent) {
+    var json = this._parseAttributes(node10, parent);
+    for (var i = 0; i < node10.childNodes.length; i++) {
+      var child = node10.childNodes[i];
       if (child.nodeName.toLowerCase() == "node") {
         json.children.push(this._parseNode(child, json));
       }
     }
     return json;
   };
-  MM.Format.FreeMind._parseAttributes = function(node9, parent) {
+  MM.Format.FreeMind._parseAttributes = function(node10, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node9.getAttribute("TEXT") || ""),
-      id: node9.getAttribute("ID")
+      text: MM.Format.nl2br(node10.getAttribute("TEXT") || ""),
+      id: node10.getAttribute("ID")
     };
-    var position = node9.getAttribute("POSITION");
+    var position = node10.getAttribute("POSITION");
     if (position) {
       json.side = position;
     }
-    var style = node9.getAttribute("STYLE");
+    var style = node10.getAttribute("STYLE");
     if (style == "bubble") {
       json.shape = "box";
     } else {
       json.shape = parent.shape;
     }
-    if (node9.getAttribute("FOLDED") == "true") {
+    if (node10.getAttribute("FOLDED") == "true") {
       json.collapsed = 1;
     }
-    var children = node9.children;
+    var children = node10.children;
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeName.toLowerCase()) {
@@ -2321,25 +2927,25 @@
     label: { value: "Mind Map Architect" },
     extension: { value: "mma" }
   });
-  MM.Format.MMA._parseAttributes = function(node9, parent) {
+  MM.Format.MMA._parseAttributes = function(node10, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node9.getAttribute("title") || ""),
+      text: MM.Format.nl2br(node10.getAttribute("title") || ""),
       shape: "box"
     };
-    if (node9.getAttribute("expand") == "false") {
+    if (node10.getAttribute("expand") == "false") {
       json.collapsed = 1;
     }
-    var direction = node9.getAttribute("direction");
+    var direction = node10.getAttribute("direction");
     if (direction == "0") {
       json.side = "left";
     }
     if (direction == "1") {
       json.side = "right";
     }
-    var color2 = node9.getAttribute("color");
-    if (color2) {
-      var re = color2.match(/^#(....)(....)(....)$/);
+    var color = node10.getAttribute("color");
+    if (color) {
+      var re = color.match(/^#(....)(....)(....)$/);
       if (re) {
         var r = parseInt(re[1], 16) >> 8;
         var g = parseInt(re[2], 16) >> 8;
@@ -2350,7 +2956,7 @@
       }
       json.color = "#" + [r, g, b].join("");
     }
-    json.icon = node9.getAttribute("icon");
+    json.icon = node10.getAttribute("icon");
     return json;
   };
   MM.Format.MMA._serializeAttributes = function(doc, json) {
@@ -2581,14 +3187,14 @@
     return this._request("GET", url);
   };
   MM.Backend.WebDAV._request = async function(method, url, data) {
-    let init9 = {
+    let init15 = {
       method,
       credentials: "include"
     };
     if (data) {
-      init9.body = data;
+      init15.body = data;
     }
-    let response = await fetch(url, init9);
+    let response = await fetch(url, init15);
     let text = await response.text();
     if (response.status == 200) {
       return text;
@@ -2988,160 +3594,6 @@
     return promise;
   };
 
-  // .js/ui/ui.layout.js
-  MM.UI.Layout = function() {
-    this._select = document.querySelector("#layout");
-    let layout2 = repo.get("map");
-    this._select.append(new Option(layout2.label, layout2.id));
-    var label = this._buildGroup("Graph");
-    let graphOptions = ["right", "left", "bottom", "top"].map((name) => {
-      let layout3 = repo.get(`graph-${name}`);
-      return new Option(layout3.label, layout3.id);
-    });
-    label.append(...graphOptions);
-    var label = this._buildGroup("Tree");
-    let treeOptions = ["right", "left"].map((name) => {
-      let layout3 = repo.get(`tree-${name}`);
-      return new Option(layout3.label, layout3.id);
-    });
-    label.append(...treeOptions);
-    this._select.addEventListener("change", this);
-  };
-  MM.UI.Layout.prototype.update = function() {
-    var value2 = "";
-    var layout2 = currentItem.layout;
-    if (layout2) {
-      value2 = layout2.id;
-    }
-    this._select.value = value2;
-    this._getOption("").disabled = currentItem.isRoot;
-    this._getOption("map").disabled = !currentItem.isRoot;
-  };
-  MM.UI.Layout.prototype.handleEvent = function(e) {
-    var layout2 = repo.get(this._select.value);
-    var action2 = new SetLayout(currentItem, layout2);
-    action(action2);
-  };
-  MM.UI.Layout.prototype._getOption = function(value2) {
-    return this._select.querySelector("option[value='" + value2 + "']");
-  };
-  MM.UI.Layout.prototype._buildGroup = function(label) {
-    var node9 = document.createElement("optgroup");
-    node9.label = label;
-    this._select.appendChild(node9);
-    return node9;
-  };
-
-  // .js/ui/ui.shape.js
-  MM.UI.Shape = function() {
-    this._select = document.querySelector("#shape");
-    repo2.forEach((shape2) => {
-      this._select.append(new Option(shape2.label, shape2.id));
-    });
-    this._select.addEventListener("change", this);
-  };
-  MM.UI.Shape.prototype.update = function() {
-    var value2 = "";
-    var shape2 = currentItem.shape;
-    if (shape2) {
-      value2 = shape2.id;
-    }
-    this._select.value = value2;
-  };
-  MM.UI.Shape.prototype.handleEvent = function(e) {
-    var shape2 = repo2.get(this._select.value);
-    var action2 = new SetShape(currentItem, shape2);
-    action(action2);
-  };
-
-  // .js/ui/ui.value.js
-  MM.UI.Value = function() {
-    this._select = document.querySelector("#value");
-    this._select.addEventListener("change", this);
-  };
-  MM.UI.Value.prototype.update = function() {
-    var value2 = currentItem.value;
-    if (value2 === null) {
-      value2 = "";
-    }
-    if (typeof value2 == "number") {
-      value2 = "num";
-    }
-    this._select.value = value2;
-  };
-  MM.UI.Value.prototype.handleEvent = function(e) {
-    var value2 = this._select.value;
-    if (value2 == "num") {
-      MM.Command.Value.execute();
-    } else {
-      var action2 = new SetValue(currentItem, value2 || null);
-      action(action2);
-    }
-  };
-
-  // .js/ui/ui.status.js
-  var STATUS_MAP = {
-    "yes": true,
-    "no": false,
-    "": null
-  };
-  function statusToString(status2) {
-    for (let key in STATUS_MAP) {
-      if (STATUS_MAP[key] === status2) {
-        return key;
-      }
-    }
-    return status2;
-  }
-  function stringToStatus(str) {
-    return str in STATUS_MAP ? STATUS_MAP[str] : str;
-  }
-  MM.UI.Status = function() {
-    this._select = document.querySelector("#status");
-    this._select.addEventListener("change", this);
-  };
-  MM.UI.Status.prototype.update = function() {
-    this._select.value = statusToString(currentItem.status);
-  };
-  MM.UI.Status.prototype.handleEvent = function(e) {
-    let status2 = stringToStatus(this._select.value);
-    var action2 = SetStatus(currentItem, status2);
-    action(action2);
-  };
-
-  // .js/ui/ui.color.js
-  MM.UI.Color = function() {
-    this._node = document.querySelector("#color");
-    this._node.addEventListener("click", this);
-    var items = this._node.querySelectorAll("[data-color]");
-    for (var i = 0; i < items.length; i++) {
-      var item = items[i];
-      item.style.backgroundColor = item.getAttribute("data-color");
-    }
-  };
-  MM.UI.Color.prototype.handleEvent = function(e) {
-    e.preventDefault();
-    if (!e.target.hasAttribute("data-color")) {
-      return;
-    }
-    var color2 = e.target.getAttribute("data-color") || null;
-    var action2 = new SetColor(currentItem, color2);
-    action(action2);
-  };
-
-  // .js/ui/ui.icon.js
-  MM.UI.Icon = function() {
-    this._select = document.querySelector("#icons");
-    this._select.addEventListener("change", this);
-  };
-  MM.UI.Icon.prototype.update = function() {
-    this._select.value = currentItem.icon || "";
-  };
-  MM.UI.Icon.prototype.handleEvent = function(e) {
-    var action2 = new SetIcon(currentItem, this._select.value || null);
-    action(action2);
-  };
-
   // .js/ui/ui.io.js
   MM.UI.IO = function() {
     this._prefix = "mm.app.";
@@ -3244,7 +3696,7 @@
     }
   };
   MM.UI.IO.prototype._syncBackend = function() {
-    [...this._node.querySelectorAll("div[id]")].forEach((node9) => node9.hidden = true);
+    [...this._node.querySelectorAll("div[id]")].forEach((node10) => node10.hidden = true);
     this._node.querySelector("#" + this._backend.value).hidden = false;
     this._backends[this._backend.value].show(this._mode);
   };
@@ -3275,7 +3727,7 @@
 
   // .js/ui/backend/ui.backend.js
   MM.UI.Backend = Object.create(MM.Repo);
-  MM.UI.Backend.init = function(select) {
+  MM.UI.Backend.init = function(select6) {
     this._backend = MM.Backend.getById(this.id);
     this._mode = "";
     this._prefix = "mm.app." + this.id + ".";
@@ -3284,7 +3736,7 @@
     this._cancel.addEventListener("click", this);
     this._go = this._node.querySelector(".go");
     this._go.addEventListener("click", this);
-    select.appendChild(this._backend.buildOption());
+    select6.appendChild(this._backend.buildOption());
   };
   MM.UI.Backend.reset = function() {
     this._backend.reset();
@@ -3311,8 +3763,8 @@
   MM.UI.Backend.show = function(mode2) {
     this._mode = mode2;
     this._go.innerHTML = mode2.charAt(0).toUpperCase() + mode2.substring(1);
-    [...this._node.querySelectorAll("[data-for]")].forEach((node9) => node9.hidden = true);
-    [...this._node.querySelectorAll(`[data-for~=${mode2}]`)].forEach((node9) => node9.hidden = false);
+    [...this._node.querySelectorAll("[data-for]")].forEach((node10) => node10.hidden = true);
+    [...this._node.querySelectorAll(`[data-for~=${mode2}]`)].forEach((node10) => node10.hidden = false);
     this._go.focus();
   };
   MM.UI.Backend._action = function() {
@@ -3342,7 +3794,7 @@
     setThrobber(false);
     alert("IO error: " + e.message);
   };
-  MM.UI.Backend._buildList = function(list, select) {
+  MM.UI.Backend._buildList = function(list, select6) {
     var data = [];
     for (var id in list) {
       data.push({ id, name: list[id] });
@@ -3354,7 +3806,7 @@
       var o = document.createElement("option");
       o.value = item.id;
       o.innerHTML = item.name;
-      select.appendChild(o);
+      select6.appendChild(o);
     });
   };
 
@@ -3362,8 +3814,8 @@
   MM.UI.Backend.File = Object.create(MM.UI.Backend, {
     id: { value: "file" }
   });
-  MM.UI.Backend.File.init = function(select) {
-    MM.UI.Backend.init.call(this, select);
+  MM.UI.Backend.File.init = function(select6) {
+    MM.UI.Backend.init.call(this, select6);
     this._format = this._node.querySelector(".format");
     this._format.appendChild(MM.Format.JSON.buildOption());
     this._format.appendChild(MM.Format.FreeMind.buildOption());
@@ -3404,8 +3856,8 @@
   MM.UI.Backend.WebDAV = Object.create(MM.UI.Backend, {
     id: { value: "webdav" }
   });
-  MM.UI.Backend.WebDAV.init = function(select) {
-    MM.UI.Backend.init.call(this, select);
+  MM.UI.Backend.WebDAV.init = function(select6) {
+    MM.UI.Backend.init.call(this, select6);
     this._url = this._node.querySelector(".url");
     this._url.value = localStorage.getItem(this._prefix + "url") || "";
     this._current = "";
@@ -3469,8 +3921,8 @@
   MM.UI.Backend.Local = Object.create(MM.UI.Backend, {
     id: { value: "local" }
   });
-  MM.UI.Backend.Local.init = function(select) {
-    MM.UI.Backend.init.call(this, select);
+  MM.UI.Backend.Local.init = function(select6) {
+    MM.UI.Backend.init.call(this, select6);
     this._list = this._node.querySelector(".list");
     this._remove = this._node.querySelector(".remove");
     this._remove.addEventListener("click", this);
@@ -3544,8 +3996,8 @@
   MM.UI.Backend.Firebase = Object.create(MM.UI.Backend, {
     id: { value: "firebase" }
   });
-  MM.UI.Backend.Firebase.init = function(select) {
-    MM.UI.Backend.init.call(this, select);
+  MM.UI.Backend.Firebase.init = function(select6) {
+    MM.UI.Backend.init.call(this, select6);
     this._online = false;
     this._itemChangeTimeout = null;
     this._list = this._node.querySelector(".list");
@@ -3694,8 +4146,8 @@
   MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
     id: { value: "gdrive" }
   });
-  MM.UI.Backend.GDrive.init = function(select) {
-    MM.UI.Backend.init.call(this, select);
+  MM.UI.Backend.GDrive.init = function(select6) {
+    MM.UI.Backend.init.call(this, select6);
     this._format = this._node.querySelector(".format");
     this._format.appendChild(MM.Format.JSON.buildOption());
     this._format.appendChild(MM.Format.FreeMind.buildOption());
@@ -3750,400 +4202,6 @@
     MM.UI.Backend._loadDone.call(this, json);
   };
 
-  // .js/layout/graph.js
-  var SPACING_RANK = 16;
-  var R = SPACING_RANK / 2;
-  var GraphLayout = class extends Layout {
-    update(item) {
-      this.layoutItem(item, this.childDirection);
-      if (this.childDirection == "left" || this.childDirection == "right") {
-        this.drawLinesHorizontal(item, this.childDirection);
-      } else {
-        this.drawLinesVertical(item, this.childDirection);
-      }
-    }
-    layoutItem(item, rankDirection) {
-      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
-      var childIndex = (rankIndex + 1) % 2;
-      const { contentSize } = item;
-      var bbox = this.computeChildrenBBox(item.children, childIndex);
-      var rankSize = contentSize[rankIndex];
-      if (bbox[rankIndex]) {
-        rankSize += bbox[rankIndex] + SPACING_RANK;
-      }
-      var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
-      var offset = [0, 0];
-      if (rankDirection == "right") {
-        offset[0] = contentSize[0] + SPACING_RANK;
-      }
-      if (rankDirection == "bottom") {
-        offset[1] = contentSize[1] + SPACING_RANK;
-      }
-      offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
-      this.layoutChildren(item.children, rankDirection, offset, bbox);
-      var labelPos = 0;
-      if (rankDirection == "left") {
-        labelPos = rankSize - contentSize[0];
-      }
-      if (rankDirection == "top") {
-        labelPos = rankSize - contentSize[1];
-      }
-      let contentPosition = [Math.round((childSize - contentSize[childIndex]) / 2), labelPos];
-      if (rankIndex == 0) {
-        contentPosition = contentPosition.reverse();
-      }
-      item.contentPosition = contentPosition;
-    }
-    layoutChildren(children, rankDirection, offset, bbox) {
-      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
-      var childIndex = (rankIndex + 1) % 2;
-      children.forEach((child) => {
-        const { size } = child;
-        if (rankDirection == "left") {
-          offset[0] = bbox[0] - size[0];
-        }
-        if (rankDirection == "top") {
-          offset[1] = bbox[1] - size[1];
-        }
-        child.position = offset;
-        offset[childIndex] += size[childIndex] + this.SPACING_CHILD;
-      });
-      return bbox;
-    }
-    drawLinesHorizontal(item, side) {
-      const { contentPosition, contentSize, resolvedShape, resolvedColor, children, dom } = item;
-      if (children.length == 0) {
-        return;
-      }
-      let itemAnchor = [
-        contentPosition[0] + (side == "right" ? contentSize[0] + 0.5 : -0.5),
-        resolvedShape.getVerticalAnchor(item)
-      ];
-      this.anchorToggle(item, itemAnchor, side);
-      if (item.isCollapsed()) {
-        return;
-      }
-      let d = [];
-      if (children.length == 1) {
-        var child = children[0];
-        const { position, resolvedShape: resolvedShape2 } = child;
-        let childAnchor = [
-          this.getChildAnchor(child, side),
-          resolvedShape2.getVerticalAnchor(child) + position[1]
-        ];
-        let mid = (itemAnchor[0] + childAnchor[0]) / 2;
-        d.push(`M ${itemAnchor}`, `C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`);
-        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-        dom.connectors.append(path2);
-        return;
-      }
-      let center = [
-        itemAnchor[0] + (side == "left" ? -R : R),
-        itemAnchor[1]
-      ];
-      d.push(`M ${itemAnchor}`, `L ${center}`);
-      const firstChild = children[0];
-      const lastChild = children[children.length - 1];
-      const cornerEndX = center[0] + (side == "left" ? -R : R);
-      const sweep = cornerEndX < center[0] ? 1 : 0;
-      let firstAnchor = [
-        this.getChildAnchor(firstChild, side),
-        firstChild.resolvedShape.getVerticalAnchor(firstChild) + firstChild.position[1]
-      ];
-      let lastAnchor = [
-        this.getChildAnchor(lastChild, side),
-        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1]
-      ];
-      d.push(`M ${firstAnchor}`, `L ${cornerEndX} ${firstAnchor[1]}`, `A ${R} ${R} 0 0 ${sweep} ${center[0]} ${firstAnchor[1] + R}`, `L ${center[0]} ${lastAnchor[1] - R}`, `A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${lastAnchor[1]}`, `L ${lastAnchor}`);
-      for (let i = 1; i < children.length - 1; i++) {
-        const c = children[i];
-        const y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
-        let lineStart = [center[0], y];
-        let childAnchor = [this.getChildAnchor(c, side), y];
-        d.push(`M ${lineStart}`, `L ${childAnchor}`);
-      }
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-    drawLinesVertical(item, side) {
-      const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
-      if (children.length == 0) {
-        return;
-      }
-      const height = children.length == 1 ? 2 * R : R;
-      let itemAnchor = [
-        resolvedShape.getHorizontalAnchor(item),
-        side == "top" ? size[1] - contentSize[1] : resolvedShape.getVerticalAnchor(item)
-      ];
-      let center = [
-        itemAnchor[0],
-        (side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
-      ];
-      this.anchorToggle(item, itemAnchor, side);
-      if (item.isCollapsed()) {
-        return;
-      }
-      let d = [];
-      d.push(`M ${itemAnchor}`, `L ${center}`);
-      if (children.length == 1) {
-        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-        dom.connectors.append(path2);
-        return;
-      }
-      const firstChild = children[0];
-      const lastChild = children[children.length - 1];
-      const cornerEndY = center[1] + (side == "top" ? -R : R);
-      const sweep = cornerEndY > center[1] ? 1 : 0;
-      let firstAnchor = [
-        firstChild.resolvedShape.getHorizontalAnchor(firstChild) + firstChild.position[0],
-        this.getChildAnchor(firstChild, side)
-      ];
-      let lastAnchor = [
-        lastChild.resolvedShape.getHorizontalAnchor(lastChild) + lastChild.position[0],
-        this.getChildAnchor(lastChild, side)
-      ];
-      d.push(`M ${firstAnchor}`, `L ${firstAnchor[0]} ${cornerEndY}`, `A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0] + R} ${center[1]}`, `L ${lastAnchor[0] - R} ${center[1]}`, `A ${R} ${R} 0 0 ${sweep} ${lastAnchor[0]} ${cornerEndY}`, `L ${lastAnchor}`);
-      for (var i = 1; i < children.length - 1; i++) {
-        const c = children[i];
-        const x = c.resolvedShape.getHorizontalAnchor(c) + c.position[0];
-        let lineStart = [x, center[1]];
-        let childAnchor = [x, this.getChildAnchor(c, side)];
-        d.push(`M ${lineStart}`, `L ${childAnchor}`);
-      }
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-  };
-  new GraphLayout("graph-bottom", "Bottom", "bottom");
-  new GraphLayout("graph-top", "Top", "top");
-  new GraphLayout("graph-left", "Left", "left");
-  new GraphLayout("graph-right", "Right", "right");
-
-  // .js/layout/tree.js
-  var SPACING_RANK2 = 32;
-  var R2 = SPACING_RANK2 / 4;
-  var LINE_OFFSET = SPACING_RANK2 / 2;
-  var TreeLayout = class extends Layout {
-    update(item) {
-      this.layoutItem(item, this.childDirection);
-      this.drawLines(item, this.childDirection);
-    }
-    layoutItem(item, rankDirection) {
-      const { contentSize, children } = item;
-      let bbox = this.computeChildrenBBox(children, 1);
-      let rankSize = contentSize[0];
-      if (bbox[0]) {
-        rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK2);
-      }
-      let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
-      if (rankDirection == "left") {
-        offset[0] = rankSize - bbox[0] - SPACING_RANK2;
-      }
-      this.layoutChildren(children, rankDirection, offset, bbox);
-      let labelPos = 0;
-      if (rankDirection == "left") {
-        labelPos = rankSize - contentSize[0];
-      }
-      item.contentPosition = [labelPos, 0];
-    }
-    layoutChildren(children, rankDirection, offset, bbox) {
-      children.forEach((child) => {
-        const { size } = child;
-        let left = offset[0];
-        if (rankDirection == "left") {
-          left += bbox[0] - size[0];
-        }
-        child.position = [left, offset[1]];
-        offset[1] += size[1] + this.SPACING_CHILD;
-      });
-    }
-    drawLines(item, side) {
-      const { size, resolvedShape, resolvedColor, children, dom } = item;
-      let pointAnchor = [
-        (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5,
-        resolvedShape.getVerticalAnchor(item)
-      ];
-      this.anchorToggle(item, pointAnchor, "bottom");
-      if (children.length == 0 || item.isCollapsed()) {
-        return;
-      }
-      let lastChild = children[children.length - 1];
-      let lineEnd = [
-        pointAnchor[0],
-        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R2
-      ];
-      let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
-      let cornerEndX = lineEnd[0] + (side == "left" ? -R2 : R2);
-      let sweep = cornerEndX < lineEnd[0] ? 1 : 0;
-      children.forEach((child) => {
-        const { resolvedShape: resolvedShape2, position } = child;
-        const y = resolvedShape2.getVerticalAnchor(child) + position[1];
-        d.push(`M ${pointAnchor[0]} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${cornerEndX} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
-      });
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-  };
-  new TreeLayout("tree-left", "Left", "left");
-  new TreeLayout("tree-right", "Right", "right");
-
-  // .js/layout/map.js
-  var MapLayout = class extends GraphLayout {
-    constructor() {
-      super(...arguments);
-      this.LINE_THICKNESS = 8;
-    }
-    update(item) {
-      if (item.isRoot) {
-        this.layoutRoot(item);
-      } else {
-        var side = this.getChildDirection(item);
-        repo.get(`graph-${side}`).update(item);
-      }
-    }
-    getChildDirection(child) {
-      while (!child.parent.isRoot) {
-        child = child.parent;
-      }
-      var side = child.side;
-      if (side) {
-        return side;
-      }
-      var counts = { left: 0, right: 0 };
-      var children = child.parent.children;
-      for (var i = 0; i < children.length; i++) {
-        var side = children[i].side;
-        if (!side) {
-          side = counts.right > counts.left ? "left" : "right";
-          children[i].side = side;
-        }
-        counts[side]++;
-      }
-      return child.side;
-    }
-    pickSibling(item, dir) {
-      if (item.isRoot) {
-        return item;
-      }
-      const parent = item.parent;
-      var children = parent.children;
-      if (parent.isRoot) {
-        var side = this.getChildDirection(item);
-        children = children.filter((child) => this.getChildDirection(child) == side);
-      }
-      var index2 = children.indexOf(item);
-      index2 += dir;
-      index2 = (index2 + children.length) % children.length;
-      return children[index2];
-    }
-    layoutRoot(item) {
-      const { children, contentSize } = item;
-      let childrenLeft = [];
-      let childrenRight = [];
-      let contentPosition = [0, 0];
-      children.forEach((child) => {
-        var side = this.getChildDirection(child);
-        if (side == "left") {
-          childrenLeft.push(child);
-        } else {
-          childrenRight.push(child);
-        }
-      });
-      var bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
-      var bboxRight = this.computeChildrenBBox(childrenRight, 1);
-      var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
-      var left = 0;
-      this.layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
-      left += bboxLeft[0];
-      if (childrenLeft.length) {
-        left += SPACING_RANK;
-      }
-      contentPosition[0] = left;
-      left += contentSize[0];
-      if (childrenRight.length) {
-        left += SPACING_RANK;
-      }
-      this.layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
-      left += bboxRight[0];
-      contentPosition[1] = Math.round((height - contentSize[1]) / 2);
-      item.contentPosition = contentPosition;
-      this.drawRootConnectors(item, "left", childrenLeft);
-      this.drawRootConnectors(item, "right", childrenRight);
-    }
-    drawRootConnectors(item, side, children) {
-      if (children.length == 0 || item.isCollapsed()) {
-        return;
-      }
-      const { contentSize, contentPosition, resolvedShape, dom } = item;
-      let x1 = contentPosition[0] + contentSize[0] / 2;
-      let y1 = resolvedShape.getVerticalAnchor(item);
-      const half = this.LINE_THICKNESS / 2;
-      let paths = children.map((child) => {
-        const { resolvedColor, resolvedShape: resolvedShape2, position } = child;
-        let x2 = this.getChildAnchor(child, side);
-        let y2 = resolvedShape2.getVerticalAnchor(child) + position[1];
-        let angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
-        let dx = Math.cos(angle) * half;
-        let dy = Math.sin(angle) * half;
-        let d = [
-          `M ${x1 - dx} ${y1 - dy}`,
-          `Q ${(x2 + x1) / 2} ${y2} ${x2} ${y2}`,
-          `Q ${(x2 + x1) / 2} ${y2} ${x1 + dx} ${y1 + dy}`,
-          `Z`
-        ];
-        let attrs = {
-          d: d.join(" "),
-          fill: resolvedColor,
-          stroke: resolvedColor
-        };
-        return node2("path", attrs);
-      });
-      dom.connectors.append(...paths);
-    }
-  };
-  new MapLayout("map", "Map");
-
-  // .js/shape/box.js
-  var Box = class extends Shape {
-    constructor() {
-      super("box", "Box");
-    }
-  };
-  new Box();
-
-  // .js/shape/ellipse.js
-  var Ellipse = class extends Shape {
-    constructor() {
-      super("ellipse", "Ellipse");
-    }
-  };
-  new Ellipse();
-
-  // .js/shape/underline.js
-  var VERTICAL_OFFSET2 = -3;
-  var Underline = class extends Shape {
-    constructor() {
-      super("underline", "Underline");
-    }
-    update(item) {
-      const { contentPosition, resolvedColor, contentSize, dom } = item;
-      let left = contentPosition[0];
-      let right = left + contentSize[0];
-      let top = this.getVerticalAnchor(item);
-      let d = [
-        `M ${left} ${top}`,
-        `L ${right} ${top}`
-      ];
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-    getVerticalAnchor(item) {
-      const { contentPosition, contentSize } = item;
-      return contentPosition[1] + contentSize[1] + VERTICAL_OFFSET2 + 0.5;
-    }
-  };
-  new Underline();
-
   // .js/keyboard.js
   function handleEvent(e) {
     if (isActive()) {
@@ -4160,7 +4218,7 @@
       command.execute(e);
     }
   }
-  function init4() {
+  function init11() {
     window.addEventListener("keydown", handleEvent);
     window.addEventListener("keypress", handleEvent);
   }
@@ -4180,22 +4238,22 @@
   }
 
   // .js/menu.js
-  var node6 = document.querySelector("#menu");
+  var node8 = document.querySelector("#menu");
   var port;
-  function init5(port_) {
+  function init12(port_) {
     port = port_;
-    [...node6.querySelectorAll("[data-command]")].forEach((button) => {
+    [...node8.querySelectorAll("[data-command]")].forEach((button) => {
       let commandName = button.dataset.command;
       button.textContent = MM.Command[commandName].label;
     });
     port.addEventListener("mousedown", handleEvent2);
-    node6.addEventListener("mousedown", handleEvent2);
+    node8.addEventListener("mousedown", handleEvent2);
     close2();
   }
   function open(point) {
-    node6.hidden = false;
-    let w = node6.offsetWidth;
-    let h = node6.offsetHeight;
+    node8.hidden = false;
+    let w = node8.offsetWidth;
+    let h = node8.offsetHeight;
     let left = point[0];
     let top = point[1];
     if (left > port.offsetWidth / 2) {
@@ -4204,11 +4262,11 @@
     if (top > port.offsetHeight / 2) {
       top -= h;
     }
-    node6.style.left = `${left}px`;
-    node6.style.top = `${top}px`;
+    node8.style.left = `${left}px`;
+    node8.style.top = `${top}px`;
   }
   function handleEvent2(e) {
-    if (e.currentTarget != node6) {
+    if (e.currentTarget != node8) {
       close2();
       return;
     }
@@ -4226,7 +4284,7 @@
     close2();
   }
   function close2() {
-    node6.hidden = true;
+    node8.hidden = true;
   }
 
   // .js/mouse.js
@@ -4242,7 +4300,7 @@
     previousDragState: null
   };
   var port2;
-  function init6(port_) {
+  function init13(port_) {
     port2 = port_;
     port2.addEventListener("touchstart", onDragStart);
     port2.addEventListener("mousedown", onDragStart);
@@ -4464,14 +4522,14 @@
   }
 
   // .js/ui/notes.js
-  var node7 = document.querySelector("#notes");
+  var node9 = document.querySelector("#notes");
   function close3() {
-    if (!node7.hidden) {
-      node7.hidden = true;
+    if (!node9.hidden) {
+      node9.hidden = true;
       focus();
     }
   }
-  function update2(html2) {
+  function update7(html2) {
     if (html2.trim().length === 0) {
       currentItem.notes = null;
     } else {
@@ -4480,44 +4538,11 @@
     currentItem.update();
   }
 
-  // .js/ui/tip.js
-  var node8 = document.querySelector("#tip");
-  function init7() {
-    node8.addEventListener("click", hide);
-    subscribe("command-child", hide);
-    subscribe("command-sibling", hide);
-  }
-  function hide() {
-    unsubscribe("command-child", hide);
-    unsubscribe("command-sibling", hide);
-    node8.removeEventListener("click", hide);
-    node8.hidden = true;
-  }
-
   // .js/my-mind.js
   MM.App = {
-    keyboard: null,
-    editing: false,
-    ui: null,
     io: null,
-    _throbber: null,
-    handleMessage: function(message, publisher) {
-      switch (message) {
-        case "ui-change":
-          syncPort();
-          break;
-        case "item-change":
-          if (publisher.isRoot && publisher.map == this.map) {
-            document.title = this.map.name + " :: My Mind";
-          }
-          break;
-      }
-    },
     handleEvent: function(e) {
       switch (e.type) {
-        case "resize":
-          syncPort();
-          break;
         case "keyup":
           if (e.key === "Escape") {
             close3();
@@ -4528,7 +4553,7 @@
           if (e.data && e.data.action) {
             switch (e.data.action) {
               case "setContent":
-                update2(e.data.value);
+                update7(e.data.value);
                 break;
               case "closeEditor":
                 close3();
@@ -4536,22 +4561,13 @@
             }
           }
           break;
-        case "beforeunload":
-          e.preventDefault();
-          return "";
-          break;
       }
     },
     init: function() {
       this.io = new MM.UI.IO();
-      window.addEventListener("resize", this);
-      window.addEventListener("beforeunload", this);
       window.addEventListener("keyup", this);
       window.addEventListener("message", this, false);
-      subscribe("ui-change", this);
       subscribe("item-change", this);
-      syncPort();
-      showMap(new Map2());
     }
   };
   var port3 = document.querySelector("#port");
@@ -4594,18 +4610,29 @@
     editing = false;
     return currentItem.stopEditing();
   }
-  function init8() {
-    init3();
-    init2();
+  function init14() {
+    init10();
     init();
-    init7();
-    init4();
-    init5(port3);
-    init6(port3);
+    init11();
+    init12(port3);
+    init13(port3);
     MM.App.init();
+    subscribe("item-change", (_message, publisher) => {
+      if (publisher.isRoot && publisher.map == currentMap) {
+        document.title = currentMap.name + " :: My Mind";
+      }
+    });
+    subscribe("ui-change", syncPort);
+    window.addEventListener("resize", syncPort);
+    window.addEventListener("beforeunload", (e) => {
+      e.preventDefault();
+      return "";
+    });
     window.addEventListener("load", (e) => {
       MM.App.io.restore();
     });
+    syncPort();
+    showMap(new Map2());
   }
   function syncPort() {
     let portSize = [window.innerWidth - getWidth(), window.innerHeight];
@@ -4614,5 +4641,5 @@
     throbber.style.right = 20 + getWidth() + "px";
     currentMap && currentMap.ensureItemVisibility(currentItem);
   }
-  init8();
+  init14();
 })();
