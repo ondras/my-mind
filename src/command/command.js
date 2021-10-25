@@ -4,6 +4,7 @@ import * as app from "../my-mind.js";
 import * as help from "../ui/help.js";
 import * as clipboard from "../clipboard.js";
 import * as actions from "../action.js";
+import * as ui from "../ui/ui.js";
 import Map from "../map.js";
 
 
@@ -213,7 +214,7 @@ MM.Command.UI = Object.create(MM.Command, {
 	keys: {value: [{charCode: "*".charCodeAt(0)}]}
 });
 MM.Command.UI.execute = function() {
-	MM.App.ui.toggle();
+	ui.toggle();
 }
 
 MM.Command.Pan = Object.create(MM.Command, {

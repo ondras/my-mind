@@ -18,7 +18,6 @@ import "./backend/backend.image.js";
 import "./backend/backend.file.js";
 import "./backend/backend.firebase.js";
 import "./backend/backend.gdrive.js";
-import "./ui/ui.js";
 import "./ui/ui.layout.js";
 import "./ui/ui.shape.js";
 import "./ui/ui.value.js";
@@ -52,6 +51,7 @@ import * as history from "./history.js";
 import * as help from "./ui/help.js";
 import * as notes from "./ui/notes.js";
 import * as clipboard from "./clipboard.js";
+import * as ui from "./ui/ui.js";
 import * as tip from "./ui/tip.js";
 
 
@@ -148,7 +148,6 @@ setInterval(function() {
 	},
 
 	init: function() {
-		this.ui = new MM.UI();
 		this.io = new MM.UI.IO();
 
 
@@ -214,6 +213,7 @@ export function stopEditing() {
 }
 
 function init() {
+	ui.init(); // FIXME presunout ui/xxx:init sem
 	help.init();
 	clipboard.init();
 	tip.init();
@@ -230,7 +230,6 @@ function init() {
 }
 
 function syncPort() { // fixme k cemu?
-	let ui = (MM as any).App.ui;
 	let portSize = [window.innerWidth - ui.getWidth(), window.innerHeight];
 	port.style.width = portSize[0] + "px";
 	port.style.height = portSize[1] + "px";

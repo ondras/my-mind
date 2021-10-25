@@ -2,8 +2,8 @@ import * as ui from "./ui/ui.js";
 
 
 function handleEvent(e: KeyboardEvent) {
-	/* mode 2a: ignore keyboard when the activeElement resides somewhere inside of the UI pane */
-	if (ui.node.contains(document.activeElement)) { return; }
+	// mode 2a: ignore keyboard when the activeElement resides somewhere inside of the UI pane
+	if (ui.isActive()) { return; }
 
 	let command = MM.Command.getAll().find(command => {
 		if (!command.isValid()) { return false; }

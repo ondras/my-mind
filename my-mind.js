@@ -13,11 +13,11 @@
     this._thenPromises = [];
     executor && executor(this.fulfill.bind(this), this.reject.bind(this));
   };
-  Promise.resolve = function(value) {
-    return new Promise().fulfill(value);
+  Promise.resolve = function(value2) {
+    return new Promise().fulfill(value2);
   };
-  Promise.reject = function(value) {
-    return new Promise().reject(value);
+  Promise.reject = function(value2) {
+    return new Promise().reject(value2);
   };
   Promise.prototype.then = function(onFulfilled, onRejected) {
     this._cb.fulfilled.push(onFulfilled);
@@ -29,21 +29,21 @@
     }
     return thenPromise;
   };
-  Promise.prototype.fulfill = function(value) {
+  Promise.prototype.fulfill = function(value2) {
     if (this._state != 0) {
       return this;
     }
     this._state = 1;
-    this._value = value;
+    this._value = value2;
     this._processQueue();
     return this;
   };
-  Promise.prototype.reject = function(value) {
+  Promise.prototype.reject = function(value2) {
     if (this._state != 0) {
       return this;
     }
     this._state = 2;
-    this._value = value;
+    this._value = value2;
     this._processQueue();
     return this;
   };
@@ -73,11 +73,11 @@
     try {
       var returned = cb(this._value);
       if (returned && typeof returned.then == "function") {
-        var fulfillThenPromise = function(value) {
-          thenPromise.fulfill(value);
+        var fulfillThenPromise = function(value2) {
+          thenPromise.fulfill(value2);
         };
-        var rejectThenPromise = function(value) {
-          thenPromise.reject(value);
+        var rejectThenPromise = function(value2) {
+          thenPromise.reject(value2);
         };
         returned.then(fulfillThenPromise, rejectThenPromise);
       } else {
@@ -102,9 +102,9 @@
       }
       return all;
     },
-    getByProperty: function(property, value) {
+    getByProperty: function(property, value2) {
       return this.getAll().filter((item) => {
-        return item[property] == value;
+        return item[property] == value2;
       })[0] || null;
     },
     getById: function(id) {
@@ -983,17 +983,17 @@
     get value() {
       return this._value;
     }
-    set value(value) {
-      this._value = value;
+    set value(value2) {
+      this._value = value2;
       this.update();
     }
     get resolvedValue() {
-      const value = this._value;
-      if (typeof value == "number") {
-        return value;
+      const value2 = this._value;
+      if (typeof value2 == "number") {
+        return value2;
       }
       let childValues = this.children.map((child) => child.resolvedValue);
-      switch (value) {
+      switch (value2) {
         case "max":
           return Math.max(...childValues);
           break;
@@ -1015,25 +1015,25 @@
     get status() {
       return this._status;
     }
-    set status(status) {
-      this._status = status;
+    set status(status2) {
+      this._status = status2;
       this.update();
     }
     get resolvedStatus() {
-      let status = this._status;
-      if (status == "computed") {
+      let status2 = this._status;
+      if (status2 == "computed") {
         return this.children.every((child) => {
           return child.resolvedStatus !== false;
         });
       } else {
-        return status;
+        return status2;
       }
     }
     get icon() {
       return this._icon;
     }
-    set icon(icon) {
-      this._icon = icon;
+    set icon(icon2) {
+      this._icon = icon2;
       this.update();
     }
     get side() {
@@ -1045,8 +1045,8 @@
     get color() {
       return this._color;
     }
-    set color(color) {
-      this._color = color;
+    set color(color2) {
+      this._color = color2;
       this.update({ children: true });
     }
     get resolvedColor() {
@@ -1062,8 +1062,8 @@
     get layout() {
       return this._layout;
     }
-    set layout(layout) {
-      this._layout = layout;
+    set layout(layout2) {
+      this._layout = layout2;
       this.update({ children: true });
     }
     get resolvedLayout() {
@@ -1079,8 +1079,8 @@
     get shape() {
       return this._shape;
     }
-    set shape(shape) {
-      this._shape = shape;
+    set shape(shape2) {
+      this._shape = shape2;
       this.update();
     }
     get resolvedShape() {
@@ -1209,12 +1209,12 @@
       }
     }
     updateIcon() {
-      var icon = this._icon;
+      var icon2 = this._icon;
       this.dom.icon.className = "icon";
-      this.dom.icon.hidden = !icon;
-      if (icon) {
+      this.dom.icon.hidden = !icon2;
+      if (icon2) {
         this.dom.icon.classList.add("fa");
-        this.dom.icon.classList.add(icon);
+        this.dom.icon.classList.add(icon2);
       }
     }
     updateValue() {
@@ -1376,10 +1376,10 @@
     }
   };
   var SetLayout = class extends Action {
-    constructor(item, layout) {
+    constructor(item, layout2) {
       super();
       this.item = item;
-      this.layout = layout;
+      this.layout = layout2;
       this.oldLayout = item.layout;
     }
     do() {
@@ -1390,10 +1390,10 @@
     }
   };
   var SetShape = class extends Action {
-    constructor(item, shape) {
+    constructor(item, shape2) {
       super();
       this.item = item;
-      this.shape = shape;
+      this.shape = shape2;
       this.oldShape = item.shape;
     }
     do() {
@@ -1404,10 +1404,10 @@
     }
   };
   var SetColor = class extends Action {
-    constructor(item, color) {
+    constructor(item, color2) {
       super();
       this.item = item;
-      this.color = color;
+      this.color = color2;
       this.oldColor = item.color;
     }
     do() {
@@ -1438,10 +1438,10 @@
     }
   };
   var SetValue = class extends Action {
-    constructor(item, value) {
+    constructor(item, value2) {
       super();
       this.item = item;
-      this.value = value;
+      this.value = value2;
       this.oldValue = item.value;
     }
     do() {
@@ -1452,10 +1452,10 @@
     }
   };
   var SetStatus = class extends Action {
-    constructor(item, status) {
+    constructor(item, status2) {
       super();
       this.item = item;
-      this.status = status;
+      this.status = status2;
       this.oldStatus = item.status;
     }
     do() {
@@ -1466,10 +1466,10 @@
     }
   };
   var SetIcon = class extends Action {
-    constructor(item, icon) {
+    constructor(item, icon2) {
       super();
       this.item = item;
-      this.icon = icon;
+      this.icon = icon2;
       this.oldIcon = item.icon;
     }
     do() {
@@ -1632,6 +1632,64 @@
   }
   function close() {
     node4.hidden = true;
+  }
+
+  // .js/ui/ui.js
+  var node5 = document.querySelector(".ui");
+  MM.UI = {};
+  var layout;
+  var shape;
+  var icon;
+  var color;
+  var value;
+  var status;
+  function isActive() {
+    return node5.contains(document.activeElement);
+  }
+  function toggle2() {
+    node5.hidden = !node5.hidden;
+    publish("ui-change", this);
+  }
+  function getWidth() {
+    return node5.hidden ? 0 : node5.offsetWidth;
+  }
+  function update() {
+    [layout, shape, icon, value, status].forEach((ui4) => ui4.update());
+  }
+  function onClick(e) {
+    let target = e.target;
+    if (target.nodeName.toLowerCase() != "select") {
+      focus();
+    }
+    if (target == node5.querySelector("#toggle")) {
+      this.toggle();
+      return;
+    }
+    let current2 = target;
+    while (current2 != document) {
+      let command = node5.dataset.command;
+      if (command) {
+        MM.Command[command].execute();
+        return;
+      }
+      current2 = node5.parentNode;
+    }
+  }
+  function init3() {
+    layout = new MM.UI.Layout();
+    shape = new MM.UI.Shape();
+    icon = new MM.UI.Icon();
+    color = new MM.UI.Color();
+    value = new MM.UI.Value();
+    status = new MM.UI.Status();
+    subscribe("item-select", update);
+    subscribe("item-change", (_message, publisher) => {
+      if (publisher == currentItem) {
+        update();
+      }
+    });
+    node5.addEventListener("click", onClick);
+    node5.addEventListener("change", (_) => focus());
   }
 
   // .js/command/command.js
@@ -1819,7 +1877,7 @@
     keys: { value: [{ charCode: "*".charCodeAt(0) }] }
   });
   MM.Command.UI.execute = function() {
-    MM.App.ui.toggle();
+    toggle2();
   };
   MM.Command.Pan = Object.create(MM.Command, {
     label: { value: "Pan the map" },
@@ -2029,8 +2087,8 @@
   });
   MM.Command.Yes.execute = function() {
     var item = currentItem;
-    var status = item.status === true ? null : true;
-    var action2 = new SetStatus(item, status);
+    var status2 = item.status === true ? null : true;
+    var action2 = new SetStatus(item, status2);
     action(action2);
   };
   MM.Command.No = Object.create(MM.Command, {
@@ -2039,8 +2097,8 @@
   });
   MM.Command.No.execute = function() {
     var item = currentItem;
-    var status = item.status === false ? null : false;
-    var action2 = new SetStatus(item, status);
+    var status2 = item.status === false ? null : false;
+    var action2 = new SetStatus(item, status2);
     action(action2);
   };
   MM.Command.Computed = Object.create(MM.Command, {
@@ -2049,8 +2107,8 @@
   });
   MM.Command.Computed.execute = function() {
     var item = currentItem;
-    var status = item.status == "computed" ? null : "computed";
-    var action2 = new SetStatus(item, status);
+    var status2 = item.status == "computed" ? null : "computed";
+    var action2 = new SetStatus(item, status2);
     action(action2);
   };
 
@@ -2072,8 +2130,8 @@
       40: "bottom"
     };
     var dir = dirs[e.keyCode];
-    var layout = app.currentItem.resolvedLayout;
-    var item = layout.pick(app.currentItem, dir);
+    var layout2 = app.currentItem.resolvedLayout;
+    var item = layout2.pick(app.currentItem, dir);
     app.selectItem(item);
   };
   MM.Command.SelectRoot = Object.create(MM.Command, {
@@ -2279,9 +2337,9 @@
     if (direction == "1") {
       json.side = "right";
     }
-    var color = node9.getAttribute("color");
-    if (color) {
-      var re = color.match(/^#(....)(....)(....)$/);
+    var color2 = node9.getAttribute("color");
+    if (color2) {
+      var re = color2.match(/^#(....)(....)(....)$/);
       if (re) {
         var r = parseInt(re[1], 16) >> 8;
         var g = parseInt(re[2], 16) >> 8;
@@ -2523,14 +2581,14 @@
     return this._request("GET", url);
   };
   MM.Backend.WebDAV._request = async function(method, url, data) {
-    let init8 = {
+    let init9 = {
       method,
       credentials: "include"
     };
     if (data) {
-      init8.body = data;
+      init9.body = data;
     }
-    let response = await fetch(url, init8);
+    let response = await fetch(url, init9);
     let text = await response.text();
     if (response.status == 200) {
       return text;
@@ -2930,111 +2988,42 @@
     return promise;
   };
 
-  // .js/ui/ui.js
-  var node5;
-  MM.UI = function() {
-    this._node = document.querySelector(".ui");
-    node5 = this._node;
-    this._toggle = this._node.querySelector("#toggle");
-    this._layout = new MM.UI.Layout();
-    this._shape = new MM.UI.Shape();
-    this._icon = new MM.UI.Icon();
-    this._color = new MM.UI.Color();
-    this._value = new MM.UI.Value();
-    this._status = new MM.UI.Status();
-    subscribe("item-select", this);
-    subscribe("item-change", this);
-    this._node.addEventListener("click", this);
-    this._node.addEventListener("change", this);
-  };
-  MM.UI.prototype.handleMessage = function(message, publisher) {
-    switch (message) {
-      case "item-select":
-        this._update();
-        break;
-      case "item-change":
-        if (publisher == currentItem) {
-          this._update();
-        }
-        break;
-    }
-  };
-  MM.UI.prototype.handleEvent = function(e) {
-    switch (e.type) {
-      case "click":
-        if (e.target.nodeName.toLowerCase() != "select") {
-          focus();
-        }
-        if (e.target == this._toggle) {
-          this.toggle();
-          return;
-        }
-        var node9 = e.target;
-        while (node9 != document) {
-          var command = node9.getAttribute("data-command");
-          if (command) {
-            MM.Command[command].execute();
-            return;
-          }
-          node9 = node9.parentNode;
-        }
-        break;
-      case "change":
-        focus();
-        break;
-    }
-  };
-  MM.UI.prototype.toggle = function() {
-    this._node.hidden = !this._node.hidden;
-    publish("ui-change", this);
-  };
-  MM.UI.prototype.getWidth = function() {
-    return this._node.hidden ? 0 : this._node.offsetWidth;
-  };
-  MM.UI.prototype._update = function() {
-    this._layout.update();
-    this._shape.update();
-    this._icon.update();
-    this._value.update();
-    this._status.update();
-  };
-
   // .js/ui/ui.layout.js
   MM.UI.Layout = function() {
     this._select = document.querySelector("#layout");
-    let layout = repo.get("map");
-    this._select.append(new Option(layout.label, layout.id));
+    let layout2 = repo.get("map");
+    this._select.append(new Option(layout2.label, layout2.id));
     var label = this._buildGroup("Graph");
     let graphOptions = ["right", "left", "bottom", "top"].map((name) => {
-      let layout2 = repo.get(`graph-${name}`);
-      return new Option(layout2.label, layout2.id);
+      let layout3 = repo.get(`graph-${name}`);
+      return new Option(layout3.label, layout3.id);
     });
     label.append(...graphOptions);
     var label = this._buildGroup("Tree");
     let treeOptions = ["right", "left"].map((name) => {
-      let layout2 = repo.get(`tree-${name}`);
-      return new Option(layout2.label, layout2.id);
+      let layout3 = repo.get(`tree-${name}`);
+      return new Option(layout3.label, layout3.id);
     });
     label.append(...treeOptions);
     this._select.addEventListener("change", this);
   };
   MM.UI.Layout.prototype.update = function() {
-    var value = "";
-    var layout = currentItem.layout;
-    if (layout) {
-      value = layout.id;
+    var value2 = "";
+    var layout2 = currentItem.layout;
+    if (layout2) {
+      value2 = layout2.id;
     }
-    this._select.value = value;
+    this._select.value = value2;
     this._getOption("").disabled = currentItem.isRoot;
     this._getOption("map").disabled = !currentItem.isRoot;
   };
   MM.UI.Layout.prototype.handleEvent = function(e) {
-    var layout = repo.get(this._select.value);
-    var action2 = new SetLayout(currentItem, layout);
+    var layout2 = repo.get(this._select.value);
+    var action2 = new SetLayout(currentItem, layout2);
     action(action2);
   };
-  MM.UI.Layout.prototype._getOption = function(value) {
-    return this._select.querySelector("option[value='" + value + "']");
+  MM.UI.Layout.prototype._getOption = function(value2) {
+    return this._select.querySelector("option[value='" + value2 + "']");
   };
   MM.UI.Layout.prototype._buildGroup = function(label) {
     var node9 = document.createElement("optgroup");
@@ -3046,22 +3035,22 @@
   // .js/ui/ui.shape.js
   MM.UI.Shape = function() {
     this._select = document.querySelector("#shape");
-    repo2.forEach((shape) => {
-      this._select.append(new Option(shape.label, shape.id));
+    repo2.forEach((shape2) => {
+      this._select.append(new Option(shape2.label, shape2.id));
     });
     this._select.addEventListener("change", this);
   };
   MM.UI.Shape.prototype.update = function() {
-    var value = "";
-    var shape = currentItem.shape;
-    if (shape) {
-      value = shape.id;
+    var value2 = "";
+    var shape2 = currentItem.shape;
+    if (shape2) {
+      value2 = shape2.id;
     }
-    this._select.value = value;
+    this._select.value = value2;
   };
   MM.UI.Shape.prototype.handleEvent = function(e) {
-    var shape = repo2.get(this._select.value);
-    var action2 = new SetShape(currentItem, shape);
+    var shape2 = repo2.get(this._select.value);
+    var action2 = new SetShape(currentItem, shape2);
     action(action2);
   };
 
@@ -3071,21 +3060,21 @@
     this._select.addEventListener("change", this);
   };
   MM.UI.Value.prototype.update = function() {
-    var value = currentItem.value;
-    if (value === null) {
-      value = "";
+    var value2 = currentItem.value;
+    if (value2 === null) {
+      value2 = "";
     }
-    if (typeof value == "number") {
-      value = "num";
+    if (typeof value2 == "number") {
+      value2 = "num";
     }
-    this._select.value = value;
+    this._select.value = value2;
   };
   MM.UI.Value.prototype.handleEvent = function(e) {
-    var value = this._select.value;
-    if (value == "num") {
+    var value2 = this._select.value;
+    if (value2 == "num") {
       MM.Command.Value.execute();
     } else {
-      var action2 = new SetValue(currentItem, value || null);
+      var action2 = new SetValue(currentItem, value2 || null);
       action(action2);
     }
   };
@@ -3096,13 +3085,13 @@
     "no": false,
     "": null
   };
-  function statusToString(status) {
+  function statusToString(status2) {
     for (let key in STATUS_MAP) {
-      if (STATUS_MAP[key] === status) {
+      if (STATUS_MAP[key] === status2) {
         return key;
       }
     }
-    return status;
+    return status2;
   }
   function stringToStatus(str) {
     return str in STATUS_MAP ? STATUS_MAP[str] : str;
@@ -3115,8 +3104,8 @@
     this._select.value = statusToString(currentItem.status);
   };
   MM.UI.Status.prototype.handleEvent = function(e) {
-    let status = stringToStatus(this._select.value);
-    var action2 = SetStatus(currentItem, status);
+    let status2 = stringToStatus(this._select.value);
+    var action2 = SetStatus(currentItem, status2);
     action(action2);
   };
 
@@ -3135,8 +3124,8 @@
     if (!e.target.hasAttribute("data-color")) {
       return;
     }
-    var color = e.target.getAttribute("data-color") || null;
-    var action2 = new SetColor(currentItem, color);
+    var color2 = e.target.getAttribute("data-color") || null;
+    var action2 = new SetColor(currentItem, color2);
     action(action2);
   };
 
@@ -3164,9 +3153,9 @@
     this._backends = {};
     var ids = ["local", "firebase", "gdrive", "file", "webdav", "image"];
     ids.forEach(function(id) {
-      var ui2 = MM.UI.Backend.getById(id);
-      ui2.init(this._backend);
-      this._backends[id] = ui2;
+      var ui4 = MM.UI.Backend.getById(id);
+      ui4.init(this._backend);
+      this._backends[id] = ui4;
     }, this);
     this._backend.value = localStorage.getItem(this._prefix + "backend") || MM.Backend.File.id;
     this._backend.addEventListener("change", this);
@@ -4157,7 +4146,7 @@
 
   // .js/keyboard.js
   function handleEvent(e) {
-    if (node5.contains(document.activeElement)) {
+    if (isActive()) {
       return;
     }
     let command = MM.Command.getAll().find((command2) => {
@@ -4171,7 +4160,7 @@
       command.execute(e);
     }
   }
-  function init3() {
+  function init4() {
     window.addEventListener("keydown", handleEvent);
     window.addEventListener("keypress", handleEvent);
   }
@@ -4193,7 +4182,7 @@
   // .js/menu.js
   var node6 = document.querySelector("#menu");
   var port;
-  function init4(port_) {
+  function init5(port_) {
     port = port_;
     [...node6.querySelectorAll("[data-command]")].forEach((button) => {
       let commandName = button.dataset.command;
@@ -4253,7 +4242,7 @@
     previousDragState: null
   };
   var port2;
-  function init5(port_) {
+  function init6(port_) {
     port2 = port_;
     port2.addEventListener("touchstart", onDragStart);
     port2.addEventListener("mousedown", onDragStart);
@@ -4482,7 +4471,7 @@
       focus();
     }
   }
-  function update(html2) {
+  function update2(html2) {
     if (html2.trim().length === 0) {
       currentItem.notes = null;
     } else {
@@ -4493,7 +4482,7 @@
 
   // .js/ui/tip.js
   var node8 = document.querySelector("#tip");
-  function init6() {
+  function init7() {
     node8.addEventListener("click", hide);
     subscribe("command-child", hide);
     subscribe("command-sibling", hide);
@@ -4539,7 +4528,7 @@
           if (e.data && e.data.action) {
             switch (e.data.action) {
               case "setContent":
-                update(e.data.value);
+                update2(e.data.value);
                 break;
               case "closeEditor":
                 close3();
@@ -4554,7 +4543,6 @@
       }
     },
     init: function() {
-      this.ui = new MM.UI();
       this.io = new MM.UI.IO();
       window.addEventListener("resize", this);
       window.addEventListener("beforeunload", this);
@@ -4606,25 +4594,25 @@
     editing = false;
     return currentItem.stopEditing();
   }
-  function init7() {
+  function init8() {
+    init3();
     init2();
     init();
-    init6();
-    init3();
-    init4(port3);
+    init7();
+    init4();
     init5(port3);
+    init6(port3);
     MM.App.init();
     window.addEventListener("load", (e) => {
       MM.App.io.restore();
     });
   }
   function syncPort() {
-    let ui2 = MM.App.ui;
-    let portSize = [window.innerWidth - ui2.getWidth(), window.innerHeight];
+    let portSize = [window.innerWidth - getWidth(), window.innerHeight];
     port3.style.width = portSize[0] + "px";
     port3.style.height = portSize[1] + "px";
-    throbber.style.right = 20 + ui2.getWidth() + "px";
+    throbber.style.right = 20 + getWidth() + "px";
     currentMap && currentMap.ensureItemVisibility(currentItem);
   }
-  init7();
+  init8();
 })();
