@@ -2,6 +2,7 @@ import * as pubsub from "../pubsub.js";
 import * as history from "../history.js";
 import * as app from "../my-mind.js";
 import * as help from "../ui/help.js";
+import * as notes from "../ui/notes.js";
 import * as clipboard from "../clipboard.js";
 import * as actions from "../action.js";
 import * as ui from "../ui/ui.js";

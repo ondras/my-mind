@@ -41,24 +41,26 @@ function onClick(e: MouseEvent) {
 	if (target.nodeName.toLowerCase() != "select") { clipboard.focus(); } // focus the clipboard (2c)
 
 	if (target == node.querySelector("#toggle")) { // fixme nelibi
-		this.toggle();
+		toggle();
 		return;
 	}
 
 	let current: Node = target;
 	while (current != document) {
-		let command = node.dataset.command;
+		let command = (current as HTMLElement).dataset.command;
 		if (command) {
 			MM.Command[command].execute();
 			return;
 		}
-		current = node.parentNode;
+		current = current.parentNode;
 	}
 }
 
 export function init() {
-	[layout, shape, icon, value, status, color,
-	help, tip].forEach(ui => ui.init());
+	[
+		layout, shape, icon, value, status, color,
+		help, tip, notes
+	].forEach(ui => ui.init());
 
 	pubsub.subscribe("item-select", update);
 	pubsub.subscribe("item-change", (_message: string, publisher: any) => {

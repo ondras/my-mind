@@ -75,45 +75,9 @@ setInterval(function() {
  *
  */
 (MM as any).App = {
-	io: null,
-
-	handleEvent: function(e) {
-		switch (e.type) {
-			case "keyup":
-				// fixme blbe
-				if (e.key === "Escape") {
-					notes.close();
-					help.close();
-				}
-				break;
-
-			case "message":
-				// fixme blbe
-				if (e.data && e.data.action) {
-					switch (e.data.action) {
-						case "setContent":
-							notes.update(e.data.value);
-							break;
-
-						case "closeEditor":
-							notes.close();
-							break;
-					}
-				}
-
-				break;
-
-		}
-	},
-
 	init: function() {
 		this.io = new MM.UI.IO();
-
-		window.addEventListener("keyup", this);
-		window.addEventListener("message", this, false);
-		pubsub.subscribe("item-change", this);
-	},
-
+	}
 }
 
 const port = document.querySelector<HTMLElement>("#port");
@@ -165,7 +129,7 @@ export function stopEditing() {
 }
 
 function init() {
-	ui.init(); // FIXME presunout ui/xxx:init sem
+	ui.init();
 	clipboard.init();
 	keyboard.init();
 	menu.init(port);

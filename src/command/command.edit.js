@@ -1,5 +1,7 @@
 import * as app from "../my-mind.js";
 import * as actions from "../action.js";
+import * as notes from "../ui/notes.js";
+import * as help from "../ui/help.js";
 
 
 MM.Command.Edit = Object.create(MM.Command, {
@@ -44,15 +46,21 @@ MM.Command.Newline.execute = function() {
 }
 
 MM.Command.Cancel = Object.create(MM.Command, {
-	editMode: {value: true},
+	editMode: {value: null},
 	keys: {value: [{keyCode: 27}]}
 });
 MM.Command.Cancel.execute = function() {
-	app.stopEditing();
-	var oldText = app.currentItem.text;
-	if (!oldText) { /* newly added node */
-		var action = new actions.RemoveItem(app.currentItem);
-		app.action(action);
+	if (app.editing) {
+		app.stopEditing();
+		var oldText = app.currentItem.text;
+		if (!oldText) { // newly added node
+			var action = new actions.RemoveItem(app.currentItem);
+			app.action(action);
+		}
+	} else {
+		notes.close();
+		help.close();
+		MM.App.io.hide();
 	}
 }
 

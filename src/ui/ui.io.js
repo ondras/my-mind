@@ -82,14 +82,12 @@ MM.UI.IO.prototype.show = function(mode) {
 	this._heading.innerHTML = mode;
 
 	this._syncBackend();
-	window.addEventListener("keydown", this);
 }
 
 MM.UI.IO.prototype.hide = function() {
 	if (this._node.hidden) { return; }
 	this._node.hidden = true;
 	clipboard.focus();
-	window.removeEventListener("keydown", this);
 }
 
 MM.UI.IO.prototype.quickSave = function() {
@@ -102,10 +100,6 @@ MM.UI.IO.prototype.quickSave = function() {
 
 MM.UI.IO.prototype.handleEvent = function(e) {
 	switch (e.type) {
-		case "keydown":
-			if (e.keyCode == 27) { this.hide(); }
-		break;
-
 		case "change":
 			this._syncBackend();
 		break;

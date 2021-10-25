@@ -9,17 +9,28 @@ export function toggle() {
 }
 
 export function close() {
-	if (!node.hidden) {
-		node.hidden = true;
-		clipboard.focus();
-	}
+	if (node.hidden) { return ; }
+	node.hidden = true;
+	clipboard.focus();
 }
 
-export function update(html) {
+function update(html: string) {
 	if (html.trim().length === 0) {
 		app.currentItem.notes = null;
 	} else {
 		app.currentItem.notes = html;
 	}
 	app.currentItem.update();
+}
+
+function onMessage(e: MessageEvent) {
+	if (!e.data || !e.data.action) { return; }
+	switch (e.data.action) {
+		case "setContent": update(e.data.value); break;
+		case "closeEditor": close(); break;
+	}
+}
+
+export function init() {
+	window.addEventListener("message", onMessage);
 }

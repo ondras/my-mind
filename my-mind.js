@@ -1648,15 +1648,58 @@
     node4.hidden = true;
   }
 
+  // .js/ui/notes.js
+  var notes_exports = {};
+  __export(notes_exports, {
+    close: () => close2,
+    init: () => init3,
+    toggle: () => toggle2
+  });
+  var node5 = document.querySelector("#notes");
+  function toggle2() {
+    node5.hidden = !node5.hidden;
+  }
+  function close2() {
+    if (node5.hidden) {
+      return;
+    }
+    node5.hidden = true;
+    focus();
+  }
+  function update(html2) {
+    if (html2.trim().length === 0) {
+      currentItem.notes = null;
+    } else {
+      currentItem.notes = html2;
+    }
+    currentItem.update();
+  }
+  function onMessage(e) {
+    if (!e.data || !e.data.action) {
+      return;
+    }
+    switch (e.data.action) {
+      case "setContent":
+        update(e.data.value);
+        break;
+      case "closeEditor":
+        close2();
+        break;
+    }
+  }
+  function init3() {
+    window.addEventListener("message", onMessage);
+  }
+
   // .js/ui/color.js
   var color_exports = {};
   __export(color_exports, {
-    init: () => init3
+    init: () => init4
   });
-  var node5 = document.querySelector("#color");
-  function init3() {
-    node5.addEventListener("click", onClick);
-    [...node5.querySelectorAll("[data-color]")].forEach((item) => {
+  var node6 = document.querySelector("#color");
+  function init4() {
+    node6.addEventListener("click", onClick);
+    [...node6.querySelectorAll("[data-color]")].forEach((item) => {
       item.style.backgroundColor = item.dataset.color;
     });
   }
@@ -1670,14 +1713,14 @@
   // .js/ui/value.js
   var value_exports = {};
   __export(value_exports, {
-    init: () => init4,
-    update: () => update
+    init: () => init5,
+    update: () => update2
   });
   var select = document.querySelector("#value");
-  function init4() {
+  function init5() {
     select.addEventListener("change", onChange);
   }
-  function update() {
+  function update2() {
     let value = currentItem.value;
     if (value === null) {
       value = "";
@@ -1700,8 +1743,8 @@
   // .js/ui/layout.js
   var layout_exports = {};
   __export(layout_exports, {
-    init: () => init5,
-    update: () => update2
+    init: () => init6,
+    update: () => update3
   });
 
   // .js/layout/graph.js
@@ -2059,7 +2102,7 @@
 
   // .js/ui/layout.js
   var select2 = document.querySelector("#layout");
-  function init5() {
+  function init6() {
     let layout = repo.get("map");
     select2.append(new Option(layout.label, layout.id));
     let label = buildGroup("Graph");
@@ -2076,7 +2119,7 @@
     label.append(...treeOptions);
     select2.addEventListener("change", onChange2);
   }
-  function update2() {
+  function update3() {
     var value = "";
     var layout = currentItem.layout;
     if (layout) {
@@ -2104,14 +2147,14 @@
   // .js/ui/icon.js
   var icon_exports = {};
   __export(icon_exports, {
-    init: () => init6,
-    update: () => update3
+    init: () => init7,
+    update: () => update4
   });
   var select3 = document.querySelector("#icons");
-  function init6() {
+  function init7() {
     select3.addEventListener("change", onChange3);
   }
-  function update3() {
+  function update4() {
     select3.value = currentItem.icon || "";
   }
   function onChange3() {
@@ -2122,8 +2165,8 @@
   // .js/ui/shape.js
   var shape_exports = {};
   __export(shape_exports, {
-    init: () => init7,
-    update: () => update4
+    init: () => init8,
+    update: () => update5
   });
 
   // .js/shape/box.js
@@ -2169,13 +2212,13 @@
 
   // .js/ui/shape.js
   var select4 = document.querySelector("#shape");
-  function init7() {
+  function init8() {
     repo2.forEach((shape) => {
       select4.append(new Option(shape.label, shape.id));
     });
     select4.addEventListener("change", onChange4);
   }
-  function update4() {
+  function update5() {
     let value = "";
     let shape = currentItem.shape;
     if (shape) {
@@ -2192,8 +2235,8 @@
   // .js/ui/status.js
   var status_exports = {};
   __export(status_exports, {
-    init: () => init8,
-    update: () => update5
+    init: () => init9,
+    update: () => update6
   });
   var select5 = document.querySelector("#status");
   var STATUS_MAP = {
@@ -2212,10 +2255,10 @@
   function stringToStatus(str) {
     return str in STATUS_MAP ? STATUS_MAP[str] : str;
   }
-  function init8() {
+  function init9() {
     select5.addEventListener("change", onChange5);
   }
-  function update5() {
+  function update6() {
     select5.value = statusToString(currentItem.status);
   }
   function onChange5() {
@@ -2227,35 +2270,35 @@
   // .js/ui/tip.js
   var tip_exports = {};
   __export(tip_exports, {
-    init: () => init9
+    init: () => init10
   });
-  var node6 = document.querySelector("#tip");
-  function init9() {
-    node6.addEventListener("click", hide);
+  var node7 = document.querySelector("#tip");
+  function init10() {
+    node7.addEventListener("click", hide);
     subscribe("command-child", hide);
     subscribe("command-sibling", hide);
   }
   function hide() {
     unsubscribe("command-child", hide);
     unsubscribe("command-sibling", hide);
-    node6.removeEventListener("click", hide);
-    node6.hidden = true;
+    node7.removeEventListener("click", hide);
+    node7.hidden = true;
   }
 
   // .js/ui/ui.js
-  var node7 = document.querySelector(".ui");
+  var node8 = document.querySelector(".ui");
   MM.UI = {};
   function isActive() {
-    return node7.contains(document.activeElement);
+    return node8.contains(document.activeElement);
   }
-  function toggle2() {
-    node7.hidden = !node7.hidden;
+  function toggle3() {
+    node8.hidden = !node8.hidden;
     publish("ui-change", this);
   }
   function getWidth() {
-    return node7.hidden ? 0 : node7.offsetWidth;
+    return node8.hidden ? 0 : node8.offsetWidth;
   }
-  function update6() {
+  function update7() {
     [layout_exports, shape_exports, icon_exports, value_exports, status_exports].forEach((ui4) => ui4.update());
   }
   function onClick2(e) {
@@ -2263,21 +2306,21 @@
     if (target.nodeName.toLowerCase() != "select") {
       focus();
     }
-    if (target == node7.querySelector("#toggle")) {
-      this.toggle();
+    if (target == node8.querySelector("#toggle")) {
+      toggle3();
       return;
     }
     let current2 = target;
     while (current2 != document) {
-      let command = node7.dataset.command;
+      let command = current2.dataset.command;
       if (command) {
         MM.Command[command].execute();
         return;
       }
-      current2 = node7.parentNode;
+      current2 = current2.parentNode;
     }
   }
-  function init10() {
+  function init11() {
     [
       layout_exports,
       shape_exports,
@@ -2286,16 +2329,17 @@
       status_exports,
       color_exports,
       help_exports,
-      tip_exports
+      tip_exports,
+      notes_exports
     ].forEach((ui4) => ui4.init());
-    subscribe("item-select", update6);
+    subscribe("item-select", update7);
     subscribe("item-change", (_message, publisher) => {
       if (publisher == currentItem) {
-        update6();
+        update7();
       }
     });
-    node7.addEventListener("click", onClick2);
-    node7.addEventListener("change", (_) => focus());
+    node8.addEventListener("click", onClick2);
+    node8.addEventListener("change", (_) => focus());
   }
 
   // .js/command/command.js
@@ -2322,7 +2366,7 @@
     return MM.Command.isValid.call(this);
   };
   MM.Command.Notes.execute = function() {
-    notes.toggle();
+    toggle2();
   };
   MM.Command.Undo = Object.create(MM.Command, {
     label: { value: "Undo" },
@@ -2483,7 +2527,7 @@
     keys: { value: [{ charCode: "*".charCodeAt(0) }] }
   });
   MM.Command.UI.execute = function() {
-    toggle2();
+    toggle3();
   };
   MM.Command.Pan = Object.create(MM.Command, {
     label: { value: "Pan the map" },
@@ -2620,15 +2664,21 @@
     currentItem.update({ parent: true, children: true });
   };
   MM.Command.Cancel = Object.create(MM.Command, {
-    editMode: { value: true },
+    editMode: { value: null },
     keys: { value: [{ keyCode: 27 }] }
   });
   MM.Command.Cancel.execute = function() {
-    stopEditing();
-    var oldText = currentItem.text;
-    if (!oldText) {
-      var action2 = new RemoveItem(currentItem);
-      action(action2);
+    if (editing) {
+      stopEditing();
+      var oldText = currentItem.text;
+      if (!oldText) {
+        var action2 = new RemoveItem(currentItem);
+        action(action2);
+      }
+    } else {
+      close2();
+      close();
+      MM.App.io.hide();
     }
   };
   MM.Command.Style = Object.create(MM.Command, {
@@ -3187,14 +3237,14 @@
     return this._request("GET", url);
   };
   MM.Backend.WebDAV._request = async function(method, url, data) {
-    let init15 = {
+    let init16 = {
       method,
       credentials: "include"
     };
     if (data) {
-      init15.body = data;
+      init16.body = data;
     }
-    let response = await fetch(url, init15);
+    let response = await fetch(url, init16);
     let text = await response.text();
     if (response.status == 200) {
       return text;
@@ -3666,7 +3716,6 @@
     this._node.hidden = false;
     this._heading.innerHTML = mode2;
     this._syncBackend();
-    window.addEventListener("keydown", this);
   };
   MM.UI.IO.prototype.hide = function() {
     if (this._node.hidden) {
@@ -3674,7 +3723,6 @@
     }
     this._node.hidden = true;
     focus();
-    window.removeEventListener("keydown", this);
   };
   MM.UI.IO.prototype.quickSave = function() {
     if (this._currentBackend) {
@@ -3685,11 +3733,6 @@
   };
   MM.UI.IO.prototype.handleEvent = function(e) {
     switch (e.type) {
-      case "keydown":
-        if (e.keyCode == 27) {
-          this.hide();
-        }
-        break;
       case "change":
         this._syncBackend();
         break;
@@ -4218,7 +4261,7 @@
       command.execute(e);
     }
   }
-  function init11() {
+  function init12() {
     window.addEventListener("keydown", handleEvent);
     window.addEventListener("keypress", handleEvent);
   }
@@ -4238,22 +4281,22 @@
   }
 
   // .js/menu.js
-  var node8 = document.querySelector("#menu");
+  var node9 = document.querySelector("#menu");
   var port;
-  function init12(port_) {
+  function init13(port_) {
     port = port_;
-    [...node8.querySelectorAll("[data-command]")].forEach((button) => {
+    [...node9.querySelectorAll("[data-command]")].forEach((button) => {
       let commandName = button.dataset.command;
       button.textContent = MM.Command[commandName].label;
     });
     port.addEventListener("mousedown", handleEvent2);
-    node8.addEventListener("mousedown", handleEvent2);
-    close2();
+    node9.addEventListener("mousedown", handleEvent2);
+    close3();
   }
   function open(point) {
-    node8.hidden = false;
-    let w = node8.offsetWidth;
-    let h = node8.offsetHeight;
+    node9.hidden = false;
+    let w = node9.offsetWidth;
+    let h = node9.offsetHeight;
     let left = point[0];
     let top = point[1];
     if (left > port.offsetWidth / 2) {
@@ -4262,12 +4305,12 @@
     if (top > port.offsetHeight / 2) {
       top -= h;
     }
-    node8.style.left = `${left}px`;
-    node8.style.top = `${top}px`;
+    node9.style.left = `${left}px`;
+    node9.style.top = `${top}px`;
   }
   function handleEvent2(e) {
-    if (e.currentTarget != node8) {
-      close2();
+    if (e.currentTarget != node9) {
+      close3();
       return;
     }
     e.stopPropagation();
@@ -4281,10 +4324,10 @@
       return;
     }
     command.execute();
-    close2();
+    close3();
   }
-  function close2() {
-    node8.hidden = true;
+  function close3() {
+    node9.hidden = true;
   }
 
   // .js/mouse.js
@@ -4300,7 +4343,7 @@
     previousDragState: null
   };
   var port2;
-  function init13(port_) {
+  function init14(port_) {
     port2 = port_;
     port2.addEventListener("touchstart", onDragStart);
     port2.addEventListener("mousedown", onDragStart);
@@ -4521,53 +4564,10 @@
     }
   }
 
-  // .js/ui/notes.js
-  var node9 = document.querySelector("#notes");
-  function close3() {
-    if (!node9.hidden) {
-      node9.hidden = true;
-      focus();
-    }
-  }
-  function update7(html2) {
-    if (html2.trim().length === 0) {
-      currentItem.notes = null;
-    } else {
-      currentItem.notes = html2;
-    }
-    currentItem.update();
-  }
-
   // .js/my-mind.js
   MM.App = {
-    io: null,
-    handleEvent: function(e) {
-      switch (e.type) {
-        case "keyup":
-          if (e.key === "Escape") {
-            close3();
-            close();
-          }
-          break;
-        case "message":
-          if (e.data && e.data.action) {
-            switch (e.data.action) {
-              case "setContent":
-                update7(e.data.value);
-                break;
-              case "closeEditor":
-                close3();
-                break;
-            }
-          }
-          break;
-      }
-    },
     init: function() {
       this.io = new MM.UI.IO();
-      window.addEventListener("keyup", this);
-      window.addEventListener("message", this, false);
-      subscribe("item-change", this);
     }
   };
   var port3 = document.querySelector("#port");
@@ -4610,12 +4610,12 @@
     editing = false;
     return currentItem.stopEditing();
   }
-  function init14() {
-    init10();
-    init();
+  function init15() {
     init11();
-    init12(port3);
+    init();
+    init12();
     init13(port3);
+    init14(port3);
     MM.App.init();
     subscribe("item-change", (_message, publisher) => {
       if (publisher.isRoot && publisher.map == currentMap) {
@@ -4641,5 +4641,5 @@
     throbber.style.right = 20 + getWidth() + "px";
     currentMap && currentMap.ensureItemVisibility(currentItem);
   }
-  init14();
+  init15();
 })();
