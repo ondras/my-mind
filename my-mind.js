@@ -8,93 +8,7 @@
   };
 
   // .js/mm.js
-  window.MM = {};
-
-  // .js/promise.js
-  window.Promise = function(executor) {
-    this._state = 0;
-    this._value = null;
-    this._cb = {
-      fulfilled: [],
-      rejected: []
-    };
-    this._thenPromises = [];
-    executor && executor(this.fulfill.bind(this), this.reject.bind(this));
-  };
-  Promise.resolve = function(value) {
-    return new Promise().fulfill(value);
-  };
-  Promise.reject = function(value) {
-    return new Promise().reject(value);
-  };
-  Promise.prototype.then = function(onFulfilled, onRejected) {
-    this._cb.fulfilled.push(onFulfilled);
-    this._cb.rejected.push(onRejected);
-    var thenPromise = new Promise();
-    this._thenPromises.push(thenPromise);
-    if (this._state > 0) {
-      setTimeout(this._processQueue.bind(this), 0);
-    }
-    return thenPromise;
-  };
-  Promise.prototype.fulfill = function(value) {
-    if (this._state != 0) {
-      return this;
-    }
-    this._state = 1;
-    this._value = value;
-    this._processQueue();
-    return this;
-  };
-  Promise.prototype.reject = function(value) {
-    if (this._state != 0) {
-      return this;
-    }
-    this._state = 2;
-    this._value = value;
-    this._processQueue();
-    return this;
-  };
-  Promise.prototype.chain = function(promise) {
-    return this.then(promise.fulfill.bind(promise), promise.reject.bind(promise));
-  };
-  Promise.prototype["catch"] = function(onRejected) {
-    return this.then(null, onRejected);
-  };
-  Promise.prototype._processQueue = function() {
-    while (this._thenPromises.length) {
-      var onFulfilled = this._cb.fulfilled.shift();
-      var onRejected = this._cb.rejected.shift();
-      this._executeCallback(this._state == 1 ? onFulfilled : onRejected);
-    }
-  };
-  Promise.prototype._executeCallback = function(cb) {
-    var thenPromise = this._thenPromises.shift();
-    if (typeof cb != "function") {
-      if (this._state == 1) {
-        thenPromise.fulfill(this._value);
-      } else {
-        thenPromise.reject(this._value);
-      }
-      return;
-    }
-    try {
-      var returned = cb(this._value);
-      if (returned && typeof returned.then == "function") {
-        var fulfillThenPromise = function(value) {
-          thenPromise.fulfill(value);
-        };
-        var rejectThenPromise = function(value) {
-          thenPromise.reject(value);
-        };
-        returned.then(fulfillThenPromise, rejectThenPromise);
-      } else {
-        thenPromise.fulfill(returned);
-      }
-    } catch (e) {
-      thenPromise.reject(e);
-    }
-  };
+  window.MM = { UI: {} };
 
   // .js/repo.js
   MM.Repo = {
@@ -125,2694 +39,6 @@
       return o;
     }
   };
-
-  // .js/html.js
-  function node(name, attrs) {
-    let node10 = document.createElement(name);
-    Object.assign(node10, attrs);
-    return node10;
-  }
-
-  // .js/svg.js
-  var NS = "http://www.w3.org/2000/svg";
-  function node2(name, attrs) {
-    let node10 = document.createElementNS(NS, name);
-    for (let attr in attrs) {
-      node10.setAttribute(attr, attrs[attr]);
-    }
-    return node10;
-  }
-  function group() {
-    return node2("g");
-  }
-  function foreignObject() {
-    let fo = node2("foreignObject");
-    fo.setAttribute("width", "1");
-    fo.setAttribute("height", "1");
-    return fo;
-  }
-
-  // .js/pubsub.js
-  var subscribers = new Map();
-  function publish(message, publisher, data) {
-    let subs = subscribers.get(message) || [];
-    subs.forEach((sub) => {
-      if (typeof sub == "function") {
-        sub(message, publisher, data);
-      } else {
-        sub.handleMessage(message, publisher, data);
-      }
-    });
-  }
-  function subscribe(message, subscriber) {
-    if (!subscribers.has(message)) {
-      subscribers.set(message, []);
-    }
-    let subs = subscribers.get(message) || [];
-    let index2 = subs.indexOf(subscriber);
-    if (index2 == -1) {
-      subs.push(subscriber);
-    }
-  }
-  function unsubscribe(message, subscriber) {
-    let subs = subscribers.get(message) || [];
-    let index2 = subs.indexOf(subscriber);
-    if (index2 > -1) {
-      subs.splice(index2, 1);
-    }
-  }
-
-  // .js/layout/layout.js
-  var Layout = class {
-    constructor(id, label, childDirection = "right") {
-      this.id = id;
-      this.label = label;
-      this.childDirection = childDirection;
-      this.SPACING_CHILD = 4;
-      repo.set(this.id, this);
-    }
-    getChildDirection(_child) {
-      return this.childDirection;
-    }
-    computeAlignment(item) {
-      let direction = item.isRoot ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item);
-      if (direction == "left") {
-        return "right";
-      }
-      return "left";
-    }
-    pick(item, dir) {
-      var opposite = {
-        left: "right",
-        right: "left",
-        top: "bottom",
-        bottom: "top"
-      };
-      if (!item.isCollapsed()) {
-        var children = item.children;
-        for (var i = 0; i < children.length; i++) {
-          var child = children[i];
-          if (this.getChildDirection(child) == dir) {
-            return child;
-          }
-        }
-      }
-      if (item.isRoot) {
-        return item;
-      }
-      var parentLayout = item.parent.resolvedLayout;
-      var thisChildDirection = parentLayout.getChildDirection(item);
-      if (thisChildDirection == dir) {
-        return item;
-      } else if (thisChildDirection == opposite[dir]) {
-        return item.parent;
-      } else {
-        return parentLayout.pickSibling(item, dir == "left" || dir == "top" ? -1 : 1);
-      }
-    }
-    pickSibling(item, dir) {
-      if (item.isRoot) {
-        return item;
-      }
-      var children = item.parent.children;
-      var index2 = children.indexOf(item);
-      index2 += dir;
-      index2 = (index2 + children.length) % children.length;
-      return children[index2];
-    }
-    anchorToggle(item, point, side) {
-      var node10 = item.dom.toggle;
-      var w = node10.offsetWidth;
-      var h = node10.offsetHeight;
-      let [l, t] = point;
-      switch (side) {
-        case "left":
-          t -= h / 2;
-          l -= w;
-          break;
-        case "right":
-          t -= h / 2;
-          break;
-        case "top":
-          l -= w / 2;
-          t -= h;
-          break;
-        case "bottom":
-          l -= w / 2;
-          break;
-      }
-      node10.style.left = Math.round(l) + "px";
-      node10.style.top = Math.round(t) + "px";
-    }
-    getChildAnchor(item, side) {
-      let { position, contentPosition, contentSize } = item;
-      if (side == "left" || side == "right") {
-        var pos = position[0] + contentPosition[0];
-        if (side == "left") {
-          pos += contentSize[0];
-        }
-      } else {
-        var pos = position[1] + contentPosition[1];
-        if (side == "top") {
-          pos += contentSize[1];
-        }
-      }
-      return pos;
-    }
-    computeChildrenBBox(children, childIndex) {
-      var bbox = [0, 0];
-      var rankIndex = (childIndex + 1) % 2;
-      children.forEach((child) => {
-        const { size } = child;
-        bbox[rankIndex] = Math.max(bbox[rankIndex], size[rankIndex]);
-        bbox[childIndex] += size[childIndex];
-      });
-      if (children.length > 1) {
-        bbox[childIndex] += this.SPACING_CHILD * (children.length - 1);
-      }
-      return bbox;
-    }
-  };
-  var repo = new Map();
-
-  // .js/map.js
-  var UPDATE_OPTIONS = {
-    children: true
-  };
-  var Map2 = class {
-    constructor(options) {
-      this.node = node2("svg");
-      this.position = [0, 0];
-      options = Object.assign({
-        root: "My Mind Map",
-        layout: repo.get("map")
-      }, options);
-      let root = new Item();
-      root.text = options.root;
-      root.layout = options.layout;
-      this.root = root;
-    }
-    static fromJSON(data) {
-      return new this().fromJSON(data);
-    }
-    toJSON() {
-      let data = {
-        root: this._root.toJSON()
-      };
-      return data;
-    }
-    fromJSON(data) {
-      this.root = Item.fromJSON(data.root);
-      return this;
-    }
-    get root() {
-      return this._root;
-    }
-    set root(root) {
-      const { node: node10 } = this;
-      this._root = root;
-      node10.innerHTML = "";
-      node10.append(root.dom.node);
-      root.parent = this;
-    }
-    mergeWith(data) {
-      var ids = [];
-      var current2 = currentItem;
-      var node10 = current2;
-      while (true) {
-        ids.push(node10.id);
-        if (node10.parent == this) {
-          break;
-        }
-        node10 = node10.parent;
-      }
-      this._root.mergeWith(data.root);
-      if (current2.map) {
-        let node11 = current2;
-        let hidden = false;
-        while (true) {
-          if (node11.parent == this) {
-            break;
-          }
-          node11 = node11.parent;
-          if (node11.isCollapsed()) {
-            hidden = true;
-          }
-        }
-        if (!hidden) {
-          return;
-        }
-      }
-      editing && stopEditing();
-      var idMap = {};
-      var scan = function(item) {
-        idMap[item.id] = item;
-        item.children.forEach(scan);
-      };
-      scan(this._root);
-      while (ids.length) {
-        var id = ids.shift();
-        if (id in idMap) {
-          selectItem(idMap[id]);
-          return;
-        }
-      }
-    }
-    get isVisible() {
-      return !!this.node.parentNode;
-    }
-    update(options) {
-      options = Object.assign({}, UPDATE_OPTIONS, options);
-      options.children && this._root.update({ parent: false, children: true });
-      const { node: node10 } = this;
-      const { size } = this._root;
-      node10.setAttribute("width", String(size[0]));
-      node10.setAttribute("height", String(size[1]));
-    }
-    show(where) {
-      where.append(this.node);
-      this.update();
-      this.center();
-      selectItem(this._root);
-    }
-    hide() {
-      this.node.remove();
-    }
-    center() {
-      let { size } = this._root;
-      let parent = this.node.parentNode;
-      let position = [
-        (parent.offsetWidth - size[0]) / 2,
-        (parent.offsetHeight - size[1]) / 2
-      ].map(Math.round);
-      this.moveTo(position);
-    }
-    moveBy(diff) {
-      let position = this.position.map((p, i) => p + diff[i]);
-      return this.moveTo(position);
-    }
-    getClosestItem(point) {
-      let all = [];
-      function scan(item) {
-        let rect = item.dom.content.getBoundingClientRect();
-        let dx = rect.left + rect.width / 2 - point[0];
-        let dy = rect.top + rect.height / 2 - point[1];
-        let distance = dx * dx + dy * dy;
-        all.push({ dx, dy, item, distance });
-        if (!item.isCollapsed()) {
-          item.children.forEach(scan);
-        }
-      }
-      scan(this._root);
-      all.sort((a, b) => a.distance - b.distance);
-      return all[0];
-    }
-    getItemFor(node10) {
-      let content = node10.closest(".content");
-      if (!content) {
-        return null;
-      }
-      function scanForContent(item) {
-        if (item.dom.content == content) {
-          return item;
-        }
-        for (let child of item.children) {
-          let found = scanForContent(child);
-          if (found) {
-            return found;
-          }
-        }
-        return null;
-      }
-      return scanForContent(this._root);
-    }
-    ensureItemVisibility(item) {
-      const padding = 10;
-      let itemRect = item.dom.content.getBoundingClientRect();
-      var parentRect = this.node.parentNode.getBoundingClientRect();
-      var delta = [0, 0];
-      var dx = parentRect.left - itemRect.left + padding;
-      if (dx > 0) {
-        delta[0] = dx;
-      }
-      var dx = parentRect.right - itemRect.right - padding;
-      if (dx < 0) {
-        delta[0] = dx;
-      }
-      var dy = parentRect.top - itemRect.top + padding;
-      if (dy > 0) {
-        delta[1] = dy;
-      }
-      var dy = parentRect.bottom - itemRect.bottom - padding;
-      if (dy < 0) {
-        delta[1] = dy;
-      }
-      if (delta[0] || delta[1]) {
-        this.moveBy(delta);
-      }
-    }
-    get name() {
-      let name = this._root.text;
-      return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
-    }
-    get id() {
-      return this._root.id;
-    }
-    pick(item, direction) {
-      var candidates = [];
-      var currentRect = item.dom.content.getBoundingClientRect();
-      this._getPickCandidates(currentRect, this._root, direction, candidates);
-      if (!candidates.length) {
-        return item;
-      }
-      candidates.sort((a, b) => a.dist - b.dist);
-      return candidates[0].item;
-    }
-    _getPickCandidates(currentRect, item, direction, candidates) {
-      if (!item.isCollapsed()) {
-        item.children.forEach(function(child) {
-          this._getPickCandidates(currentRect, child, direction, candidates);
-        }, this);
-      }
-      var node10 = item.dom.content;
-      var rect = node10.getBoundingClientRect();
-      if (direction == "left" || direction == "right") {
-        var x1 = currentRect.left + currentRect.width / 2;
-        var x2 = rect.left + rect.width / 2;
-        if (direction == "left" && x2 > x1) {
-          return;
-        }
-        if (direction == "right" && x2 < x1) {
-          return;
-        }
-        var diff1 = currentRect.top - rect.bottom;
-        var diff2 = rect.top - currentRect.bottom;
-        var dist = Math.abs(x2 - x1);
-      } else {
-        var y1 = currentRect.top + currentRect.height / 2;
-        var y2 = rect.top + rect.height / 2;
-        if (direction == "top" && y2 > y1) {
-          return;
-        }
-        if (direction == "bottom" && y2 < y1) {
-          return;
-        }
-        var diff1 = currentRect.left - rect.right;
-        var diff2 = rect.left - currentRect.right;
-        var dist = Math.abs(y2 - y1);
-      }
-      var diff = Math.max(diff1, diff2);
-      if (diff > 0) {
-        return;
-      }
-      if (!dist || dist < diff) {
-        return;
-      }
-      candidates.push({ item, dist });
-    }
-    moveTo(point) {
-      this.position = point;
-      this.node.style.left = `${point[0]}px`;
-      this.node.style.top = `${point[1]}px`;
-    }
-  };
-
-  // .js/clipboard.js
-  var node3 = document.createElement("textarea");
-  var DELAY = 50;
-  var storedItem = null;
-  var mode = "";
-  function init() {
-    node3.style.position = "absolute";
-    node3.style.width = "0";
-    node3.style.height = "0";
-    node3.style.left = "-100px";
-    node3.style.top = "-100px";
-    document.body.append(node3);
-  }
-  function focus() {
-    node3.focus();
-    empty();
-  }
-  function copy(sourceItem) {
-    endCut();
-    storedItem = sourceItem.clone();
-    mode = "copy";
-    expose();
-  }
-  function paste(targetItem) {
-    setTimeout(() => {
-      let pasted = node3.value;
-      empty();
-      if (!pasted) {
-        return;
-      }
-      if (storedItem && pasted == MM.Format.Plaintext.to(storedItem.toJSON())) {
-        pasteItem(storedItem, targetItem);
-      } else {
-        pastePlaintext(pasted, targetItem);
-      }
-    }, DELAY);
-  }
-  function pasteItem(sourceItem, targetItem) {
-    let action2;
-    switch (mode) {
-      case "cut":
-        if (sourceItem == targetItem || sourceItem.parent == targetItem) {
-          endCut();
-          return;
-        }
-        let item = targetItem;
-        while (true) {
-          if (item == sourceItem) {
-            return;
-          }
-          if (item.parent instanceof Map2) {
-            break;
-          }
-          item = item.parent;
-        }
-        action2 = new MoveItem(sourceItem, targetItem);
-        action(action2);
-        endCut();
-        break;
-      case "copy":
-        action2 = new AppendItem(targetItem, sourceItem.clone());
-        action(action2);
-        break;
-    }
-  }
-  function pastePlaintext(plaintext, targetItem) {
-    if (mode == "cut") {
-      endCut();
-    }
-    let json = MM.Format.Plaintext.from(plaintext);
-    let map = Map2.fromJSON(json);
-    let root = map.root;
-    if (root.text) {
-      let action2 = new AppendItem(targetItem, root);
-      action(action2);
-    } else {
-      let actions12 = root.children.map((item) => new actions12.AppendItem(targetItem, item));
-      let action2 = new actions12.Multi(actions12);
-      action(action2);
-    }
-  }
-  function cut(sourceItem) {
-    endCut();
-    storedItem = sourceItem;
-    storedItem.dom.node.classList.add("cut");
-    mode = "cut";
-    expose();
-  }
-  function expose() {
-    let json = storedItem.toJSON();
-    let plaintext = MM.Format.Plaintext.to(json);
-    node3.value = plaintext;
-    node3.selectionStart = 0;
-    node3.selectionEnd = node3.value.length;
-    setTimeout(empty, DELAY);
-  }
-  function empty() {
-    node3.value = "\n";
-    node3.selectionStart = 0;
-    node3.selectionEnd = node3.value.length;
-  }
-  function endCut() {
-    if (mode != "cut") {
-      return;
-    }
-    storedItem.dom.node.classList.remove("cut");
-    storedItem = null;
-    mode = "";
-  }
-
-  // .js/shape/shape.js
-  var VERTICAL_OFFSET = 0.5;
-  var Shape = class {
-    constructor(id, label) {
-      this.id = id;
-      this.label = label;
-      repo2.set(this.id, this);
-    }
-    update(item) {
-      item.dom.content.style.borderColor = item.resolvedColor;
-    }
-    getHorizontalAnchor(item) {
-      const { contentPosition, contentSize } = item;
-      return Math.round(contentPosition[0] + contentSize[0] / 2) + 0.5;
-    }
-    getVerticalAnchor(item) {
-      const { contentPosition, contentSize } = item;
-      return contentPosition[1] + Math.round(contentSize[1] * VERTICAL_OFFSET) + 0.5;
-    }
-  };
-  var repo2 = new Map();
-
-  // .js/item.js
-  var COLOR = "#999";
-  var RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
-  var UPDATE_OPTIONS2 = {
-    parent: true,
-    children: false
-  };
-  var Item = class {
-    constructor() {
-      this._id = generateId();
-      this._parent = null;
-      this._collapsed = false;
-      this._icon = null;
-      this._notes = null;
-      this._value = null;
-      this._status = null;
-      this._color = null;
-      this._side = null;
-      this._shape = null;
-      this._layout = null;
-      this.originalText = "";
-      this.dom = {
-        node: group(),
-        connectors: group(),
-        content: node("div"),
-        notes: node("div"),
-        status: node("span"),
-        icon: node("span"),
-        value: node("span"),
-        text: node("div"),
-        toggle: node("div")
-      };
-      this.children = [];
-      const { dom } = this;
-      dom.node.classList.add("item");
-      dom.content.classList.add("content");
-      dom.notes.classList.add("notes-indicator");
-      dom.status.classList.add("status");
-      dom.icon.classList.add("icon");
-      dom.value.classList.add("value");
-      dom.text.classList.add("text");
-      dom.toggle.classList.add("toggle");
-      dom.icon.classList.add("icon");
-      let foContent = foreignObject();
-      dom.node.append(dom.connectors, foContent);
-      foContent.append(dom.content);
-      dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
-      dom.toggle.addEventListener("click", this);
-    }
-    static fromJSON(data) {
-      return new this().fromJSON(data);
-    }
-    get id() {
-      return this._id;
-    }
-    get parent() {
-      return this._parent;
-    }
-    set parent(parent) {
-      this._parent = parent;
-      this.update({ children: true });
-    }
-    get size() {
-      const bbox = this.dom.node.getBBox();
-      return [bbox.width, bbox.height];
-    }
-    get position() {
-      const { node: node10 } = this.dom;
-      const transform = node10.getAttribute("transform");
-      return transform.match(/\d+/g).map(Number);
-    }
-    set position(position) {
-      const { node: node10 } = this.dom;
-      const transform = `translate(${position.join(" ")})`;
-      node10.setAttribute("transform", transform);
-    }
-    get contentSize() {
-      const { content } = this.dom;
-      const fo = content.parentNode;
-      return [fo.getAttribute("width"), fo.getAttribute("height")].map(Number);
-    }
-    get contentPosition() {
-      const { content } = this.dom;
-      const fo = content.parentNode;
-      return [fo.getAttribute("x"), fo.getAttribute("y")].map(Number);
-    }
-    set contentPosition(position) {
-      const { content } = this.dom;
-      const fo = content.parentNode;
-      fo.setAttribute("x", String(position[0]));
-      fo.setAttribute("y", String(position[1]));
-    }
-    toJSON() {
-      let data = {
-        id: this.id,
-        text: this.text,
-        notes: this.notes
-      };
-      if (this._side) {
-        data.side = this._side;
-      }
-      if (this._color) {
-        data.color = this._color;
-      }
-      if (this._icon) {
-        data.icon = this._icon;
-      }
-      if (this._value) {
-        data.value = this._value;
-      }
-      if (this._status) {
-        data.status = this._status;
-      }
-      if (this._layout) {
-        data.layout = this._layout.id;
-      }
-      if (this._shape) {
-        data.shape = this._shape.id;
-      }
-      if (this._collapsed) {
-        data.collapsed = 1;
-      }
-      if (this.children.length) {
-        data.children = this.children.map((child) => child.toJSON());
-      }
-      return data;
-    }
-    fromJSON(data) {
-      this.text = data.text;
-      if (data.id) {
-        this._id = data.id;
-      }
-      if (data.notes) {
-        this.notes = data.notes;
-      }
-      if (data.side) {
-        this._side = data.side;
-      }
-      if (data.color) {
-        this._color = data.color;
-      }
-      if (data.icon) {
-        this._icon = data.icon;
-      }
-      if (data.value) {
-        this._value = data.value;
-      }
-      if (data.status) {
-        if (data.status == "yes") {
-          this._status = true;
-        } else if (data.status == "no") {
-          this._status = false;
-        } else {
-          this._status = data.status;
-        }
-      }
-      if (data.collapsed) {
-        this.collapse();
-      }
-      if (data.layout) {
-        this._layout = repo.get(data.layout);
-      }
-      if (data.shape) {
-        this.shape = repo2.get(data.shape);
-      }
-      (data.children || []).forEach((child) => {
-        this.insertChild(Item.fromJSON(child));
-      });
-      return this;
-    }
-    mergeWith(data) {
-      var dirty = 0;
-      if (this.text != data.text && !this.dom.text.contentEditable) {
-        this.text = data.text;
-      }
-      if (this._side != data.side) {
-        this._side = data.side;
-        dirty = 1;
-      }
-      if (this._color != data.color) {
-        this._color = data.color;
-        dirty = 2;
-      }
-      if (this._icon != data.icon) {
-        this._icon = data.icon;
-        dirty = 1;
-      }
-      if (this._value != data.value) {
-        this._value = data.value;
-        dirty = 1;
-      }
-      if (this._status != data.status) {
-        this._status = data.status;
-        dirty = 1;
-      }
-      if (this._collapsed != !!data.collapsed) {
-        this[this._collapsed ? "expand" : "collapse"]();
-      }
-      if (this.layout != data.layout) {
-        this._layout = repo.get(data.layout);
-        dirty = 2;
-      }
-      if (this.shape != data.shape) {
-        this.shape = repo2.get(data.shape);
-      }
-      (data.children || []).forEach((child, index2) => {
-        if (index2 >= this.children.length) {
-          this.insertChild(Item.fromJSON(child));
-        } else {
-          var myChild = this.children[index2];
-          if (myChild.id == child.id) {
-            myChild.mergeWith(child);
-          } else {
-            this.removeChild(this.children[index2]);
-            this.insertChild(Item.fromJSON(child), index2);
-          }
-        }
-      });
-      var newLength = (data.children || []).length;
-      while (this.children.length > newLength) {
-        this.removeChild(this.children[this.children.length - 1]);
-      }
-      if (dirty == 1) {
-        this.update({ children: false });
-      }
-      if (dirty == 2) {
-        this.update({ children: true });
-      }
-    }
-    clone() {
-      var data = this.toJSON();
-      var removeId = function(obj) {
-        delete obj.id;
-        obj.children && obj.children.forEach(removeId);
-      };
-      removeId(data);
-      return Item.fromJSON(data);
-    }
-    select() {
-      this.dom.node.classList.add("current");
-      if (window.editor) {
-        if (this.notes) {
-          window.editor.setContent(this.notes);
-        } else {
-          window.editor.setContent("");
-        }
-      }
-      this.map.ensureItemVisibility(this);
-      focus();
-      publish("item-select", this);
-    }
-    deselect() {
-      if (editing) {
-        MM.Command.Finish.execute();
-      }
-      this.dom.node.classList.remove("current");
-    }
-    update(options = {}) {
-      options = Object.assign({}, UPDATE_OPTIONS2, options);
-      const { map, children, parent } = this;
-      if (!map || !map.isVisible) {
-        return;
-      }
-      if (options.children) {
-        let childUpdateOptions = { parent: false, children: true };
-        children.forEach((child) => child.update(childUpdateOptions));
-      }
-      publish("item-change", this);
-      this.updateStatus();
-      this.updateIcon();
-      this.updateValue();
-      const { resolvedLayout, resolvedShape, dom } = this;
-      dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
-      dom.node.classList.toggle("collapsed", this._collapsed);
-      dom.node.dataset.shape = resolvedShape.id;
-      dom.node.dataset.align = resolvedLayout.computeAlignment(this);
-      let fo = dom.content.parentNode;
-      fo.setAttribute("width", String(dom.content.offsetWidth));
-      fo.setAttribute("height", String(dom.content.offsetHeight));
-      dom.connectors.innerHTML = "";
-      resolvedLayout.update(this);
-      resolvedShape.update(this);
-      if (options.parent) {
-        parent.update({ children: false });
-      }
-    }
-    get text() {
-      return this.dom.text.innerHTML;
-    }
-    set text(text) {
-      this.dom.text.innerHTML = text;
-      findLinks(this.dom.text);
-      this.update();
-    }
-    get notes() {
-      return this._notes;
-    }
-    set notes(notes3) {
-      this._notes = notes3;
-      this.update();
-    }
-    collapse() {
-      if (this._collapsed) {
-        return;
-      }
-      this._collapsed = true;
-      this.update();
-    }
-    expand() {
-      if (!this._collapsed) {
-        return;
-      }
-      this._collapsed = false;
-      this.update();
-      this.update({ children: true });
-    }
-    isCollapsed() {
-      return this._collapsed;
-    }
-    get value() {
-      return this._value;
-    }
-    set value(value) {
-      this._value = value;
-      this.update();
-    }
-    get resolvedValue() {
-      const value = this._value;
-      if (typeof value == "number") {
-        return value;
-      }
-      let childValues = this.children.map((child) => child.resolvedValue);
-      switch (value) {
-        case "max":
-          return Math.max(...childValues);
-          break;
-        case "min":
-          return Math.min(...childValues);
-          break;
-        case "sum":
-          return childValues.reduce((prev, cur) => prev + cur, 0);
-          break;
-        case "avg":
-          var sum = childValues.reduce((prev, cur) => prev + cur, 0);
-          return childValues.length ? sum / childValues.length : 0;
-          break;
-        default:
-          return 0;
-          break;
-      }
-    }
-    get status() {
-      return this._status;
-    }
-    set status(status) {
-      this._status = status;
-      this.update();
-    }
-    get resolvedStatus() {
-      let status = this._status;
-      if (status == "computed") {
-        return this.children.every((child) => {
-          return child.resolvedStatus !== false;
-        });
-      } else {
-        return status;
-      }
-    }
-    get icon() {
-      return this._icon;
-    }
-    set icon(icon) {
-      this._icon = icon;
-      this.update();
-    }
-    get side() {
-      return this._side;
-    }
-    set side(side) {
-      this._side = side;
-    }
-    get color() {
-      return this._color;
-    }
-    set color(color) {
-      this._color = color;
-      this.update({ children: true });
-    }
-    get resolvedColor() {
-      if (this._color) {
-        return this._color;
-      }
-      const { parent } = this;
-      if (parent instanceof Item) {
-        return parent.resolvedColor;
-      }
-      return COLOR;
-    }
-    get layout() {
-      return this._layout;
-    }
-    set layout(layout) {
-      this._layout = layout;
-      this.update({ children: true });
-    }
-    get resolvedLayout() {
-      if (this._layout) {
-        return this._layout;
-      }
-      const { parent } = this;
-      if (!(parent instanceof Item)) {
-        throw new Error("Non-connected item does not have layout");
-      }
-      return parent.resolvedLayout;
-    }
-    get shape() {
-      return this._shape;
-    }
-    set shape(shape) {
-      this._shape = shape;
-      this.update();
-    }
-    get resolvedShape() {
-      if (this._shape) {
-        return this._shape;
-      }
-      let depth = 0;
-      let node10 = this;
-      while (!node10.isRoot) {
-        depth++;
-        node10 = node10.parent;
-      }
-      switch (depth) {
-        case 0:
-          return repo2.get("ellipse");
-        case 1:
-          return repo2.get("box");
-        default:
-          return repo2.get("underline");
-      }
-    }
-    get map() {
-      let item = this.parent;
-      while (item) {
-        if (item instanceof Map2) {
-          return item;
-        }
-        item = item.parent;
-      }
-      return null;
-    }
-    get isRoot() {
-      return this.parent instanceof Map2;
-    }
-    insertChild(child, index2) {
-      if (!child) {
-        child = new Item();
-      } else if (child.parent && child.parent instanceof Item) {
-        child.parent.removeChild(child);
-      }
-      if (!this.children.length) {
-        this.dom.node.appendChild(this.dom.toggle);
-      }
-      if (arguments.length < 2) {
-        index2 = this.children.length;
-      }
-      var next = null;
-      if (index2 < this.children.length) {
-        next = this.children[index2].dom.node;
-      }
-      this.dom.node.insertBefore(child.dom.node, next);
-      this.children.splice(index2, 0, child);
-      child.parent = this;
-    }
-    removeChild(child) {
-      var index2 = this.children.indexOf(child);
-      this.children.splice(index2, 1);
-      var node10 = child.dom.node;
-      node10.parentNode.removeChild(node10);
-      child.parent = null;
-      if (!this.children.length) {
-        this.dom.toggle.parentNode.removeChild(this.dom.toggle);
-      }
-      this.update();
-    }
-    startEditing() {
-      this.originalText = this.text;
-      this.dom.text.contentEditable = "true";
-      this.dom.text.focus();
-      document.execCommand("styleWithCSS", null, "false");
-      this.dom.text.addEventListener("input", this);
-      this.dom.text.addEventListener("keydown", this);
-      this.dom.text.addEventListener("blur", this);
-    }
-    stopEditing() {
-      this.dom.text.removeEventListener("input", this);
-      this.dom.text.removeEventListener("keydown", this);
-      this.dom.text.removeEventListener("blur", this);
-      this.dom.text.blur();
-      this.dom.text.contentEditable = "false";
-      var result = this.dom.text.innerHTML;
-      this.dom.text.innerHTML = this.originalText;
-      this.originalText = "";
-      this.update();
-      focus();
-      return result;
-    }
-    handleEvent(e) {
-      switch (e.type) {
-        case "input":
-          this.update();
-          this.map.ensureItemVisibility(this);
-          break;
-        case "keydown":
-          if (e.keyCode == 9) {
-            e.preventDefault();
-          }
-          break;
-        case "blur":
-          MM.Command.Finish.execute();
-          break;
-        case "click":
-          if (this._collapsed) {
-            this.expand();
-          } else {
-            this.collapse();
-          }
-          selectItem(this);
-          break;
-      }
-    }
-    updateStatus() {
-      const { resolvedStatus, dom } = this;
-      dom.status.className = "status";
-      dom.status.hidden = false;
-      switch (resolvedStatus) {
-        case true:
-          dom.status.classList.add("yes");
-          break;
-        case false:
-          dom.status.classList.add("no");
-          break;
-        default:
-          dom.status.hidden = true;
-          break;
-      }
-    }
-    updateIcon() {
-      var icon = this._icon;
-      this.dom.icon.className = "icon";
-      this.dom.icon.hidden = !icon;
-      if (icon) {
-        this.dom.icon.classList.add("fa");
-        this.dom.icon.classList.add(icon);
-      }
-    }
-    updateValue() {
-      const { dom, _value } = this;
-      if (_value === null) {
-        dom.value.hidden = true;
-        return;
-      }
-      dom.value.hidden = false;
-      if (typeof _value == "number") {
-        dom.value.textContent = String(_value);
-      } else {
-        let resolved = this.resolvedValue;
-        dom.value.textContent = String(Math.round(resolved) == resolved ? resolved : resolved.toFixed(3));
-      }
-    }
-  };
-  function findLinks(node10) {
-    var children = [].slice.call(node10.childNodes);
-    for (var i = 0; i < children.length; i++) {
-      var child = children[i];
-      switch (child.nodeType) {
-        case 1:
-          if (child.nodeName.toLowerCase() == "a") {
-            continue;
-          }
-          findLinks(child);
-          break;
-        case 3:
-          var result = child.nodeValue.match(RE);
-          if (result) {
-            var before = child.nodeValue.substring(0, result.index);
-            var after = child.nodeValue.substring(result.index + result[0].length);
-            var link = document.createElement("a");
-            link.innerHTML = link.href = result[0];
-            if (before) {
-              node10.insertBefore(document.createTextNode(before), child);
-            }
-            node10.insertBefore(link, child);
-            if (after) {
-              child.nodeValue = after;
-              i--;
-            } else {
-              node10.removeChild(child);
-            }
-          }
-          break;
-      }
-    }
-  }
-  function generateId() {
-    let str = "";
-    for (var i = 0; i < 8; i++) {
-      let code = Math.floor(Math.random() * 26);
-      str += String.fromCharCode("a".charCodeAt(0) + code);
-    }
-    return str;
-  }
-  MM.Item = Item;
-
-  // .js/action.js
-  var Action = class {
-    do() {
-    }
-    undo() {
-    }
-  };
-  var InsertNewItem = class extends Action {
-    constructor(parent, index2) {
-      super();
-      this.parent = parent;
-      this.index = index2;
-      this.item = new Item();
-    }
-    do() {
-      this.parent.expand();
-      this.parent.insertChild(this.item, this.index);
-      selectItem(this.item);
-    }
-    undo() {
-      this.parent.removeChild(this.item);
-      selectItem(this.parent);
-    }
-  };
-  var AppendItem = class extends Action {
-    constructor(parent, item) {
-      super();
-      this.parent = parent;
-      this.item = item;
-    }
-    do() {
-      this.parent.insertChild(this.item);
-      selectItem(this.item);
-    }
-    undo() {
-      this.parent.removeChild(this.item);
-      selectItem(this.parent);
-    }
-  };
-  var RemoveItem = class extends Action {
-    constructor(item) {
-      super();
-      this.item = item;
-      this.parent = item.parent;
-      this.index = this.parent.children.indexOf(this.item);
-    }
-    do() {
-      this.parent.removeChild(this.item);
-      selectItem(this.parent);
-    }
-    undo() {
-      this.parent.insertChild(this.item, this.index);
-      selectItem(this.item);
-    }
-  };
-  var MoveItem = class extends Action {
-    constructor(item, newParent, newIndex, newSide = "") {
-      super();
-      this.item = item;
-      this.newParent = newParent;
-      this.newIndex = newIndex;
-      this.newSide = newSide;
-      this.oldParent = item.parent;
-      this.oldIndex = this.oldParent.children.indexOf(item);
-      this.oldSide = item.side;
-    }
-    do() {
-      const { item, newParent, newIndex, newSide } = this;
-      item.side = newSide;
-      if (newIndex === void 0) {
-        newParent.insertChild(item);
-      } else {
-        newParent.insertChild(item, newIndex);
-      }
-      selectItem(item);
-    }
-    undo() {
-      const { item, oldSide, oldIndex, oldParent, newParent } = this;
-      item.side = oldSide;
-      oldParent.insertChild(item, oldIndex);
-      selectItem(newParent);
-    }
-  };
-  var Swap = class extends Action {
-    constructor(item, diff) {
-      super();
-      this.item = item;
-      this.parent = item.parent;
-      let children = this.parent.children;
-      let sibling = this.parent.resolvedLayout.pickSibling(item, diff);
-      this.sourceIndex = children.indexOf(item);
-      this.targetIndex = children.indexOf(sibling);
-    }
-    do() {
-      this.parent.insertChild(this.item, this.targetIndex);
-    }
-    undo() {
-      this.parent.insertChild(this.item, this.sourceIndex);
-    }
-  };
-  var SetLayout = class extends Action {
-    constructor(item, layout) {
-      super();
-      this.item = item;
-      this.layout = layout;
-      this.oldLayout = item.layout;
-    }
-    do() {
-      this.item.layout = this.layout;
-    }
-    undo() {
-      this.item.layout = this.oldLayout;
-    }
-  };
-  var SetShape = class extends Action {
-    constructor(item, shape) {
-      super();
-      this.item = item;
-      this.shape = shape;
-      this.oldShape = item.shape;
-    }
-    do() {
-      this.item.shape = this.shape;
-    }
-    undo() {
-      this.item.shape = this.oldShape;
-    }
-  };
-  var SetColor = class extends Action {
-    constructor(item, color) {
-      super();
-      this.item = item;
-      this.color = color;
-      this.oldColor = item.color;
-    }
-    do() {
-      this.item.color = this.color;
-    }
-    undo() {
-      this.item.color = this.oldColor;
-    }
-  };
-  var SetText = class extends Action {
-    constructor(item, text) {
-      super();
-      this.item = item;
-      this.text = text;
-      this.oldText = item.text;
-      this.oldValue = item.value;
-    }
-    do() {
-      this.item.text = this.text;
-      let numText = Number(this.text);
-      if (String(numText) == this.text) {
-        this.item.value = numText;
-      }
-    }
-    undo() {
-      this.item.text = this.oldText;
-      this.item.value = this.oldValue;
-    }
-  };
-  var SetValue = class extends Action {
-    constructor(item, value) {
-      super();
-      this.item = item;
-      this.value = value;
-      this.oldValue = item.value;
-    }
-    do() {
-      this.item.value = this.value;
-    }
-    undo() {
-      this.item.value = this.oldValue;
-    }
-  };
-  var SetStatus = class extends Action {
-    constructor(item, status) {
-      super();
-      this.item = item;
-      this.status = status;
-      this.oldStatus = item.status;
-    }
-    do() {
-      this.item.status = this.status;
-    }
-    undo() {
-      this.item.status = this.oldStatus;
-    }
-  };
-  var SetIcon = class extends Action {
-    constructor(item, icon) {
-      super();
-      this.item = item;
-      this.icon = icon;
-      this.oldIcon = item.icon;
-    }
-    do() {
-      this.item.icon = this.icon;
-    }
-    undo() {
-      this.item.icon = this.oldIcon;
-    }
-  };
-  var SetSide = class extends Action {
-    constructor(item, side) {
-      super();
-      this.item = item;
-      this.side = side;
-      this.oldSide = item.side;
-    }
-    do() {
-      this.item.side = this.side;
-      this.item.map.update();
-    }
-    undo() {
-      this.item.side = this.oldSide;
-      this.item.map.update();
-    }
-  };
-
-  // .js/history.js
-  var index = 0;
-  var actions2 = [];
-  function reset() {
-    index = 0;
-    actions2 = [];
-  }
-  function push(action2) {
-    if (index < actions2.length) {
-      actions2.splice(index, actions2.length - index);
-    }
-    actions2.push(action2);
-    index++;
-  }
-  function back() {
-    actions2[--index].undo();
-  }
-  function forward() {
-    actions2[index++].do();
-  }
-  function canBack() {
-    return !!index;
-  }
-  function canForward() {
-    return index != actions2.length;
-  }
-
-  // .js/ui/help.js
-  var help_exports = {};
-  __export(help_exports, {
-    close: () => close,
-    init: () => init2,
-    toggle: () => toggle
-  });
-  var node4 = document.querySelector("#help");
-  var MAP = {
-    8: "Backspace",
-    9: "Tab",
-    13: "\u21A9",
-    32: "Spacebar",
-    33: "PgUp",
-    34: "PgDown",
-    35: "End",
-    36: "Home",
-    37: "\u2190",
-    38: "\u2191",
-    39: "\u2192",
-    40: "\u2193",
-    45: "Insert",
-    46: "Delete",
-    65: "A",
-    68: "D",
-    83: "S",
-    87: "W",
-    112: "F1",
-    113: "F2",
-    114: "F3",
-    115: "F4",
-    116: "F5",
-    117: "F6",
-    118: "F7",
-    119: "F8",
-    120: "F9",
-    121: "F10",
-    "-": "&minus;"
-  };
-  function toggle() {
-    node4.hidden = !node4.hidden;
-  }
-  function init2() {
-    let t = node4.querySelector(".navigation");
-    buildRow(t, "Pan");
-    buildRow(t, "Select");
-    buildRow(t, "SelectRoot");
-    buildRow(t, "SelectParent");
-    buildRow(t, "Center");
-    buildRow(t, "ZoomIn", "ZoomOut");
-    buildRow(t, "Fold");
-    t = node4.querySelector(".manipulation");
-    buildRow(t, "InsertSibling");
-    buildRow(t, "InsertChild");
-    buildRow(t, "Swap");
-    buildRow(t, "Side");
-    buildRow(t, "Delete");
-    buildRow(t, "Copy");
-    buildRow(t, "Cut");
-    buildRow(t, "Paste");
-    t = node4.querySelector(".editing");
-    buildRow(t, "Value");
-    buildRow(t, "Yes", "No", "Computed");
-    buildRow(t, "Edit");
-    buildRow(t, "Newline");
-    buildRow(t, "Bold");
-    buildRow(t, "Italic");
-    buildRow(t, "Underline");
-    buildRow(t, "Strikethrough");
-    t = node4.querySelector(".other");
-    buildRow(t, "Undo", "Redo");
-    buildRow(t, "Save");
-    buildRow(t, "SaveAs");
-    buildRow(t, "Load");
-    buildRow(t, "Help");
-    buildRow(t, "Notes");
-    buildRow(t, "UI");
-  }
-  function buildRow(table, ...commandNames) {
-    var row = table.insertRow(-1);
-    var labels = [];
-    var keys = [];
-    commandNames.forEach((name) => {
-      let command = MM.Command[name];
-      if (!command) {
-        return;
-      }
-      labels.push(command.label);
-      keys = keys.concat(command.keys.map(formatKey));
-    });
-    row.insertCell(-1).textContent = labels.join("/");
-    row.insertCell(-1).textContent = keys.join("/");
-  }
-  function formatKey(key) {
-    var str = "";
-    if (key.ctrlKey) {
-      str += "Ctrl+";
-    }
-    if (key.altKey) {
-      str += "Alt+";
-    }
-    if (key.shiftKey) {
-      str += "Shift+";
-    }
-    if (key.charCode) {
-      var ch = String.fromCharCode(key.charCode);
-      str += MAP[ch] || ch.toUpperCase();
-    }
-    if (key.keyCode) {
-      str += MAP[key.keyCode] || String.fromCharCode(key.keyCode);
-    }
-    return str;
-  }
-  function close() {
-    node4.hidden = true;
-  }
-
-  // .js/ui/notes.js
-  var notes_exports = {};
-  __export(notes_exports, {
-    close: () => close2,
-    init: () => init3,
-    toggle: () => toggle2
-  });
-  var node5 = document.querySelector("#notes");
-  function toggle2() {
-    node5.hidden = !node5.hidden;
-  }
-  function close2() {
-    if (node5.hidden) {
-      return;
-    }
-    node5.hidden = true;
-    focus();
-  }
-  function update(html2) {
-    if (html2.trim().length === 0) {
-      currentItem.notes = null;
-    } else {
-      currentItem.notes = html2;
-    }
-    currentItem.update();
-  }
-  function onMessage(e) {
-    if (!e.data || !e.data.action) {
-      return;
-    }
-    switch (e.data.action) {
-      case "setContent":
-        update(e.data.value);
-        break;
-      case "closeEditor":
-        close2();
-        break;
-    }
-  }
-  function init3() {
-    window.addEventListener("message", onMessage);
-  }
-
-  // .js/ui/color.js
-  var color_exports = {};
-  __export(color_exports, {
-    init: () => init4
-  });
-  var node6 = document.querySelector("#color");
-  function init4() {
-    node6.addEventListener("click", onClick);
-    [...node6.querySelectorAll("[data-color]")].forEach((item) => {
-      item.style.backgroundColor = item.dataset.color;
-    });
-  }
-  function onClick(e) {
-    e.preventDefault();
-    let color = e.target.dataset.color || null;
-    let action2 = new SetColor(currentItem, color);
-    action(action2);
-  }
-
-  // .js/ui/value.js
-  var value_exports = {};
-  __export(value_exports, {
-    init: () => init5,
-    update: () => update2
-  });
-  var select = document.querySelector("#value");
-  function init5() {
-    select.addEventListener("change", onChange);
-  }
-  function update2() {
-    let value = currentItem.value;
-    if (value === null) {
-      value = "";
-    }
-    if (typeof value == "number") {
-      value = "num";
-    }
-    select.value = value;
-  }
-  function onChange() {
-    let value = select.value;
-    if (value == "num") {
-      MM.Command.Value.execute();
-    } else {
-      let action2 = new SetValue(currentItem, value || null);
-      action(action2);
-    }
-  }
-
-  // .js/ui/layout.js
-  var layout_exports = {};
-  __export(layout_exports, {
-    init: () => init6,
-    update: () => update3
-  });
-
-  // .js/layout/graph.js
-  var SPACING_RANK = 16;
-  var R = SPACING_RANK / 2;
-  var GraphLayout = class extends Layout {
-    update(item) {
-      this.layoutItem(item, this.childDirection);
-      if (this.childDirection == "left" || this.childDirection == "right") {
-        this.drawLinesHorizontal(item, this.childDirection);
-      } else {
-        this.drawLinesVertical(item, this.childDirection);
-      }
-    }
-    layoutItem(item, rankDirection) {
-      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
-      var childIndex = (rankIndex + 1) % 2;
-      const { contentSize } = item;
-      var bbox = this.computeChildrenBBox(item.children, childIndex);
-      var rankSize = contentSize[rankIndex];
-      if (bbox[rankIndex]) {
-        rankSize += bbox[rankIndex] + SPACING_RANK;
-      }
-      var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
-      var offset = [0, 0];
-      if (rankDirection == "right") {
-        offset[0] = contentSize[0] + SPACING_RANK;
-      }
-      if (rankDirection == "bottom") {
-        offset[1] = contentSize[1] + SPACING_RANK;
-      }
-      offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
-      this.layoutChildren(item.children, rankDirection, offset, bbox);
-      var labelPos = 0;
-      if (rankDirection == "left") {
-        labelPos = rankSize - contentSize[0];
-      }
-      if (rankDirection == "top") {
-        labelPos = rankSize - contentSize[1];
-      }
-      let contentPosition = [Math.round((childSize - contentSize[childIndex]) / 2), labelPos];
-      if (rankIndex == 0) {
-        contentPosition = contentPosition.reverse();
-      }
-      item.contentPosition = contentPosition;
-    }
-    layoutChildren(children, rankDirection, offset, bbox) {
-      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
-      var childIndex = (rankIndex + 1) % 2;
-      children.forEach((child) => {
-        const { size } = child;
-        if (rankDirection == "left") {
-          offset[0] = bbox[0] - size[0];
-        }
-        if (rankDirection == "top") {
-          offset[1] = bbox[1] - size[1];
-        }
-        child.position = offset;
-        offset[childIndex] += size[childIndex] + this.SPACING_CHILD;
-      });
-      return bbox;
-    }
-    drawLinesHorizontal(item, side) {
-      const { contentPosition, contentSize, resolvedShape, resolvedColor, children, dom } = item;
-      if (children.length == 0) {
-        return;
-      }
-      let itemAnchor = [
-        contentPosition[0] + (side == "right" ? contentSize[0] + 0.5 : -0.5),
-        resolvedShape.getVerticalAnchor(item)
-      ];
-      this.anchorToggle(item, itemAnchor, side);
-      if (item.isCollapsed()) {
-        return;
-      }
-      let d = [];
-      if (children.length == 1) {
-        var child = children[0];
-        const { position, resolvedShape: resolvedShape2 } = child;
-        let childAnchor = [
-          this.getChildAnchor(child, side),
-          resolvedShape2.getVerticalAnchor(child) + position[1]
-        ];
-        let mid = (itemAnchor[0] + childAnchor[0]) / 2;
-        d.push(`M ${itemAnchor}`, `C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`);
-        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-        dom.connectors.append(path2);
-        return;
-      }
-      let center = [
-        itemAnchor[0] + (side == "left" ? -R : R),
-        itemAnchor[1]
-      ];
-      d.push(`M ${itemAnchor}`, `L ${center}`);
-      const firstChild = children[0];
-      const lastChild = children[children.length - 1];
-      const cornerEndX = center[0] + (side == "left" ? -R : R);
-      const sweep = cornerEndX < center[0] ? 1 : 0;
-      let firstAnchor = [
-        this.getChildAnchor(firstChild, side),
-        firstChild.resolvedShape.getVerticalAnchor(firstChild) + firstChild.position[1]
-      ];
-      let lastAnchor = [
-        this.getChildAnchor(lastChild, side),
-        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1]
-      ];
-      d.push(`M ${firstAnchor}`, `L ${cornerEndX} ${firstAnchor[1]}`, `A ${R} ${R} 0 0 ${sweep} ${center[0]} ${firstAnchor[1] + R}`, `L ${center[0]} ${lastAnchor[1] - R}`, `A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${lastAnchor[1]}`, `L ${lastAnchor}`);
-      for (let i = 1; i < children.length - 1; i++) {
-        const c = children[i];
-        const y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
-        let lineStart = [center[0], y];
-        let childAnchor = [this.getChildAnchor(c, side), y];
-        d.push(`M ${lineStart}`, `L ${childAnchor}`);
-      }
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-    drawLinesVertical(item, side) {
-      const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
-      if (children.length == 0) {
-        return;
-      }
-      const height = children.length == 1 ? 2 * R : R;
-      let itemAnchor = [
-        resolvedShape.getHorizontalAnchor(item),
-        side == "top" ? size[1] - contentSize[1] : resolvedShape.getVerticalAnchor(item)
-      ];
-      let center = [
-        itemAnchor[0],
-        (side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
-      ];
-      this.anchorToggle(item, itemAnchor, side);
-      if (item.isCollapsed()) {
-        return;
-      }
-      let d = [];
-      d.push(`M ${itemAnchor}`, `L ${center}`);
-      if (children.length == 1) {
-        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-        dom.connectors.append(path2);
-        return;
-      }
-      const firstChild = children[0];
-      const lastChild = children[children.length - 1];
-      const cornerEndY = center[1] + (side == "top" ? -R : R);
-      const sweep = cornerEndY > center[1] ? 1 : 0;
-      let firstAnchor = [
-        firstChild.resolvedShape.getHorizontalAnchor(firstChild) + firstChild.position[0],
-        this.getChildAnchor(firstChild, side)
-      ];
-      let lastAnchor = [
-        lastChild.resolvedShape.getHorizontalAnchor(lastChild) + lastChild.position[0],
-        this.getChildAnchor(lastChild, side)
-      ];
-      d.push(`M ${firstAnchor}`, `L ${firstAnchor[0]} ${cornerEndY}`, `A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0] + R} ${center[1]}`, `L ${lastAnchor[0] - R} ${center[1]}`, `A ${R} ${R} 0 0 ${sweep} ${lastAnchor[0]} ${cornerEndY}`, `L ${lastAnchor}`);
-      for (var i = 1; i < children.length - 1; i++) {
-        const c = children[i];
-        const x = c.resolvedShape.getHorizontalAnchor(c) + c.position[0];
-        let lineStart = [x, center[1]];
-        let childAnchor = [x, this.getChildAnchor(c, side)];
-        d.push(`M ${lineStart}`, `L ${childAnchor}`);
-      }
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-  };
-  new GraphLayout("graph-bottom", "Bottom", "bottom");
-  new GraphLayout("graph-top", "Top", "top");
-  new GraphLayout("graph-left", "Left", "left");
-  new GraphLayout("graph-right", "Right", "right");
-
-  // .js/layout/tree.js
-  var SPACING_RANK2 = 32;
-  var R2 = SPACING_RANK2 / 4;
-  var LINE_OFFSET = SPACING_RANK2 / 2;
-  var TreeLayout = class extends Layout {
-    update(item) {
-      this.layoutItem(item, this.childDirection);
-      this.drawLines(item, this.childDirection);
-    }
-    layoutItem(item, rankDirection) {
-      const { contentSize, children } = item;
-      let bbox = this.computeChildrenBBox(children, 1);
-      let rankSize = contentSize[0];
-      if (bbox[0]) {
-        rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK2);
-      }
-      let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
-      if (rankDirection == "left") {
-        offset[0] = rankSize - bbox[0] - SPACING_RANK2;
-      }
-      this.layoutChildren(children, rankDirection, offset, bbox);
-      let labelPos = 0;
-      if (rankDirection == "left") {
-        labelPos = rankSize - contentSize[0];
-      }
-      item.contentPosition = [labelPos, 0];
-    }
-    layoutChildren(children, rankDirection, offset, bbox) {
-      children.forEach((child) => {
-        const { size } = child;
-        let left = offset[0];
-        if (rankDirection == "left") {
-          left += bbox[0] - size[0];
-        }
-        child.position = [left, offset[1]];
-        offset[1] += size[1] + this.SPACING_CHILD;
-      });
-    }
-    drawLines(item, side) {
-      const { size, resolvedShape, resolvedColor, children, dom } = item;
-      let pointAnchor = [
-        (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5,
-        resolvedShape.getVerticalAnchor(item)
-      ];
-      this.anchorToggle(item, pointAnchor, "bottom");
-      if (children.length == 0 || item.isCollapsed()) {
-        return;
-      }
-      let lastChild = children[children.length - 1];
-      let lineEnd = [
-        pointAnchor[0],
-        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R2
-      ];
-      let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
-      let cornerEndX = lineEnd[0] + (side == "left" ? -R2 : R2);
-      let sweep = cornerEndX < lineEnd[0] ? 1 : 0;
-      children.forEach((child) => {
-        const { resolvedShape: resolvedShape2, position } = child;
-        const y = resolvedShape2.getVerticalAnchor(child) + position[1];
-        d.push(`M ${pointAnchor[0]} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${cornerEndX} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
-      });
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-  };
-  new TreeLayout("tree-left", "Left", "left");
-  new TreeLayout("tree-right", "Right", "right");
-
-  // .js/layout/map.js
-  var MapLayout = class extends GraphLayout {
-    constructor() {
-      super(...arguments);
-      this.LINE_THICKNESS = 8;
-    }
-    update(item) {
-      if (item.isRoot) {
-        this.layoutRoot(item);
-      } else {
-        var side = this.getChildDirection(item);
-        repo.get(`graph-${side}`).update(item);
-      }
-    }
-    getChildDirection(child) {
-      while (!child.parent.isRoot) {
-        child = child.parent;
-      }
-      var side = child.side;
-      if (side) {
-        return side;
-      }
-      var counts = { left: 0, right: 0 };
-      var children = child.parent.children;
-      for (var i = 0; i < children.length; i++) {
-        var side = children[i].side;
-        if (!side) {
-          side = counts.right > counts.left ? "left" : "right";
-          children[i].side = side;
-        }
-        counts[side]++;
-      }
-      return child.side;
-    }
-    pickSibling(item, dir) {
-      if (item.isRoot) {
-        return item;
-      }
-      const parent = item.parent;
-      var children = parent.children;
-      if (parent.isRoot) {
-        var side = this.getChildDirection(item);
-        children = children.filter((child) => this.getChildDirection(child) == side);
-      }
-      var index2 = children.indexOf(item);
-      index2 += dir;
-      index2 = (index2 + children.length) % children.length;
-      return children[index2];
-    }
-    layoutRoot(item) {
-      const { children, contentSize } = item;
-      let childrenLeft = [];
-      let childrenRight = [];
-      let contentPosition = [0, 0];
-      children.forEach((child) => {
-        var side = this.getChildDirection(child);
-        if (side == "left") {
-          childrenLeft.push(child);
-        } else {
-          childrenRight.push(child);
-        }
-      });
-      var bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
-      var bboxRight = this.computeChildrenBBox(childrenRight, 1);
-      var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
-      var left = 0;
-      this.layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
-      left += bboxLeft[0];
-      if (childrenLeft.length) {
-        left += SPACING_RANK;
-      }
-      contentPosition[0] = left;
-      left += contentSize[0];
-      if (childrenRight.length) {
-        left += SPACING_RANK;
-      }
-      this.layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
-      left += bboxRight[0];
-      contentPosition[1] = Math.round((height - contentSize[1]) / 2);
-      item.contentPosition = contentPosition;
-      this.drawRootConnectors(item, "left", childrenLeft);
-      this.drawRootConnectors(item, "right", childrenRight);
-    }
-    drawRootConnectors(item, side, children) {
-      if (children.length == 0 || item.isCollapsed()) {
-        return;
-      }
-      const { contentSize, contentPosition, resolvedShape, dom } = item;
-      let x1 = contentPosition[0] + contentSize[0] / 2;
-      let y1 = resolvedShape.getVerticalAnchor(item);
-      const half = this.LINE_THICKNESS / 2;
-      let paths = children.map((child) => {
-        const { resolvedColor, resolvedShape: resolvedShape2, position } = child;
-        let x2 = this.getChildAnchor(child, side);
-        let y2 = resolvedShape2.getVerticalAnchor(child) + position[1];
-        let angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
-        let dx = Math.cos(angle) * half;
-        let dy = Math.sin(angle) * half;
-        let d = [
-          `M ${x1 - dx} ${y1 - dy}`,
-          `Q ${(x2 + x1) / 2} ${y2} ${x2} ${y2}`,
-          `Q ${(x2 + x1) / 2} ${y2} ${x1 + dx} ${y1 + dy}`,
-          `Z`
-        ];
-        let attrs = {
-          d: d.join(" "),
-          fill: resolvedColor,
-          stroke: resolvedColor
-        };
-        return node2("path", attrs);
-      });
-      dom.connectors.append(...paths);
-    }
-  };
-  new MapLayout("map", "Map");
-
-  // .js/ui/layout.js
-  var select2 = document.querySelector("#layout");
-  function init6() {
-    let layout = repo.get("map");
-    select2.append(new Option(layout.label, layout.id));
-    let label = buildGroup("Graph");
-    let graphOptions = ["right", "left", "bottom", "top"].map((name) => {
-      let layout2 = repo.get(`graph-${name}`);
-      return new Option(layout2.label, layout2.id);
-    });
-    label.append(...graphOptions);
-    label = buildGroup("Tree");
-    let treeOptions = ["right", "left"].map((name) => {
-      let layout2 = repo.get(`tree-${name}`);
-      return new Option(layout2.label, layout2.id);
-    });
-    label.append(...treeOptions);
-    select2.addEventListener("change", onChange2);
-  }
-  function update3() {
-    var value = "";
-    var layout = currentItem.layout;
-    if (layout) {
-      value = layout.id;
-    }
-    select2.value = value;
-    getOption("").disabled = currentItem.isRoot;
-    getOption("map").disabled = !currentItem.isRoot;
-  }
-  function onChange2() {
-    var layout = repo.get(select2.value);
-    var action2 = new SetLayout(currentItem, layout);
-    action(action2);
-  }
-  function getOption(value) {
-    return select2.querySelector(`option[value="${value}"]`);
-  }
-  function buildGroup(label) {
-    let node10 = document.createElement("optgroup");
-    node10.label = label;
-    select2.append(node10);
-    return node10;
-  }
-
-  // .js/ui/icon.js
-  var icon_exports = {};
-  __export(icon_exports, {
-    init: () => init7,
-    update: () => update4
-  });
-  var select3 = document.querySelector("#icons");
-  function init7() {
-    select3.addEventListener("change", onChange3);
-  }
-  function update4() {
-    select3.value = currentItem.icon || "";
-  }
-  function onChange3() {
-    let action2 = new SetIcon(currentItem, select3.value || null);
-    action(action2);
-  }
-
-  // .js/ui/shape.js
-  var shape_exports = {};
-  __export(shape_exports, {
-    init: () => init8,
-    update: () => update5
-  });
-
-  // .js/shape/box.js
-  var Box = class extends Shape {
-    constructor() {
-      super("box", "Box");
-    }
-  };
-  new Box();
-
-  // .js/shape/ellipse.js
-  var Ellipse = class extends Shape {
-    constructor() {
-      super("ellipse", "Ellipse");
-    }
-  };
-  new Ellipse();
-
-  // .js/shape/underline.js
-  var VERTICAL_OFFSET2 = -3;
-  var Underline = class extends Shape {
-    constructor() {
-      super("underline", "Underline");
-    }
-    update(item) {
-      const { contentPosition, resolvedColor, contentSize, dom } = item;
-      let left = contentPosition[0];
-      let right = left + contentSize[0];
-      let top = this.getVerticalAnchor(item);
-      let d = [
-        `M ${left} ${top}`,
-        `L ${right} ${top}`
-      ];
-      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
-      dom.connectors.append(path);
-    }
-    getVerticalAnchor(item) {
-      const { contentPosition, contentSize } = item;
-      return contentPosition[1] + contentSize[1] + VERTICAL_OFFSET2 + 0.5;
-    }
-  };
-  new Underline();
-
-  // .js/ui/shape.js
-  var select4 = document.querySelector("#shape");
-  function init8() {
-    repo2.forEach((shape) => {
-      select4.append(new Option(shape.label, shape.id));
-    });
-    select4.addEventListener("change", onChange4);
-  }
-  function update5() {
-    let value = "";
-    let shape = currentItem.shape;
-    if (shape) {
-      value = shape.id;
-    }
-    select4.value = value;
-  }
-  function onChange4() {
-    let shape = repo2.get(this._select.value);
-    let action2 = new SetShape(currentItem, shape);
-    action(action2);
-  }
-
-  // .js/ui/status.js
-  var status_exports = {};
-  __export(status_exports, {
-    init: () => init9,
-    update: () => update6
-  });
-  var select5 = document.querySelector("#status");
-  var STATUS_MAP = {
-    "yes": true,
-    "no": false,
-    "": null
-  };
-  function statusToString(status) {
-    for (let key in STATUS_MAP) {
-      if (STATUS_MAP[key] === status) {
-        return key;
-      }
-    }
-    return String(status);
-  }
-  function stringToStatus(str) {
-    return str in STATUS_MAP ? STATUS_MAP[str] : str;
-  }
-  function init9() {
-    select5.addEventListener("change", onChange5);
-  }
-  function update6() {
-    select5.value = statusToString(currentItem.status);
-  }
-  function onChange5() {
-    let status = stringToStatus(select5.value);
-    let action2 = new SetStatus(currentItem, status);
-    action(action2);
-  }
-
-  // .js/ui/tip.js
-  var tip_exports = {};
-  __export(tip_exports, {
-    init: () => init10
-  });
-  var node7 = document.querySelector("#tip");
-  function init10() {
-    node7.addEventListener("click", hide);
-    subscribe("command-child", hide);
-    subscribe("command-sibling", hide);
-  }
-  function hide() {
-    unsubscribe("command-child", hide);
-    unsubscribe("command-sibling", hide);
-    node7.removeEventListener("click", hide);
-    node7.hidden = true;
-  }
-
-  // .js/ui/ui.js
-  var node8 = document.querySelector(".ui");
-  MM.UI = {};
-  function isActive() {
-    return node8.contains(document.activeElement);
-  }
-  function toggle3() {
-    node8.hidden = !node8.hidden;
-    publish("ui-change", this);
-  }
-  function getWidth() {
-    return node8.hidden ? 0 : node8.offsetWidth;
-  }
-  function update7() {
-    [layout_exports, shape_exports, icon_exports, value_exports, status_exports].forEach((ui4) => ui4.update());
-  }
-  function onClick2(e) {
-    let target = e.target;
-    if (target.nodeName.toLowerCase() != "select") {
-      focus();
-    }
-    if (target == node8.querySelector("#toggle")) {
-      toggle3();
-      return;
-    }
-    let current2 = target;
-    while (current2 != document) {
-      let command = current2.dataset.command;
-      if (command) {
-        MM.Command[command].execute();
-        return;
-      }
-      current2 = current2.parentNode;
-    }
-  }
-  function init11() {
-    [
-      layout_exports,
-      shape_exports,
-      icon_exports,
-      value_exports,
-      status_exports,
-      color_exports,
-      help_exports,
-      tip_exports,
-      notes_exports
-    ].forEach((ui4) => ui4.init());
-    subscribe("item-select", update7);
-    subscribe("item-change", (_message, publisher) => {
-      if (publisher == currentItem) {
-        update7();
-      }
-    });
-    node8.addEventListener("click", onClick2);
-    node8.addEventListener("change", (_) => focus());
-  }
-
-  // .js/command/command.js
-  var PAN_AMOUNT = 15;
-  function isMac() {
-    return !!navigator.platform.match(/mac/i);
-  }
-  MM.Command = Object.create(MM.Repo, {
-    keys: { value: [] },
-    editMode: { value: false },
-    prevent: { value: true },
-    label: { value: "" }
-  });
-  MM.Command.isValid = function() {
-    return this.editMode === null || this.editMode == editing;
-  };
-  MM.Command.execute = function() {
-  };
-  MM.Command.Notes = Object.create(MM.Command, {
-    label: { value: "Notes" },
-    keys: { value: [{ keyCode: "M".charCodeAt(0), ctrlKey: true }] }
-  });
-  MM.Command.Notes.isValid = function() {
-    return MM.Command.isValid.call(this);
-  };
-  MM.Command.Notes.execute = function() {
-    toggle2();
-  };
-  MM.Command.Undo = Object.create(MM.Command, {
-    label: { value: "Undo" },
-    keys: { value: [{ keyCode: "Z".charCodeAt(0), ctrlKey: true }] }
-  });
-  MM.Command.Undo.isValid = function() {
-    return MM.Command.isValid.call(this) && canBack();
-  };
-  MM.Command.Undo.execute = function() {
-    back();
-  };
-  MM.Command.Redo = Object.create(MM.Command, {
-    label: { value: "Redo" },
-    keys: { value: [{ keyCode: "Y".charCodeAt(0), ctrlKey: true }] }
-  });
-  MM.Command.Redo.isValid = function() {
-    return MM.Command.isValid.call(this) && canForward();
-  };
-  MM.Command.Redo.execute = function() {
-    forward();
-  };
-  MM.Command.InsertSibling = Object.create(MM.Command, {
-    label: { value: "Insert a sibling" },
-    keys: { value: [{ keyCode: 13 }] }
-  });
-  MM.Command.InsertSibling.execute = function() {
-    var item = currentItem;
-    if (item.isRoot) {
-      var action2 = new InsertNewItem(item, item.children.length);
-    } else {
-      var parent = item.parent;
-      var index2 = parent.children.indexOf(item);
-      var action2 = new InsertNewItem(parent, index2 + 1);
-    }
-    action(action2);
-    MM.Command.Edit.execute();
-    publish("command-sibling");
-  };
-  MM.Command.InsertChild = Object.create(MM.Command, {
-    label: { value: "Insert a child" },
-    keys: { value: [
-      { keyCode: 9, ctrlKey: false },
-      { keyCode: 45 }
-    ] }
-  });
-  MM.Command.InsertChild.execute = function() {
-    var item = currentItem;
-    var action2 = new InsertNewItem(item, item.children.length);
-    action(action2);
-    MM.Command.Edit.execute();
-    publish("command-child");
-  };
-  MM.Command.Delete = Object.create(MM.Command, {
-    label: { value: "Delete an item" },
-    keys: { value: [{ keyCode: isMac() ? 8 : 46 }] }
-  });
-  MM.Command.Delete.isValid = function() {
-    return MM.Command.isValid.call(this) && !currentItem.isRoot;
-  };
-  MM.Command.Delete.execute = function() {
-    var action2 = new RemoveItem(currentItem);
-    action(action2);
-  };
-  MM.Command.Swap = Object.create(MM.Command, {
-    label: { value: "Swap sibling" },
-    keys: { value: [
-      { keyCode: 38, ctrlKey: true },
-      { keyCode: 40, ctrlKey: true }
-    ] }
-  });
-  MM.Command.Swap.execute = function(e) {
-    var current2 = currentItem;
-    if (current2.isRoot || current2.parent.children.length < 2) {
-      return;
-    }
-    var diff = e.keyCode == 38 ? -1 : 1;
-    var action2 = new Swap(currentItem, diff);
-    action(action2);
-  };
-  MM.Command.Side = Object.create(MM.Command, {
-    label: { value: "Change side" },
-    keys: { value: [
-      { keyCode: 37, ctrlKey: true },
-      { keyCode: 39, ctrlKey: true }
-    ] }
-  });
-  MM.Command.Side.execute = function(e) {
-    var current2 = currentItem;
-    if (current2.isRoot || !current2.parent.isRoot) {
-      return;
-    }
-    var side = e.keyCode == 37 ? "left" : "right";
-    var action2 = new SetSide(currentItem, side);
-    action(action2);
-  };
-  MM.Command.Save = Object.create(MM.Command, {
-    label: { value: "Save map" },
-    keys: { value: [{ keyCode: "S".charCodeAt(0), ctrlKey: true, shiftKey: false }] }
-  });
-  MM.Command.Save.execute = function() {
-    MM.App.io.quickSave();
-  };
-  MM.Command.SaveAs = Object.create(MM.Command, {
-    label: { value: "Save as&hellip;" },
-    keys: { value: [{ keyCode: "S".charCodeAt(0), ctrlKey: true, shiftKey: true }] }
-  });
-  MM.Command.SaveAs.execute = function() {
-    MM.App.io.show("save");
-  };
-  MM.Command.Load = Object.create(MM.Command, {
-    label: { value: "Load map" },
-    keys: { value: [{ keyCode: "O".charCodeAt(0), ctrlKey: true }] }
-  });
-  MM.Command.Load.execute = function() {
-    MM.App.io.show("load");
-  };
-  MM.Command.Center = Object.create(MM.Command, {
-    label: { value: "Center map" },
-    keys: { value: [{ keyCode: 35 }] }
-  });
-  MM.Command.Center.execute = function() {
-    currentMap.center();
-  };
-  MM.Command.New = Object.create(MM.Command, {
-    label: { value: "New map" },
-    keys: { value: [{ keyCode: "N".charCodeAt(0), ctrlKey: true }] }
-  });
-  MM.Command.New.execute = function() {
-    if (!confirm("Throw away your current map and start a new one?")) {
-      return;
-    }
-    showMap(new Map2());
-    publish("map-new", this);
-  };
-  MM.Command.ZoomIn = Object.create(MM.Command, {
-    label: { value: "Zoom in" },
-    keys: { value: [{ charCode: "+".charCodeAt(0) }] }
-  });
-  MM.Command.ZoomIn.execute = function() {
-    adjustFontSize(1);
-  };
-  MM.Command.ZoomOut = Object.create(MM.Command, {
-    label: { value: "Zoom out" },
-    keys: { value: [{ charCode: "-".charCodeAt(0) }] }
-  });
-  MM.Command.ZoomOut.execute = function() {
-    adjustFontSize(-1);
-  };
-  MM.Command.Help = Object.create(MM.Command, {
-    label: { value: "Show/hide help" },
-    keys: { value: [{ charCode: "?".charCodeAt(0) }] }
-  });
-  MM.Command.Help.execute = function() {
-    toggle();
-  };
-  MM.Command.UI = Object.create(MM.Command, {
-    label: { value: "Show/hide UI" },
-    keys: { value: [{ charCode: "*".charCodeAt(0) }] }
-  });
-  MM.Command.UI.execute = function() {
-    toggle3();
-  };
-  MM.Command.Pan = Object.create(MM.Command, {
-    label: { value: "Pan the map" },
-    keys: { value: [
-      { keyCode: "W".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false },
-      { keyCode: "A".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false },
-      { keyCode: "S".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false },
-      { keyCode: "D".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false }
-    ] },
-    chars: { value: [] }
-  });
-  MM.Command.Pan.execute = function(e) {
-    var ch = String.fromCharCode(e.keyCode);
-    var index2 = this.chars.indexOf(ch);
-    if (index2 > -1) {
-      return;
-    }
-    if (!this.chars.length) {
-      window.addEventListener("keyup", this);
-      this.interval = setInterval(this._step.bind(this), 50);
-    }
-    this.chars.push(ch);
-    this._step();
-  };
-  MM.Command.Pan._step = function() {
-    var dirs = {
-      "W": [0, 1],
-      "A": [1, 0],
-      "S": [0, -1],
-      "D": [-1, 0]
-    };
-    let offset = [0, 0];
-    this.chars.forEach((ch) => {
-      offset[0] += dirs[ch][0] * PAN_AMOUNT;
-      offset[1] += dirs[ch][1] * PAN_AMOUNT;
-    });
-    currentMap.moveBy(offset);
-  };
-  MM.Command.Pan.handleEvent = function(e) {
-    var ch = String.fromCharCode(e.keyCode);
-    var index2 = this.chars.indexOf(ch);
-    if (index2 > -1) {
-      this.chars.splice(index2, 1);
-      if (!this.chars.length) {
-        window.removeEventListener("keyup", this);
-        clearInterval(this.interval);
-      }
-    }
-  };
-  MM.Command.Copy = Object.create(MM.Command, {
-    label: { value: "Copy" },
-    prevent: { value: false },
-    keys: { value: [
-      { keyCode: "C".charCodeAt(0), ctrlKey: true },
-      { keyCode: "C".charCodeAt(0), metaKey: true }
-    ] }
-  });
-  MM.Command.Copy.execute = function() {
-    copy(currentItem);
-  };
-  MM.Command.Cut = Object.create(MM.Command, {
-    label: { value: "Cut" },
-    prevent: { value: false },
-    keys: { value: [
-      { keyCode: "X".charCodeAt(0), ctrlKey: true },
-      { keyCode: "X".charCodeAt(0), metaKey: true }
-    ] }
-  });
-  MM.Command.Cut.execute = function() {
-    cut(currentItem);
-  };
-  MM.Command.Paste = Object.create(MM.Command, {
-    label: { value: "Paste" },
-    prevent: { value: false },
-    keys: { value: [
-      { keyCode: "V".charCodeAt(0), ctrlKey: true },
-      { keyCode: "V".charCodeAt(0), metaKey: true }
-    ] }
-  });
-  MM.Command.Paste.execute = function() {
-    paste(currentItem);
-  };
-  MM.Command.Fold = Object.create(MM.Command, {
-    label: { value: "Fold/Unfold" },
-    keys: { value: [{ charCode: "f".charCodeAt(0), ctrlKey: false }] }
-  });
-  MM.Command.Fold.execute = function() {
-    var item = currentItem;
-    if (item.isCollapsed()) {
-      item.expand();
-    } else {
-      item.collapse();
-    }
-    currentMap.ensureItemVisibility(item);
-  };
-
-  // .js/command/command.edit.js
-  MM.Command.Edit = Object.create(MM.Command, {
-    label: { value: "Edit item" },
-    keys: { value: [
-      { keyCode: 32 },
-      { keyCode: 113 }
-    ] }
-  });
-  MM.Command.Edit.execute = function() {
-    startEditing();
-  };
-  MM.Command.Finish = Object.create(MM.Command, {
-    keys: { value: [{ keyCode: 13, altKey: false, ctrlKey: false, shiftKey: false }] },
-    editMode: { value: true }
-  });
-  MM.Command.Finish.execute = function() {
-    let text = stopEditing();
-    if (text) {
-      var action2 = new SetText(currentItem, text);
-    } else {
-      var action2 = new RemoveItem(currentItem);
-    }
-    action(action2);
-  };
-  MM.Command.Newline = Object.create(MM.Command, {
-    label: { value: "Line break" },
-    keys: { value: [
-      { keyCode: 13, shiftKey: true },
-      { keyCode: 13, ctrlKey: true }
-    ] },
-    editMode: { value: true }
-  });
-  MM.Command.Newline.execute = function() {
-    var range = getSelection().getRangeAt(0);
-    var br = document.createElement("br");
-    range.insertNode(br);
-    range.setStartAfter(br);
-    currentItem.update({ parent: true, children: true });
-  };
-  MM.Command.Cancel = Object.create(MM.Command, {
-    editMode: { value: null },
-    keys: { value: [{ keyCode: 27 }] }
-  });
-  MM.Command.Cancel.execute = function() {
-    if (editing) {
-      stopEditing();
-      var oldText = currentItem.text;
-      if (!oldText) {
-        var action2 = new RemoveItem(currentItem);
-        action(action2);
-      }
-    } else {
-      close2();
-      close();
-      MM.App.io.hide();
-    }
-  };
-  MM.Command.Style = Object.create(MM.Command, {
-    editMode: { value: null },
-    command: { value: "" }
-  });
-  MM.Command.Style.execute = function() {
-    if (editing) {
-      document.execCommand(this.command, null, null);
-    } else {
-      MM.Command.Edit.execute();
-      var selection = getSelection();
-      var range = selection.getRangeAt(0);
-      range.selectNodeContents(currentItem.dom.text);
-      selection.removeAllRanges();
-      selection.addRange(range);
-      this.execute();
-      MM.Command.Finish.execute();
-    }
-  };
-  MM.Command.Bold = Object.create(MM.Command.Style, {
-    command: { value: "bold" },
-    label: { value: "Bold" },
-    keys: { value: [{ keyCode: "B".charCodeAt(0), ctrlKey: true }] }
-  });
-  MM.Command.Underline = Object.create(MM.Command.Style, {
-    command: { value: "underline" },
-    label: { value: "Underline" },
-    keys: { value: [{ keyCode: "U".charCodeAt(0), ctrlKey: true }] }
-  });
-  MM.Command.Italic = Object.create(MM.Command.Style, {
-    command: { value: "italic" },
-    label: { value: "Italic" },
-    keys: { value: [{ keyCode: "I".charCodeAt(0), ctrlKey: true }] }
-  });
-  MM.Command.Strikethrough = Object.create(MM.Command.Style, {
-    command: { value: "strikeThrough" },
-    label: { value: "Strike-through" },
-    keys: { value: [{ keyCode: "S".charCodeAt(0), ctrlKey: true }] }
-  });
-  MM.Command.Value = Object.create(MM.Command, {
-    label: { value: "Set value" },
-    keys: { value: [{ charCode: "v".charCodeAt(0), ctrlKey: false, metaKey: false }] }
-  });
-  MM.Command.Value.execute = function() {
-    var item = currentItem;
-    var oldValue = item.value;
-    var newValue = prompt("Set item value", oldValue);
-    if (newValue == null) {
-      return;
-    }
-    if (!newValue.length) {
-      newValue = null;
-    }
-    var numValue = parseFloat(newValue);
-    var action2 = new SetValue(item, isNaN(numValue) ? newValue : numValue);
-    action(action2);
-  };
-  MM.Command.Yes = Object.create(MM.Command, {
-    label: { value: "Yes" },
-    keys: { value: [{ charCode: "y".charCodeAt(0), ctrlKey: false }] }
-  });
-  MM.Command.Yes.execute = function() {
-    var item = currentItem;
-    var status = item.status === true ? null : true;
-    var action2 = new SetStatus(item, status);
-    action(action2);
-  };
-  MM.Command.No = Object.create(MM.Command, {
-    label: { value: "No" },
-    keys: { value: [{ charCode: "n".charCodeAt(0), ctrlKey: false }] }
-  });
-  MM.Command.No.execute = function() {
-    var item = currentItem;
-    var status = item.status === false ? null : false;
-    var action2 = new SetStatus(item, status);
-    action(action2);
-  };
-  MM.Command.Computed = Object.create(MM.Command, {
-    label: { value: "Computed" },
-    keys: { value: [{ charCode: "c".charCodeAt(0), ctrlKey: false, metaKey: false }] }
-  });
-  MM.Command.Computed.execute = function() {
-    var item = currentItem;
-    var status = item.status == "computed" ? null : "computed";
-    var action2 = new SetStatus(item, status);
-    action(action2);
-  };
-
-  // .js/command/command.select.js
-  MM.Command.Select = Object.create(MM.Command, {
-    label: { value: "Move selection" },
-    keys: { value: [
-      { keyCode: 38, ctrlKey: false },
-      { keyCode: 37, ctrlKey: false },
-      { keyCode: 40, ctrlKey: false },
-      { keyCode: 39, ctrlKey: false }
-    ] }
-  });
-  MM.Command.Select.execute = function(e) {
-    var dirs = {
-      37: "left",
-      38: "top",
-      39: "right",
-      40: "bottom"
-    };
-    var dir = dirs[e.keyCode];
-    var layout = app.currentItem.resolvedLayout;
-    var item = layout.pick(app.currentItem, dir);
-    app.selectItem(item);
-  };
-  MM.Command.SelectRoot = Object.create(MM.Command, {
-    label: { value: "Select root" },
-    keys: { value: [{ keyCode: 36 }] }
-  });
-  MM.Command.SelectRoot.execute = function() {
-    var item = app.currentItem;
-    while (!item.isRoot) {
-      item = item.parent;
-    }
-    app.selectItem(item);
-  };
-  if (!isMac()) {
-    MM.Command.SelectParent = Object.create(MM.Command, {
-      label: { value: "Select parent" },
-      keys: { value: [{ keyCode: 8 }] }
-    });
-    MM.Command.SelectParent.execute = function() {
-      if (app.currentItem.isRoot) {
-        return;
-      }
-      app.selectItem(app.currentItem.parent);
-    };
-  }
 
   // .js/format/format.js
   MM.Format = Object.create(MM.Repo, {
@@ -2916,36 +142,36 @@
     }
     return elm;
   };
-  MM.Format.FreeMind._parseNode = function(node10, parent) {
-    var json = this._parseAttributes(node10, parent);
-    for (var i = 0; i < node10.childNodes.length; i++) {
-      var child = node10.childNodes[i];
+  MM.Format.FreeMind._parseNode = function(node9, parent) {
+    var json = this._parseAttributes(node9, parent);
+    for (var i = 0; i < node9.childNodes.length; i++) {
+      var child = node9.childNodes[i];
       if (child.nodeName.toLowerCase() == "node") {
         json.children.push(this._parseNode(child, json));
       }
     }
     return json;
   };
-  MM.Format.FreeMind._parseAttributes = function(node10, parent) {
+  MM.Format.FreeMind._parseAttributes = function(node9, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node10.getAttribute("TEXT") || ""),
-      id: node10.getAttribute("ID")
+      text: MM.Format.nl2br(node9.getAttribute("TEXT") || ""),
+      id: node9.getAttribute("ID")
     };
-    var position = node10.getAttribute("POSITION");
+    var position = node9.getAttribute("POSITION");
     if (position) {
       json.side = position;
     }
-    var style = node10.getAttribute("STYLE");
+    var style = node9.getAttribute("STYLE");
     if (style == "bubble") {
       json.shape = "box";
     } else {
       json.shape = parent.shape;
     }
-    if (node10.getAttribute("FOLDED") == "true") {
+    if (node9.getAttribute("FOLDED") == "true") {
       json.collapsed = 1;
     }
-    var children = node10.children;
+    var children = node9.children;
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeName.toLowerCase()) {
@@ -2977,23 +203,23 @@
     label: { value: "Mind Map Architect" },
     extension: { value: "mma" }
   });
-  MM.Format.MMA._parseAttributes = function(node10, parent) {
+  MM.Format.MMA._parseAttributes = function(node9, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node10.getAttribute("title") || ""),
+      text: MM.Format.nl2br(node9.getAttribute("title") || ""),
       shape: "box"
     };
-    if (node10.getAttribute("expand") == "false") {
+    if (node9.getAttribute("expand") == "false") {
       json.collapsed = 1;
     }
-    var direction = node10.getAttribute("direction");
+    var direction = node9.getAttribute("direction");
     if (direction == "0") {
       json.side = "left";
     }
     if (direction == "1") {
       json.side = "right";
     }
-    var color = node10.getAttribute("color");
+    var color = node9.getAttribute("color");
     if (color) {
       var re = color.match(/^#(....)(....)(....)$/);
       if (re) {
@@ -3006,7 +232,7 @@
       }
       json.color = "#" + [r, g, b].join("");
     }
-    json.icon = node10.getAttribute("icon");
+    json.icon = node9.getAttribute("icon");
     return json;
   };
   MM.Format.MMA._serializeAttributes = function(doc, json) {
@@ -3294,29 +520,58 @@
     document.body.appendChild(link);
     link.click();
     link.parentNode.removeChild(link);
-    var promise = new Promise().fulfill();
-    return promise;
+    return Promise.resolve();
   };
   MM.Backend.File.load = function() {
-    var promise = new Promise();
     this.input.type = "file";
-    this.input.onchange = function(e) {
-      var file = e.target.files[0];
-      if (!file) {
-        return;
-      }
-      var reader = new FileReader();
-      reader.onload = function() {
-        promise.fulfill({ data: reader.result, name: file.name });
-      };
-      reader.onerror = function() {
-        promise.reject(reader.error);
-      };
-      reader.readAsText(file);
-    }.bind(this);
-    this.input.click();
-    return promise;
+    return new Promise((resolve, reject) => {
+      this.input.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) {
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function() {
+          resolve({ data: reader.result, name: file.name });
+        };
+        reader.onerror = function() {
+          reject(reader.error);
+        };
+        reader.readAsText(file);
+      }.bind(this);
+      this.input.click();
+    });
   };
+
+  // .js/pubsub.js
+  var subscribers = new Map();
+  function publish(message, publisher, data) {
+    let subs = subscribers.get(message) || [];
+    subs.forEach((sub) => {
+      if (typeof sub == "function") {
+        sub(message, publisher, data);
+      } else {
+        sub.handleMessage(message, publisher, data);
+      }
+    });
+  }
+  function subscribe(message, subscriber) {
+    if (!subscribers.has(message)) {
+      subscribers.set(message, []);
+    }
+    let subs = subscribers.get(message) || [];
+    let index2 = subs.indexOf(subscriber);
+    if (index2 == -1) {
+      subs.push(subscriber);
+    }
+  }
+  function unsubscribe(message, subscriber) {
+    let subs = subscribers.get(message) || [];
+    let index2 = subs.indexOf(subscriber);
+    if (index2 > -1) {
+      subs.splice(index2, 1);
+    }
+  }
 
   // .js/backend/backend.firebase.js
   MM.Backend.Firebase = Object.create(MM.Backend, {
@@ -3350,50 +605,46 @@
     }
   };
   MM.Backend.Firebase.save = function(data, id, name) {
-    var promise = new Promise();
     try {
       this.ref.child("names/" + id).set(name);
-      this.ref.child("data/" + id).set(data, function(result) {
-        if (result) {
-          promise.reject(result);
-        } else {
-          promise.fulfill();
-          this._listenStart(data, id);
-        }
-      }.bind(this));
-    } catch (e) {
-      promise.reject(e);
-    }
-    return promise;
-  };
-  MM.Backend.Firebase.load = function(id) {
-    var promise = new Promise();
-    this.ref.child("data/" + id).once("value", function(snap) {
-      var data = snap.val();
-      if (data) {
-        promise.fulfill(data);
-        this._listenStart(data, id);
-      } else {
-        promise.reject(new Error("There is no such saved map"));
-      }
-    }, this);
-    return promise;
-  };
-  MM.Backend.Firebase.remove = function(id) {
-    var promise = new Promise();
-    try {
-      this.ref.child("names/" + id).remove();
-      this.ref.child("data/" + id).remove(function(result) {
-        if (result) {
-          promise.reject(result);
-        } else {
-          promise.fulfill();
-        }
+      return new Promise((resolve, reject) => {
+        this.ref.child("data/" + id).set(data, (result) => {
+          if (result) {
+            reject(result);
+          } else {
+            resolve();
+            this._listenStart(data, id);
+          }
+        });
       });
     } catch (e) {
-      promise.reject(e);
+      return Promise.reject(e);
     }
-    return promise;
+  };
+  MM.Backend.Firebase.load = function(id) {
+    return new Promise((resolve, reject) => {
+      this.ref.child("data/" + id).once("value", (snap) => {
+        var data = snap.val();
+        if (data) {
+          resolve(data);
+          this._listenStart(data, id);
+        } else {
+          reject(new Error("There is no such saved map"));
+        }
+      });
+    });
+  };
+  MM.Backend.Firebase.remove = function(id) {
+    try {
+      this.ref.child("names/" + id).remove();
+      return new Promise((resolve, reject) => {
+        this.ref.child("data/" + id).remove((result) => {
+          result ? reject(result) : resolve();
+        });
+      });
+    } catch (e) {
+      return Promise.reject(e);
+    }
   };
   MM.Backend.Firebase.reset = function() {
     this._listenStop();
@@ -3513,7 +764,6 @@
     }.bind(this));
   };
   MM.Backend.GDrive._send = function(data, name, mime) {
-    var promise = new Promise();
     var path = "/upload/drive/v2/files";
     var method = "POST";
     if (this.fileId) {
@@ -3541,43 +791,42 @@
       },
       body
     });
-    request.execute(function(response) {
-      if (!response) {
-        promise.reject(new Error("Failed to upload to Google Drive"));
-      } else if (response.error) {
-        promise.reject(response.error);
-      } else {
-        this.fileId = response.id;
-        promise.fulfill();
-      }
-    }.bind(this));
-    return promise;
+    return new Promise((resolve, reject) => {
+      request.execute((response) => {
+        if (!response) {
+          reject(new Error("Failed to upload to Google Drive"));
+        } else if (response.error) {
+          reject(response.error);
+        } else {
+          this.fileId = response.id;
+          resolve();
+        }
+      });
+    });
   };
   MM.Backend.GDrive.load = function(id) {
     return this._connect().then(this._load.bind(this, id));
   };
   MM.Backend.GDrive._load = function(id) {
     this.fileId = id;
-    var promise = new Promise();
     var request = gapi.client.request({
       path: "/drive/v2/files/" + this.fileId,
       method: "GET"
     });
-    request.execute(function(response) {
-      if (response && response.id) {
-        var xhr = new XMLHttpRequest();
-        xhr.open("get", "https://www.googleapis.com/drive/v2/files/" + response.id + "?alt=media", true);
-        xhr.setRequestHeader("Authorization", "Bearer " + gapi.auth.getToken().access_token);
-        Promise.send(xhr).then(function(xhr2) {
-          promise.fulfill({ data: xhr2.responseText, name: response.title, mime: response.mimeType });
-        }, function(xhr2) {
-          promise.reject(xhr2.responseText);
-        });
-      } else {
-        promise.reject(response && response.error || new Error("Failed to download file"));
-      }
-    }.bind(this));
-    return promise;
+    return new Promise((resolve, reject) => {
+      request.execute(async (response) => {
+        if (!response || !response.id) {
+          return reject(response && response.error || new Error("Failed to download file"));
+        }
+        let headers = { "Authentication": "Bearer " + gapi.auth.getToken().access_token };
+        let r = await fetch(`https://www.googleapis.com/drive/v2/files/${response.id}?alt=media`, { headers });
+        let data = await r.text();
+        if (r.status != 200) {
+          return reject(data);
+        }
+        resolve({ data, name: response.title, mime: response.mimeType });
+      });
+    });
   };
   MM.Backend.GDrive.pick = function() {
     return this._connect().then(this._pick.bind(this));
@@ -3626,22 +875,27 @@
     document.body.appendChild(script);
     return promise;
   };
-  MM.Backend.GDrive._auth = function(forceUI) {
-    var promise = new Promise();
-    gapi.auth.authorize({
-      "client_id": this.clientId,
-      "scope": this.scope,
-      "immediate": !forceUI
-    }, function(token) {
-      if (token && !token.error) {
-        promise.fulfill();
-      } else if (!forceUI) {
-        this._auth(true).then(promise.fulfill.bind(promise), promise.reject.bind(promise));
-      } else {
-        promise.reject(token && token.error || new Error("Failed to authorize with Google"));
-      }
-    }.bind(this));
-    return promise;
+  MM.Backend.GDrive._auth = async function(forceUI) {
+    return new Promise((resolve, reject) => {
+      gapi.auth.authorize({
+        "client_id": this.clientId,
+        "scope": this.scope,
+        "immediate": !forceUI
+      }, async (token) => {
+        if (token && !token.error) {
+          resolve();
+        } else if (!forceUI) {
+          try {
+            await this._auth(true);
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          reject(token && token.error || new Error("Failed to authorize with Google"));
+        }
+      });
+    });
   };
 
   // .js/ui/ui.io.js
@@ -3655,9 +909,9 @@
     this._backends = {};
     var ids = ["local", "firebase", "gdrive", "file", "webdav", "image"];
     ids.forEach(function(id) {
-      var ui4 = MM.UI.Backend.getById(id);
-      ui4.init(this._backend);
-      this._backends[id] = ui4;
+      var ui5 = MM.UI.Backend.getById(id);
+      ui5.init(this._backend);
+      this._backends[id] = ui5;
     }, this);
     this._backend.value = localStorage.getItem(this._prefix + "backend") || MM.Backend.File.id;
     this._backend.addEventListener("change", this);
@@ -3722,7 +976,6 @@
       return;
     }
     this._node.hidden = true;
-    focus();
   };
   MM.UI.IO.prototype.quickSave = function() {
     if (this._currentBackend) {
@@ -3739,7 +992,7 @@
     }
   };
   MM.UI.IO.prototype._syncBackend = function() {
-    [...this._node.querySelectorAll("div[id]")].forEach((node10) => node10.hidden = true);
+    [...this._node.querySelectorAll("div[id]")].forEach((node9) => node9.hidden = true);
     this._node.querySelector("#" + this._backend.value).hidden = false;
     this._backends[this._backend.value].show(this._mode);
   };
@@ -3765,6 +1018,2368 @@
         return encodeURIComponent(key) + "=" + encodeURIComponent(data[key]);
       });
       history.replaceState(null, "", "?" + arr.join("&"));
+    }
+  };
+
+  // .js/html.js
+  function node(name, attrs) {
+    let node9 = document.createElement(name);
+    Object.assign(node9, attrs);
+    return node9;
+  }
+
+  // .js/svg.js
+  var NS = "http://www.w3.org/2000/svg";
+  function node2(name, attrs) {
+    let node9 = document.createElementNS(NS, name);
+    for (let attr in attrs) {
+      node9.setAttribute(attr, attrs[attr]);
+    }
+    return node9;
+  }
+  function group() {
+    return node2("g");
+  }
+  function foreignObject() {
+    let fo = node2("foreignObject");
+    fo.setAttribute("width", "1");
+    fo.setAttribute("height", "1");
+    return fo;
+  }
+
+  // .js/history.js
+  var index = 0;
+  var actions = [];
+  function reset() {
+    index = 0;
+    actions = [];
+  }
+  function push(action2) {
+    if (index < actions.length) {
+      actions.splice(index, actions.length - index);
+    }
+    actions.push(action2);
+    index++;
+  }
+  function back() {
+    actions[--index].undo();
+  }
+  function forward() {
+    actions[index++].do();
+  }
+  function canBack() {
+    return !!index;
+  }
+  function canForward() {
+    return index != actions.length;
+  }
+
+  // .js/ui/help.js
+  var help_exports = {};
+  __export(help_exports, {
+    close: () => close,
+    init: () => init,
+    toggle: () => toggle
+  });
+  var node3 = document.querySelector("#help");
+  var MAP = {
+    8: "Backspace",
+    9: "Tab",
+    13: "\u21A9",
+    32: "Spacebar",
+    33: "PgUp",
+    34: "PgDown",
+    35: "End",
+    36: "Home",
+    37: "\u2190",
+    38: "\u2191",
+    39: "\u2192",
+    40: "\u2193",
+    45: "Insert",
+    46: "Delete",
+    65: "A",
+    68: "D",
+    83: "S",
+    87: "W",
+    112: "F1",
+    113: "F2",
+    114: "F3",
+    115: "F4",
+    116: "F5",
+    117: "F6",
+    118: "F7",
+    119: "F8",
+    120: "F9",
+    121: "F10",
+    "-": "\u2212"
+  };
+  function toggle() {
+    node3.hidden = !node3.hidden;
+  }
+  function init() {
+    let t = node3.querySelector(".navigation");
+    buildRow(t, "pan");
+    buildRow(t, "select");
+    buildRow(t, "select-root");
+    buildRow(t, "select-parent");
+    buildRow(t, "center");
+    buildRow(t, "zoom-in", "zoom-out");
+    buildRow(t, "fold");
+    t = node3.querySelector(".manipulation");
+    buildRow(t, "insert-sibling");
+    buildRow(t, "insert-child");
+    buildRow(t, "swap");
+    buildRow(t, "side");
+    buildRow(t, "delete");
+    t = node3.querySelector(".editing");
+    buildRow(t, "value");
+    buildRow(t, "yes", "no", "computed");
+    buildRow(t, "edit");
+    buildRow(t, "newline");
+    buildRow(t, "bold");
+    buildRow(t, "italic");
+    buildRow(t, "underline");
+    buildRow(t, "strikethrough");
+    t = node3.querySelector(".other");
+    buildRow(t, "undo", "redo");
+    buildRow(t, "save");
+    buildRow(t, "save-as");
+    buildRow(t, "load");
+    buildRow(t, "help");
+    buildRow(t, "notes");
+    buildRow(t, "ui");
+  }
+  function buildRow(table, ...commandNames) {
+    var row = table.insertRow(-1);
+    var labels = [];
+    var keys = [];
+    commandNames.forEach((name) => {
+      let command = repo.get(name);
+      if (!command) {
+        console.warn(name);
+        return;
+      }
+      labels.push(command.label);
+      keys = keys.concat(command.keys.map(formatKey));
+    });
+    row.insertCell(-1).textContent = labels.join("/");
+    row.insertCell(-1).textContent = keys.join("/");
+  }
+  function formatKey(key) {
+    var str = "";
+    if (key.ctrlKey) {
+      str += "Ctrl+";
+    }
+    if (key.altKey) {
+      str += "Alt+";
+    }
+    if (key.shiftKey) {
+      str += "Shift+";
+    }
+    if (key.charCode) {
+      var ch = String.fromCharCode(key.charCode);
+      str += MAP[ch] || ch.toUpperCase();
+    }
+    if (key.keyCode) {
+      str += MAP[key.keyCode] || String.fromCharCode(key.keyCode);
+    }
+    return str;
+  }
+  function close() {
+    node3.hidden = true;
+  }
+
+  // .js/ui/notes.js
+  var notes_exports = {};
+  __export(notes_exports, {
+    close: () => close2,
+    init: () => init2,
+    toggle: () => toggle2
+  });
+  var node4 = document.querySelector("#notes");
+  function toggle2() {
+    node4.hidden = !node4.hidden;
+  }
+  function close2() {
+    if (node4.hidden) {
+      return;
+    }
+    node4.hidden = true;
+  }
+  function update(html2) {
+    if (html2.trim().length === 0) {
+      currentItem.notes = null;
+    } else {
+      currentItem.notes = html2;
+    }
+    currentItem.update();
+  }
+  function onMessage(e) {
+    if (!e.data || !e.data.action) {
+      return;
+    }
+    switch (e.data.action) {
+      case "setContent":
+        update(e.data.value);
+        break;
+      case "closeEditor":
+        close2();
+        break;
+    }
+  }
+  function init2() {
+    window.addEventListener("message", onMessage);
+  }
+
+  // .js/ui/color.js
+  var color_exports = {};
+  __export(color_exports, {
+    init: () => init3
+  });
+
+  // .js/action.js
+  var Action = class {
+    do() {
+    }
+    undo() {
+    }
+  };
+  var Multi = class extends Action {
+    constructor(actions12) {
+      super();
+      this.actions = actions12;
+    }
+    do() {
+      this.actions.forEach((action2) => action2.do());
+    }
+    undo() {
+      this.actions.slice().reverse().forEach((action2) => action2.undo());
+    }
+  };
+  var InsertNewItem = class extends Action {
+    constructor(parent, index2) {
+      super();
+      this.parent = parent;
+      this.index = index2;
+      this.item = new Item();
+    }
+    do() {
+      this.parent.expand();
+      this.parent.insertChild(this.item, this.index);
+      selectItem(this.item);
+    }
+    undo() {
+      this.parent.removeChild(this.item);
+      selectItem(this.parent);
+    }
+  };
+  var AppendItem = class extends Action {
+    constructor(parent, item) {
+      super();
+      this.parent = parent;
+      this.item = item;
+    }
+    do() {
+      this.parent.insertChild(this.item);
+      selectItem(this.item);
+    }
+    undo() {
+      this.parent.removeChild(this.item);
+      selectItem(this.parent);
+    }
+  };
+  var RemoveItem = class extends Action {
+    constructor(item) {
+      super();
+      this.item = item;
+      this.parent = item.parent;
+      this.index = this.parent.children.indexOf(this.item);
+    }
+    do() {
+      this.parent.removeChild(this.item);
+      selectItem(this.parent);
+    }
+    undo() {
+      this.parent.insertChild(this.item, this.index);
+      selectItem(this.item);
+    }
+  };
+  var MoveItem = class extends Action {
+    constructor(item, newParent, newIndex, newSide = "") {
+      super();
+      this.item = item;
+      this.newParent = newParent;
+      this.newIndex = newIndex;
+      this.newSide = newSide;
+      this.oldParent = item.parent;
+      this.oldIndex = this.oldParent.children.indexOf(item);
+      this.oldSide = item.side;
+    }
+    do() {
+      const { item, newParent, newIndex, newSide } = this;
+      item.side = newSide;
+      if (newIndex === void 0) {
+        newParent.insertChild(item);
+      } else {
+        newParent.insertChild(item, newIndex);
+      }
+      selectItem(item);
+    }
+    undo() {
+      const { item, oldSide, oldIndex, oldParent, newParent } = this;
+      item.side = oldSide;
+      oldParent.insertChild(item, oldIndex);
+      selectItem(newParent);
+    }
+  };
+  var Swap = class extends Action {
+    constructor(item, diff) {
+      super();
+      this.item = item;
+      this.parent = item.parent;
+      let children = this.parent.children;
+      let sibling = this.parent.resolvedLayout.pickSibling(item, diff);
+      this.sourceIndex = children.indexOf(item);
+      this.targetIndex = children.indexOf(sibling);
+    }
+    do() {
+      this.parent.insertChild(this.item, this.targetIndex);
+    }
+    undo() {
+      this.parent.insertChild(this.item, this.sourceIndex);
+    }
+  };
+  var SetLayout = class extends Action {
+    constructor(item, layout) {
+      super();
+      this.item = item;
+      this.layout = layout;
+      this.oldLayout = item.layout;
+    }
+    do() {
+      this.item.layout = this.layout;
+    }
+    undo() {
+      this.item.layout = this.oldLayout;
+    }
+  };
+  var SetShape = class extends Action {
+    constructor(item, shape) {
+      super();
+      this.item = item;
+      this.shape = shape;
+      this.oldShape = item.shape;
+    }
+    do() {
+      this.item.shape = this.shape;
+    }
+    undo() {
+      this.item.shape = this.oldShape;
+    }
+  };
+  var SetColor = class extends Action {
+    constructor(item, color) {
+      super();
+      this.item = item;
+      this.color = color;
+      this.oldColor = item.color;
+    }
+    do() {
+      this.item.color = this.color;
+    }
+    undo() {
+      this.item.color = this.oldColor;
+    }
+  };
+  var SetText = class extends Action {
+    constructor(item, text) {
+      super();
+      this.item = item;
+      this.text = text;
+      this.oldText = item.text;
+      this.oldValue = item.value;
+    }
+    do() {
+      this.item.text = this.text;
+      let numText = Number(this.text);
+      if (String(numText) == this.text) {
+        this.item.value = numText;
+      }
+    }
+    undo() {
+      this.item.text = this.oldText;
+      this.item.value = this.oldValue;
+    }
+  };
+  var SetValue = class extends Action {
+    constructor(item, value) {
+      super();
+      this.item = item;
+      this.value = value;
+      this.oldValue = item.value;
+    }
+    do() {
+      this.item.value = this.value;
+    }
+    undo() {
+      this.item.value = this.oldValue;
+    }
+  };
+  var SetStatus = class extends Action {
+    constructor(item, status) {
+      super();
+      this.item = item;
+      this.status = status;
+      this.oldStatus = item.status;
+    }
+    do() {
+      this.item.status = this.status;
+    }
+    undo() {
+      this.item.status = this.oldStatus;
+    }
+  };
+  var SetIcon = class extends Action {
+    constructor(item, icon) {
+      super();
+      this.item = item;
+      this.icon = icon;
+      this.oldIcon = item.icon;
+    }
+    do() {
+      this.item.icon = this.icon;
+    }
+    undo() {
+      this.item.icon = this.oldIcon;
+    }
+  };
+  var SetSide = class extends Action {
+    constructor(item, side) {
+      super();
+      this.item = item;
+      this.side = side;
+      this.oldSide = item.side;
+    }
+    do() {
+      this.item.side = this.side;
+      this.item.map.update();
+    }
+    undo() {
+      this.item.side = this.oldSide;
+      this.item.map.update();
+    }
+  };
+
+  // .js/ui/color.js
+  var node5 = document.querySelector("#color");
+  function init3() {
+    node5.addEventListener("click", onClick);
+    [...node5.querySelectorAll("[data-color]")].forEach((item) => {
+      item.style.backgroundColor = item.dataset.color;
+    });
+  }
+  function onClick(e) {
+    e.preventDefault();
+    let color = e.target.dataset.color || null;
+    let action2 = new SetColor(currentItem, color);
+    action(action2);
+  }
+
+  // .js/ui/value.js
+  var value_exports = {};
+  __export(value_exports, {
+    init: () => init4,
+    update: () => update2
+  });
+  var select = document.querySelector("#value");
+  function init4() {
+    select.addEventListener("change", onChange);
+  }
+  function update2() {
+    let value = currentItem.value;
+    if (value === null) {
+      value = "";
+    }
+    if (typeof value == "number") {
+      value = "num";
+    }
+    select.value = value;
+  }
+  function onChange() {
+    let value = select.value;
+    if (value == "num") {
+      repo.get("value").execute();
+    } else {
+      let action2 = new SetValue(currentItem, value || null);
+      action(action2);
+    }
+  }
+
+  // .js/ui/layout.js
+  var layout_exports = {};
+  __export(layout_exports, {
+    init: () => init5,
+    update: () => update3
+  });
+
+  // .js/layout/layout.js
+  var Layout = class {
+    constructor(id, label, childDirection = "right") {
+      this.id = id;
+      this.label = label;
+      this.childDirection = childDirection;
+      this.SPACING_CHILD = 4;
+      repo2.set(this.id, this);
+    }
+    getChildDirection(_child) {
+      return this.childDirection;
+    }
+    computeAlignment(item) {
+      let direction = item.isRoot ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item);
+      if (direction == "left") {
+        return "right";
+      }
+      return "left";
+    }
+    pick(item, dir) {
+      var opposite = {
+        left: "right",
+        right: "left",
+        top: "bottom",
+        bottom: "top"
+      };
+      if (!item.isCollapsed()) {
+        var children = item.children;
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          if (this.getChildDirection(child) == dir) {
+            return child;
+          }
+        }
+      }
+      if (item.isRoot) {
+        return item;
+      }
+      var parentLayout = item.parent.resolvedLayout;
+      var thisChildDirection = parentLayout.getChildDirection(item);
+      if (thisChildDirection == dir) {
+        return item;
+      } else if (thisChildDirection == opposite[dir]) {
+        return item.parent;
+      } else {
+        return parentLayout.pickSibling(item, dir == "left" || dir == "top" ? -1 : 1);
+      }
+    }
+    pickSibling(item, dir) {
+      if (item.isRoot) {
+        return item;
+      }
+      var children = item.parent.children;
+      var index2 = children.indexOf(item);
+      index2 += dir;
+      index2 = (index2 + children.length) % children.length;
+      return children[index2];
+    }
+    anchorToggle(item, point, side) {
+      var node9 = item.dom.toggle;
+      var w = node9.offsetWidth;
+      var h = node9.offsetHeight;
+      let [l, t] = point;
+      switch (side) {
+        case "left":
+          t -= h / 2;
+          l -= w;
+          break;
+        case "right":
+          t -= h / 2;
+          break;
+        case "top":
+          l -= w / 2;
+          t -= h;
+          break;
+        case "bottom":
+          l -= w / 2;
+          break;
+      }
+      node9.style.left = Math.round(l) + "px";
+      node9.style.top = Math.round(t) + "px";
+    }
+    getChildAnchor(item, side) {
+      let { position, contentPosition, contentSize } = item;
+      if (side == "left" || side == "right") {
+        var pos = position[0] + contentPosition[0];
+        if (side == "left") {
+          pos += contentSize[0];
+        }
+      } else {
+        var pos = position[1] + contentPosition[1];
+        if (side == "top") {
+          pos += contentSize[1];
+        }
+      }
+      return pos;
+    }
+    computeChildrenBBox(children, childIndex) {
+      var bbox = [0, 0];
+      var rankIndex = (childIndex + 1) % 2;
+      children.forEach((child) => {
+        const { size } = child;
+        bbox[rankIndex] = Math.max(bbox[rankIndex], size[rankIndex]);
+        bbox[childIndex] += size[childIndex];
+      });
+      if (children.length > 1) {
+        bbox[childIndex] += this.SPACING_CHILD * (children.length - 1);
+      }
+      return bbox;
+    }
+  };
+  var repo2 = new Map();
+
+  // .js/layout/graph.js
+  var SPACING_RANK = 16;
+  var R = SPACING_RANK / 2;
+  var GraphLayout = class extends Layout {
+    update(item) {
+      this.layoutItem(item, this.childDirection);
+      if (this.childDirection == "left" || this.childDirection == "right") {
+        this.drawLinesHorizontal(item, this.childDirection);
+      } else {
+        this.drawLinesVertical(item, this.childDirection);
+      }
+    }
+    layoutItem(item, rankDirection) {
+      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
+      var childIndex = (rankIndex + 1) % 2;
+      const { contentSize } = item;
+      var bbox = this.computeChildrenBBox(item.children, childIndex);
+      var rankSize = contentSize[rankIndex];
+      if (bbox[rankIndex]) {
+        rankSize += bbox[rankIndex] + SPACING_RANK;
+      }
+      var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
+      var offset = [0, 0];
+      if (rankDirection == "right") {
+        offset[0] = contentSize[0] + SPACING_RANK;
+      }
+      if (rankDirection == "bottom") {
+        offset[1] = contentSize[1] + SPACING_RANK;
+      }
+      offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
+      this.layoutChildren(item.children, rankDirection, offset, bbox);
+      var labelPos = 0;
+      if (rankDirection == "left") {
+        labelPos = rankSize - contentSize[0];
+      }
+      if (rankDirection == "top") {
+        labelPos = rankSize - contentSize[1];
+      }
+      let contentPosition = [Math.round((childSize - contentSize[childIndex]) / 2), labelPos];
+      if (rankIndex == 0) {
+        contentPosition = contentPosition.reverse();
+      }
+      item.contentPosition = contentPosition;
+    }
+    layoutChildren(children, rankDirection, offset, bbox) {
+      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
+      var childIndex = (rankIndex + 1) % 2;
+      children.forEach((child) => {
+        const { size } = child;
+        if (rankDirection == "left") {
+          offset[0] = bbox[0] - size[0];
+        }
+        if (rankDirection == "top") {
+          offset[1] = bbox[1] - size[1];
+        }
+        child.position = offset;
+        offset[childIndex] += size[childIndex] + this.SPACING_CHILD;
+      });
+      return bbox;
+    }
+    drawLinesHorizontal(item, side) {
+      const { contentPosition, contentSize, resolvedShape, resolvedColor, children, dom } = item;
+      if (children.length == 0) {
+        return;
+      }
+      let itemAnchor = [
+        contentPosition[0] + (side == "right" ? contentSize[0] + 0.5 : -0.5),
+        resolvedShape.getVerticalAnchor(item)
+      ];
+      this.anchorToggle(item, itemAnchor, side);
+      if (item.isCollapsed()) {
+        return;
+      }
+      let d = [];
+      if (children.length == 1) {
+        var child = children[0];
+        const { position, resolvedShape: resolvedShape2 } = child;
+        let childAnchor = [
+          this.getChildAnchor(child, side),
+          resolvedShape2.getVerticalAnchor(child) + position[1]
+        ];
+        let mid = (itemAnchor[0] + childAnchor[0]) / 2;
+        d.push(`M ${itemAnchor}`, `C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`);
+        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+        dom.connectors.append(path2);
+        return;
+      }
+      let center = [
+        itemAnchor[0] + (side == "left" ? -R : R),
+        itemAnchor[1]
+      ];
+      d.push(`M ${itemAnchor}`, `L ${center}`);
+      const firstChild = children[0];
+      const lastChild = children[children.length - 1];
+      const cornerEndX = center[0] + (side == "left" ? -R : R);
+      const sweep = cornerEndX < center[0] ? 1 : 0;
+      let firstAnchor = [
+        this.getChildAnchor(firstChild, side),
+        firstChild.resolvedShape.getVerticalAnchor(firstChild) + firstChild.position[1]
+      ];
+      let lastAnchor = [
+        this.getChildAnchor(lastChild, side),
+        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1]
+      ];
+      d.push(`M ${firstAnchor}`, `L ${cornerEndX} ${firstAnchor[1]}`, `A ${R} ${R} 0 0 ${sweep} ${center[0]} ${firstAnchor[1] + R}`, `L ${center[0]} ${lastAnchor[1] - R}`, `A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${lastAnchor[1]}`, `L ${lastAnchor}`);
+      for (let i = 1; i < children.length - 1; i++) {
+        const c = children[i];
+        const y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
+        let lineStart = [center[0], y];
+        let childAnchor = [this.getChildAnchor(c, side), y];
+        d.push(`M ${lineStart}`, `L ${childAnchor}`);
+      }
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+    drawLinesVertical(item, side) {
+      const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
+      if (children.length == 0) {
+        return;
+      }
+      const height = children.length == 1 ? 2 * R : R;
+      let itemAnchor = [
+        resolvedShape.getHorizontalAnchor(item),
+        side == "top" ? size[1] - contentSize[1] : resolvedShape.getVerticalAnchor(item)
+      ];
+      let center = [
+        itemAnchor[0],
+        (side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
+      ];
+      this.anchorToggle(item, itemAnchor, side);
+      if (item.isCollapsed()) {
+        return;
+      }
+      let d = [];
+      d.push(`M ${itemAnchor}`, `L ${center}`);
+      if (children.length == 1) {
+        let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+        dom.connectors.append(path2);
+        return;
+      }
+      const firstChild = children[0];
+      const lastChild = children[children.length - 1];
+      const cornerEndY = center[1] + (side == "top" ? -R : R);
+      const sweep = cornerEndY > center[1] ? 1 : 0;
+      let firstAnchor = [
+        firstChild.resolvedShape.getHorizontalAnchor(firstChild) + firstChild.position[0],
+        this.getChildAnchor(firstChild, side)
+      ];
+      let lastAnchor = [
+        lastChild.resolvedShape.getHorizontalAnchor(lastChild) + lastChild.position[0],
+        this.getChildAnchor(lastChild, side)
+      ];
+      d.push(`M ${firstAnchor}`, `L ${firstAnchor[0]} ${cornerEndY}`, `A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0] + R} ${center[1]}`, `L ${lastAnchor[0] - R} ${center[1]}`, `A ${R} ${R} 0 0 ${sweep} ${lastAnchor[0]} ${cornerEndY}`, `L ${lastAnchor}`);
+      for (var i = 1; i < children.length - 1; i++) {
+        const c = children[i];
+        const x = c.resolvedShape.getHorizontalAnchor(c) + c.position[0];
+        let lineStart = [x, center[1]];
+        let childAnchor = [x, this.getChildAnchor(c, side)];
+        d.push(`M ${lineStart}`, `L ${childAnchor}`);
+      }
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+  };
+  new GraphLayout("graph-bottom", "Bottom", "bottom");
+  new GraphLayout("graph-top", "Top", "top");
+  new GraphLayout("graph-left", "Left", "left");
+  new GraphLayout("graph-right", "Right", "right");
+
+  // .js/layout/tree.js
+  var SPACING_RANK2 = 32;
+  var R2 = SPACING_RANK2 / 4;
+  var LINE_OFFSET = SPACING_RANK2 / 2;
+  var TreeLayout = class extends Layout {
+    update(item) {
+      this.layoutItem(item, this.childDirection);
+      this.drawLines(item, this.childDirection);
+    }
+    layoutItem(item, rankDirection) {
+      const { contentSize, children } = item;
+      let bbox = this.computeChildrenBBox(children, 1);
+      let rankSize = contentSize[0];
+      if (bbox[0]) {
+        rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK2);
+      }
+      let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
+      if (rankDirection == "left") {
+        offset[0] = rankSize - bbox[0] - SPACING_RANK2;
+      }
+      this.layoutChildren(children, rankDirection, offset, bbox);
+      let labelPos = 0;
+      if (rankDirection == "left") {
+        labelPos = rankSize - contentSize[0];
+      }
+      item.contentPosition = [labelPos, 0];
+    }
+    layoutChildren(children, rankDirection, offset, bbox) {
+      children.forEach((child) => {
+        const { size } = child;
+        let left = offset[0];
+        if (rankDirection == "left") {
+          left += bbox[0] - size[0];
+        }
+        child.position = [left, offset[1]];
+        offset[1] += size[1] + this.SPACING_CHILD;
+      });
+    }
+    drawLines(item, side) {
+      const { size, resolvedShape, resolvedColor, children, dom } = item;
+      let pointAnchor = [
+        (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5,
+        resolvedShape.getVerticalAnchor(item)
+      ];
+      this.anchorToggle(item, pointAnchor, "bottom");
+      if (children.length == 0 || item.isCollapsed()) {
+        return;
+      }
+      let lastChild = children[children.length - 1];
+      let lineEnd = [
+        pointAnchor[0],
+        lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R2
+      ];
+      let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
+      let cornerEndX = lineEnd[0] + (side == "left" ? -R2 : R2);
+      let sweep = cornerEndX < lineEnd[0] ? 1 : 0;
+      children.forEach((child) => {
+        const { resolvedShape: resolvedShape2, position } = child;
+        const y = resolvedShape2.getVerticalAnchor(child) + position[1];
+        d.push(`M ${pointAnchor[0]} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${cornerEndX} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
+      });
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+  };
+  new TreeLayout("tree-left", "Left", "left");
+  new TreeLayout("tree-right", "Right", "right");
+
+  // .js/layout/map.js
+  var MapLayout = class extends GraphLayout {
+    constructor() {
+      super(...arguments);
+      this.LINE_THICKNESS = 8;
+    }
+    update(item) {
+      if (item.isRoot) {
+        this.layoutRoot(item);
+      } else {
+        var side = this.getChildDirection(item);
+        repo2.get(`graph-${side}`).update(item);
+      }
+    }
+    getChildDirection(child) {
+      while (!child.parent.isRoot) {
+        child = child.parent;
+      }
+      var side = child.side;
+      if (side) {
+        return side;
+      }
+      var counts = { left: 0, right: 0 };
+      var children = child.parent.children;
+      for (var i = 0; i < children.length; i++) {
+        var side = children[i].side;
+        if (!side) {
+          side = counts.right > counts.left ? "left" : "right";
+          children[i].side = side;
+        }
+        counts[side]++;
+      }
+      return child.side;
+    }
+    pickSibling(item, dir) {
+      if (item.isRoot) {
+        return item;
+      }
+      const parent = item.parent;
+      var children = parent.children;
+      if (parent.isRoot) {
+        var side = this.getChildDirection(item);
+        children = children.filter((child) => this.getChildDirection(child) == side);
+      }
+      var index2 = children.indexOf(item);
+      index2 += dir;
+      index2 = (index2 + children.length) % children.length;
+      return children[index2];
+    }
+    layoutRoot(item) {
+      const { children, contentSize } = item;
+      let childrenLeft = [];
+      let childrenRight = [];
+      let contentPosition = [0, 0];
+      children.forEach((child) => {
+        var side = this.getChildDirection(child);
+        if (side == "left") {
+          childrenLeft.push(child);
+        } else {
+          childrenRight.push(child);
+        }
+      });
+      var bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
+      var bboxRight = this.computeChildrenBBox(childrenRight, 1);
+      var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
+      var left = 0;
+      this.layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
+      left += bboxLeft[0];
+      if (childrenLeft.length) {
+        left += SPACING_RANK;
+      }
+      contentPosition[0] = left;
+      left += contentSize[0];
+      if (childrenRight.length) {
+        left += SPACING_RANK;
+      }
+      this.layoutChildren(childrenRight, "right", [left, Math.round((height - bboxRight[1]) / 2)], bboxRight);
+      left += bboxRight[0];
+      contentPosition[1] = Math.round((height - contentSize[1]) / 2);
+      item.contentPosition = contentPosition;
+      this.drawRootConnectors(item, "left", childrenLeft);
+      this.drawRootConnectors(item, "right", childrenRight);
+    }
+    drawRootConnectors(item, side, children) {
+      if (children.length == 0 || item.isCollapsed()) {
+        return;
+      }
+      const { contentSize, contentPosition, resolvedShape, dom } = item;
+      let x1 = contentPosition[0] + contentSize[0] / 2;
+      let y1 = resolvedShape.getVerticalAnchor(item);
+      const half = this.LINE_THICKNESS / 2;
+      let paths = children.map((child) => {
+        const { resolvedColor, resolvedShape: resolvedShape2, position } = child;
+        let x2 = this.getChildAnchor(child, side);
+        let y2 = resolvedShape2.getVerticalAnchor(child) + position[1];
+        let angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
+        let dx = Math.cos(angle) * half;
+        let dy = Math.sin(angle) * half;
+        let d = [
+          `M ${x1 - dx} ${y1 - dy}`,
+          `Q ${(x2 + x1) / 2} ${y2} ${x2} ${y2}`,
+          `Q ${(x2 + x1) / 2} ${y2} ${x1 + dx} ${y1 + dy}`,
+          `Z`
+        ];
+        let attrs = {
+          d: d.join(" "),
+          fill: resolvedColor,
+          stroke: resolvedColor
+        };
+        return node2("path", attrs);
+      });
+      dom.connectors.append(...paths);
+    }
+  };
+  new MapLayout("map", "Map");
+
+  // .js/ui/layout.js
+  var select2 = document.querySelector("#layout");
+  function init5() {
+    let layout = repo2.get("map");
+    select2.append(new Option(layout.label, layout.id));
+    let label = buildGroup("Graph");
+    let graphOptions = ["right", "left", "bottom", "top"].map((name) => {
+      let layout2 = repo2.get(`graph-${name}`);
+      return new Option(layout2.label, layout2.id);
+    });
+    label.append(...graphOptions);
+    label = buildGroup("Tree");
+    let treeOptions = ["right", "left"].map((name) => {
+      let layout2 = repo2.get(`tree-${name}`);
+      return new Option(layout2.label, layout2.id);
+    });
+    label.append(...treeOptions);
+    select2.addEventListener("change", onChange2);
+  }
+  function update3() {
+    var value = "";
+    var layout = currentItem.layout;
+    if (layout) {
+      value = layout.id;
+    }
+    select2.value = value;
+    getOption("").disabled = currentItem.isRoot;
+    getOption("map").disabled = !currentItem.isRoot;
+  }
+  function onChange2() {
+    var layout = repo2.get(select2.value);
+    var action2 = new SetLayout(currentItem, layout);
+    action(action2);
+  }
+  function getOption(value) {
+    return select2.querySelector(`option[value="${value}"]`);
+  }
+  function buildGroup(label) {
+    let node9 = document.createElement("optgroup");
+    node9.label = label;
+    select2.append(node9);
+    return node9;
+  }
+
+  // .js/ui/icon.js
+  var icon_exports = {};
+  __export(icon_exports, {
+    init: () => init6,
+    update: () => update4
+  });
+  var select3 = document.querySelector("#icons");
+  function init6() {
+    select3.addEventListener("change", onChange3);
+  }
+  function update4() {
+    select3.value = currentItem.icon || "";
+  }
+  function onChange3() {
+    let action2 = new SetIcon(currentItem, select3.value || null);
+    action(action2);
+  }
+
+  // .js/ui/shape.js
+  var shape_exports = {};
+  __export(shape_exports, {
+    init: () => init7,
+    update: () => update5
+  });
+
+  // .js/shape/shape.js
+  var VERTICAL_OFFSET = 0.5;
+  var Shape = class {
+    constructor(id, label) {
+      this.id = id;
+      this.label = label;
+      repo3.set(this.id, this);
+    }
+    update(item) {
+      item.dom.content.style.borderColor = item.resolvedColor;
+    }
+    getHorizontalAnchor(item) {
+      const { contentPosition, contentSize } = item;
+      return Math.round(contentPosition[0] + contentSize[0] / 2) + 0.5;
+    }
+    getVerticalAnchor(item) {
+      const { contentPosition, contentSize } = item;
+      return contentPosition[1] + Math.round(contentSize[1] * VERTICAL_OFFSET) + 0.5;
+    }
+  };
+  var repo3 = new Map();
+
+  // .js/shape/box.js
+  var Box = class extends Shape {
+    constructor() {
+      super("box", "Box");
+    }
+  };
+  new Box();
+
+  // .js/shape/ellipse.js
+  var Ellipse = class extends Shape {
+    constructor() {
+      super("ellipse", "Ellipse");
+    }
+  };
+  new Ellipse();
+
+  // .js/shape/underline.js
+  var VERTICAL_OFFSET2 = -3;
+  var Underline = class extends Shape {
+    constructor() {
+      super("underline", "Underline");
+    }
+    update(item) {
+      const { contentPosition, resolvedColor, contentSize, dom } = item;
+      let left = contentPosition[0];
+      let right = left + contentSize[0];
+      let top = this.getVerticalAnchor(item);
+      let d = [
+        `M ${left} ${top}`,
+        `L ${right} ${top}`
+      ];
+      let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
+      dom.connectors.append(path);
+    }
+    getVerticalAnchor(item) {
+      const { contentPosition, contentSize } = item;
+      return contentPosition[1] + contentSize[1] + VERTICAL_OFFSET2 + 0.5;
+    }
+  };
+  new Underline();
+
+  // .js/ui/shape.js
+  var select4 = document.querySelector("#shape");
+  function init7() {
+    repo3.forEach((shape) => {
+      select4.append(new Option(shape.label, shape.id));
+    });
+    select4.addEventListener("change", onChange4);
+  }
+  function update5() {
+    let value = "";
+    let shape = currentItem.shape;
+    if (shape) {
+      value = shape.id;
+    }
+    select4.value = value;
+  }
+  function onChange4() {
+    let shape = repo3.get(this._select.value);
+    let action2 = new SetShape(currentItem, shape);
+    action(action2);
+  }
+
+  // .js/ui/status.js
+  var status_exports = {};
+  __export(status_exports, {
+    init: () => init8,
+    update: () => update6
+  });
+  var select5 = document.querySelector("#status");
+  var STATUS_MAP = {
+    "yes": true,
+    "no": false,
+    "": null
+  };
+  function statusToString(status) {
+    for (let key in STATUS_MAP) {
+      if (STATUS_MAP[key] === status) {
+        return key;
+      }
+    }
+    return String(status);
+  }
+  function stringToStatus(str) {
+    return str in STATUS_MAP ? STATUS_MAP[str] : str;
+  }
+  function init8() {
+    select5.addEventListener("change", onChange5);
+  }
+  function update6() {
+    select5.value = statusToString(currentItem.status);
+  }
+  function onChange5() {
+    let status = stringToStatus(select5.value);
+    let action2 = new SetStatus(currentItem, status);
+    action(action2);
+  }
+
+  // .js/ui/tip.js
+  var tip_exports = {};
+  __export(tip_exports, {
+    init: () => init9
+  });
+  var node6 = document.querySelector("#tip");
+  function init9() {
+    node6.addEventListener("click", hide);
+    subscribe("command-child", hide);
+    subscribe("command-sibling", hide);
+  }
+  function hide() {
+    unsubscribe("command-child", hide);
+    unsubscribe("command-sibling", hide);
+    node6.removeEventListener("click", hide);
+    node6.hidden = true;
+  }
+
+  // .js/ui/ui.js
+  var node7 = document.querySelector(".ui");
+  function isActive() {
+    return node7.contains(document.activeElement);
+  }
+  function toggle3() {
+    node7.hidden = !node7.hidden;
+    publish("ui-change", this);
+  }
+  function getWidth() {
+    return node7.hidden ? 0 : node7.offsetWidth;
+  }
+  function update7() {
+    [layout_exports, shape_exports, icon_exports, value_exports, status_exports].forEach((ui5) => ui5.update());
+  }
+  function onClick2(e) {
+    let target = e.target;
+    if (target == node7.querySelector("#toggle")) {
+      toggle3();
+      return;
+    }
+    let current2 = target;
+    while (current2 != document) {
+      let command = current2.dataset.command;
+      if (command) {
+        repo.get(command).execute();
+        return;
+      }
+      current2 = current2.parentNode;
+    }
+  }
+  function init10() {
+    [
+      layout_exports,
+      shape_exports,
+      icon_exports,
+      value_exports,
+      status_exports,
+      color_exports,
+      help_exports,
+      tip_exports,
+      notes_exports
+    ].forEach((ui5) => ui5.init());
+    subscribe("item-select", update7);
+    subscribe("item-change", (_message, publisher) => {
+      if (publisher == currentItem) {
+        update7();
+      }
+    });
+    node7.addEventListener("click", onClick2);
+  }
+
+  // .js/command/command.js
+  var PAN_AMOUNT = 15;
+  function isMac() {
+    return !!navigator.platform.match(/mac/i);
+  }
+  var repo = new Map();
+  var Command = class {
+    constructor(id, label) {
+      this.label = label;
+      this.editMode = false;
+      repo.set(id, this);
+    }
+    get isValid() {
+      return this.editMode === null || this.editMode == editing;
+    }
+  };
+  new class Notes extends Command {
+    constructor() {
+      super("notes", "Notes");
+      this.keys = [{ keyCode: "M".charCodeAt(0), ctrlKey: true }];
+    }
+    execute() {
+      toggle2();
+    }
+  }();
+  new class Undo extends Command {
+    constructor() {
+      super("undo", "Undo");
+      this.keys = [{ keyCode: "Z".charCodeAt(0), ctrlKey: true }];
+    }
+    get isValid() {
+      return super.isValid && canBack();
+    }
+    execute() {
+      back();
+    }
+  }();
+  new class Redo extends Command {
+    constructor() {
+      super("redo", "Redo");
+      this.keys = [{ keyCode: "Y".charCodeAt(0), ctrlKey: true }];
+    }
+    get isValid() {
+      return super.isValid && canForward();
+    }
+    execute() {
+      forward();
+    }
+  }();
+  new class InsertSibling extends Command {
+    constructor() {
+      super("insert-sibling", "Insert a sibling");
+      this.keys = [{ keyCode: 13 }];
+    }
+    execute() {
+      let item = currentItem;
+      let action2;
+      if (item.isRoot) {
+        action2 = new InsertNewItem(item, item.children.length);
+      } else {
+        let parent = item.parent;
+        let index2 = parent.children.indexOf(item);
+        action2 = new InsertNewItem(parent, index2 + 1);
+      }
+      action(action2);
+      repo.get("edit").execute();
+      publish("command-sibling");
+    }
+  }();
+  new class InsertChild extends Command {
+    constructor() {
+      super("insert-child", "Insert a child");
+      this.keys = [
+        { keyCode: 9, ctrlKey: false },
+        { keyCode: 45 }
+      ];
+    }
+    execute() {
+      let item = currentItem;
+      let action2 = new InsertNewItem(item, item.children.length);
+      action(action2);
+      repo.get("edit").execute();
+      publish("command-child");
+    }
+  }();
+  new class Delete extends Command {
+    constructor() {
+      super("delete", "Delete an item");
+      this.keys = [{ keyCode: isMac() ? 8 : 46 }];
+    }
+    get isValid() {
+      return super.isValid && !currentItem.isRoot;
+    }
+    execute() {
+      let action2 = new RemoveItem(currentItem);
+      action(action2);
+    }
+  }();
+  new class Swap2 extends Command {
+    constructor() {
+      super("swap", "Swap sibling");
+      this.keys = [
+        { keyCode: 38, ctrlKey: true },
+        { keyCode: 40, ctrlKey: true }
+      ];
+    }
+    execute(e) {
+      let current2 = currentItem;
+      if (current2.isRoot || current2.parent.children.length < 2) {
+        return;
+      }
+      let diff = e.keyCode == 38 ? -1 : 1;
+      let action2 = new Swap(current2, diff);
+      action(action2);
+    }
+  }();
+  new class SetSide2 extends Command {
+    constructor() {
+      super("side", "Change side");
+      this.keys = [
+        { keyCode: 37, ctrlKey: true },
+        { keyCode: 39, ctrlKey: true }
+      ];
+    }
+    execute(e) {
+      let current2 = currentItem;
+      if (current2.isRoot || !current2.parent.isRoot) {
+        return;
+      }
+      let side = e.keyCode == 37 ? "left" : "right";
+      let action2 = new SetSide(currentItem, side);
+      action(action2);
+    }
+  }();
+  new class Save extends Command {
+    constructor() {
+      super("save", "Save map");
+      this.keys = [{ keyCode: "S".charCodeAt(0), ctrlKey: true, shiftKey: false }];
+    }
+    execute() {
+      MM.App.io.quickSave();
+    }
+  }();
+  new class SaveAs extends Command {
+    constructor() {
+      super("save-as", "Save as\u2026");
+      this.keys = [{ keyCode: "S".charCodeAt(0), ctrlKey: true, shiftKey: true }];
+    }
+    execute() {
+      MM.App.io.show("save");
+    }
+  }();
+  new class Load extends Command {
+    constructor() {
+      super("load", "Load map");
+      this.keys = [{ keyCode: "O".charCodeAt(0), ctrlKey: true }];
+    }
+    execute() {
+      MM.App.io.show("load");
+    }
+  }();
+  new class Center extends Command {
+    constructor() {
+      super("center", "Center map");
+      this.keys = [{ keyCode: 35 }];
+    }
+    execute() {
+      currentMap.center();
+    }
+  }();
+  new class New extends Command {
+    constructor() {
+      super("new", "New map");
+      this.keys = [{ keyCode: "N".charCodeAt(0), ctrlKey: true }];
+    }
+    execute() {
+      if (!confirm("Throw away your current map and start a new one?")) {
+        return;
+      }
+      showMap(new Map2());
+      publish("map-new", this);
+    }
+  }();
+  new class ZoomIn extends Command {
+    constructor() {
+      super("zoom-in", "Zoom in");
+      this.keys = [{ charCode: "+".charCodeAt(0) }];
+    }
+    execute() {
+      adjustFontSize(1);
+    }
+  }();
+  new class ZoomOut extends Command {
+    constructor() {
+      super("zoom-out", "Zoom out");
+      this.keys = [{ charCode: "-".charCodeAt(0) }];
+    }
+    execute() {
+      adjustFontSize(-1);
+    }
+  }();
+  new class Help extends Command {
+    constructor() {
+      super("help", "Show/hide help");
+      this.keys = [{ charCode: "?".charCodeAt(0) }];
+    }
+    execute() {
+      toggle();
+    }
+  }();
+  new class UI extends Command {
+    constructor() {
+      super("ui", "Show/hide UI");
+      this.keys = [{ charCode: "*".charCodeAt(0) }];
+    }
+    execute() {
+      toggle3();
+    }
+  }();
+  new class Pan extends Command {
+    constructor() {
+      super("pan", "Pan the map");
+      this.keys = [
+        { keyCode: "W".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false },
+        { keyCode: "A".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false },
+        { keyCode: "S".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false },
+        { keyCode: "D".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false }
+      ];
+      this.chars = [];
+    }
+    execute(e) {
+      var ch = String.fromCharCode(e.keyCode);
+      var index2 = this.chars.indexOf(ch);
+      if (index2 > -1) {
+        return;
+      }
+      if (!this.chars.length) {
+        window.addEventListener("keyup", this);
+        this.interval = setInterval(() => this.step(), 50);
+      }
+      this.chars.push(ch);
+      this.step();
+    }
+    step() {
+      const dirs = {
+        "W": [0, 1],
+        "A": [1, 0],
+        "S": [0, -1],
+        "D": [-1, 0]
+      };
+      let offset = [0, 0];
+      this.chars.forEach((ch) => {
+        offset[0] += dirs[ch][0] * PAN_AMOUNT;
+        offset[1] += dirs[ch][1] * PAN_AMOUNT;
+      });
+      currentMap.moveBy(offset);
+    }
+    handleEvent(e) {
+      var ch = String.fromCharCode(e.keyCode);
+      var index2 = this.chars.indexOf(ch);
+      if (index2 > -1) {
+        this.chars.splice(index2, 1);
+        if (!this.chars.length) {
+          window.removeEventListener("keyup", this);
+          clearInterval(this.interval);
+        }
+      }
+    }
+  }();
+  new class Fold extends Command {
+    constructor() {
+      super("fold", "Fold/Unfold");
+      this.keys = [{ charCode: "f".charCodeAt(0), ctrlKey: false }];
+    }
+    execute() {
+      let item = currentItem;
+      if (item.isCollapsed()) {
+        item.expand();
+      } else {
+        item.collapse();
+      }
+      currentMap.ensureItemVisibility(item);
+    }
+  }();
+
+  // .js/item.js
+  var COLOR = "#999";
+  var RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
+  var UPDATE_OPTIONS = {
+    parent: true,
+    children: false
+  };
+  var Item = class {
+    constructor() {
+      this._id = generateId();
+      this._parent = null;
+      this._collapsed = false;
+      this._icon = null;
+      this._notes = null;
+      this._value = null;
+      this._status = null;
+      this._color = null;
+      this._side = null;
+      this._shape = null;
+      this._layout = null;
+      this.originalText = "";
+      this.dom = {
+        node: group(),
+        connectors: group(),
+        content: node("div"),
+        notes: node("div"),
+        status: node("span"),
+        icon: node("span"),
+        value: node("span"),
+        text: node("div"),
+        toggle: node("div")
+      };
+      this.children = [];
+      const { dom } = this;
+      dom.node.classList.add("item");
+      dom.content.classList.add("content");
+      dom.notes.classList.add("notes-indicator");
+      dom.status.classList.add("status");
+      dom.icon.classList.add("icon");
+      dom.value.classList.add("value");
+      dom.text.classList.add("text");
+      dom.toggle.classList.add("toggle");
+      dom.icon.classList.add("icon");
+      let foContent = foreignObject();
+      dom.node.append(dom.connectors, foContent);
+      foContent.append(dom.content);
+      dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
+      dom.toggle.addEventListener("click", this);
+    }
+    static fromJSON(data) {
+      return new this().fromJSON(data);
+    }
+    get id() {
+      return this._id;
+    }
+    get parent() {
+      return this._parent;
+    }
+    set parent(parent) {
+      this._parent = parent;
+      this.update({ children: true });
+    }
+    get size() {
+      const bbox = this.dom.node.getBBox();
+      return [bbox.width, bbox.height];
+    }
+    get position() {
+      const { node: node9 } = this.dom;
+      const transform = node9.getAttribute("transform");
+      return transform.match(/\d+/g).map(Number);
+    }
+    set position(position) {
+      const { node: node9 } = this.dom;
+      const transform = `translate(${position.join(" ")})`;
+      node9.setAttribute("transform", transform);
+    }
+    get contentSize() {
+      const { content } = this.dom;
+      const fo = content.parentNode;
+      return [fo.getAttribute("width"), fo.getAttribute("height")].map(Number);
+    }
+    get contentPosition() {
+      const { content } = this.dom;
+      const fo = content.parentNode;
+      return [fo.getAttribute("x"), fo.getAttribute("y")].map(Number);
+    }
+    set contentPosition(position) {
+      const { content } = this.dom;
+      const fo = content.parentNode;
+      fo.setAttribute("x", String(position[0]));
+      fo.setAttribute("y", String(position[1]));
+    }
+    toJSON() {
+      let data = {
+        id: this.id,
+        text: this.text,
+        notes: this.notes
+      };
+      if (this._side) {
+        data.side = this._side;
+      }
+      if (this._color) {
+        data.color = this._color;
+      }
+      if (this._icon) {
+        data.icon = this._icon;
+      }
+      if (this._value) {
+        data.value = this._value;
+      }
+      if (this._status) {
+        data.status = this._status;
+      }
+      if (this._layout) {
+        data.layout = this._layout.id;
+      }
+      if (this._shape) {
+        data.shape = this._shape.id;
+      }
+      if (this._collapsed) {
+        data.collapsed = 1;
+      }
+      if (this.children.length) {
+        data.children = this.children.map((child) => child.toJSON());
+      }
+      return data;
+    }
+    fromJSON(data) {
+      this.text = data.text;
+      if (data.id) {
+        this._id = data.id;
+      }
+      if (data.notes) {
+        this.notes = data.notes;
+      }
+      if (data.side) {
+        this._side = data.side;
+      }
+      if (data.color) {
+        this._color = data.color;
+      }
+      if (data.icon) {
+        this._icon = data.icon;
+      }
+      if (data.value) {
+        this._value = data.value;
+      }
+      if (data.status) {
+        if (data.status == "yes") {
+          this._status = true;
+        } else if (data.status == "no") {
+          this._status = false;
+        } else {
+          this._status = data.status;
+        }
+      }
+      if (data.collapsed) {
+        this.collapse();
+      }
+      if (data.layout) {
+        this._layout = repo2.get(data.layout);
+      }
+      if (data.shape) {
+        this.shape = repo3.get(data.shape);
+      }
+      (data.children || []).forEach((child) => {
+        this.insertChild(Item.fromJSON(child));
+      });
+      return this;
+    }
+    mergeWith(data) {
+      var dirty = 0;
+      if (this.text != data.text && !this.dom.text.contentEditable) {
+        this.text = data.text;
+      }
+      if (this._side != data.side) {
+        this._side = data.side;
+        dirty = 1;
+      }
+      if (this._color != data.color) {
+        this._color = data.color;
+        dirty = 2;
+      }
+      if (this._icon != data.icon) {
+        this._icon = data.icon;
+        dirty = 1;
+      }
+      if (this._value != data.value) {
+        this._value = data.value;
+        dirty = 1;
+      }
+      if (this._status != data.status) {
+        this._status = data.status;
+        dirty = 1;
+      }
+      if (this._collapsed != !!data.collapsed) {
+        this[this._collapsed ? "expand" : "collapse"]();
+      }
+      if (this.layout != data.layout) {
+        this._layout = repo2.get(data.layout);
+        dirty = 2;
+      }
+      if (this.shape != data.shape) {
+        this.shape = repo3.get(data.shape);
+      }
+      (data.children || []).forEach((child, index2) => {
+        if (index2 >= this.children.length) {
+          this.insertChild(Item.fromJSON(child));
+        } else {
+          var myChild = this.children[index2];
+          if (myChild.id == child.id) {
+            myChild.mergeWith(child);
+          } else {
+            this.removeChild(this.children[index2]);
+            this.insertChild(Item.fromJSON(child), index2);
+          }
+        }
+      });
+      var newLength = (data.children || []).length;
+      while (this.children.length > newLength) {
+        this.removeChild(this.children[this.children.length - 1]);
+      }
+      if (dirty == 1) {
+        this.update({ children: false });
+      }
+      if (dirty == 2) {
+        this.update({ children: true });
+      }
+    }
+    clone() {
+      var data = this.toJSON();
+      var removeId = function(obj) {
+        delete obj.id;
+        obj.children && obj.children.forEach(removeId);
+      };
+      removeId(data);
+      return Item.fromJSON(data);
+    }
+    select() {
+      this.dom.node.classList.add("current");
+      if (window.editor) {
+        if (this.notes) {
+          window.editor.setContent(this.notes);
+        } else {
+          window.editor.setContent("");
+        }
+      }
+      this.map.ensureItemVisibility(this);
+      publish("item-select", this);
+    }
+    deselect() {
+      this.dom.node.classList.remove("current");
+    }
+    update(options = {}) {
+      options = Object.assign({}, UPDATE_OPTIONS, options);
+      const { map, children, parent } = this;
+      if (!map || !map.isVisible) {
+        return;
+      }
+      if (options.children) {
+        let childUpdateOptions = { parent: false, children: true };
+        children.forEach((child) => child.update(childUpdateOptions));
+      }
+      publish("item-change", this);
+      this.updateStatus();
+      this.updateIcon();
+      this.updateValue();
+      const { resolvedLayout, resolvedShape, dom } = this;
+      dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
+      dom.node.classList.toggle("collapsed", this._collapsed);
+      dom.node.dataset.shape = resolvedShape.id;
+      dom.node.dataset.align = resolvedLayout.computeAlignment(this);
+      let fo = dom.content.parentNode;
+      fo.setAttribute("width", String(dom.content.offsetWidth));
+      fo.setAttribute("height", String(dom.content.offsetHeight));
+      dom.connectors.innerHTML = "";
+      resolvedLayout.update(this);
+      resolvedShape.update(this);
+      if (options.parent) {
+        parent.update({ children: false });
+      }
+    }
+    get text() {
+      return this.dom.text.innerHTML;
+    }
+    set text(text) {
+      this.dom.text.innerHTML = text;
+      findLinks(this.dom.text);
+      this.update();
+    }
+    get notes() {
+      return this._notes;
+    }
+    set notes(notes3) {
+      this._notes = notes3;
+      this.update();
+    }
+    collapse() {
+      if (this._collapsed) {
+        return;
+      }
+      this._collapsed = true;
+      this.update();
+    }
+    expand() {
+      if (!this._collapsed) {
+        return;
+      }
+      this._collapsed = false;
+      this.update();
+      this.update({ children: true });
+    }
+    isCollapsed() {
+      return this._collapsed;
+    }
+    get value() {
+      return this._value;
+    }
+    set value(value) {
+      this._value = value;
+      this.update();
+    }
+    get resolvedValue() {
+      const value = this._value;
+      if (typeof value == "number") {
+        return value;
+      }
+      let childValues = this.children.map((child) => child.resolvedValue);
+      switch (value) {
+        case "max":
+          return Math.max(...childValues);
+          break;
+        case "min":
+          return Math.min(...childValues);
+          break;
+        case "sum":
+          return childValues.reduce((prev, cur) => prev + cur, 0);
+          break;
+        case "avg":
+          var sum = childValues.reduce((prev, cur) => prev + cur, 0);
+          return childValues.length ? sum / childValues.length : 0;
+          break;
+        default:
+          return 0;
+          break;
+      }
+    }
+    get status() {
+      return this._status;
+    }
+    set status(status) {
+      this._status = status;
+      this.update();
+    }
+    get resolvedStatus() {
+      let status = this._status;
+      if (status == "computed") {
+        return this.children.every((child) => {
+          return child.resolvedStatus !== false;
+        });
+      } else {
+        return status;
+      }
+    }
+    get icon() {
+      return this._icon;
+    }
+    set icon(icon) {
+      this._icon = icon;
+      this.update();
+    }
+    get side() {
+      return this._side;
+    }
+    set side(side) {
+      this._side = side;
+    }
+    get color() {
+      return this._color;
+    }
+    set color(color) {
+      this._color = color;
+      this.update({ children: true });
+    }
+    get resolvedColor() {
+      if (this._color) {
+        return this._color;
+      }
+      const { parent } = this;
+      if (parent instanceof Item) {
+        return parent.resolvedColor;
+      }
+      return COLOR;
+    }
+    get layout() {
+      return this._layout;
+    }
+    set layout(layout) {
+      this._layout = layout;
+      this.update({ children: true });
+    }
+    get resolvedLayout() {
+      if (this._layout) {
+        return this._layout;
+      }
+      const { parent } = this;
+      if (!(parent instanceof Item)) {
+        throw new Error("Non-connected item does not have layout");
+      }
+      return parent.resolvedLayout;
+    }
+    get shape() {
+      return this._shape;
+    }
+    set shape(shape) {
+      this._shape = shape;
+      this.update();
+    }
+    get resolvedShape() {
+      if (this._shape) {
+        return this._shape;
+      }
+      let depth = 0;
+      let node9 = this;
+      while (!node9.isRoot) {
+        depth++;
+        node9 = node9.parent;
+      }
+      switch (depth) {
+        case 0:
+          return repo3.get("ellipse");
+        case 1:
+          return repo3.get("box");
+        default:
+          return repo3.get("underline");
+      }
+    }
+    get map() {
+      let item = this.parent;
+      while (item) {
+        if (item instanceof Map2) {
+          return item;
+        }
+        item = item.parent;
+      }
+      return null;
+    }
+    get isRoot() {
+      return this.parent instanceof Map2;
+    }
+    insertChild(child, index2) {
+      if (!child) {
+        child = new Item();
+      } else if (child.parent && child.parent instanceof Item) {
+        child.parent.removeChild(child);
+      }
+      if (!this.children.length) {
+        this.dom.node.appendChild(this.dom.toggle);
+      }
+      if (arguments.length < 2) {
+        index2 = this.children.length;
+      }
+      var next = null;
+      if (index2 < this.children.length) {
+        next = this.children[index2].dom.node;
+      }
+      this.dom.node.insertBefore(child.dom.node, next);
+      this.children.splice(index2, 0, child);
+      child.parent = this;
+    }
+    removeChild(child) {
+      var index2 = this.children.indexOf(child);
+      this.children.splice(index2, 1);
+      var node9 = child.dom.node;
+      node9.parentNode.removeChild(node9);
+      child.parent = null;
+      if (!this.children.length) {
+        this.dom.toggle.parentNode.removeChild(this.dom.toggle);
+      }
+      this.update();
+    }
+    startEditing() {
+      this.originalText = this.text;
+      this.dom.text.contentEditable = "true";
+      this.dom.text.focus();
+      document.execCommand("styleWithCSS", null, "false");
+      this.dom.text.addEventListener("input", this);
+      this.dom.text.addEventListener("keydown", this);
+      this.dom.text.addEventListener("blur", this);
+    }
+    stopEditing() {
+      this.dom.text.removeEventListener("input", this);
+      this.dom.text.removeEventListener("keydown", this);
+      this.dom.text.removeEventListener("blur", this);
+      this.dom.text.blur();
+      this.dom.text.contentEditable = "false";
+      var result = this.dom.text.innerHTML;
+      this.dom.text.innerHTML = this.originalText;
+      this.originalText = "";
+      this.update();
+      return result;
+    }
+    handleEvent(e) {
+      switch (e.type) {
+        case "input":
+          this.update();
+          this.map.ensureItemVisibility(this);
+          break;
+        case "keydown":
+          if (e.keyCode == 9) {
+            e.preventDefault();
+          }
+          break;
+        case "blur":
+          repo.get("finish").execute();
+          break;
+        case "click":
+          if (this._collapsed) {
+            this.expand();
+          } else {
+            this.collapse();
+          }
+          selectItem(this);
+          break;
+      }
+    }
+    updateStatus() {
+      const { resolvedStatus, dom } = this;
+      dom.status.className = "status";
+      dom.status.hidden = false;
+      switch (resolvedStatus) {
+        case true:
+          dom.status.classList.add("yes");
+          break;
+        case false:
+          dom.status.classList.add("no");
+          break;
+        default:
+          dom.status.hidden = true;
+          break;
+      }
+    }
+    updateIcon() {
+      var icon = this._icon;
+      this.dom.icon.className = "icon";
+      this.dom.icon.hidden = !icon;
+      if (icon) {
+        this.dom.icon.classList.add("fa");
+        this.dom.icon.classList.add(icon);
+      }
+    }
+    updateValue() {
+      const { dom, _value } = this;
+      if (_value === null) {
+        dom.value.hidden = true;
+        return;
+      }
+      dom.value.hidden = false;
+      if (typeof _value == "number") {
+        dom.value.textContent = String(_value);
+      } else {
+        let resolved = this.resolvedValue;
+        dom.value.textContent = String(Math.round(resolved) == resolved ? resolved : resolved.toFixed(3));
+      }
+    }
+  };
+  function findLinks(node9) {
+    var children = [].slice.call(node9.childNodes);
+    for (var i = 0; i < children.length; i++) {
+      var child = children[i];
+      switch (child.nodeType) {
+        case 1:
+          if (child.nodeName.toLowerCase() == "a") {
+            continue;
+          }
+          findLinks(child);
+          break;
+        case 3:
+          var result = child.nodeValue.match(RE);
+          if (result) {
+            var before = child.nodeValue.substring(0, result.index);
+            var after = child.nodeValue.substring(result.index + result[0].length);
+            var link = document.createElement("a");
+            link.innerHTML = link.href = result[0];
+            if (before) {
+              node9.insertBefore(document.createTextNode(before), child);
+            }
+            node9.insertBefore(link, child);
+            if (after) {
+              child.nodeValue = after;
+              i--;
+            } else {
+              node9.removeChild(child);
+            }
+          }
+          break;
+      }
+    }
+  }
+  function generateId() {
+    let str = "";
+    for (var i = 0; i < 8; i++) {
+      let code = Math.floor(Math.random() * 26);
+      str += String.fromCharCode("a".charCodeAt(0) + code);
+    }
+    return str;
+  }
+  MM.Item = Item;
+
+  // .js/map.js
+  var UPDATE_OPTIONS2 = {
+    children: true
+  };
+  var Map2 = class {
+    constructor(options) {
+      this.node = node2("svg");
+      this.position = [0, 0];
+      options = Object.assign({
+        root: "My Mind Map",
+        layout: repo2.get("map")
+      }, options);
+      let root = new Item();
+      root.text = options.root;
+      root.layout = options.layout;
+      this.root = root;
+    }
+    static fromJSON(data) {
+      return new this().fromJSON(data);
+    }
+    toJSON() {
+      let data = {
+        root: this._root.toJSON()
+      };
+      return data;
+    }
+    fromJSON(data) {
+      this.root = Item.fromJSON(data.root);
+      return this;
+    }
+    get root() {
+      return this._root;
+    }
+    set root(root) {
+      const { node: node9 } = this;
+      this._root = root;
+      node9.innerHTML = "";
+      node9.append(root.dom.node);
+      root.parent = this;
+    }
+    mergeWith(data) {
+      var ids = [];
+      var current2 = currentItem;
+      var node9 = current2;
+      while (true) {
+        ids.push(node9.id);
+        if (node9.parent == this) {
+          break;
+        }
+        node9 = node9.parent;
+      }
+      this._root.mergeWith(data.root);
+      if (current2.map) {
+        let node10 = current2;
+        let hidden = false;
+        while (true) {
+          if (node10.parent == this) {
+            break;
+          }
+          node10 = node10.parent;
+          if (node10.isCollapsed()) {
+            hidden = true;
+          }
+        }
+        if (!hidden) {
+          return;
+        }
+      }
+      editing && stopEditing();
+      var idMap = {};
+      var scan = function(item) {
+        idMap[item.id] = item;
+        item.children.forEach(scan);
+      };
+      scan(this._root);
+      while (ids.length) {
+        var id = ids.shift();
+        if (id in idMap) {
+          selectItem(idMap[id]);
+          return;
+        }
+      }
+    }
+    get isVisible() {
+      return !!this.node.parentNode;
+    }
+    update(options) {
+      options = Object.assign({}, UPDATE_OPTIONS2, options);
+      options.children && this._root.update({ parent: false, children: true });
+      const { node: node9 } = this;
+      const { size } = this._root;
+      node9.setAttribute("width", String(size[0]));
+      node9.setAttribute("height", String(size[1]));
+    }
+    show(where) {
+      where.append(this.node);
+      this.update();
+      this.center();
+      selectItem(this._root);
+    }
+    hide() {
+      this.node.remove();
+    }
+    center() {
+      let { size } = this._root;
+      let parent = this.node.parentNode;
+      let position = [
+        (parent.offsetWidth - size[0]) / 2,
+        (parent.offsetHeight - size[1]) / 2
+      ].map(Math.round);
+      this.moveTo(position);
+    }
+    moveBy(diff) {
+      let position = this.position.map((p, i) => p + diff[i]);
+      return this.moveTo(position);
+    }
+    getClosestItem(point) {
+      let all = [];
+      function scan(item) {
+        let rect = item.dom.content.getBoundingClientRect();
+        let dx = rect.left + rect.width / 2 - point[0];
+        let dy = rect.top + rect.height / 2 - point[1];
+        let distance = dx * dx + dy * dy;
+        all.push({ dx, dy, item, distance });
+        if (!item.isCollapsed()) {
+          item.children.forEach(scan);
+        }
+      }
+      scan(this._root);
+      all.sort((a, b) => a.distance - b.distance);
+      return all[0];
+    }
+    getItemFor(node9) {
+      let content = node9.closest(".content");
+      if (!content) {
+        return null;
+      }
+      function scanForContent(item) {
+        if (item.dom.content == content) {
+          return item;
+        }
+        for (let child of item.children) {
+          let found = scanForContent(child);
+          if (found) {
+            return found;
+          }
+        }
+        return null;
+      }
+      return scanForContent(this._root);
+    }
+    ensureItemVisibility(item) {
+      const padding = 10;
+      let itemRect = item.dom.content.getBoundingClientRect();
+      var parentRect = this.node.parentNode.getBoundingClientRect();
+      var delta = [0, 0];
+      var dx = parentRect.left - itemRect.left + padding;
+      if (dx > 0) {
+        delta[0] = dx;
+      }
+      var dx = parentRect.right - itemRect.right - padding;
+      if (dx < 0) {
+        delta[0] = dx;
+      }
+      var dy = parentRect.top - itemRect.top + padding;
+      if (dy > 0) {
+        delta[1] = dy;
+      }
+      var dy = parentRect.bottom - itemRect.bottom - padding;
+      if (dy < 0) {
+        delta[1] = dy;
+      }
+      if (delta[0] || delta[1]) {
+        this.moveBy(delta);
+      }
+    }
+    get name() {
+      let name = this._root.text;
+      return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
+    }
+    get id() {
+      return this._root.id;
+    }
+    pick(item, direction) {
+      var candidates = [];
+      var currentRect = item.dom.content.getBoundingClientRect();
+      this._getPickCandidates(currentRect, this._root, direction, candidates);
+      if (!candidates.length) {
+        return item;
+      }
+      candidates.sort((a, b) => a.dist - b.dist);
+      return candidates[0].item;
+    }
+    _getPickCandidates(currentRect, item, direction, candidates) {
+      if (!item.isCollapsed()) {
+        item.children.forEach(function(child) {
+          this._getPickCandidates(currentRect, child, direction, candidates);
+        }, this);
+      }
+      var node9 = item.dom.content;
+      var rect = node9.getBoundingClientRect();
+      if (direction == "left" || direction == "right") {
+        var x1 = currentRect.left + currentRect.width / 2;
+        var x2 = rect.left + rect.width / 2;
+        if (direction == "left" && x2 > x1) {
+          return;
+        }
+        if (direction == "right" && x2 < x1) {
+          return;
+        }
+        var diff1 = currentRect.top - rect.bottom;
+        var diff2 = rect.top - currentRect.bottom;
+        var dist = Math.abs(x2 - x1);
+      } else {
+        var y1 = currentRect.top + currentRect.height / 2;
+        var y2 = rect.top + rect.height / 2;
+        if (direction == "top" && y2 > y1) {
+          return;
+        }
+        if (direction == "bottom" && y2 < y1) {
+          return;
+        }
+        var diff1 = currentRect.left - rect.right;
+        var diff2 = rect.left - currentRect.right;
+        var dist = Math.abs(y2 - y1);
+      }
+      var diff = Math.max(diff1, diff2);
+      if (diff > 0) {
+        return;
+      }
+      if (!dist || dist < diff) {
+        return;
+      }
+      candidates.push({ item, dist });
+    }
+    moveTo(point) {
+      this.position = point;
+      this.node.style.left = `${point[0]}px`;
+      this.node.style.top = `${point[1]}px`;
     }
   };
 
@@ -3806,8 +3421,8 @@
   MM.UI.Backend.show = function(mode2) {
     this._mode = mode2;
     this._go.innerHTML = mode2.charAt(0).toUpperCase() + mode2.substring(1);
-    [...this._node.querySelectorAll("[data-for]")].forEach((node10) => node10.hidden = true);
-    [...this._node.querySelectorAll(`[data-for~=${mode2}]`)].forEach((node10) => node10.hidden = false);
+    [...this._node.querySelectorAll("[data-for]")].forEach((node9) => node9.hidden = true);
+    [...this._node.querySelectorAll(`[data-for~=${mode2}]`)].forEach((node9) => node9.hidden = false);
     this._go.focus();
   };
   MM.UI.Backend._action = function() {
@@ -3912,9 +3527,9 @@
     return data;
   };
   MM.UI.Backend.WebDAV.setState = function(data) {
-    this._load(data.url);
+    this.load(data.url);
   };
-  MM.UI.Backend.WebDAV.save = function() {
+  MM.UI.Backend.WebDAV.save = async function() {
     setThrobber(true);
     var map = currentMap;
     var url = this._url.value;
@@ -3929,18 +3544,25 @@
     this._current = url;
     var json = map.toJSON();
     var data = MM.Format.JSON.to(json);
-    this._backend.save(data, url).then(this._saveDone.bind(this), this._error.bind(this));
+    try {
+      await this._backend.save(data, url);
+      this._saveDone();
+    } catch (e) {
+      this._error(e);
+    }
   };
-  MM.UI.Backend.WebDAV.load = function() {
-    this._load(this._url.value);
-  };
-  MM.UI.Backend.WebDAV._load = function(url) {
+  MM.UI.Backend.WebDAV.load = async function(url = this._url.value) {
     this._current = url;
     setThrobber(true);
     var lastIndex = url.lastIndexOf("/");
     this._url.value = url.substring(0, lastIndex);
     localStorage.setItem(this._prefix + "url", this._url.value);
-    this._backend.load(url).then(this._loadDone.bind(this), this._error.bind(this));
+    try {
+      let data = await this._backend.load(url);
+      this._loadDone(data);
+    } catch (e) {
+      this._error(e);
+    }
   };
   MM.UI.Backend.WebDAV._loadDone = function(data) {
     try {
@@ -4144,7 +3766,7 @@
     setThrobber(true);
     this._backend.load(id).then(this._loadDone.bind(this), this._error.bind(this));
   };
-  MM.UI.Backend.Firebase._connect = function(server, auth) {
+  MM.UI.Backend.Firebase._connect = async function(server, auth) {
     var promise = new Promise();
     this._server.value = server;
     this._auth.value = auth;
@@ -4154,11 +3776,8 @@
     localStorage.setItem(this._prefix + "auth", auth || "");
     this._go.disabled = true;
     setThrobber(true);
-    this._backend.connect(server, auth).then(function() {
-      this._connected();
-      promise.fulfill();
-    }.bind(this), promise.reject.bind(promise));
-    return promise;
+    await this._backend.connect(server, auth);
+    this._connected();
   };
   MM.UI.Backend.Firebase._connected = function() {
     setThrobber(false);
@@ -4250,18 +3869,18 @@
     if (isActive()) {
       return;
     }
-    let command = MM.Command.getAll().find((command2) => {
-      if (!command2.isValid()) {
+    let command = [...repo.values()].find((command2) => {
+      if (!command2.isValid) {
         return false;
       }
       return command2.keys.find((key) => keyOK(key, e));
     });
     if (command) {
-      command.prevent && e.preventDefault();
+      e.preventDefault();
       command.execute(e);
     }
   }
-  function init12() {
+  function init11() {
     window.addEventListener("keydown", handleEvent);
     window.addEventListener("keypress", handleEvent);
   }
@@ -4281,22 +3900,22 @@
   }
 
   // .js/menu.js
-  var node9 = document.querySelector("#menu");
+  var node8 = document.querySelector("#menu");
   var port;
-  function init13(port_) {
+  function init12(port_) {
     port = port_;
-    [...node9.querySelectorAll("[data-command]")].forEach((button) => {
+    [...node8.querySelectorAll("[data-command]")].forEach((button) => {
       let commandName = button.dataset.command;
-      button.textContent = MM.Command[commandName].label;
+      button.textContent = repo.get(commandName).label;
     });
     port.addEventListener("mousedown", handleEvent2);
-    node9.addEventListener("mousedown", handleEvent2);
+    node8.addEventListener("mousedown", handleEvent2);
     close3();
   }
   function open(point) {
-    node9.hidden = false;
-    let w = node9.offsetWidth;
-    let h = node9.offsetHeight;
+    node8.hidden = false;
+    let w = node8.offsetWidth;
+    let h = node8.offsetHeight;
     let left = point[0];
     let top = point[1];
     if (left > port.offsetWidth / 2) {
@@ -4305,11 +3924,11 @@
     if (top > port.offsetHeight / 2) {
       top -= h;
     }
-    node9.style.left = `${left}px`;
-    node9.style.top = `${top}px`;
+    node8.style.left = `${left}px`;
+    node8.style.top = `${top}px`;
   }
   function handleEvent2(e) {
-    if (e.currentTarget != node9) {
+    if (e.currentTarget != node8) {
       close3();
       return;
     }
@@ -4319,15 +3938,15 @@
     if (!commandName) {
       return;
     }
-    let command = MM.Command[commandName];
-    if (!command.isValid()) {
+    let command = repo.get(commandName);
+    if (!command.isValid) {
       return;
     }
     command.execute();
     close3();
   }
   function close3() {
-    node9.hidden = true;
+    node8.hidden = true;
   }
 
   // .js/mouse.js
@@ -4343,7 +3962,7 @@
     previousDragState: null
   };
   var port2;
-  function init14(port_) {
+  function init13(port_) {
     port2 = port_;
     port2.addEventListener("touchstart", onDragStart);
     port2.addEventListener("mousedown", onDragStart);
@@ -4356,7 +3975,7 @@
     });
     port2.addEventListener("dblclick", (e) => {
       let item = currentMap.getItemFor(e.target);
-      item && MM.Command.Edit.execute();
+      item && repo.get("edit").execute();
     });
     port2.addEventListener("wheel", (e) => {
       const { deltaY } = e;
@@ -4384,7 +4003,7 @@
       if (item == currentItem) {
         return;
       }
-      MM.Command.Finish.execute();
+      repo.get("finish").execute();
     }
     current.cursor = point;
     if (item && !item.isRoot) {
@@ -4564,6 +4183,323 @@
     }
   }
 
+  // .js/clipboard.js
+  var storedItem = null;
+  var mode = "";
+  function init14() {
+    document.body.addEventListener("cut", onCopyCut);
+    document.body.addEventListener("copy", onCopyCut);
+    document.body.addEventListener("paste", onPaste);
+  }
+  function onCopyCut(e) {
+    if (isActive() || editing) {
+      return;
+    }
+    e.preventDefault();
+    endCut();
+    switch (e.type) {
+      case "copy":
+        storedItem = currentItem.clone();
+        break;
+      case "cut":
+        storedItem = currentItem;
+        storedItem.dom.node.classList.add("cut");
+        break;
+    }
+    let json = storedItem.toJSON();
+    let plaintext = MM.Format.Plaintext.to(json);
+    e.clipboardData.setData("text/plain", plaintext);
+    mode = e.type;
+  }
+  function onPaste(e) {
+    if (isActive() || editing) {
+      return;
+    }
+    e.preventDefault();
+    let pasted = e.clipboardData.getData("text/plain");
+    if (!pasted) {
+      return;
+    }
+    if (storedItem && pasted == MM.Format.Plaintext.to(storedItem.toJSON())) {
+      pasteItem(storedItem, currentItem);
+    } else {
+      pastePlaintext(pasted, currentItem);
+    }
+    endCut();
+  }
+  function pasteItem(sourceItem, targetItem) {
+    let action2;
+    switch (mode) {
+      case "cut":
+        if (sourceItem == targetItem || sourceItem.parent == targetItem) {
+          return;
+        }
+        let item = targetItem;
+        while (true) {
+          if (item == sourceItem) {
+            return;
+          }
+          if (item.parent instanceof Map2) {
+            break;
+          }
+          item = item.parent;
+        }
+        action2 = new MoveItem(sourceItem, targetItem);
+        action(action2);
+        break;
+      case "copy":
+        action2 = new AppendItem(targetItem, sourceItem.clone());
+        action(action2);
+        break;
+    }
+  }
+  function pastePlaintext(plaintext, targetItem) {
+    let json = MM.Format.Plaintext.from(plaintext);
+    let map = Map2.fromJSON(json);
+    let root = map.root;
+    if (root.text) {
+      let action2 = new AppendItem(targetItem, root);
+      action(action2);
+    } else {
+      let subactions = root.children.map((item) => new AppendItem(targetItem, item));
+      let action2 = new Multi(subactions);
+      action(action2);
+    }
+  }
+  function endCut() {
+    if (mode != "cut") {
+      return;
+    }
+    storedItem.dom.node.classList.remove("cut");
+    storedItem = null;
+    mode = "";
+  }
+
+  // .js/command/select.js
+  new class Select extends Command {
+    constructor() {
+      super("select", "Move selection");
+      this.keys = [
+        { keyCode: 38, ctrlKey: false },
+        { keyCode: 37, ctrlKey: false },
+        { keyCode: 40, ctrlKey: false },
+        { keyCode: 39, ctrlKey: false }
+      ];
+    }
+    execute(e) {
+      let dirs = {
+        37: "left",
+        38: "top",
+        39: "right",
+        40: "bottom"
+      };
+      let dir = dirs[e.keyCode];
+      let layout = currentItem.resolvedLayout;
+      let item = layout.pick(currentItem, dir);
+      selectItem(item);
+    }
+  }();
+  new class SelectRoot extends Command {
+    constructor() {
+      super("select-root", "Select root");
+      this.keys = [{ keyCode: 36 }];
+    }
+    execute() {
+      let item = currentItem;
+      while (!item.isRoot) {
+        item = item.parent;
+      }
+      selectItem(item);
+    }
+  }();
+  if (!isMac()) {
+    new class SelectParent extends Command {
+      constructor() {
+        super("select-parent", "Select parent");
+        this.keys = [{ keyCode: 8 }];
+      }
+      execute() {
+        if (currentItem.isRoot) {
+          return;
+        }
+        selectItem(currentItem.parent);
+      }
+    }();
+  }
+
+  // .js/command/edit.js
+  new class Edit extends Command {
+    constructor() {
+      super("edit", "Edit item");
+      this.keys = [
+        { keyCode: 32 },
+        { keyCode: 113 }
+      ];
+    }
+    execute() {
+      startEditing();
+    }
+  }();
+  new class Finish extends Command {
+    constructor() {
+      super("finish", "Finish editing");
+      this.keys = [{ keyCode: 13, altKey: false, ctrlKey: false, shiftKey: false }];
+      this.editMode = true;
+    }
+    execute() {
+      let text = stopEditing();
+      let action2;
+      if (text) {
+        action2 = new SetText(currentItem, text);
+      } else {
+        action2 = new RemoveItem(currentItem);
+      }
+      action(action2);
+    }
+  }();
+  new class Newline extends Command {
+    constructor() {
+      super("newline", "Line break");
+      this.keys = [
+        { keyCode: 13, shiftKey: true },
+        { keyCode: 13, ctrlKey: true }
+      ];
+      this.editMode = true;
+    }
+    execute() {
+      let range = getSelection().getRangeAt(0);
+      let br = document.createElement("br");
+      range.insertNode(br);
+      range.setStartAfter(br);
+      currentItem.update({ parent: true, children: true });
+    }
+  }();
+  new class Cancel extends Command {
+    constructor() {
+      super("cancel", "Cancel");
+      this.keys = [{ keyCode: 27 }];
+      this.editMode = null;
+    }
+    execute() {
+      if (editing) {
+        stopEditing();
+        var oldText = currentItem.text;
+        if (!oldText) {
+          var action2 = new RemoveItem(currentItem);
+          action(action2);
+        }
+      } else {
+        close2();
+        close();
+        MM.App.io.hide();
+      }
+    }
+  }();
+  var Style = class extends Command {
+    constructor() {
+      super(...arguments);
+      this.editMode = null;
+    }
+    execute() {
+      if (editing) {
+        document.execCommand(this.command, null, null);
+      } else {
+        repo.get("edit").execute();
+        let selection = getSelection();
+        let range = selection.getRangeAt(0);
+        range.selectNodeContents(currentItem.dom.text);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        this.execute();
+        repo.get("finish").execute();
+      }
+    }
+  };
+  new class Bold extends Style {
+    constructor() {
+      super("bold", "Bold");
+      this.keys = [{ keyCode: "B".charCodeAt(0), ctrlKey: true }];
+      this.command = "bold";
+    }
+  }();
+  new class Underline2 extends Style {
+    constructor() {
+      super("underline", "Underline");
+      this.keys = [{ keyCode: "U".charCodeAt(0), ctrlKey: true }];
+      this.command = "underline";
+    }
+  }();
+  new class Italic extends Style {
+    constructor() {
+      super("italic", "Italic");
+      this.keys = [{ keyCode: "I".charCodeAt(0), ctrlKey: true }];
+      this.command = "italic";
+    }
+  }();
+  new class Strikethrough extends Style {
+    constructor() {
+      super("strikethrough", "Strike-through");
+      this.keys = [{ keyCode: "S".charCodeAt(0), ctrlKey: true }];
+      this.command = "strikeThrough";
+    }
+  }();
+  new class Value extends Command {
+    constructor() {
+      super("value", "Set value");
+      this.keys = [{ charCode: "v".charCodeAt(0), ctrlKey: false, metaKey: false }];
+    }
+    execute() {
+      let item = currentItem;
+      let oldValue = item.value;
+      let newValue = prompt("Set item value", String(oldValue));
+      if (newValue == null) {
+        return;
+      }
+      if (!newValue.length) {
+        newValue = null;
+      }
+      let numValue = parseFloat(newValue);
+      let action2 = new SetValue(item, isNaN(numValue) ? newValue : numValue);
+      action(action2);
+    }
+  }();
+  new class Yes extends Command {
+    constructor() {
+      super("yes", "Yes");
+      this.keys = [{ charCode: "y".charCodeAt(0), ctrlKey: false }];
+    }
+    execute() {
+      let item = currentItem;
+      let status = item.status === true ? null : true;
+      let action2 = new SetStatus(item, status);
+      action(action2);
+    }
+  }();
+  new class No extends Command {
+    constructor() {
+      super("no", "No");
+      this.keys = [{ charCode: "n".charCodeAt(0), ctrlKey: false }];
+    }
+    execute() {
+      let item = currentItem;
+      let status = item.status === false ? null : true;
+      let action2 = new SetStatus(item, status);
+      action(action2);
+    }
+  }();
+  new class Computed extends Command {
+    constructor() {
+      super("computed", "Computed");
+      this.keys = [{ charCode: "c".charCodeAt(0), ctrlKey: false, metaKey: false }];
+    }
+    execute() {
+      let item = currentItem;
+      let status = item.status == "computed" ? null : "computed";
+      let action2 = new SetStatus(item, status);
+      action(action2);
+    }
+  }();
+
   // .js/my-mind.js
   MM.App = {
     init: function() {
@@ -4588,6 +4524,9 @@
   }
   function selectItem(item) {
     if (currentItem && currentItem != item) {
+      if (editing) {
+        repo.get("finish").execute();
+      }
       currentItem.deselect();
     }
     currentItem = item;
@@ -4611,11 +4550,11 @@
     return currentItem.stopEditing();
   }
   function init15() {
+    init10();
+    init14();
     init11();
-    init();
-    init12();
+    init12(port3);
     init13(port3);
-    init14(port3);
     MM.App.init();
     subscribe("item-change", (_message, publisher) => {
       if (publisher.isRoot && publisher.map == currentMap) {

@@ -1,1 +1,1 @@
-(window as any).MM = {};
+(window as any).MM = {UI:{}};

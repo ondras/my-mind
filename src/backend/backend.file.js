@@ -12,25 +12,23 @@ MM.Backend.File.save = function(data, name) {
 	link.click();
 	link.parentNode.removeChild(link);
 
-	var promise = new Promise().fulfill();
-	return promise;
+	return Promise.resolve(); // fixme casem async/await, netreba
 }
 
 MM.Backend.File.load = function() {
-	var promise = new Promise();
-
 	this.input.type = "file";
 
-	this.input.onchange = function(e) {
-		var file = e.target.files[0];
-		if (!file) { return; }
+	return new Promise((resolve, reject) => {
+		this.input.onchange = function(e) {
+			var file = e.target.files[0];
+			if (!file) { return; }
 
-		var reader = new FileReader();
-		reader.onload = function() { promise.fulfill({data:reader.result, name:file.name}); }
-		reader.onerror = function() { promise.reject(reader.error); }
-		reader.readAsText(file);
-	}.bind(this);
+			var reader = new FileReader();
+			reader.onload = function() { resolve({data:reader.result, name:file.name}); }
+			reader.onerror = function() { reject(reader.error); }
+			reader.readAsText(file);
+		}.bind(this);
 
-	this.input.click();
-	return promise;
+		this.input.click();
+	});
 }

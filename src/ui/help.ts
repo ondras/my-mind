@@ -1,3 +1,6 @@
+import { repo as commandRepo, Key } from "../command/command.js";
+
+
 const node = document.querySelector<HTMLElement>("#help");
 const MAP = {
 	8: "Backspace",
@@ -28,7 +31,7 @@ const MAP = {
 	119: "F8",
 	120: "F9",
 	121: "F10",
-	"-": "&minus;"
+	"-": "−"
 }
 
 export function toggle() {
@@ -37,43 +40,39 @@ export function toggle() {
 
 export function init() {
 	let t = node.querySelector<HTMLTableElement>(".navigation");
-	buildRow(t, "Pan");
-	buildRow(t, "Select");
-	buildRow(t, "SelectRoot");
-	buildRow(t, "SelectParent");
-	buildRow(t, "Center");
-	buildRow(t, "ZoomIn", "ZoomOut");
-	buildRow(t, "Fold");
+	buildRow(t, "pan");
+	buildRow(t, "select");
+	buildRow(t, "select-root");
+	buildRow(t, "select-parent");
+	buildRow(t, "center");
+	buildRow(t, "zoom-in", "zoom-out");
+	buildRow(t, "fold");
 
 	t = node.querySelector(".manipulation");
-	buildRow(t, "InsertSibling");
-	buildRow(t, "InsertChild");
-	buildRow(t, "Swap");
-	buildRow(t, "Side");
-	buildRow(t, "Delete");
-
-	buildRow(t, "Copy");
-	buildRow(t, "Cut");
-	buildRow(t, "Paste");
+	buildRow(t, "insert-sibling");
+	buildRow(t, "insert-child");
+	buildRow(t, "swap");
+	buildRow(t, "side");
+	buildRow(t, "delete");
 
 	t = node.querySelector(".editing");
-	buildRow(t, "Value");
-	buildRow(t, "Yes", "No", "Computed");
-	buildRow(t, "Edit");
-	buildRow(t, "Newline");
-	buildRow(t, "Bold");
-	buildRow(t, "Italic");
-	buildRow(t, "Underline");
-	buildRow(t, "Strikethrough");
+	buildRow(t, "value");
+	buildRow(t, "yes", "no", "computed");
+	buildRow(t, "edit");
+	buildRow(t, "newline");
+	buildRow(t, "bold");
+	buildRow(t, "italic");
+	buildRow(t, "underline");
+	buildRow(t, "strikethrough");
 
 	t = node.querySelector(".other");
-	buildRow(t, "Undo", "Redo");
-	buildRow(t, "Save");
-	buildRow(t, "SaveAs");
-	buildRow(t, "Load");
-	buildRow(t, "Help");
-	buildRow(t, "Notes");
-	buildRow(t, "UI");
+	buildRow(t, "undo", "redo");
+	buildRow(t, "save");
+	buildRow(t, "save-as");
+	buildRow(t, "load");
+	buildRow(t, "help");
+	buildRow(t, "notes");
+	buildRow(t, "ui");
 }
 
 function buildRow(table: HTMLTableElement, ...commandNames: string[]) {
@@ -83,8 +82,8 @@ function buildRow(table: HTMLTableElement, ...commandNames: string[]) {
 	var keys = [];
 
 	commandNames.forEach(name => {
-		let command = MM.Command[name];
-		if (!command) { return; }
+		let command = commandRepo.get(name);
+		if (!command) { console.warn(name); return; }
 		labels.push(command.label);
 		keys = keys.concat(command.keys.map(formatKey));
 	});
@@ -93,7 +92,7 @@ function buildRow(table: HTMLTableElement, ...commandNames: string[]) {
 	row.insertCell(-1).textContent = keys.join("/");
 }
 
-function formatKey(key) {
+function formatKey(key: Key) {
 	var str = "";
 	if (key.ctrlKey) { str += "Ctrl+"; }
 	if (key.altKey) { str += "Alt+"; }

@@ -1,62 +1,69 @@
 import Map from "./map.js";
 import Item, { ChildItem } from "./item.js";
 import * as app from "./my-mind.js";
-import * as actions from "./action.js";
+import * as ui from "./ui/ui.js";
+import Action, * as actions from "./action.js";
 
 
 type Mode = "" | "copy" | "cut";
-const node = document.createElement("textarea");
-const DELAY = 50; // wait after ctrl+c/v so that the data is copied/pasted
 
 let storedItem: Item | null = null;
 let mode: Mode = "";
 
 export function init() {
-	node.style.position = "absolute";
-	node.style.width = "0";
-	node.style.height = "0";
-	node.style.left = "-100px";
-	node.style.top = "-100px";
-	document.body.append(node);
+	document.body.addEventListener("cut", onCopyCut);
+	document.body.addEventListener("copy", onCopyCut);
+	document.body.addEventListener("paste", onPaste);
 }
 
-export function focus() {
-	node.focus();
-	empty();
-}
+function onCopyCut(e: ClipboardEvent) {
+	if (ui.isActive() || app.editing) { return; }
+	e.preventDefault();
 
-export function copy(sourceItem: Item) {
 	endCut();
-	storedItem = sourceItem.clone();
-	mode = "copy";
 
-	expose();
+	switch (e.type) {
+		case "copy":
+			storedItem = app.currentItem.clone();
+		break;
+
+		case "cut":
+			storedItem = app.currentItem;
+			storedItem.dom.node.classList.add("cut");
+		break;
+	}
+
+	let json = storedItem.toJSON();
+	let plaintext = MM.Format.Plaintext.to(json);
+
+	e.clipboardData.setData("text/plain", plaintext);
+	mode = e.type as Mode;
 }
 
-export function paste(targetItem: Item) {
-	setTimeout(() => {
-		let pasted = node.value;
-		empty();
-		if (!pasted) { return; } // nothing
+function onPaste(e: ClipboardEvent) {
+	if (ui.isActive() || app.editing) { return; }
+	e.preventDefault();
 
-		if (storedItem && pasted == MM.Format.Plaintext.to(storedItem.toJSON())) { // pasted a previously copied/cut item
-			pasteItem(storedItem, targetItem);
-		} else { // pasted some external data
-			pastePlaintext(pasted, targetItem);
-		}
+	let pasted = e.clipboardData.getData("text/plain");
+	if (!pasted) { return; }
 
-	}, DELAY);
+	if (storedItem && pasted == MM.Format.Plaintext.to(storedItem.toJSON())) {
+		// pasted a previously copied/cut item
+		pasteItem(storedItem, app.currentItem);
+	} else {
+		// pasted some external data
+		pastePlaintext(pasted, app.currentItem);
+	}
+	endCut();
 }
 
 function pasteItem(sourceItem: Item, targetItem: Item) {
-	let action;
+	let action: Action;
 
 	switch (mode) {
 		case "cut":
-			if (sourceItem == targetItem || sourceItem.parent == targetItem) { // abort by pasting on the same node or the parent
-				endCut();
-				return;
-			}
+			// abort by pasting on the same node or the parent
+			if (sourceItem == targetItem || sourceItem.parent == targetItem) { return ; }
 
 			let item = targetItem;
 			while (true) {
@@ -67,8 +74,6 @@ function pasteItem(sourceItem: Item, targetItem: Item) {
 
 			action = new actions.MoveItem(sourceItem as ChildItem, targetItem);
 			app.action(action);
-
-			endCut();
 		break;
 
 		case "copy":
@@ -79,8 +84,6 @@ function pasteItem(sourceItem: Item, targetItem: Item) {
 }
 
 function pastePlaintext(plaintext: string, targetItem: Item) {
-	if (mode == "cut") { endCut(); } // external paste => abort cutting
-
 	let json = MM.Format.Plaintext.from(plaintext);
 	let map = Map.fromJSON(json);
 	let root = map.root;
@@ -89,39 +92,10 @@ function pastePlaintext(plaintext: string, targetItem: Item) {
 		let action = new actions.AppendItem(targetItem, root);
 		app.action(action);
 	} else {
-		let actions = root.children.map(item => new actions.AppendItem(targetItem, item));
-		let action = new actions.Multi(actions);
+		let subactions = root.children.map(item => new actions.AppendItem(targetItem, item));
+		let action = new actions.Multi(subactions);
 		app.action(action);
 	}
-}
-
-export function cut(sourceItem: Item) {
-	endCut();
-
-	storedItem = sourceItem;
-	storedItem.dom.node.classList.add("cut");
-	mode = "cut";
-
-	expose();
-}
-
-/**
- * Expose plaintext data to the textarea to be copied to system clipboard. Clear afterwards.
- */
-function expose() {
-	let json = storedItem.toJSON();
-	let plaintext = MM.Format.Plaintext.to(json);
-	node.value = plaintext;
-	node.selectionStart = 0;
-	node.selectionEnd = node.value.length;
-	setTimeout(empty, DELAY);
-}
-
-function empty() {
-	// safari needs a non-empty selection in order to actually perfrom a real copy on cmd+c
-	node.value = "\n";
-	node.selectionStart = 0;
-	node.selectionEnd = node.value.length;
 }
 
 function endCut() {

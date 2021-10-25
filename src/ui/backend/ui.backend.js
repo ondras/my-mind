@@ -58,7 +58,6 @@ MM.UI.Backend.show = function(mode) {
 	[...this._node.querySelectorAll("[data-for]")].forEach(node => node.hidden = true);
 	[...this._node.querySelectorAll(`[data-for~=${mode}]`)].forEach(node => node.hidden = false);
 
-	/* switch to 2a: steal focus from the current item */
 	this._go.focus();
 }
 

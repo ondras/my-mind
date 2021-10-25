@@ -22,10 +22,10 @@ MM.UI.Backend.WebDAV.getState = function() {
 }
 
 MM.UI.Backend.WebDAV.setState = function(data) {
-	this._load(data.url);
+	this.load(data.url);
 }
 
-MM.UI.Backend.WebDAV.save = function() {
+MM.UI.Backend.WebDAV.save = async function() {
 	app.setThrobber(true);
 
 	var map = app.currentMap;
@@ -42,17 +42,15 @@ MM.UI.Backend.WebDAV.save = function() {
 	var json = map.toJSON();
 	var data = MM.Format.JSON.to(json);
 
-	this._backend.save(data, url).then(
-		this._saveDone.bind(this),
-		this._error.bind(this)
-	);
+	try {
+		await this._backend.save(data, url);
+		this._saveDone();
+	} catch (e) {
+		this._error(e);
+	}
 }
 
-MM.UI.Backend.WebDAV.load = function() {
-	this._load(this._url.value);
-}
-
-MM.UI.Backend.WebDAV._load = function(url) {
+MM.UI.Backend.WebDAV.load = async function(url = this._url.value) {
 	this._current = url;
 	app.setThrobber(true);
 
@@ -60,10 +58,12 @@ MM.UI.Backend.WebDAV._load = function(url) {
 	this._url.value = url.substring(0, lastIndex);
 	localStorage.setItem(this._prefix + "url", this._url.value);
 
-	this._backend.load(url).then(
-		this._loadDone.bind(this),
-		this._error.bind(this)
-	);
+	try {
+		let data = await this._backend.load(url);
+		this._loadDone(data);
+	} catch (e) {
+		this._error(e);
+	}
 }
 
 MM.UI.Backend.WebDAV._loadDone = function(data) {

@@ -8,7 +8,7 @@ type Subscriber = SubscriberObject | SubscribeFunction;
 
 let subscribers = new Map<string, Subscriber[]>();
 
-export function publish(message: string, publisher: any, data?: any) {
+export function publish(message: string, publisher?: any, data?: any) {
 	let subs = subscribers.get(message) || [];
 	subs.forEach(sub => {
 		if (typeof(sub) == "function") {

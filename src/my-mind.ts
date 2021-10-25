@@ -1,10 +1,5 @@
 import "./mm.js";
-import "./promise.js";
 import "./repo.js";
-import "./action.js";
-import "./command/command.js";
-import "./command/command.edit.js";
-import "./command/command.select.js";
 import "./format/format.js";
 import "./format/format.json.js";
 import "./format/format.freemind.js";
@@ -36,44 +31,16 @@ import * as menu from "./menu.js";
 import * as history from "./history.js";
 import * as clipboard from "./clipboard.js";
 import * as ui from "./ui/ui.js";
-import * as help from "./ui/help.js";
-import * as notes from "./ui/notes.js";
 
+import { repo as commandRepo } from "./command/command.js";
+import "./command/select.js";
+import "./command/edit.js";
 
-/*
+/**
 setInterval(function() {
 	console.log(document.activeElement);
 }, 1000);
-*/
-
-/*
- * Notes regarding app state/modes, activeElements, focusing etc.
- * ==============================================================
- *
- * 1) There is always exactly one item selected. All executed commands
- *    operate on this item.
- *
- * 2) The app distinguishes three modes with respect to focus:
- *   2a) One of the UI panes has focus (inputs, buttons, selects).
- *       Keyboard shortcuts are disabled.
- *   2b) Current item is being edited. It is contentEditable and focused.
- *       Blurring ends the edit mode.
- *   2c) ELSE the Clipboard is focused (its invisible textarea)
- *
- * In 2a, we try to lose focus as soon as possible
- * (after clicking, after changing select's value), switching to 2c.
- *
- * 3) Editing mode (2b) can be ended by multiple ways:
- *   3a) By calling current.stopEditing();
- *       this shall be followed by some resolution.
- *   3b) By executing MM.Command.{Finish,Cancel};
- *       these call 3a internally.
- *   3c) By blurring the item itself (by selecting another);
- *       this calls MM.Command.Finish (3b).
- *   3b) By blurring the currentElement;
- *       this calls MM.Command.Finish (3b).
- *
- */
+//*/
 (MM as any).App = {
 	init: function() {
 		this.io = new MM.UI.IO();
@@ -102,7 +69,10 @@ export function action(action) {
 }
 
 export function selectItem(item: Item) {
-	if (currentItem && currentItem != item) { currentItem.deselect(); }
+	if (currentItem && currentItem != item) {
+		if (editing) { commandRepo.get("finish").execute(); }
+		currentItem.deselect();
+	}
 	currentItem = item;
 	currentItem.select();
 }

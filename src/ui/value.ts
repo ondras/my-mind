@@ -1,5 +1,6 @@
 import * as actions from "../action.js";
 import * as app from "../my-mind.js";
+import { repo as commandRepo } from "../command/command.js";
 
 
 const select = document.querySelector<HTMLSelectElement>("#value");
@@ -19,7 +20,7 @@ export function update() {
 function onChange() {
 	let value = select.value;
 	if (value == "num") {
-		MM.Command.Value.execute();
+		commandRepo.get("value").execute();
 	} else {
 		let action = new actions.SetValue(app.currentItem, value || null);
 		app.action(action);

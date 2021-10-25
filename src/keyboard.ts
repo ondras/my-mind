@@ -1,17 +1,18 @@
 import * as ui from "./ui/ui.js";
+import { repo as commandRepo, Key } from "./command/command.js";
 
 
 function handleEvent(e: KeyboardEvent) {
-	// mode 2a: ignore keyboard when the activeElement resides somewhere inside of the UI pane
+	// ignore keyboard when the activeElement resides somewhere inside of the UI pane
 	if (ui.isActive()) { return; }
 
-	let command = MM.Command.getAll().find(command => {
-		if (!command.isValid()) { return false; }
+	let command = [...commandRepo.values()].find(command => {
+		if (!command.isValid) { return false; }
 		return command.keys.find(key => keyOK(key, e));
 	});
 
 	if (command) {
-		command.prevent && e.preventDefault();
+		e.preventDefault();
 		command.execute(e);
 	}
 }
@@ -21,7 +22,7 @@ export function init() {
 	window.addEventListener("keypress", handleEvent);
 }
 
-function keyOK(key, e: KeyboardEvent) {
+function keyOK(key: Key, e: KeyboardEvent) {
 	if ("keyCode" in key && e.type != "keydown") { return false; }
 	if ("charCode" in key && e.type != "keypress") { return false; }
 	for (let p in key) {

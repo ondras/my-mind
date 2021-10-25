@@ -4,7 +4,7 @@ import Layout from "./layout/layout.js";
 import Shape from "./shape/shape.js";
 
 
-export abstract class Action {
+export default abstract class Action {
 	do() {}
 	undo() {}
 }

@@ -78,13 +78,13 @@ button:not(:disabled) {
 	margin-right: 0 !important;
 }
 
-.ui button[data-command=Help] {
+.ui button[data-command=help] {
 	position: absolute;
 	left: -50px;
 	top: 5px;
 }
 
-.ui button[data-command=Notes] {
+.ui button[data-command=notes] {
 	position: absolute;
 	left: -90px;
 	top: 5px;

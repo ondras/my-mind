@@ -1,5 +1,4 @@
 import * as pubsub from "../pubsub.js";
-import * as clipboard from "../clipboard.js";
 
 
 MM.UI.IO = function() {
@@ -87,7 +86,6 @@ MM.UI.IO.prototype.show = function(mode) {
 MM.UI.IO.prototype.hide = function() {
 	if (this._node.hidden) { return; }
 	this._node.hidden = true;
-	clipboard.focus();
 }
 
 MM.UI.IO.prototype.quickSave = function() {

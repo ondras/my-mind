@@ -2,13 +2,13 @@ import * as html from "./html.js";
 import * as svg from "./svg.js";
 import * as pubsub from "./pubsub.js";
 import * as app from "./my-mind.js";
-import * as clipboard from "./clipboard.js";
+import { repo as commandRepo } from "./command/command.js";
 import Shape, { repo as shapeRepo } from "./shape/shape.js";
 import Layout, { repo as layoutRepo } from "./layout/layout.js";
 import Map from "./map.js";
 
 
-declare global {
+declare global {  // fixme
 	interface Window {
 		editor: any;
 	}
@@ -272,13 +272,10 @@ export default class Item {
 			}
 		}
 		this.map.ensureItemVisibility(this);
-		clipboard.focus(); /* going to mode 2c */
 		pubsub.publish("item-select", this);
 	}
 
 	deselect() {
-		/* we were in 2b; finish that via 3b */
-		if (app.editing) { MM.Command.Finish.execute(); }
 		this.dom.node.classList.remove("current");
 	}
 
@@ -534,8 +531,6 @@ export default class Item {
 
 		this.update(); /* text changed */
 
-		clipboard.focus();
-
 		return result;
 	}
 
@@ -547,11 +542,11 @@ export default class Item {
 			break;
 
 			case "keydown":
-				if (e.keyCode == 9) { e.preventDefault(); } /* TAB has a special meaning in this app, do not use it to change focus */
+				if (e.keyCode == 9) { e.preventDefault(); } // TAB has a special meaning in this app, do not use it to change focus
 			break;
 
-			case "blur": /* 3d */
-				MM.Command.Finish.execute();
+			case "blur":
+				commandRepo.get("finish").execute();
 			break;
 
 			case "click":

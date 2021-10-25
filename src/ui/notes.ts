@@ -1,5 +1,4 @@
 import * as app from "../my-mind.js";
-import * as clipboard from "../clipboard.js";
 
 
 const node = document.querySelector<HTMLElement>("#notes");
@@ -11,7 +10,6 @@ export function toggle() {
 export function close() {
 	if (node.hidden) { return ; }
 	node.hidden = true;
-	clipboard.focus();
 }
 
 function update(html: string) {

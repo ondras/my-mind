@@ -137,7 +137,7 @@ MM.UI.Backend.Firebase._load = function(id) {
 	);
 }
 
-MM.UI.Backend.Firebase._connect = function(server, auth) {
+MM.UI.Backend.Firebase._connect = async function(server, auth) {
 	var promise = new Promise();
 
 	this._server.value = server;
@@ -151,15 +151,8 @@ MM.UI.Backend.Firebase._connect = function(server, auth) {
 	this._go.disabled = true;
 	app.setThrobber(true);
 
-	this._backend.connect(server, auth).then(
-		function() {
-			this._connected();
-			promise.fulfill();
-		}.bind(this),
-		promise.reject.bind(promise)
-	);
-
-	return promise;
+	await this._backend.connect(server, auth);
+	this._connected();
 }
 
 MM.UI.Backend.Firebase._connected = function() {

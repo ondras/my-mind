@@ -1,3 +1,6 @@
+import { repo as commandRepo } from "./command/command.js";
+
+
 let node = document.querySelector<HTMLElement>("#menu");
 let port: HTMLElement;
 
@@ -7,7 +10,7 @@ export function init(port_: HTMLElement) {
 
 	[...node.querySelectorAll<HTMLElement>("[data-command]")].forEach(button => {
 		let commandName = button.dataset.command;
-		button.textContent = MM.Command[commandName].label;
+		button.textContent = commandRepo.get(commandName).label;
 	});
 
 	port.addEventListener("mousedown", handleEvent);
@@ -43,8 +46,8 @@ function handleEvent(e: MouseEvent) {
 	let commandName = (e.target as HTMLElement).dataset.command;
 	if (!commandName) { return; }
 
-	let command = MM.Command[commandName];
-	if (!command.isValid()) { return; }
+	let command = commandRepo.get(commandName);
+	if (!command.isValid) { return; }
 
 	command.execute();
 	close();

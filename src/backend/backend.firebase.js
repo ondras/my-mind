@@ -38,56 +38,50 @@ MM.Backend.Firebase.connect = function(server, auth) {
 }
 
 MM.Backend.Firebase.save = function(data, id, name) {
-	var promise = new Promise();
-
 	try {
 		this.ref.child("names/" + id).set(name);
-		this.ref.child("data/" + id).set(data, function(result) {
-			if (result) {
-				promise.reject(result);
-			} else {
-				promise.fulfill();
-				this._listenStart(data, id);
-			}
-		}.bind(this));
+
+		return new Promise((resolve, reject) => {
+			this.ref.child("data/" + id).set(data, result => {
+				if (result) {
+					reject(result);
+				} else {
+					resolve();
+					this._listenStart(data, id);
+				}
+			});
+		});
 	} catch (e) {
-		promise.reject(e);
+		return Promise.reject(e);
 	}
-	return promise;
 }
 
 MM.Backend.Firebase.load = function(id) {
-	var promise = new Promise();
-
-	this.ref.child("data/" + id).once("value", function(snap) {
-		var data = snap.val();
-		if (data) {
-			promise.fulfill(data);
-			this._listenStart(data, id);
-		} else {
-			promise.reject(new Error("There is no such saved map"));
-		}
-	}, this);
-	return promise;
+	return new Promise((resolve, reject) => {
+		this.ref.child("data/" + id).once("value", snap => {
+			var data = snap.val();
+			if (data) {
+				resolve(data);
+				this._listenStart(data, id);
+			} else {
+				reject(new Error("There is no such saved map"));
+			}
+		});
+	});
 }
 
 MM.Backend.Firebase.remove = function(id) {
-	var promise = new Promise();
-
 	try {
 		this.ref.child("names/" + id).remove();
-		this.ref.child("data/" + id).remove(function(result) {
-			if (result) {
-				promise.reject(result);
-			} else {
-				promise.fulfill();
-			}
-		});
-	} catch (e) {
-		promise.reject(e);
-	}
 
-	return promise;
+		return new Promise((resolve, reject) => {
+			this.ref.child("data/" + id).remove(result => {
+				result ? reject(result) : resolve();
+			});
+		})
+	} catch (e) {
+		return Promise.reject(e);
+	}
 }
 
 MM.Backend.Firebase.reset = function() {

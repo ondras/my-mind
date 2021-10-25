@@ -1,4 +1,3 @@
-import * as clipboard from "../clipboard.js";
 import * as pubsub from "../pubsub.js";
 import * as app from "../my-mind.js";
 
@@ -12,11 +11,10 @@ import * as status from "./status.js";
 import * as help from "./help.js";
 import * as notes from "./notes.js";
 import * as tip from "./tip.js";
+import { repo as commandRepo } from "../command/command.js";
 
 
 const node = document.querySelector<HTMLElement>(".ui");
-
-(MM as any).UI = {};
 
 export function isActive() {
 	return node.contains(document.activeElement);
@@ -38,8 +36,6 @@ function update() {
 function onClick(e: MouseEvent) {
 	let target = e.target as HTMLElement;
 
-	if (target.nodeName.toLowerCase() != "select") { clipboard.focus(); } // focus the clipboard (2c)
-
 	if (target == node.querySelector("#toggle")) { // fixme nelibi
 		toggle();
 		return;
@@ -49,7 +45,7 @@ function onClick(e: MouseEvent) {
 	while (current != document) {
 		let command = (current as HTMLElement).dataset.command;
 		if (command) {
-			MM.Command[command].execute();
+			commandRepo.get(command).execute();
 			return;
 		}
 		current = current.parentNode;
@@ -68,5 +64,4 @@ export function init() {
 	});
 
 	node.addEventListener("click", onClick);
-	node.addEventListener("change", _ => clipboard.focus()); // focus the clipboard (2c)
 }

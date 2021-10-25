@@ -20,8 +20,6 @@ MM.Backend.GDrive.save = function(data, name, mime) {
 }
 
 MM.Backend.GDrive._send = function(data, name, mime) {
-	var promise = new Promise();
-
 	var path = "/upload/drive/v2/files";
 	var method = "POST";
 	if (this.fileId) {
@@ -50,18 +48,18 @@ MM.Backend.GDrive._send = function(data, name, mime) {
 		body: body
 	});
 
-	request.execute(function(response) {
-		if (!response) {
-			promise.reject(new Error("Failed to upload to Google Drive"));
-		} else if (response.error) {
-			promise.reject(response.error);
-		} else {
-			this.fileId = response.id;
-			promise.fulfill();
-		}
-	}.bind(this));
-	
-	return promise;
+	return new Promise((resolve, reject) => {
+		request.execute(response => {
+			if (!response) {
+				reject(new Error("Failed to upload to Google Drive"));
+			} else if (response.error) {
+				reject(response.error);
+			} else {
+				this.fileId = response.id;
+				resolve();
+			}
+		});
+	});
 }
 
 MM.Backend.GDrive.load = function(id) {
@@ -73,28 +71,26 @@ MM.Backend.GDrive.load = function(id) {
 MM.Backend.GDrive._load = function(id) {
 	this.fileId = id;
 
-	var promise = new Promise();
-
 	var request = gapi.client.request({
 		path: "/drive/v2/files/" + this.fileId,
 		method: "GET"
 	});
 
-	request.execute(function(response) {
-		if (response && response.id) {
-			var xhr = new XMLHttpRequest();
-			xhr.open("get", "https://www.googleapis.com/drive/v2/files/" + response.id + '?alt=media', true);
-			xhr.setRequestHeader("Authorization", "Bearer " + gapi.auth.getToken().access_token);
-			Promise.send(xhr).then(
-				function(xhr) { promise.fulfill({data:xhr.responseText, name:response.title, mime:response.mimeType}); },
-				function(xhr) { promise.reject(xhr.responseText); }
-			);
-		} else {
-			promise.reject(response && response.error || new Error("Failed to download file"));
-		}
-	}.bind(this));
+	return new Promise((resolve, reject) => {
+		request.execute(async response => {
+			if (!response || !response.id) {
+				return reject(response && response.error || new Error("Failed to download file"));
+			}
 
-	return promise;
+			let headers = {"Authentication": "Bearer " + gapi.auth.getToken().access_token};
+
+			let r = await fetch(`https://www.googleapis.com/drive/v2/files/${response.id}?alt=media`, {headers});
+			let data = await r.text();
+			if (r.status != 200) { return reject(data); }
+
+			resolve({data, name:response.title, mime:response.mimeType});
+		});
+	});
 }
 
 MM.Backend.GDrive.pick = function() {
@@ -151,7 +147,7 @@ MM.Backend.GDrive._connect = function() {
 MM.Backend.GDrive._loadGapi = function() {
 	var promise = new Promise();
 	if (window.gapi) { return promise.fulfill(); }
-	
+
 	var script = document.createElement("script");
 	var name = ("cb"+Math.random()).replace(".", "");
 	window[name] = promise.fulfill.bind(promise);
@@ -161,25 +157,23 @@ MM.Backend.GDrive._loadGapi = function() {
 	return promise;
 }
 
-MM.Backend.GDrive._auth = function(forceUI) {
-	var promise = new Promise();
-
-	gapi.auth.authorize({
-		"client_id": this.clientId,
-		"scope": this.scope,
-		"immediate": !forceUI
-	}, function(token) {
-		if (token && !token.error) { /* done */
-			promise.fulfill();
-		} else if (!forceUI) { /* try again with ui */
-			this._auth(true).then(
-				promise.fulfill.bind(promise),
-				promise.reject.bind(promise)
-			);
-		} else { /* bad luck */
-			promise.reject(token && token.error || new Error("Failed to authorize with Google"));
-		}
-	}.bind(this));
-
-	return promise;
+MM.Backend.GDrive._auth = async function(forceUI) {
+	return new Promise((resolve, reject) => {
+		gapi.auth.authorize({
+			"client_id": this.clientId,
+			"scope": this.scope,
+			"immediate": !forceUI
+		}, async token => {
+			if (token && !token.error) { // done
+				resolve();
+			} else if (!forceUI) { // try again with ui
+				try {
+					await this._auth(true);
+					resolve();
+				} catch (e) { reject(e); }
+			} else { // bad luck
+				reject(token && token.error || new Error("Failed to authorize with Google"));
+			}
+		});
+	});
 }

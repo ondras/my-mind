@@ -1,7 +1,8 @@
 import Item, { ChildItem } from "./item.js";
 import * as menu from "./menu.js";
 import * as app from "./my-mind.js";
-import * as actions from "./action.js";
+import Action, * as actions from "./action.js";
+import { repo as commandRepo } from "./command/command.js";
 
 
 // FIXME
@@ -54,7 +55,7 @@ export function init(port_: HTMLElement) {
 
 	port.addEventListener("dblclick", e => {
 		let item = app.currentMap.getItemFor(e.target as HTMLElement);
-		item && MM.Command.Edit.execute();
+		item && commandRepo.get("edit").execute();
 	});
 
 	port.addEventListener("wheel", e => {
@@ -83,7 +84,7 @@ function onDragStart(e: MouseEvent | TouchEvent) {
 	let item = app.currentMap.getItemFor(e.target as HTMLElement);
 	if (app.editing) {
 		if (item == app.currentItem) { return; } // ignore dnd on edited node
-		MM.Command.Finish.execute(); // clicked elsewhere => finalize edit
+		commandRepo.get("finish").execute(); // clicked elsewhere => finalize edit
 	}
 
 	// we can safely start drag
@@ -192,7 +193,7 @@ function finishDragDrop(state: DragState) {
 
 	const { target, result, direction } = state;
 
-	let action: actions.Action;
+	let action: Action;
 	switch (result) {
 		case "append":
 			action = new actions.MoveItem(current.item as ChildItem, target);
