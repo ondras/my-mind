@@ -11,6 +11,7 @@ import * as status from "./status.js";
 import * as help from "./help.js";
 import * as notes from "./notes.js";
 import * as tip from "./tip.js";
+import * as io from "./io.js";
 import { repo as commandRepo } from "../command/command.js";
 
 
@@ -55,7 +56,7 @@ function onClick(e: MouseEvent) {
 export function init() {
 	[
 		layout, shape, icon, value, status, color,
-		help, tip, notes
+		help, tip, notes, io
 	].forEach(ui => ui.init());
 
 	pubsub.subscribe("item-select", update);
@@ -64,4 +65,8 @@ export function init() {
 	});
 
 	node.addEventListener("click", onClick);
+
+	window.addEventListener("load", _ => {
+		io.restore(); // fixme proc az na load?
+	});
 }

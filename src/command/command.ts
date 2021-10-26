@@ -4,6 +4,7 @@ import * as app from "../my-mind.js";
 import * as help from "../ui/help.js";
 import * as notes from "../ui/notes.js";
 import * as ui from "../ui/ui.js";
+import * as io from "../ui/io.js";
 import Action, * as actions from "../action.js";
 import MindMap from "../map.js";
 import { Side, ChildItem } from "../item.js";
@@ -157,7 +158,7 @@ new (class Save extends Command {
 
 	constructor() { super("save", "Save map"); }
 
-	execute() { ((MM as any).App as any).io.quickSave(); }
+	execute() { io.quickSave(); }
 });
 
 new (class SaveAs extends Command {
@@ -165,7 +166,7 @@ new (class SaveAs extends Command {
 
 	constructor() { super("save-as", "Save as…"); }
 
-	execute() { ((MM as any).App as any).io.show("save"); }
+	execute() { io.show("save"); }
 });
 
 new (class Load extends Command {
@@ -173,7 +174,7 @@ new (class Load extends Command {
 
 	constructor() { super("load", "Load map"); }
 
-	execute() { ((MM as any).App as any).io.show("load"); }
+	execute() { io.show("load"); }
 });
 
 new (class Center extends Command {

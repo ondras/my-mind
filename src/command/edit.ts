@@ -2,6 +2,7 @@ import * as app from "../my-mind.js";
 import Action, * as actions from "../action.js";
 import * as notes from "../ui/notes.js";
 import * as help from "../ui/help.js";
+import * as io from "../ui/io.js";
 import Command, { repo as commandRepo } from "./command.js";
 import { ChildItem, Status } from "../item.js";
 
@@ -70,7 +71,7 @@ new (class Cancel extends Command {
 		} else {
 			notes.close();
 			help.close();
-			((MM as any).App as any).io.hide();
+			io.hide();
 		}
 	}
 });

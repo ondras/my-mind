@@ -6,21 +6,6 @@ import "./format/format.freemind.js";
 import "./format/format.mma.js";
 import "./format/format.mup.js";
 import "./format/format.plaintext.js";
-import "./backend/backend.js";
-import "./backend/backend.local.js";
-import "./backend/backend.webdav.js";
-import "./backend/backend.image.js";
-import "./backend/backend.file.js";
-import "./backend/backend.firebase.js";
-import "./backend/backend.gdrive.js";
-import "./ui/ui.io.js";
-import "./ui/backend/ui.backend.js";
-import "./ui/backend/ui.backend.file.js";
-import "./ui/backend/ui.backend.webdav.js";
-import "./ui/backend/ui.backend.image.js";
-import "./ui/backend/ui.backend.local.js";
-import "./ui/backend/ui.backend.firebase.js";
-import "./ui/backend/ui.backend.gdrive.js";
 
 import Map from "./map.js";
 import Item from "./item.js";
@@ -36,16 +21,6 @@ import { repo as commandRepo } from "./command/command.js";
 import "./command/select.js";
 import "./command/edit.js";
 
-/**
-setInterval(function() {
-	console.log(document.activeElement);
-}, 1000);
-//*/
-(MM as any).App = {
-	init: function() {
-		this.io = new MM.UI.IO();
-	}
-}
 
 const port = document.querySelector<HTMLElement>("#port");
 const throbber = document.querySelector<HTMLElement>("#throbber");
@@ -105,8 +80,6 @@ function init() {
 	menu.init(port);
 	mouse.init(port);
 
-	(MM as any).App.init();
-
 	pubsub.subscribe("item-change", (_message: string, publisher: any) => {
 		if (publisher.isRoot && publisher.map == currentMap) {
 			document.title = currentMap.name + " :: My Mind";
@@ -119,11 +92,6 @@ function init() {
 	window.addEventListener("beforeunload", e => {
 		e.preventDefault();
 		return "";
-	});
-
-	window.addEventListener("load", e => {
-
-		(MM as any).App.io.restore();
 	});
 
 	syncPort();

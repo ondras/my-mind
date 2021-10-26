@@ -8,7 +8,7 @@
   };
 
   // .js/mm.js
-  window.MM = { UI: {} };
+  window.MM = { UI: {}, Backend: {} };
 
   // .js/repo.js
   MM.Repo = {
@@ -142,36 +142,36 @@
     }
     return elm;
   };
-  MM.Format.FreeMind._parseNode = function(node9, parent) {
-    var json = this._parseAttributes(node9, parent);
-    for (var i = 0; i < node9.childNodes.length; i++) {
-      var child = node9.childNodes[i];
+  MM.Format.FreeMind._parseNode = function(node10, parent) {
+    var json = this._parseAttributes(node10, parent);
+    for (var i = 0; i < node10.childNodes.length; i++) {
+      var child = node10.childNodes[i];
       if (child.nodeName.toLowerCase() == "node") {
         json.children.push(this._parseNode(child, json));
       }
     }
     return json;
   };
-  MM.Format.FreeMind._parseAttributes = function(node9, parent) {
+  MM.Format.FreeMind._parseAttributes = function(node10, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node9.getAttribute("TEXT") || ""),
-      id: node9.getAttribute("ID")
+      text: MM.Format.nl2br(node10.getAttribute("TEXT") || ""),
+      id: node10.getAttribute("ID")
     };
-    var position = node9.getAttribute("POSITION");
+    var position = node10.getAttribute("POSITION");
     if (position) {
       json.side = position;
     }
-    var style = node9.getAttribute("STYLE");
+    var style = node10.getAttribute("STYLE");
     if (style == "bubble") {
       json.shape = "box";
     } else {
       json.shape = parent.shape;
     }
-    if (node9.getAttribute("FOLDED") == "true") {
+    if (node10.getAttribute("FOLDED") == "true") {
       json.collapsed = 1;
     }
-    var children = node9.children;
+    var children = node10.children;
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeName.toLowerCase()) {
@@ -203,23 +203,23 @@
     label: { value: "Mind Map Architect" },
     extension: { value: "mma" }
   });
-  MM.Format.MMA._parseAttributes = function(node9, parent) {
+  MM.Format.MMA._parseAttributes = function(node10, parent) {
     var json = {
       children: [],
-      text: MM.Format.nl2br(node9.getAttribute("title") || ""),
+      text: MM.Format.nl2br(node10.getAttribute("title") || ""),
       shape: "box"
     };
-    if (node9.getAttribute("expand") == "false") {
+    if (node10.getAttribute("expand") == "false") {
       json.collapsed = 1;
     }
-    var direction = node9.getAttribute("direction");
+    var direction = node10.getAttribute("direction");
     if (direction == "0") {
       json.side = "left";
     }
     if (direction == "1") {
       json.side = "right";
     }
-    var color = node9.getAttribute("color");
+    var color = node10.getAttribute("color");
     if (color) {
       var re = color.match(/^#(....)(....)(....)$/);
       if (re) {
@@ -232,7 +232,7 @@
       }
       json.color = "#" + [r, g, b].join("");
     }
-    json.icon = node9.getAttribute("icon");
+    json.icon = node10.getAttribute("icon");
     return json;
   };
   MM.Format.MMA._serializeAttributes = function(doc, json) {
@@ -408,140 +408,31 @@
     return line.match(/^\s*/)[0];
   };
 
-  // .js/backend/backend.js
-  MM.Backend = Object.create(MM.Repo);
-  MM.Backend.reset = function() {
-  };
-  MM.Backend.save = function(data, name) {
-  };
-  MM.Backend.load = function(name) {
-  };
+  // .js/html.js
+  function node(name, attrs) {
+    let node10 = document.createElement(name);
+    Object.assign(node10, attrs);
+    return node10;
+  }
 
-  // .js/backend/backend.local.js
-  MM.Backend.Local = Object.create(MM.Backend, {
-    label: { value: "Browser storage" },
-    id: { value: "local" },
-    prefix: { value: "mm.map." }
-  });
-  MM.Backend.Local.save = function(data, id, name) {
-    localStorage.setItem(this.prefix + id, data);
-    var names = this.list();
-    names[id] = name;
-    localStorage.setItem(this.prefix + "names", JSON.stringify(names));
-  };
-  MM.Backend.Local.load = function(id) {
-    var data = localStorage.getItem(this.prefix + id);
-    if (!data) {
-      throw new Error("There is no such saved map");
+  // .js/svg.js
+  var NS = "http://www.w3.org/2000/svg";
+  function node2(name, attrs) {
+    let node10 = document.createElementNS(NS, name);
+    for (let attr in attrs) {
+      node10.setAttribute(attr, attrs[attr]);
     }
-    return data;
-  };
-  MM.Backend.Local.remove = function(id) {
-    localStorage.removeItem(this.prefix + id);
-    var names = this.list();
-    delete names[id];
-    localStorage.setItem(this.prefix + "names", JSON.stringify(names));
-  };
-  MM.Backend.Local.list = function() {
-    try {
-      var data = localStorage.getItem(this.prefix + "names") || "{}";
-      return JSON.parse(data);
-    } catch (e) {
-      return {};
-    }
-  };
-
-  // .js/backend/backend.webdav.js
-  MM.Backend.WebDAV = Object.create(MM.Backend, {
-    id: { value: "webdav" },
-    label: { value: "Generic WebDAV" }
-  });
-  MM.Backend.WebDAV.save = function(data, url) {
-    return this._request("PUT", url, data);
-  };
-  MM.Backend.WebDAV.load = function(url) {
-    return this._request("GET", url);
-  };
-  MM.Backend.WebDAV._request = async function(method, url, data) {
-    let init16 = {
-      method,
-      credentials: "include"
-    };
-    if (data) {
-      init16.body = data;
-    }
-    let response = await fetch(url, init16);
-    let text = await response.text();
-    if (response.status == 200) {
-      return text;
-    } else {
-      throw new Error("HTTP/" + response.status + "\n\n" + text);
-    }
-  };
-
-  // .js/backend/backend.image.js
-  MM.Backend.Image = Object.create(MM.Backend, {
-    id: { value: "image" },
-    label: { value: "Image" },
-    url: { value: "", writable: true }
-  });
-  MM.Backend.Image.save = function() {
-    let serializer = new XMLSerializer();
-    let xml = serializer.serializeToString(currentMap.node);
-    let base64 = btoa(xml);
-    let img = new Image();
-    img.src = `data:image/svg+xml;base64,${base64}`;
-    window.img = img;
-    img.onload = () => {
-      let canvas = document.createElement("canvas");
-      window.canvas = canvas;
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext("2d").drawImage(img, 0, 0);
-      canvas.toBlob((blob) => {
-        let link = document.createElement("a");
-        link.download = currentMap.name;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-      }, "image/png");
-    };
-  };
-
-  // .js/backend/backend.file.js
-  MM.Backend.File = Object.create(MM.Backend, {
-    id: { value: "file" },
-    label: { value: "File" },
-    input: { value: document.createElement("input") }
-  });
-  MM.Backend.File.save = function(data, name) {
-    var link = document.createElement("a");
-    link.download = name;
-    link.href = "data:text/plain;base64," + btoa(unescape(encodeURIComponent(data)));
-    document.body.appendChild(link);
-    link.click();
-    link.parentNode.removeChild(link);
-    return Promise.resolve();
-  };
-  MM.Backend.File.load = function() {
-    this.input.type = "file";
-    return new Promise((resolve, reject) => {
-      this.input.onchange = function(e) {
-        var file = e.target.files[0];
-        if (!file) {
-          return;
-        }
-        var reader = new FileReader();
-        reader.onload = function() {
-          resolve({ data: reader.result, name: file.name });
-        };
-        reader.onerror = function() {
-          reject(reader.error);
-        };
-        reader.readAsText(file);
-      }.bind(this);
-      this.input.click();
-    });
-  };
+    return node10;
+  }
+  function group() {
+    return node2("g");
+  }
+  function foreignObject() {
+    let fo = node2("foreignObject");
+    fo.setAttribute("width", "1");
+    fo.setAttribute("height", "1");
+    return fo;
+  }
 
   // .js/pubsub.js
   var subscribers = new Map();
@@ -571,480 +462,6 @@
     if (index2 > -1) {
       subs.splice(index2, 1);
     }
-  }
-
-  // .js/backend/backend.firebase.js
-  MM.Backend.Firebase = Object.create(MM.Backend, {
-    label: { value: "Firebase" },
-    id: { value: "firebase" },
-    ref: { value: null, writable: true },
-    _current: { value: {
-      id: null,
-      name: null,
-      data: null
-    } }
-  });
-  MM.Backend.Firebase.connect = function(server, auth) {
-    var config = {
-      apiKey: "AIzaSyBO_6uCK8pHjoz1c9htVwZi6Skpm8o4LtQ",
-      authDomain: "my-mind.firebaseapp.com",
-      databaseURL: "https://" + server + ".firebaseio.com",
-      projectId: "firebase-my-mind",
-      storageBucket: "firebase-my-mind.appspot.com",
-      messagingSenderId: "666556281676"
-    };
-    firebase.initializeApp(config);
-    this.ref = firebase.database().ref();
-    this.ref.child("names").on("value", function(snap) {
-      publish("firebase-list", this, snap.val() || {});
-    }, this);
-    if (auth) {
-      return this._login(auth);
-    } else {
-      return new Promise().fulfill();
-    }
-  };
-  MM.Backend.Firebase.save = function(data, id, name) {
-    try {
-      this.ref.child("names/" + id).set(name);
-      return new Promise((resolve, reject) => {
-        this.ref.child("data/" + id).set(data, (result) => {
-          if (result) {
-            reject(result);
-          } else {
-            resolve();
-            this._listenStart(data, id);
-          }
-        });
-      });
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  };
-  MM.Backend.Firebase.load = function(id) {
-    return new Promise((resolve, reject) => {
-      this.ref.child("data/" + id).once("value", (snap) => {
-        var data = snap.val();
-        if (data) {
-          resolve(data);
-          this._listenStart(data, id);
-        } else {
-          reject(new Error("There is no such saved map"));
-        }
-      });
-    });
-  };
-  MM.Backend.Firebase.remove = function(id) {
-    try {
-      this.ref.child("names/" + id).remove();
-      return new Promise((resolve, reject) => {
-        this.ref.child("data/" + id).remove((result) => {
-          result ? reject(result) : resolve();
-        });
-      });
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  };
-  MM.Backend.Firebase.reset = function() {
-    this._listenStop();
-  };
-  MM.Backend.Firebase.mergeWith = function(data, name) {
-    var id = this._current.id;
-    if (name != this._current.name) {
-      this._current.name = name;
-      this.ref.child("names/" + id).set(name);
-    }
-    var dataRef = this.ref.child("data/" + id);
-    var oldData = this._current.data;
-    this._listenStop();
-    this._recursiveRefMerge(dataRef, oldData, data);
-    this._listenStart(data, id);
-  };
-  MM.Backend.Firebase._recursiveRefMerge = function(ref, oldData, newData) {
-    var updateObject = {};
-    if (newData instanceof Array) {
-      for (var i = 0; i < newData.length; i++) {
-        var newValue = newData[i];
-        if (!(i in oldData)) {
-          updateObject[i] = newValue;
-        } else if (typeof newValue == "object") {
-          this._recursiveRefMerge(ref.child(i), oldData[i], newValue);
-        } else if (newValue !== oldData[i]) {
-          updateObject[i] = newValue;
-        }
-      }
-      for (var i = newData.length; i < oldData.length; i++) {
-        updateObject[i] = null;
-      }
-    } else {
-      for (var p in newData) {
-        var newValue = newData[p];
-        if (!(p in oldData)) {
-          updateObject[p] = newValue;
-        } else if (typeof newValue == "object") {
-          this._recursiveRefMerge(ref.child(p), oldData[p], newValue);
-        } else if (newValue !== oldData[p]) {
-          updateObject[p] = newValue;
-        }
-      }
-      for (var p in oldData) {
-        if (!(p in newData)) {
-          updateObject[p] = null;
-        }
-      }
-    }
-    if (Object.keys(updateObject).length) {
-      ref.update(updateObject);
-    }
-  };
-  MM.Backend.Firebase._listenStart = function(data, id) {
-    if (this._current.id && this._current.id == id) {
-      return;
-    }
-    this._listenStop();
-    this._current.id = id;
-    this._current.data = data;
-    this.ref.child("data/" + id).on("value", this._valueChange, this);
-  };
-  MM.Backend.Firebase._listenStop = function() {
-    if (!this._current.id) {
-      return;
-    }
-    this.ref.child("data/" + this._current.id).off("value");
-    this._current.id = null;
-    this._current.name = null;
-    this._current.data = null;
-  };
-  MM.Backend.Firebase._valueChange = function(snap) {
-    this._current.data = snap.val();
-    if (this._changeTimeout) {
-      clearTimeout(this._changeTimeout);
-    }
-    this._changeTimeout = setTimeout(function() {
-      publish("firebase-change", this, this._current.data);
-    }.bind(this), 200);
-  };
-  MM.Backend.Firebase._login = function(type) {
-    var provider;
-    switch (type) {
-      case "github":
-        provider = new firebase.auth.GithubAuthProvider();
-        break;
-      case "facebook":
-        provider = new firebase.auth.FacebookAuthProvider();
-        break;
-      case "twitter":
-        provider = new firebase.auth.TwitterAuthProvider();
-        break;
-      case "google":
-        provider = new firebase.auth.GoogleAuthProvider();
-        break;
-    }
-    return firebase.auth().signInWithPopup(provider).then(function(result) {
-      return result.user;
-    });
-  };
-
-  // .js/backend/backend.gdrive.js
-  MM.Backend.GDrive = Object.create(MM.Backend, {
-    id: { value: "gdrive" },
-    label: { value: "Google Drive" },
-    scope: { value: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.install" },
-    clientId: { value: "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com" },
-    apiKey: { value: "AIzaSyCzu1qVxlgufneOYpBgDJXN6Z9SNVcHYWM" },
-    fileId: { value: null, writable: true }
-  });
-  MM.Backend.GDrive.reset = function() {
-    this.fileId = null;
-  };
-  MM.Backend.GDrive.save = function(data, name, mime) {
-    return this._connect().then(function() {
-      return this._send(data, name, mime);
-    }.bind(this));
-  };
-  MM.Backend.GDrive._send = function(data, name, mime) {
-    var path = "/upload/drive/v2/files";
-    var method = "POST";
-    if (this.fileId) {
-      path += "/" + this.fileId;
-      method = "PUT";
-    }
-    var boundary = "b" + Math.random();
-    var delimiter = "--" + boundary;
-    var body = [
-      delimiter,
-      "Content-Type: application/json",
-      "",
-      JSON.stringify({ title: name }),
-      delimiter,
-      "Content-Type: " + mime,
-      "",
-      data,
-      delimiter + "--"
-    ].join("\r\n");
-    var request = gapi.client.request({
-      path,
-      method,
-      headers: {
-        "Content-Type": "multipart/mixed; boundary='" + boundary + "'"
-      },
-      body
-    });
-    return new Promise((resolve, reject) => {
-      request.execute((response) => {
-        if (!response) {
-          reject(new Error("Failed to upload to Google Drive"));
-        } else if (response.error) {
-          reject(response.error);
-        } else {
-          this.fileId = response.id;
-          resolve();
-        }
-      });
-    });
-  };
-  MM.Backend.GDrive.load = function(id) {
-    return this._connect().then(this._load.bind(this, id));
-  };
-  MM.Backend.GDrive._load = function(id) {
-    this.fileId = id;
-    var request = gapi.client.request({
-      path: "/drive/v2/files/" + this.fileId,
-      method: "GET"
-    });
-    return new Promise((resolve, reject) => {
-      request.execute(async (response) => {
-        if (!response || !response.id) {
-          return reject(response && response.error || new Error("Failed to download file"));
-        }
-        let headers = { "Authentication": "Bearer " + gapi.auth.getToken().access_token };
-        let r = await fetch(`https://www.googleapis.com/drive/v2/files/${response.id}?alt=media`, { headers });
-        let data = await r.text();
-        if (r.status != 200) {
-          return reject(data);
-        }
-        resolve({ data, name: response.title, mime: response.mimeType });
-      });
-    });
-  };
-  MM.Backend.GDrive.pick = function() {
-    return this._connect().then(this._pick.bind(this));
-  };
-  MM.Backend.GDrive._pick = function() {
-    var promise = new Promise();
-    var token = gapi.auth.getToken();
-    var formats = MM.Format.getAll();
-    var mimeTypes = ["application/json; charset=UTF-8", "application/json"];
-    formats.forEach(function(format) {
-      if (format.mime) {
-        mimeTypes.unshift(format.mime);
-      }
-    });
-    var view = new google.picker.DocsView(google.picker.ViewId.DOCS).setMimeTypes(mimeTypes.join(",")).setMode(google.picker.DocsViewMode.LIST);
-    var picker = new google.picker.PickerBuilder().enableFeature(google.picker.Feature.NAV_HIDDEN).addView(view).setOAuthToken(token.access_token).setDeveloperKey(this.apiKey).setCallback(function(data) {
-      switch (data[google.picker.Response.ACTION]) {
-        case google.picker.Action.PICKED:
-          var doc = data[google.picker.Response.DOCUMENTS][0];
-          promise.fulfill(doc.id);
-          break;
-        case google.picker.Action.CANCEL:
-          promise.fulfill(null);
-          break;
-      }
-    }).build();
-    picker.setVisible(true);
-    return promise;
-  };
-  MM.Backend.GDrive._connect = function() {
-    if (window.gapi && window.gapi.auth.getToken()) {
-      return new Promise().fulfill();
-    } else {
-      return this._loadGapi().then(this._auth.bind(this));
-    }
-  };
-  MM.Backend.GDrive._loadGapi = function() {
-    var promise = new Promise();
-    if (window.gapi) {
-      return promise.fulfill();
-    }
-    var script = document.createElement("script");
-    var name = ("cb" + Math.random()).replace(".", "");
-    window[name] = promise.fulfill.bind(promise);
-    script.src = "https://apis.google.com/js/client:picker.js?onload=" + name;
-    document.body.appendChild(script);
-    return promise;
-  };
-  MM.Backend.GDrive._auth = async function(forceUI) {
-    return new Promise((resolve, reject) => {
-      gapi.auth.authorize({
-        "client_id": this.clientId,
-        "scope": this.scope,
-        "immediate": !forceUI
-      }, async (token) => {
-        if (token && !token.error) {
-          resolve();
-        } else if (!forceUI) {
-          try {
-            await this._auth(true);
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        } else {
-          reject(token && token.error || new Error("Failed to authorize with Google"));
-        }
-      });
-    });
-  };
-
-  // .js/ui/ui.io.js
-  MM.UI.IO = function() {
-    this._prefix = "mm.app.";
-    this._mode = "";
-    this._node = document.querySelector("#io");
-    this._heading = this._node.querySelector("h3");
-    this._backend = this._node.querySelector("#backend");
-    this._currentBackend = null;
-    this._backends = {};
-    var ids = ["local", "firebase", "gdrive", "file", "webdav", "image"];
-    ids.forEach(function(id) {
-      var ui5 = MM.UI.Backend.getById(id);
-      ui5.init(this._backend);
-      this._backends[id] = ui5;
-    }, this);
-    this._backend.value = localStorage.getItem(this._prefix + "backend") || MM.Backend.File.id;
-    this._backend.addEventListener("change", this);
-    subscribe("map-new", this);
-    subscribe("save-done", this);
-    subscribe("load-done", this);
-  };
-  MM.UI.IO.prototype.restore = function() {
-    var parts = {};
-    location.search.substring(1).split("&").forEach(function(item) {
-      var keyvalue = item.split("=");
-      parts[decodeURIComponent(keyvalue[0])] = decodeURIComponent(keyvalue[1]);
-    });
-    if ("map" in parts) {
-      parts.url = parts.map;
-    }
-    if ("url" in parts && !("b" in parts)) {
-      parts.b = "webdav";
-    }
-    var backend = MM.UI.Backend.getById(parts.b);
-    if (backend) {
-      backend.setState(parts);
-      return;
-    }
-    if (parts.state) {
-      try {
-        var state = JSON.parse(parts.state);
-        if (state.action == "open") {
-          state = {
-            b: "gdrive",
-            id: state.ids[0]
-          };
-          MM.UI.Backend.GDrive.setState(state);
-        } else {
-          history.replaceState(null, "", ".");
-        }
-        return;
-      } catch (e) {
-      }
-    }
-  };
-  MM.UI.IO.prototype.handleMessage = function(message, publisher) {
-    switch (message) {
-      case "map-new":
-        this._setCurrentBackend(null);
-        break;
-      case "save-done":
-      case "load-done":
-        this.hide();
-        this._setCurrentBackend(publisher);
-        break;
-    }
-  };
-  MM.UI.IO.prototype.show = function(mode2) {
-    this._mode = mode2;
-    this._node.hidden = false;
-    this._heading.innerHTML = mode2;
-    this._syncBackend();
-  };
-  MM.UI.IO.prototype.hide = function() {
-    if (this._node.hidden) {
-      return;
-    }
-    this._node.hidden = true;
-  };
-  MM.UI.IO.prototype.quickSave = function() {
-    if (this._currentBackend) {
-      this._currentBackend.save();
-    } else {
-      this.show("save");
-    }
-  };
-  MM.UI.IO.prototype.handleEvent = function(e) {
-    switch (e.type) {
-      case "change":
-        this._syncBackend();
-        break;
-    }
-  };
-  MM.UI.IO.prototype._syncBackend = function() {
-    [...this._node.querySelectorAll("div[id]")].forEach((node9) => node9.hidden = true);
-    this._node.querySelector("#" + this._backend.value).hidden = false;
-    this._backends[this._backend.value].show(this._mode);
-  };
-  MM.UI.IO.prototype._setCurrentBackend = function(backend) {
-    if (this._currentBackend && this._currentBackend != backend) {
-      this._currentBackend.reset();
-    }
-    if (backend) {
-      localStorage.setItem(this._prefix + "backend", backend.id);
-    }
-    this._currentBackend = backend;
-    try {
-      this._updateURL();
-    } catch (e) {
-    }
-  };
-  MM.UI.IO.prototype._updateURL = function() {
-    var data = this._currentBackend && this._currentBackend.getState();
-    if (!data) {
-      history.replaceState(null, "", ".");
-    } else {
-      var arr = Object.keys(data).map(function(key) {
-        return encodeURIComponent(key) + "=" + encodeURIComponent(data[key]);
-      });
-      history.replaceState(null, "", "?" + arr.join("&"));
-    }
-  };
-
-  // .js/html.js
-  function node(name, attrs) {
-    let node9 = document.createElement(name);
-    Object.assign(node9, attrs);
-    return node9;
-  }
-
-  // .js/svg.js
-  var NS = "http://www.w3.org/2000/svg";
-  function node2(name, attrs) {
-    let node9 = document.createElementNS(NS, name);
-    for (let attr in attrs) {
-      node9.setAttribute(attr, attrs[attr]);
-    }
-    return node9;
-  }
-  function group() {
-    return node2("g");
-  }
-  function foreignObject() {
-    let fo = node2("foreignObject");
-    fo.setAttribute("width", "1");
-    fo.setAttribute("height", "1");
-    return fo;
   }
 
   // .js/history.js
@@ -1581,9 +998,9 @@
       return children[index2];
     }
     anchorToggle(item, point, side) {
-      var node9 = item.dom.toggle;
-      var w = node9.offsetWidth;
-      var h = node9.offsetHeight;
+      var node10 = item.dom.toggle;
+      var w = node10.offsetWidth;
+      var h = node10.offsetHeight;
       let [l, t] = point;
       switch (side) {
         case "left":
@@ -1601,8 +1018,8 @@
           l -= w / 2;
           break;
       }
-      node9.style.left = Math.round(l) + "px";
-      node9.style.top = Math.round(t) + "px";
+      node10.style.left = Math.round(l) + "px";
+      node10.style.top = Math.round(t) + "px";
     }
     getChildAnchor(item, side) {
       let { position, contentPosition, contentSize } = item;
@@ -2026,10 +1443,10 @@
     return select2.querySelector(`option[value="${value}"]`);
   }
   function buildGroup(label) {
-    let node9 = document.createElement("optgroup");
-    node9.label = label;
-    select2.append(node9);
-    return node9;
+    let node10 = document.createElement("optgroup");
+    node10.label = label;
+    select2.append(node10);
+    return node10;
   }
 
   // .js/ui/icon.js
@@ -2195,24 +1612,549 @@
     node6.hidden = true;
   }
 
+  // .js/ui/io.js
+  var io_exports = {};
+  __export(io_exports, {
+    hide: () => hide2,
+    init: () => init10,
+    quickSave: () => quickSave,
+    restore: () => restore,
+    show: () => show
+  });
+
+  // .js/ui/backend/backend.js
+  var BackendUI = class {
+    constructor(backend, label) {
+      this.backend = backend;
+      this.label = label;
+      repo4.set(this.id, this);
+      this.prefix = `mm.app.${this.id}`;
+      const { go, cancel } = this;
+      cancel.addEventListener("click", (_) => hide2());
+      go.addEventListener("click", (_) => this.submit());
+    }
+    get id() {
+      return this.backend.id;
+    }
+    get node() {
+      return document.querySelector(`#${this.id}`);
+    }
+    get cancel() {
+      return this.node.querySelector(".cancel");
+    }
+    get go() {
+      return this.node.querySelector(".go");
+    }
+    get option() {
+      return new Option(this.label, this.id);
+    }
+    reset() {
+      this.backend.reset();
+    }
+    setState(_data) {
+    }
+    getState() {
+      return null;
+    }
+    show(mode2) {
+      this.mode = mode2;
+      const { go, node: node10 } = this;
+      go.textContent = mode2.charAt(0).toUpperCase() + mode2.substring(1);
+      [...node10.querySelectorAll("[data-for]")].forEach((node11) => node11.hidden = true);
+      [...node10.querySelectorAll(`[data-for~=${mode2}]`)].forEach((node11) => node11.hidden = false);
+      go.focus();
+    }
+    saveDone() {
+      setThrobber(false);
+      publish("save-done", this);
+    }
+    loadDone(json) {
+      setThrobber(false);
+      try {
+        showMap(Map2.fromJSON(json));
+        publish("load-done", this);
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    error(e) {
+      setThrobber(false);
+      alert("IO error: " + e.message);
+    }
+    submit() {
+      switch (this.mode) {
+        case "save":
+          this.save();
+          break;
+        case "load":
+          this.load();
+          break;
+      }
+    }
+  };
+  var repo4 = new Map();
+  MM.UI.Backend = BackendUI;
+  function buildList(list, select7) {
+    let data = [];
+    for (let id in list) {
+      data.push({ id, name: list[id] });
+    }
+    data.sort((a, b) => a.name.localeCompare(b.name));
+    let options = data.map((item) => new Option(item.name, item.id));
+    select7.append(...options);
+  }
+
+  // .js/backend/backend.js
+  var Backend = class {
+    constructor(id) {
+      this.id = id;
+      repo5.set(id, this);
+    }
+    reset() {
+    }
+  };
+  var repo5 = new Map();
+
+  // .js/backend/local.js
+  var Local = class extends Backend {
+    constructor() {
+      super("local");
+      this.prefix = "mm.map";
+    }
+    save(data, id, name) {
+      localStorage.setItem(this.prefix + id, data);
+      let names = this.list();
+      names[id] = name;
+      localStorage.setItem(`${this.prefix}.names`, JSON.stringify(names));
+    }
+    load(id) {
+      let data = localStorage.getItem(`${this.prefix}.${id}`);
+      if (!data) {
+        throw new Error("There is no such saved map");
+      }
+      return data;
+    }
+    remove(id) {
+      localStorage.removeItem(`${this.prefix}.${id}`);
+      let names = this.list();
+      delete names[id];
+      localStorage.setItem(`${this.prefix}.names`, JSON.stringify(names));
+    }
+    list() {
+      try {
+        let data = localStorage.getItem(`${this.prefix}.names`) || "{}";
+        return JSON.parse(data);
+      } catch (e) {
+        return {};
+      }
+    }
+  };
+
+  // .js/ui/backend/local.js
+  var LocalUI = class extends BackendUI {
+    constructor() {
+      super(new Local(), "Browser storage");
+      this.remove.addEventListener("click", (_) => {
+        var id = this.list.value;
+        if (!id) {
+          return;
+        }
+        this.backend.remove(id);
+        this.show(this.mode);
+      });
+    }
+    get list() {
+      return this.node.querySelector(".list");
+    }
+    get remove() {
+      return this.node.querySelector(".remove");
+    }
+    show(mode2) {
+      super.show(mode2);
+      const { go, remove, list } = this;
+      go.disabled = false;
+      if (mode2 == "load") {
+        let stored = this.backend.list();
+        list.innerHTML = "";
+        if (Object.keys(stored).length) {
+          go.disabled = false;
+          remove.disabled = false;
+          buildList(stored, this.list);
+        } else {
+          this.go.disabled = true;
+          this.remove.disabled = true;
+          let o = document.createElement("option");
+          o.innerHTML = "(no maps saved)";
+          this.list.append(o);
+        }
+      }
+    }
+    setState(data) {
+      this.load(data.id);
+    }
+    getState() {
+      let data = {
+        b: this.id,
+        id: currentMap.id
+      };
+      return data;
+    }
+    save() {
+      let json = currentMap.toJSON();
+      let data = MM.Format.JSON.to(json);
+      try {
+        this.backend.save(data, currentMap.id, currentMap.name);
+        this.saveDone();
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    load(id = this.list.value) {
+      try {
+        let data = this.backend.load(id);
+        var json = MM.Format.JSON.from(data);
+        this.loadDone(json);
+      } catch (e) {
+        this.error(e);
+      }
+    }
+  };
+
+  // .js/backend/file.js
+  var File = class extends Backend {
+    constructor() {
+      super("file");
+      this.input = document.createElement("input");
+    }
+    save(data, name) {
+      let link = document.createElement("a");
+      link.download = name;
+      link.href = "data:text/plain;base64," + btoa(unescape(encodeURIComponent(data)));
+      document.body.append(link);
+      link.click();
+      link.remove();
+    }
+    load() {
+      const { input } = this;
+      input.type = "file";
+      return new Promise((resolve, reject) => {
+        input.onchange = (e) => {
+          let file = e.target.files[0];
+          if (!file) {
+            return;
+          }
+          var reader = new FileReader();
+          reader.onload = function() {
+            resolve({ data: reader.result, name: file.name });
+          };
+          reader.onerror = function() {
+            reject(reader.error);
+          };
+          reader.readAsText(file);
+        };
+        input.click();
+      });
+    }
+  };
+
+  // .js/ui/backend/file.js
+  var FileUI = class extends BackendUI {
+    constructor() {
+      super(new File(), "File");
+      const { format } = this;
+      format.append(MM.Format.JSON.buildOption(), MM.Format.FreeMind.buildOption(), MM.Format.MMA.buildOption(), MM.Format.Mup.buildOption(), MM.Format.Plaintext.buildOption());
+      format.value = localStorage.getItem(this.prefix + "format") || MM.Format.JSON.id;
+    }
+    get format() {
+      return this.node.querySelector(".format");
+    }
+    show(mode2) {
+      super.show(mode2);
+      this.go.textContent = mode2 == "save" ? "Save" : "Browse";
+    }
+    save() {
+      let format = MM.Format.getById(this.format.value);
+      var json = currentMap.toJSON();
+      var data = format.to(json);
+      var name = currentMap.name + "." + format.extension;
+      try {
+        this.backend.save(data, name);
+        this.saveDone();
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    async load() {
+      try {
+        let data = await this.backend.load();
+        this.loadDone(data);
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    loadDone(data) {
+      try {
+        let format = MM.Format.getByName(data.name) || MM.Format.JSON;
+        let json = format.from(data.data);
+        super.loadDone(json);
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    submit() {
+      localStorage.setItem(`${this.prefix}.format`, this.format.value);
+      super.submit();
+    }
+  };
+
+  // .js/backend/webdav.js
+  var WebDAV = class extends Backend {
+    constructor() {
+      super("webdav");
+    }
+    save(data, url) {
+      return this.request("PUT", url, data);
+    }
+    load(url) {
+      return this.request("GET", url);
+    }
+    async request(method, url, data) {
+      let init17 = {
+        method,
+        credentials: "include"
+      };
+      if (data) {
+        init17.body = data;
+      }
+      let response = await fetch(url, init17);
+      let text = await response.text();
+      if (response.status == 200) {
+        return text;
+      } else {
+        throw new Error(`HTTP/${response.status}
+
+${text}`);
+      }
+    }
+  };
+
+  // .js/ui/backend/webdav.js
+  var WebDAVUI = class extends BackendUI {
+    constructor() {
+      super(new WebDAV(), "Generic WebDAV");
+      this.current = "";
+      this.url.value = localStorage.getItem(`${this.prefix}.url`) || "";
+    }
+    get url() {
+      return this.node.querySelector(".url");
+    }
+    getState() {
+      let data = { url: this.current };
+      return data;
+    }
+    setState(data) {
+      this.load(data.url);
+    }
+    async save() {
+      setThrobber(true);
+      var map = currentMap;
+      var url = this.url.value;
+      localStorage.setItem(`${this.prefix}.url`, url);
+      if (url.match(/\.mymind$/)) {
+      } else {
+        if (url.charAt(url.length - 1) != "/") {
+          url += "/";
+        }
+        url += `${map.name}.${MM.Format.JSON.extension}`;
+      }
+      this.current = url;
+      let json = map.toJSON();
+      let data = MM.Format.JSON.to(json);
+      try {
+        await this.backend.save(data, url);
+        this.saveDone();
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    async load(url = this.url.value) {
+      this.current = url;
+      setThrobber(true);
+      var lastIndex = url.lastIndexOf("/");
+      this.url.value = url.substring(0, lastIndex);
+      localStorage.setItem(`${this.prefix}.url`, this.url.value);
+      try {
+        let data = await this.backend.load(url);
+        this.loadDone(data);
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    loadDone(data) {
+      try {
+        let json = MM.Format.JSON.from(data);
+        super.loadDone(json);
+      } catch (e) {
+        this.error(e);
+      }
+    }
+  };
+
+  // .js/backend/image.js
+  var ImageBackend = class extends Backend {
+    constructor() {
+      super("image");
+    }
+    save() {
+      let serializer = new XMLSerializer();
+      let xml = serializer.serializeToString(currentMap.node);
+      let base64 = btoa(xml);
+      let img = new Image();
+      img.src = `data:image/svg+xml;base64,${base64}`;
+      img.onload = () => {
+        let canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          let link = document.createElement("a");
+          link.download = currentMap.name;
+          link.href = URL.createObjectURL(blob);
+          link.click();
+        }, "image/png");
+      };
+    }
+  };
+
+  // .js/ui/backend/image.js
+  var ImageUI = class extends BackendUI {
+    constructor() {
+      super(new ImageBackend(), "Image");
+    }
+    save() {
+      this.backend.save();
+    }
+    load() {
+    }
+  };
+
+  // .js/ui/io.js
+  var currentMode = "load";
+  var currentBackend = null;
+  var node7 = document.querySelector("#io");
+  var select6 = node7.querySelector("#backend");
+  var PREFIX = "mm.app";
+  function init10() {
+    [LocalUI, FileUI, WebDAVUI, ImageUI].forEach((ctor) => {
+      let bui = new ctor();
+      select6.append(bui.option);
+    });
+    select6.value = localStorage.getItem(`${PREFIX}.backend`) || repo4.get("file").id;
+    select6.addEventListener("change", syncBackend);
+    subscribe("map-new", (_) => setCurrentBackend(null));
+    subscribe("save-done", onDone);
+    subscribe("load-done", onDone);
+  }
+  function onDone(_message, publisher) {
+    hide2();
+    setCurrentBackend(publisher);
+  }
+  function restore() {
+    let parts = {};
+    location.search.substring(1).split("&").forEach((item) => {
+      let keyvalue = item.split("=").map(decodeURIComponent);
+      parts[keyvalue[0]] = keyvalue[1];
+    });
+    if ("map" in parts) {
+      parts.url = parts.map;
+    }
+    if ("url" in parts && !("b" in parts)) {
+      parts.b = "webdav";
+    }
+    let backend = repo4.get(parts.b);
+    if (backend) {
+      backend.setState(parts);
+      return;
+    }
+    if (parts.state) {
+      try {
+        var state = JSON.parse(parts.state);
+        if (state.action == "open") {
+          state = {
+            b: "gdrive",
+            id: state.ids[0]
+          };
+          MM.UI.Backend.GDrive.setState(state);
+        } else {
+          history.replaceState(null, "", ".");
+        }
+        return;
+      } catch (e) {
+      }
+    }
+  }
+  function show(mode2) {
+    currentMode = mode2;
+    node7.hidden = false;
+    node7.querySelector("h3").textContent = mode2;
+    syncBackend();
+  }
+  function hide2() {
+    node7.hidden = true;
+  }
+  function quickSave() {
+    if (currentBackend) {
+      currentBackend.save();
+    } else {
+      show("save");
+    }
+  }
+  function syncBackend() {
+    [...node7.querySelectorAll("div[id]")].forEach((node10) => node10.hidden = true);
+    node7.querySelector(`#${select6.value}`).hidden = false;
+    repo4.get(select6.value).show(currentMode);
+  }
+  function setCurrentBackend(backend) {
+    if (currentBackend && currentBackend != backend) {
+      currentBackend.reset();
+    }
+    if (backend) {
+      localStorage.setItem(`${PREFIX}.backend`, backend.id);
+    }
+    currentBackend = backend;
+    try {
+      updateURL();
+    } catch (e) {
+    }
+  }
+  function updateURL() {
+    let data = currentBackend && currentBackend.getState();
+    if (!data) {
+      history.replaceState(null, "", ".");
+    } else {
+      let arr = Object.entries(data).map((pair) => pair.map(encodeURIComponent).join("="));
+      history.replaceState(null, "", "?" + arr.join("&"));
+    }
+  }
+
   // .js/ui/ui.js
-  var node7 = document.querySelector(".ui");
+  var node8 = document.querySelector(".ui");
   function isActive() {
-    return node7.contains(document.activeElement);
+    return node8.contains(document.activeElement);
   }
   function toggle3() {
-    node7.hidden = !node7.hidden;
+    node8.hidden = !node8.hidden;
     publish("ui-change", this);
   }
   function getWidth() {
-    return node7.hidden ? 0 : node7.offsetWidth;
+    return node8.hidden ? 0 : node8.offsetWidth;
   }
   function update7() {
     [layout_exports, shape_exports, icon_exports, value_exports, status_exports].forEach((ui5) => ui5.update());
   }
   function onClick2(e) {
     let target = e.target;
-    if (target == node7.querySelector("#toggle")) {
+    if (target == node8.querySelector("#toggle")) {
       toggle3();
       return;
     }
@@ -2226,7 +2168,7 @@
       current2 = current2.parentNode;
     }
   }
-  function init10() {
+  function init11() {
     [
       layout_exports,
       shape_exports,
@@ -2236,7 +2178,8 @@
       color_exports,
       help_exports,
       tip_exports,
-      notes_exports
+      notes_exports,
+      io_exports
     ].forEach((ui5) => ui5.init());
     subscribe("item-select", update7);
     subscribe("item-change", (_message, publisher) => {
@@ -2244,7 +2187,10 @@
         update7();
       }
     });
-    node7.addEventListener("click", onClick2);
+    node8.addEventListener("click", onClick2);
+    window.addEventListener("load", (_) => {
+      restore();
+    });
   }
 
   // .js/command/command.js
@@ -2387,7 +2333,7 @@
       this.keys = [{ keyCode: "S".charCodeAt(0), ctrlKey: true, shiftKey: false }];
     }
     execute() {
-      MM.App.io.quickSave();
+      quickSave();
     }
   }();
   new class SaveAs extends Command {
@@ -2396,7 +2342,7 @@
       this.keys = [{ keyCode: "S".charCodeAt(0), ctrlKey: true, shiftKey: true }];
     }
     execute() {
-      MM.App.io.show("save");
+      show("save");
     }
   }();
   new class Load extends Command {
@@ -2405,7 +2351,7 @@
       this.keys = [{ keyCode: "O".charCodeAt(0), ctrlKey: true }];
     }
     execute() {
-      MM.App.io.show("load");
+      show("load");
     }
   }();
   new class Center extends Command {
@@ -2599,14 +2545,14 @@
       return [bbox.width, bbox.height];
     }
     get position() {
-      const { node: node9 } = this.dom;
-      const transform = node9.getAttribute("transform");
+      const { node: node10 } = this.dom;
+      const transform = node10.getAttribute("transform");
       return transform.match(/\d+/g).map(Number);
     }
     set position(position) {
-      const { node: node9 } = this.dom;
+      const { node: node10 } = this.dom;
       const transform = `translate(${position.join(" ")})`;
-      node9.setAttribute("transform", transform);
+      node10.setAttribute("transform", transform);
     }
     get contentSize() {
       const { content } = this.dom;
@@ -2955,10 +2901,10 @@
         return this._shape;
       }
       let depth = 0;
-      let node9 = this;
-      while (!node9.isRoot) {
+      let node10 = this;
+      while (!node10.isRoot) {
         depth++;
-        node9 = node9.parent;
+        node10 = node10.parent;
       }
       switch (depth) {
         case 0:
@@ -3005,8 +2951,8 @@
     removeChild(child) {
       var index2 = this.children.indexOf(child);
       this.children.splice(index2, 1);
-      var node9 = child.dom.node;
-      node9.parentNode.removeChild(node9);
+      var node10 = child.dom.node;
+      node10.parentNode.removeChild(node10);
       child.parent = null;
       if (!this.children.length) {
         this.dom.toggle.parentNode.removeChild(this.dom.toggle);
@@ -3098,8 +3044,8 @@
       }
     }
   };
-  function findLinks(node9) {
-    var children = [].slice.call(node9.childNodes);
+  function findLinks(node10) {
+    var children = [].slice.call(node10.childNodes);
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       switch (child.nodeType) {
@@ -3117,14 +3063,14 @@
             var link = document.createElement("a");
             link.innerHTML = link.href = result[0];
             if (before) {
-              node9.insertBefore(document.createTextNode(before), child);
+              node10.insertBefore(document.createTextNode(before), child);
             }
-            node9.insertBefore(link, child);
+            node10.insertBefore(link, child);
             if (after) {
               child.nodeValue = after;
               i--;
             } else {
-              node9.removeChild(child);
+              node10.removeChild(child);
             }
           }
           break;
@@ -3175,33 +3121,33 @@
       return this._root;
     }
     set root(root) {
-      const { node: node9 } = this;
+      const { node: node10 } = this;
       this._root = root;
-      node9.innerHTML = "";
-      node9.append(root.dom.node);
+      node10.innerHTML = "";
+      node10.append(root.dom.node);
       root.parent = this;
     }
     mergeWith(data) {
       var ids = [];
       var current2 = currentItem;
-      var node9 = current2;
+      var node10 = current2;
       while (true) {
-        ids.push(node9.id);
-        if (node9.parent == this) {
+        ids.push(node10.id);
+        if (node10.parent == this) {
           break;
         }
-        node9 = node9.parent;
+        node10 = node10.parent;
       }
       this._root.mergeWith(data.root);
       if (current2.map) {
-        let node10 = current2;
+        let node11 = current2;
         let hidden = false;
         while (true) {
-          if (node10.parent == this) {
+          if (node11.parent == this) {
             break;
           }
-          node10 = node10.parent;
-          if (node10.isCollapsed()) {
+          node11 = node11.parent;
+          if (node11.isCollapsed()) {
             hidden = true;
           }
         }
@@ -3230,10 +3176,10 @@
     update(options) {
       options = Object.assign({}, UPDATE_OPTIONS2, options);
       options.children && this._root.update({ parent: false, children: true });
-      const { node: node9 } = this;
+      const { node: node10 } = this;
       const { size } = this._root;
-      node9.setAttribute("width", String(size[0]));
-      node9.setAttribute("height", String(size[1]));
+      node10.setAttribute("width", String(size[0]));
+      node10.setAttribute("height", String(size[1]));
     }
     show(where) {
       where.append(this.node);
@@ -3273,8 +3219,8 @@
       all.sort((a, b) => a.distance - b.distance);
       return all[0];
     }
-    getItemFor(node9) {
-      let content = node9.closest(".content");
+    getItemFor(node10) {
+      let content = node10.closest(".content");
       if (!content) {
         return null;
       }
@@ -3340,8 +3286,8 @@
           this._getPickCandidates(currentRect, child, direction, candidates);
         }, this);
       }
-      var node9 = item.dom.content;
-      var rect = node9.getBoundingClientRect();
+      var node10 = item.dom.content;
+      var rect = node10.getBoundingClientRect();
       if (direction == "left" || direction == "right") {
         var x1 = currentRect.left + currentRect.width / 2;
         var x2 = rect.left + rect.width / 2;
@@ -3383,487 +3329,6 @@
     }
   };
 
-  // .js/ui/backend/ui.backend.js
-  MM.UI.Backend = Object.create(MM.Repo);
-  MM.UI.Backend.init = function(select6) {
-    this._backend = MM.Backend.getById(this.id);
-    this._mode = "";
-    this._prefix = "mm.app." + this.id + ".";
-    this._node = document.querySelector("#" + this.id);
-    this._cancel = this._node.querySelector(".cancel");
-    this._cancel.addEventListener("click", this);
-    this._go = this._node.querySelector(".go");
-    this._go.addEventListener("click", this);
-    select6.appendChild(this._backend.buildOption());
-  };
-  MM.UI.Backend.reset = function() {
-    this._backend.reset();
-  };
-  MM.UI.Backend.setState = function(data) {
-  };
-  MM.UI.Backend.getState = function() {
-    return null;
-  };
-  MM.UI.Backend.handleEvent = function(e) {
-    switch (e.target) {
-      case this._cancel:
-        MM.App.io.hide();
-        break;
-      case this._go:
-        this._action();
-        break;
-    }
-  };
-  MM.UI.Backend.save = function() {
-  };
-  MM.UI.Backend.load = function() {
-  };
-  MM.UI.Backend.show = function(mode2) {
-    this._mode = mode2;
-    this._go.innerHTML = mode2.charAt(0).toUpperCase() + mode2.substring(1);
-    [...this._node.querySelectorAll("[data-for]")].forEach((node9) => node9.hidden = true);
-    [...this._node.querySelectorAll(`[data-for~=${mode2}]`)].forEach((node9) => node9.hidden = false);
-    this._go.focus();
-  };
-  MM.UI.Backend._action = function() {
-    switch (this._mode) {
-      case "save":
-        this.save();
-        break;
-      case "load":
-        this.load();
-        break;
-    }
-  };
-  MM.UI.Backend._saveDone = function() {
-    setThrobber(false);
-    publish("save-done", this);
-  };
-  MM.UI.Backend._loadDone = function(json) {
-    setThrobber(false);
-    try {
-      showMap(Map2.fromJSON(json));
-      publish("load-done", this);
-    } catch (e) {
-      this._error(e);
-    }
-  };
-  MM.UI.Backend._error = function(e) {
-    setThrobber(false);
-    alert("IO error: " + e.message);
-  };
-  MM.UI.Backend._buildList = function(list, select6) {
-    var data = [];
-    for (var id in list) {
-      data.push({ id, name: list[id] });
-    }
-    data.sort(function(a, b) {
-      return a.name.localeCompare(b.name);
-    });
-    data.forEach(function(item) {
-      var o = document.createElement("option");
-      o.value = item.id;
-      o.innerHTML = item.name;
-      select6.appendChild(o);
-    });
-  };
-
-  // .js/ui/backend/ui.backend.file.js
-  MM.UI.Backend.File = Object.create(MM.UI.Backend, {
-    id: { value: "file" }
-  });
-  MM.UI.Backend.File.init = function(select6) {
-    MM.UI.Backend.init.call(this, select6);
-    this._format = this._node.querySelector(".format");
-    this._format.appendChild(MM.Format.JSON.buildOption());
-    this._format.appendChild(MM.Format.FreeMind.buildOption());
-    this._format.appendChild(MM.Format.MMA.buildOption());
-    this._format.appendChild(MM.Format.Mup.buildOption());
-    this._format.appendChild(MM.Format.Plaintext.buildOption());
-    this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
-  };
-  MM.UI.Backend.File.show = function(mode2) {
-    MM.UI.Backend.show.call(this, mode2);
-    this._go.innerHTML = mode2 == "save" ? "Save" : "Browse";
-  };
-  MM.UI.Backend.File._action = function() {
-    localStorage.setItem(this._prefix + "format", this._format.value);
-    MM.UI.Backend._action.call(this);
-  };
-  MM.UI.Backend.File.save = function() {
-    var format = MM.Format.getById(this._format.value);
-    var json = app.currentMap.toJSON();
-    var data = format.to(json);
-    var name = app.currentMap.name + "." + format.extension;
-    this._backend.save(data, name).then(this._saveDone.bind(this), this._error.bind(this));
-  };
-  MM.UI.Backend.File.load = function() {
-    this._backend.load().then(this._loadDone.bind(this), this._error.bind(this));
-  };
-  MM.UI.Backend.File._loadDone = function(data) {
-    try {
-      var format = MM.Format.getByName(data.name) || MM.Format.JSON;
-      var json = format.from(data.data);
-    } catch (e) {
-      this._error(e);
-    }
-    MM.UI.Backend._loadDone.call(this, json);
-  };
-
-  // .js/ui/backend/ui.backend.webdav.js
-  MM.UI.Backend.WebDAV = Object.create(MM.UI.Backend, {
-    id: { value: "webdav" }
-  });
-  MM.UI.Backend.WebDAV.init = function(select6) {
-    MM.UI.Backend.init.call(this, select6);
-    this._url = this._node.querySelector(".url");
-    this._url.value = localStorage.getItem(this._prefix + "url") || "";
-    this._current = "";
-  };
-  MM.UI.Backend.WebDAV.getState = function() {
-    var data = {
-      url: this._current
-    };
-    return data;
-  };
-  MM.UI.Backend.WebDAV.setState = function(data) {
-    this.load(data.url);
-  };
-  MM.UI.Backend.WebDAV.save = async function() {
-    setThrobber(true);
-    var map = currentMap;
-    var url = this._url.value;
-    localStorage.setItem(this._prefix + "url", url);
-    if (url.match(/\.mymind$/)) {
-    } else {
-      if (url.charAt(url.length - 1) != "/") {
-        url += "/";
-      }
-      url += map.name + "." + MM.Format.JSON.extension;
-    }
-    this._current = url;
-    var json = map.toJSON();
-    var data = MM.Format.JSON.to(json);
-    try {
-      await this._backend.save(data, url);
-      this._saveDone();
-    } catch (e) {
-      this._error(e);
-    }
-  };
-  MM.UI.Backend.WebDAV.load = async function(url = this._url.value) {
-    this._current = url;
-    setThrobber(true);
-    var lastIndex = url.lastIndexOf("/");
-    this._url.value = url.substring(0, lastIndex);
-    localStorage.setItem(this._prefix + "url", this._url.value);
-    try {
-      let data = await this._backend.load(url);
-      this._loadDone(data);
-    } catch (e) {
-      this._error(e);
-    }
-  };
-  MM.UI.Backend.WebDAV._loadDone = function(data) {
-    try {
-      var json = MM.Format.JSON.from(data);
-    } catch (e) {
-      this._error(e);
-    }
-    MM.UI.Backend._loadDone.call(this, json);
-  };
-
-  // .js/ui/backend/ui.backend.image.js
-  MM.UI.Backend.Image = Object.create(MM.UI.Backend, {
-    id: { value: "image" }
-  });
-  MM.UI.Backend.Image.save = function() {
-    this._backend.save();
-  };
-  MM.UI.Backend.Image.load = null;
-
-  // .js/ui/backend/ui.backend.local.js
-  MM.UI.Backend.Local = Object.create(MM.UI.Backend, {
-    id: { value: "local" }
-  });
-  MM.UI.Backend.Local.init = function(select6) {
-    MM.UI.Backend.init.call(this, select6);
-    this._list = this._node.querySelector(".list");
-    this._remove = this._node.querySelector(".remove");
-    this._remove.addEventListener("click", this);
-  };
-  MM.UI.Backend.Local.handleEvent = function(e) {
-    MM.UI.Backend.handleEvent.call(this, e);
-    switch (e.target) {
-      case this._remove:
-        var id = this._list.value;
-        if (!id) {
-          break;
-        }
-        this._backend.remove(id);
-        this.show(this._mode);
-        break;
-    }
-  };
-  MM.UI.Backend.Local.show = function(mode2) {
-    MM.UI.Backend.show.call(this, mode2);
-    this._go.disabled = false;
-    if (mode2 == "load") {
-      var list = this._backend.list();
-      this._list.innerHTML = "";
-      if (Object.keys(list).length) {
-        this._go.disabled = false;
-        this._remove.disabled = false;
-        this._buildList(list, this._list);
-      } else {
-        this._go.disabled = true;
-        this._remove.disabled = true;
-        var o = document.createElement("option");
-        o.innerHTML = "(no maps saved)";
-        this._list.appendChild(o);
-      }
-    }
-  };
-  MM.UI.Backend.Local.setState = function(data) {
-    this._load(data.id);
-  };
-  MM.UI.Backend.Local.getState = function() {
-    var data = {
-      b: this.id,
-      id: currentMap.id
-    };
-    return data;
-  };
-  MM.UI.Backend.Local.save = function() {
-    var json = currentMap.toJSON();
-    var data = MM.Format.JSON.to(json);
-    try {
-      this._backend.save(data, currentMap.id, currentMap.name);
-      this._saveDone();
-    } catch (e) {
-      this._error(e);
-    }
-  };
-  MM.UI.Backend.Local.load = function() {
-    this._load(this._list.value);
-  };
-  MM.UI.Backend.Local._load = function(id) {
-    try {
-      var data = this._backend.load(id);
-      var json = MM.Format.JSON.from(data);
-      this._loadDone(json);
-    } catch (e) {
-      this._error(e);
-    }
-  };
-
-  // .js/ui/backend/ui.backend.firebase.js
-  MM.UI.Backend.Firebase = Object.create(MM.UI.Backend, {
-    id: { value: "firebase" }
-  });
-  MM.UI.Backend.Firebase.init = function(select6) {
-    MM.UI.Backend.init.call(this, select6);
-    this._online = false;
-    this._itemChangeTimeout = null;
-    this._list = this._node.querySelector(".list");
-    this._server = this._node.querySelector(".server");
-    this._server.value = localStorage.getItem(this._prefix + "server") || "my-mind";
-    this._auth = this._node.querySelector(".auth");
-    this._auth.value = localStorage.getItem(this._prefix + "auth") || "";
-    this._remove = this._node.querySelector(".remove");
-    this._remove.addEventListener("click", this);
-    this._go.disabled = false;
-    subscribe("firebase-list", this);
-    subscribe("firebase-change", this);
-  };
-  MM.UI.Backend.Firebase.setState = function(data) {
-    this._connect(data.s, data.a).then(this._load.bind(this, data.id), this._error.bind(this));
-  };
-  MM.UI.Backend.Firebase.getState = function() {
-    var data = {
-      id: currentMap.id,
-      b: this.id,
-      s: this._server.value
-    };
-    if (this._auth.value) {
-      data.a = this._auth.value;
-    }
-    return data;
-  };
-  MM.UI.Backend.Firebase.show = function(mode2) {
-    MM.UI.Backend.show.call(this, mode2);
-    this._sync();
-  };
-  MM.UI.Backend.Firebase.handleEvent = function(e) {
-    MM.UI.Backend.handleEvent.call(this, e);
-    switch (e.target) {
-      case this._remove:
-        var id = this._list.value;
-        if (!id) {
-          break;
-        }
-        setThrobber(true);
-        this._backend.remove(id).then(function() {
-          setThrobber(false);
-        }, this._error.bind(this));
-        break;
-    }
-  };
-  MM.UI.Backend.Firebase.handleMessage = function(message, publisher, data) {
-    switch (message) {
-      case "firebase-list":
-        this._list.innerHTML = "";
-        if (Object.keys(data).length) {
-          this._buildList(data, this._list);
-        } else {
-          var o = document.createElement("option");
-          o.innerHTML = "(no maps saved)";
-          this._list.appendChild(o);
-        }
-        this._sync();
-        break;
-      case "firebase-change":
-        if (data) {
-          unsubscribe("item-change", this);
-          currentMap.mergeWith(data);
-          subscribe("item-change", this);
-        } else {
-          console.log("remote data disappeared");
-        }
-        break;
-      case "item-change":
-        if (this._itemChangeTimeout) {
-          clearTimeout(this._itemChangeTimeout);
-        }
-        this._itemChangeTimeout = setTimeout(this._itemChange.bind(this), 200);
-        break;
-    }
-  };
-  MM.UI.Backend.Firebase.reset = function() {
-    this._backend.reset();
-    unsubscribe("item-change", this);
-  };
-  MM.UI.Backend.Firebase._itemChange = function() {
-    var map = currentMap;
-    this._backend.mergeWith(map.toJSON(), map.name);
-  };
-  MM.UI.Backend.Firebase._action = function() {
-    if (!this._online) {
-      this._connect(this._server.value, this._auth.value);
-      return;
-    }
-    MM.UI.Backend._action.call(this);
-  };
-  MM.UI.Backend.Firebase.save = function() {
-    setThrobber(true);
-    var map = currentMap;
-    this._backend.save(map.toJSON(), map.id, map.name).then(this._saveDone.bind(this), this._error.bind(this));
-  };
-  MM.UI.Backend.Firebase.load = function() {
-    this._load(this._list.value);
-  };
-  MM.UI.Backend.Firebase._load = function(id) {
-    setThrobber(true);
-    this._backend.load(id).then(this._loadDone.bind(this), this._error.bind(this));
-  };
-  MM.UI.Backend.Firebase._connect = async function(server, auth) {
-    var promise = new Promise();
-    this._server.value = server;
-    this._auth.value = auth;
-    this._server.disabled = true;
-    this._auth.disabled = true;
-    localStorage.setItem(this._prefix + "server", server);
-    localStorage.setItem(this._prefix + "auth", auth || "");
-    this._go.disabled = true;
-    setThrobber(true);
-    await this._backend.connect(server, auth);
-    this._connected();
-  };
-  MM.UI.Backend.Firebase._connected = function() {
-    setThrobber(false);
-    this._online = true;
-    this._sync();
-  };
-  MM.UI.Backend.Firebase._sync = function() {
-    if (!this._online) {
-      this._go.innerHTML = "Connect";
-      return;
-    }
-    this._go.disabled = false;
-    if (this._mode == "load" && !this._list.value) {
-      this._go.disabled = true;
-    }
-    this._go.innerHTML = this._mode.charAt(0).toUpperCase() + this._mode.substring(1);
-  };
-  MM.UI.Backend.Firebase._loadDone = function() {
-    subscribe("item-change", this);
-    MM.UI.Backend._loadDone.apply(this, arguments);
-  };
-  MM.UI.Backend.Firebase._saveDone = function() {
-    subscribe("item-change", this);
-    MM.UI.Backend._saveDone.apply(this, arguments);
-  };
-
-  // .js/ui/backend/ui.backend.gdrive.js
-  MM.UI.Backend.GDrive = Object.create(MM.UI.Backend, {
-    id: { value: "gdrive" }
-  });
-  MM.UI.Backend.GDrive.init = function(select6) {
-    MM.UI.Backend.init.call(this, select6);
-    this._format = this._node.querySelector(".format");
-    this._format.appendChild(MM.Format.JSON.buildOption());
-    this._format.appendChild(MM.Format.FreeMind.buildOption());
-    this._format.appendChild(MM.Format.MMA.buildOption());
-    this._format.appendChild(MM.Format.Mup.buildOption());
-    this._format.appendChild(MM.Format.Plaintext.buildOption());
-    this._format.value = localStorage.getItem(this._prefix + "format") || MM.Format.JSON.id;
-  };
-  MM.UI.Backend.GDrive.save = function() {
-    setThrobber(true);
-    var format = MM.Format.getById(this._format.value);
-    var json = currentMap.toJSON();
-    var data = format.to(json);
-    var name = currentMap.name;
-    var mime = "text/plain";
-    if (format.mime) {
-      mime = format.mime;
-    } else {
-      name += "." + format.extension;
-    }
-    this._backend.save(data, name, mime).then(this._saveDone.bind(this), this._error.bind(this));
-  };
-  MM.UI.Backend.GDrive.load = function() {
-    setThrobber(true);
-    this._backend.pick().then(this._picked.bind(this), this._error.bind(this));
-  };
-  MM.UI.Backend.GDrive._picked = function(id) {
-    setThrobber(false);
-    if (!id) {
-      return;
-    }
-    setThrobber(true);
-    this._backend.load(id).then(this._loadDone.bind(this), this._error.bind(this));
-  };
-  MM.UI.Backend.GDrive.setState = function(data) {
-    this._picked(data.id);
-  };
-  MM.UI.Backend.GDrive.getState = function() {
-    var data = {
-      b: this.id,
-      id: this._backend.fileId
-    };
-    return data;
-  };
-  MM.UI.Backend.GDrive._loadDone = function(data) {
-    try {
-      var format = MM.Format.getByMime(data.mime) || MM.Format.getByName(data.name) || MM.Format.JSON;
-      var json = format.from(data.data);
-    } catch (e) {
-      this._error(e);
-    }
-    MM.UI.Backend._loadDone.call(this, json);
-  };
-
   // .js/keyboard.js
   function handleEvent(e) {
     if (isActive()) {
@@ -3880,7 +3345,7 @@
       command.execute(e);
     }
   }
-  function init11() {
+  function init12() {
     window.addEventListener("keydown", handleEvent);
     window.addEventListener("keypress", handleEvent);
   }
@@ -3900,22 +3365,22 @@
   }
 
   // .js/menu.js
-  var node8 = document.querySelector("#menu");
+  var node9 = document.querySelector("#menu");
   var port;
-  function init12(port_) {
+  function init13(port_) {
     port = port_;
-    [...node8.querySelectorAll("[data-command]")].forEach((button) => {
+    [...node9.querySelectorAll("[data-command]")].forEach((button) => {
       let commandName = button.dataset.command;
       button.textContent = repo.get(commandName).label;
     });
     port.addEventListener("mousedown", handleEvent2);
-    node8.addEventListener("mousedown", handleEvent2);
+    node9.addEventListener("mousedown", handleEvent2);
     close3();
   }
   function open(point) {
-    node8.hidden = false;
-    let w = node8.offsetWidth;
-    let h = node8.offsetHeight;
+    node9.hidden = false;
+    let w = node9.offsetWidth;
+    let h = node9.offsetHeight;
     let left = point[0];
     let top = point[1];
     if (left > port.offsetWidth / 2) {
@@ -3924,11 +3389,11 @@
     if (top > port.offsetHeight / 2) {
       top -= h;
     }
-    node8.style.left = `${left}px`;
-    node8.style.top = `${top}px`;
+    node9.style.left = `${left}px`;
+    node9.style.top = `${top}px`;
   }
   function handleEvent2(e) {
-    if (e.currentTarget != node8) {
+    if (e.currentTarget != node9) {
       close3();
       return;
     }
@@ -3946,7 +3411,7 @@
     close3();
   }
   function close3() {
-    node8.hidden = true;
+    node9.hidden = true;
   }
 
   // .js/mouse.js
@@ -3962,7 +3427,7 @@
     previousDragState: null
   };
   var port2;
-  function init13(port_) {
+  function init14(port_) {
     port2 = port_;
     port2.addEventListener("touchstart", onDragStart);
     port2.addEventListener("mousedown", onDragStart);
@@ -4186,7 +3651,7 @@
   // .js/clipboard.js
   var storedItem = null;
   var mode = "";
-  function init14() {
+  function init15() {
     document.body.addEventListener("cut", onCopyCut);
     document.body.addEventListener("copy", onCopyCut);
     document.body.addEventListener("paste", onPaste);
@@ -4391,7 +3856,7 @@
       } else {
         close2();
         close();
-        MM.App.io.hide();
+        hide2();
       }
     }
   }();
@@ -4501,11 +3966,6 @@
   }();
 
   // .js/my-mind.js
-  MM.App = {
-    init: function() {
-      this.io = new MM.UI.IO();
-    }
-  };
   var port3 = document.querySelector("#port");
   var throbber = document.querySelector("#throbber");
   var fontSize = 100;
@@ -4549,13 +4009,12 @@
     editing = false;
     return currentItem.stopEditing();
   }
-  function init15() {
-    init10();
-    init14();
+  function init16() {
     init11();
-    init12(port3);
+    init15();
+    init12();
     init13(port3);
-    MM.App.init();
+    init14(port3);
     subscribe("item-change", (_message, publisher) => {
       if (publisher.isRoot && publisher.map == currentMap) {
         document.title = currentMap.name + " :: My Mind";
@@ -4567,9 +4026,6 @@
       e.preventDefault();
       return "";
     });
-    window.addEventListener("load", (e) => {
-      MM.App.io.restore();
-    });
     syncPort();
     showMap(new Map2());
   }
@@ -4580,5 +4036,5 @@
     throbber.style.right = 20 + getWidth() + "px";
     currentMap && currentMap.ensureItemVisibility(currentItem);
   }
-  init15();
+  init16();
 })();
