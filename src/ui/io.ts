@@ -5,6 +5,7 @@ import Local from "./backend/local.js";
 import File from "./backend/file.js";
 import WebDAV from "./backend/webdav.js";
 import Image from "./backend/image.js";
+import GDrive from "./backend/gdrive.js";
 
 
 let currentMode: Mode = "load";
@@ -15,7 +16,7 @@ const select = node.querySelector<HTMLSelectElement>("#backend");
 const PREFIX = "mm.app";
 
 export function init() {
-	[Local, File, WebDAV, Image].forEach(ctor => {
+	[Local, GDrive, File, WebDAV, Image].forEach(ctor => {
 		let bui = new ctor();
 		select.append(bui.option);
 	})
@@ -27,7 +28,7 @@ export function init() {
 		backends[id] = ui;
 	});
 */
-	select.value = localStorage.getItem(`${PREFIX}.backend`) || repo.get("file").id;
+	select.value = localStorage.getItem(`${PREFIX}.backend`) || "file";
 	select.addEventListener("change", syncBackend);
 
 	pubsub.subscribe("map-new", _ => setCurrentBackend(null));
@@ -67,7 +68,7 @@ export function restore() {
 					b: "gdrive",
 					id: state.ids[0]
 				};
-				MM.UI.Backend.GDrive.setState(state);
+				repo.get("gdrive").setState(state);
 			} else {
 				history.replaceState(null, "", ".");
 			}

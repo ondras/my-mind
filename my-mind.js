@@ -41,31 +41,11 @@
   };
 
   // .js/format/format.js
+  var repo = new Map();
   MM.Format = Object.create(MM.Repo, {
     extension: { value: "" },
     mime: { value: "" }
   });
-  MM.Format.getByName = function(name) {
-    var index2 = name.lastIndexOf(".");
-    if (index2 == -1) {
-      return null;
-    }
-    var extension = name.substring(index2 + 1).toLowerCase();
-    return this.getByProperty("extension", extension);
-  };
-  MM.Format.getByMime = function(mime) {
-    return this.getByProperty("mime", mime);
-  };
-  MM.Format.to = function(data) {
-  };
-  MM.Format.from = function(data) {
-  };
-  MM.Format.nl2br = function(str) {
-    return str.replace(/\n/g, "<br/>");
-  };
-  MM.Format.br2nl = function(str) {
-    return str.replace(/<br\s*\/?>/g, "\n");
-  };
 
   // .js/format/format.json.js
   MM.Format.JSON = Object.create(MM.Format, {
@@ -571,7 +551,7 @@
     var labels = [];
     var keys = [];
     commandNames.forEach((name) => {
-      let command = repo.get(name);
+      let command = repo2.get(name);
       if (!command) {
         console.warn(name);
         return;
@@ -925,7 +905,7 @@
   function onChange() {
     let value = select.value;
     if (value == "num") {
-      repo.get("value").execute();
+      repo2.get("value").execute();
     } else {
       let action2 = new SetValue(currentItem, value || null);
       action(action2);
@@ -946,7 +926,7 @@
       this.label = label;
       this.childDirection = childDirection;
       this.SPACING_CHILD = 4;
-      repo2.set(this.id, this);
+      repo3.set(this.id, this);
     }
     getChildDirection(_child) {
       return this.childDirection;
@@ -1050,7 +1030,7 @@
       return bbox;
     }
   };
-  var repo2 = new Map();
+  var repo3 = new Map();
 
   // .js/layout/graph.js
   var SPACING_RANK = 16;
@@ -1300,7 +1280,7 @@
         this.layoutRoot(item);
       } else {
         var side = this.getChildDirection(item);
-        repo2.get(`graph-${side}`).update(item);
+        repo3.get(`graph-${side}`).update(item);
       }
     }
     getChildDirection(child) {
@@ -1408,17 +1388,17 @@
   // .js/ui/layout.js
   var select2 = document.querySelector("#layout");
   function init5() {
-    let layout = repo2.get("map");
+    let layout = repo3.get("map");
     select2.append(new Option(layout.label, layout.id));
     let label = buildGroup("Graph");
     let graphOptions = ["right", "left", "bottom", "top"].map((name) => {
-      let layout2 = repo2.get(`graph-${name}`);
+      let layout2 = repo3.get(`graph-${name}`);
       return new Option(layout2.label, layout2.id);
     });
     label.append(...graphOptions);
     label = buildGroup("Tree");
     let treeOptions = ["right", "left"].map((name) => {
-      let layout2 = repo2.get(`tree-${name}`);
+      let layout2 = repo3.get(`tree-${name}`);
       return new Option(layout2.label, layout2.id);
     });
     label.append(...treeOptions);
@@ -1435,7 +1415,7 @@
     getOption("map").disabled = !currentItem.isRoot;
   }
   function onChange2() {
-    var layout = repo2.get(select2.value);
+    var layout = repo3.get(select2.value);
     var action2 = new SetLayout(currentItem, layout);
     action(action2);
   }
@@ -1480,7 +1460,7 @@
     constructor(id, label) {
       this.id = id;
       this.label = label;
-      repo3.set(this.id, this);
+      repo4.set(this.id, this);
     }
     update(item) {
       item.dom.content.style.borderColor = item.resolvedColor;
@@ -1494,7 +1474,7 @@
       return contentPosition[1] + Math.round(contentSize[1] * VERTICAL_OFFSET) + 0.5;
     }
   };
-  var repo3 = new Map();
+  var repo4 = new Map();
 
   // .js/shape/box.js
   var Box = class extends Shape {
@@ -1540,7 +1520,7 @@
   // .js/ui/shape.js
   var select4 = document.querySelector("#shape");
   function init7() {
-    repo3.forEach((shape) => {
+    repo4.forEach((shape) => {
       select4.append(new Option(shape.label, shape.id));
     });
     select4.addEventListener("change", onChange4);
@@ -1554,7 +1534,7 @@
     select4.value = value;
   }
   function onChange4() {
-    let shape = repo3.get(this._select.value);
+    let shape = repo4.get(this._select.value);
     let action2 = new SetShape(currentItem, shape);
     action(action2);
   }
@@ -1627,7 +1607,7 @@
     constructor(backend, label) {
       this.backend = backend;
       this.label = label;
-      repo4.set(this.id, this);
+      repo5.set(this.id, this);
       this.prefix = `mm.app.${this.id}`;
       const { go, cancel } = this;
       cancel.addEventListener("click", (_) => hide2());
@@ -1692,7 +1672,7 @@
       }
     }
   };
-  var repo4 = new Map();
+  var repo5 = new Map();
   MM.UI.Backend = BackendUI;
   function buildList(list, select7) {
     let data = [];
@@ -1708,12 +1688,12 @@
   var Backend = class {
     constructor(id) {
       this.id = id;
-      repo5.set(id, this);
+      repo6.set(id, this);
     }
     reset() {
     }
   };
-  var repo5 = new Map();
+  var repo6 = new Map();
 
   // .js/backend/local.js
   var Local = class extends Backend {
@@ -2038,6 +2018,232 @@ ${text}`);
     }
   };
 
+  // .js/backend/gdrive.js
+  var SCOPE = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.install";
+  var CLIENT_ID = "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com";
+  var API_KEY = "AIzaSyCzu1qVxlgufneOYpBgDJXN6Z9SNVcHYWM";
+  var GDrive = class extends Backend {
+    constructor() {
+      super("gdrive");
+      this.fileId = null;
+    }
+    reset() {
+      this.fileId = null;
+    }
+    async save(data, name, mime) {
+      await connect();
+      this.fileId = await this.send(data, name, mime);
+    }
+    send(data, name, mime) {
+      var path = "/upload/drive/v2/files";
+      var method = "POST";
+      if (this.fileId) {
+        path += "/" + this.fileId;
+        method = "PUT";
+      }
+      var boundary = "b" + Math.random();
+      var delimiter = "--" + boundary;
+      var body = [
+        delimiter,
+        "Content-Type: application/json",
+        "",
+        JSON.stringify({ title: name }),
+        delimiter,
+        "Content-Type: " + mime,
+        "",
+        data,
+        delimiter + "--"
+      ].join("\r\n");
+      var request = gapi.client.request({
+        path,
+        method,
+        headers: {
+          "Content-Type": "multipart/mixed; boundary='" + boundary + "'"
+        },
+        body
+      });
+      return new Promise((resolve, reject) => {
+        request.execute((response) => {
+          if (!response) {
+            reject(new Error("Failed to upload to Google Drive"));
+          } else if (response.error) {
+            reject(response.error);
+          } else {
+            resolve(response.id);
+          }
+        });
+      });
+    }
+    async load(id) {
+      await connect();
+      this.fileId = id;
+      var request = gapi.client.request({
+        path: "/drive/v2/files/" + this.fileId,
+        method: "GET"
+      });
+      return new Promise((resolve, reject) => {
+        request.execute(async (response) => {
+          if (!response || !response.id) {
+            return reject(response && response.error || new Error("Failed to download file"));
+          }
+          let headers = { "Authentication": "Bearer " + gapi.auth.getToken().access_token };
+          let r = await fetch(`https://www.googleapis.com/drive/v2/files/${response.id}?alt=media`, { headers });
+          let data = await r.text();
+          if (r.status != 200) {
+            return reject(data);
+          }
+          resolve({ data, name: response.title, mime: response.mimeType });
+        });
+      });
+    }
+    async pick() {
+      await connect();
+      var token = gapi.auth.getToken();
+      var formats = MM.Format.getAll();
+      var mimeTypes = ["application/json; charset=UTF-8", "application/json"];
+      formats.forEach((format) => {
+        if (format.mime) {
+          mimeTypes.unshift(format.mime);
+        }
+      });
+      var view = new google.picker.DocsView(google.picker.ViewId.DOCS).setMimeTypes(mimeTypes.join(",")).setMode(google.picker.DocsViewMode.LIST);
+      return new Promise((resolve) => {
+        let picker = new google.picker.PickerBuilder().enableFeature(google.picker.Feature.NAV_HIDDEN).addView(view).setOAuthToken(token.access_token).setDeveloperKey(API_KEY).setCallback((data) => {
+          switch (data[google.picker.Response.ACTION]) {
+            case google.picker.Action.PICKED:
+              var doc = data[google.picker.Response.DOCUMENTS][0];
+              resolve(doc.id);
+              break;
+            case google.picker.Action.CANCEL:
+              resolve(null);
+              break;
+          }
+        }).build();
+        picker.setVisible(true);
+      });
+    }
+  };
+  async function connect() {
+    if (window["gapi"] && gapi.auth.getToken()) {
+      return;
+    } else {
+      await loadGapi();
+      return auth();
+    }
+  }
+  function loadGapi() {
+    if (window["gapi"]) {
+      return;
+    }
+    let script = document.createElement("script");
+    let name = ("cb" + Math.random()).replace(".", "");
+    script.src = "https://apis.google.com/js/client:picker.js?onload=" + name;
+    document.body.append(script);
+    return new Promise((resolve) => window[name] = resolve);
+  }
+  async function auth(forceUI = false) {
+    return new Promise((resolve, reject) => {
+      gapi.auth.authorize({
+        "client_id": CLIENT_ID,
+        "scope": SCOPE,
+        "immediate": !forceUI
+      }, async (token) => {
+        if (token && !token.error) {
+          resolve();
+        } else if (!forceUI) {
+          try {
+            await this.auth(true);
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          reject(token && token.error || new Error("Failed to authorize with Google"));
+        }
+      });
+    });
+  }
+
+  // .js/ui/backend/gdrive.js
+  var GDriveUI = class extends BackendUI {
+    constructor() {
+      super(new GDrive(), "Google Drive");
+      const { format } = this;
+      let options = [
+        MM.Format.JSON,
+        MM.Format.FreeMind,
+        MM.Format.MMA,
+        MM.Format.Mup,
+        MM.Format.Plaintext
+      ].map((f) => f.buildOption());
+      format.append(...options);
+      format.value = localStorage.getItem(`${this.prefix}.format`) || MM.Format.JSON.id;
+    }
+    get format() {
+      return this.node.querySelector(".format");
+    }
+    async save() {
+      setThrobber(true);
+      var format = MM.Format.getById(this.format.value);
+      var json = currentMap.toJSON();
+      var data = format.to(json);
+      var name = currentMap.name;
+      var mime = "text/plain";
+      if (format.mime) {
+        mime = format.mime;
+      } else {
+        name += "." + format.extension;
+      }
+      try {
+        await this.backend.save(data, name, mime);
+        this.saveDone();
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    async load() {
+      setThrobber(true);
+      try {
+        let id = await this.backend.pick();
+        this.picked(id);
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    async picked(id) {
+      setThrobber(false);
+      if (!id) {
+        return;
+      }
+      setThrobber(true);
+      try {
+        let data = await this.backend.load(id);
+        this.loadDone(data);
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    setState(data) {
+      this.picked(data.id);
+    }
+    getState() {
+      var data = {
+        b: this.id,
+        id: this.backend.fileId
+      };
+      return data;
+    }
+    loadDone(data) {
+      try {
+        var format = MM.Format.getByMime(data.mime) || MM.Format.getByName(data.name) || MM.Format.JSON;
+        var json = format.from(data.data);
+      } catch (e) {
+        this.error(e);
+      }
+      super.loadDone(json);
+    }
+  };
+
   // .js/ui/io.js
   var currentMode = "load";
   var currentBackend = null;
@@ -2045,11 +2251,11 @@ ${text}`);
   var select6 = node7.querySelector("#backend");
   var PREFIX = "mm.app";
   function init10() {
-    [LocalUI, FileUI, WebDAVUI, ImageUI].forEach((ctor) => {
+    [LocalUI, GDriveUI, FileUI, WebDAVUI, ImageUI].forEach((ctor) => {
       let bui = new ctor();
       select6.append(bui.option);
     });
-    select6.value = localStorage.getItem(`${PREFIX}.backend`) || repo4.get("file").id;
+    select6.value = localStorage.getItem(`${PREFIX}.backend`) || "file";
     select6.addEventListener("change", syncBackend);
     subscribe("map-new", (_) => setCurrentBackend(null));
     subscribe("save-done", onDone);
@@ -2071,7 +2277,7 @@ ${text}`);
     if ("url" in parts && !("b" in parts)) {
       parts.b = "webdav";
     }
-    let backend = repo4.get(parts.b);
+    let backend = repo5.get(parts.b);
     if (backend) {
       backend.setState(parts);
       return;
@@ -2084,7 +2290,7 @@ ${text}`);
             b: "gdrive",
             id: state.ids[0]
           };
-          MM.UI.Backend.GDrive.setState(state);
+          repo5.get("gdrive").setState(state);
         } else {
           history.replaceState(null, "", ".");
         }
@@ -2112,7 +2318,7 @@ ${text}`);
   function syncBackend() {
     [...node7.querySelectorAll("div[id]")].forEach((node10) => node10.hidden = true);
     node7.querySelector(`#${select6.value}`).hidden = false;
-    repo4.get(select6.value).show(currentMode);
+    repo5.get(select6.value).show(currentMode);
   }
   function setCurrentBackend(backend) {
     if (currentBackend && currentBackend != backend) {
@@ -2162,7 +2368,7 @@ ${text}`);
     while (current2 != document) {
       let command = current2.dataset.command;
       if (command) {
-        repo.get(command).execute();
+        repo2.get(command).execute();
         return;
       }
       current2 = current2.parentNode;
@@ -2198,12 +2404,12 @@ ${text}`);
   function isMac() {
     return !!navigator.platform.match(/mac/i);
   }
-  var repo = new Map();
+  var repo2 = new Map();
   var Command = class {
     constructor(id, label) {
       this.label = label;
       this.editMode = false;
-      repo.set(id, this);
+      repo2.set(id, this);
     }
     get isValid() {
       return this.editMode === null || this.editMode == editing;
@@ -2258,7 +2464,7 @@ ${text}`);
         action2 = new InsertNewItem(parent, index2 + 1);
       }
       action(action2);
-      repo.get("edit").execute();
+      repo2.get("edit").execute();
       publish("command-sibling");
     }
   }();
@@ -2274,7 +2480,7 @@ ${text}`);
       let item = currentItem;
       let action2 = new InsertNewItem(item, item.children.length);
       action(action2);
-      repo.get("edit").execute();
+      repo2.get("edit").execute();
       publish("command-child");
     }
   }();
@@ -2638,10 +2844,10 @@ ${text}`);
         this.collapse();
       }
       if (data.layout) {
-        this._layout = repo2.get(data.layout);
+        this._layout = repo3.get(data.layout);
       }
       if (data.shape) {
-        this.shape = repo3.get(data.shape);
+        this.shape = repo4.get(data.shape);
       }
       (data.children || []).forEach((child) => {
         this.insertChild(Item.fromJSON(child));
@@ -2677,11 +2883,11 @@ ${text}`);
         this[this._collapsed ? "expand" : "collapse"]();
       }
       if (this.layout != data.layout) {
-        this._layout = repo2.get(data.layout);
+        this._layout = repo3.get(data.layout);
         dirty = 2;
       }
       if (this.shape != data.shape) {
-        this.shape = repo3.get(data.shape);
+        this.shape = repo4.get(data.shape);
       }
       (data.children || []).forEach((child, index2) => {
         if (index2 >= this.children.length) {
@@ -2908,11 +3114,11 @@ ${text}`);
       }
       switch (depth) {
         case 0:
-          return repo3.get("ellipse");
+          return repo4.get("ellipse");
         case 1:
-          return repo3.get("box");
+          return repo4.get("box");
         default:
-          return repo3.get("underline");
+          return repo4.get("underline");
       }
     }
     get map() {
@@ -2992,7 +3198,7 @@ ${text}`);
           }
           break;
         case "blur":
-          repo.get("finish").execute();
+          repo2.get("finish").execute();
           break;
         case "click":
           if (this._collapsed) {
@@ -3097,7 +3303,7 @@ ${text}`);
       this.position = [0, 0];
       options = Object.assign({
         root: "My Mind Map",
-        layout: repo2.get("map")
+        layout: repo3.get("map")
       }, options);
       let root = new Item();
       root.text = options.root;
@@ -3334,7 +3540,7 @@ ${text}`);
     if (isActive()) {
       return;
     }
-    let command = [...repo.values()].find((command2) => {
+    let command = [...repo2.values()].find((command2) => {
       if (!command2.isValid) {
         return false;
       }
@@ -3371,7 +3577,7 @@ ${text}`);
     port = port_;
     [...node9.querySelectorAll("[data-command]")].forEach((button) => {
       let commandName = button.dataset.command;
-      button.textContent = repo.get(commandName).label;
+      button.textContent = repo2.get(commandName).label;
     });
     port.addEventListener("mousedown", handleEvent2);
     node9.addEventListener("mousedown", handleEvent2);
@@ -3403,7 +3609,7 @@ ${text}`);
     if (!commandName) {
       return;
     }
-    let command = repo.get(commandName);
+    let command = repo2.get(commandName);
     if (!command.isValid) {
       return;
     }
@@ -3440,7 +3646,7 @@ ${text}`);
     });
     port2.addEventListener("dblclick", (e) => {
       let item = currentMap.getItemFor(e.target);
-      item && repo.get("edit").execute();
+      item && repo2.get("edit").execute();
     });
     port2.addEventListener("wheel", (e) => {
       const { deltaY } = e;
@@ -3468,7 +3674,7 @@ ${text}`);
       if (item == currentItem) {
         return;
       }
-      repo.get("finish").execute();
+      repo2.get("finish").execute();
     }
     current.cursor = point;
     if (item && !item.isRoot) {
@@ -3869,14 +4075,14 @@ ${text}`);
       if (editing) {
         document.execCommand(this.command, null, null);
       } else {
-        repo.get("edit").execute();
+        repo2.get("edit").execute();
         let selection = getSelection();
         let range = selection.getRangeAt(0);
         range.selectNodeContents(currentItem.dom.text);
         selection.removeAllRanges();
         selection.addRange(range);
         this.execute();
-        repo.get("finish").execute();
+        repo2.get("finish").execute();
       }
     }
   };
@@ -3985,7 +4191,7 @@ ${text}`);
   function selectItem(item) {
     if (currentItem && currentItem != item) {
       if (editing) {
-        repo.get("finish").execute();
+        repo2.get("finish").execute();
       }
       currentItem.deselect();
     }
