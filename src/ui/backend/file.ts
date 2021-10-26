@@ -15,7 +15,7 @@ export default class FileUI extends BackendUI<File> {
 			MM.Format.Mup.buildOption(),
 			MM.Format.Plaintext.buildOption()
 		)
-		format.value = localStorage.getItem(this.prefix + "format") || MM.Format.JSON.id;
+		format.value = localStorage.getItem(this.prefix + "format") || "native";
 	}
 
 	protected get format() { return this.node.querySelector<HTMLSelectElement>(".format"); }

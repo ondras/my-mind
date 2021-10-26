@@ -19,6 +19,21 @@ export type Status = "computed" | boolean | null;
 export type Side = "" | "left" | "right";
 export type ChildItem = Item & { parent: Item };
 
+export type Jsonified = Partial<{
+	id: string;
+	text: string;
+	notes: string;
+	side: Side;
+	color: string;
+	icon: string;
+	value: Value;
+	status: Status | "yes" | "no";
+	layout: string;
+	shape: string;
+	collapsed: boolean | number;
+	children: Jsonified[];
+}>
+
 const COLOR = "#999";
 
 /* RE explanation:
@@ -135,7 +150,7 @@ export default class Item {
 	}
 
 	toJSON() {
-		let data: Record<string, any> = {
+		let data: Jsonified = {
 			id: this.id,
 			text: this.text,
 			notes: this.notes
@@ -159,7 +174,7 @@ export default class Item {
 	/**
 	 * Only when creating a new item. To merge existing items, use .mergeWith().
 	 */
-	fromJSON(data) {
+	fromJSON(data: Jsonified) {
 		this.text = data.text;
 
 		if (data.id) { this._id = data.id; }
@@ -189,7 +204,7 @@ export default class Item {
 		return this;
 	}
 
-	mergeWith(data) {
+	mergeWith(data: Jsonified) {
 		var dirty = 0;
 
 		if (this.text != data.text && !this.dom.text.contentEditable) { this.text = data.text; }
@@ -215,18 +230,20 @@ export default class Item {
 		}
 
 		if (this._status != data.status) {
-			this._status = data.status;
+			this._status = data.status as Status;
 			dirty = 1;
 		}
 
 		if (this._collapsed != !!data.collapsed) { this[this._collapsed ? "expand" : "collapse"](); }
 
-		if (this.layout != data.layout) {
+		// fixme does not work
+		if (this.layout.id != data.layout) {
 			this._layout = layoutRepo.get(data.layout);
 			dirty = 2;
 		}
 
-		if (this.shape != data.shape) { this.shape = shapeRepo.get(data.shape); }
+		// fixme does not work
+		if (this.shape.id != data.shape) { this.shape = shapeRepo.get(data.shape); }
 
 		(data.children || []).forEach((child, index) => {
 			if (index >= this.children.length) { /* new child */

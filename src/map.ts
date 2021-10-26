@@ -1,7 +1,8 @@
-import Item from "./item.js";
+import Item, { Jsonified as JsonifiedItem } from "./item.js";
 import * as svg from "./svg.js";
 import * as app from "./my-mind.js";
 import Layout, { repo as layoutRepo } from "./layout/layout.js";
+import { br2nl } from "./format/format.js";
 
 
 const UPDATE_OPTIONS = {
@@ -11,6 +12,10 @@ const UPDATE_OPTIONS = {
 interface Options {
 	root: string;
 	layout: Layout;
+}
+
+export type Jsonified = {
+	root: JsonifiedItem;
 }
 
 export default class Map {
@@ -30,18 +35,18 @@ export default class Map {
 		this.root = root;
 	}
 
-	static fromJSON(data) {
+	static fromJSON(data: Jsonified) {
 		return new this().fromJSON(data);
 	}
 
 	toJSON() {
-		let data = {
+		let data: Jsonified = {
 			root: this._root.toJSON()
 		};
 		return data;
 	}
 
-	fromJSON(data) {
+	fromJSON(data: Jsonified) {
 		this.root = Item.fromJSON(data.root);
 		return this;
 	}
@@ -57,7 +62,7 @@ export default class Map {
 		root.parent = this;
 	}
 
-	mergeWith(data) {
+	mergeWith(data: Jsonified) {
 		// store a sequence of nodes to be selected when merge is over
 		var ids = [];
 		var current = app.currentItem;
@@ -212,7 +217,7 @@ export default class Map {
 
 	get name() {
 		let name = this._root.text;
-		return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
+		return br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
 	}
 
 	get id() { return this._root.id; }

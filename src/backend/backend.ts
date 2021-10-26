@@ -1,6 +1,6 @@
 
 export default abstract class Backend {
-	constructor(readonly id) { repo.set(id, this); }
+	constructor(readonly id: string) { repo.set(id, this); }
 
 	reset() {}
 }

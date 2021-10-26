@@ -10,6 +10,8 @@ export default abstract class Layout {
 
 	abstract update(item: Item): void;
 
+	get option() { return new Option(this.label, this.id); }
+
 	/**
 	 * @param child Child node (its parent uses this layout)
 	 */

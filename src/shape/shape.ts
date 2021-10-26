@@ -8,6 +8,8 @@ export default class Shape {
 		repo.set(this.id, this);
 	}
 
+	get option() { return new Option(this.label, this.id); }
+
 	update(item: Item) {
 		item.dom.content.style.borderColor = item.resolvedColor;
 	}

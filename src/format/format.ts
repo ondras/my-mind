@@ -1,18 +1,21 @@
+import { Jsonified } from "../map.js";
+
+
 export default abstract class Format {
-	constructor(readonly id:string) {
+	extension: string;
+	mime: string;
+
+	constructor(readonly id:string, readonly label:string) {
 		repo.set(id, this);
 	}
 
-	abstract to(data): string;
-	abstract from(data: string);
+	abstract to(data: Jsonified): string;
+	abstract from(data: string): Jsonified;
+
+	get option() { return new Option(this.label, this.id); }
 }
 
 export let repo = new Map<string, Format>();
-
-MM.Format = Object.create(MM.Repo, {
-	extension: {value:""},
-	mime: {value:""}
-});
 
 function getByProperty(property: string, value: string) {
 	let filtered = [...repo.values()].filter(format => format[property] == value);

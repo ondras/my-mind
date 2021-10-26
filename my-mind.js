@@ -42,10 +42,6 @@
 
   // .js/format/format.js
   var repo = new Map();
-  MM.Format = Object.create(MM.Repo, {
-    extension: { value: "" },
-    mime: { value: "" }
-  });
 
   // .js/format/format.json.js
   MM.Format.JSON = Object.create(MM.Format, {

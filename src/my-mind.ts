@@ -1,5 +1,4 @@
 import "./mm.js";
-import "./repo.js";
 import "./format/format.js";
 import "./format/format.json.js";
 import "./format/format.freemind.js";

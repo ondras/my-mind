@@ -11,19 +11,17 @@ const select = document.querySelector<HTMLSelectElement>("#layout");
 
 export function init() {
 	let layout = repo.get("map");
-	select.append(new Option(layout.label, layout.id));
+	select.append(layout.option);
 
 	let label = buildGroup("Graph");
 	let graphOptions = ["right", "left", "bottom", "top"].map(name => {
-		let layout = repo.get(`graph-${name}`);
-		return new Option(layout.label, layout.id);
+		return repo.get(`graph-${name}`).option;
 	});
 	label.append(...graphOptions);
 
 	label = buildGroup("Tree");
 	let treeOptions = ["right", "left"].map(name => {
-		let layout = repo.get(`tree-${name}`);
-		return new Option(layout.label, layout.id);
+		return repo.get(`tree-${name}`).option;
 	});
 	label.append(...treeOptions);
 

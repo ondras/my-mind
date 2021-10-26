@@ -11,7 +11,7 @@ const select = document.querySelector<HTMLSelectElement>("#shape");
 
 export function init() {
 	repo.forEach(shape => {
-		select.append(new Option(shape.label, shape.id));
+		select.append(shape.option);
 	});
 
 	select.addEventListener("change", onChange);
