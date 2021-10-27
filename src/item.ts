@@ -661,8 +661,3 @@ function generateId() {
 	}
 	return str;
 }
-
-(MM as any).Item = Item;
-
-
-

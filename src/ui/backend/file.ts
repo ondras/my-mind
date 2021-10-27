@@ -1,8 +1,8 @@
-import BackendUI, { Mode, repo as buiRepo } from "./backend.js";
+import BackendUI, { Mode } from "./backend.js";
 import * as app from "../../my-mind.js";
 import File, { LoadedData } from "../../backend/file.js";
 import { repo as formatRepo, getByName } from "../../format/format.js";
-import { fill, fill as fillFormats } from "../format-select.js";
+import { fill as fillFormats } from "../format-select.js";
 
 
 export default class FileUI extends BackendUI<File> {
@@ -38,19 +38,11 @@ export default class FileUI extends BackendUI<File> {
 	async load() {
 		try {
 			let data = await this.backend.load();
-			this.loadDone(data);
-		} catch (e) {
-			this.error(e)
-		}
-	}
-
-	protected loadDone(data: LoadedData) {
-		try {
 			let format = getByName(data.name) || formatRepo.get("native");
 			let json = format.from(data.data);
-			super.loadDone(json);
+			this.loadDone(json);
 		} catch (e) {
-			this.error(e);
+			this.error(e)
 		}
 	}
 

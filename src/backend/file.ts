@@ -38,5 +38,4 @@ export default class File extends Backend {
 			input.click();
 		});
 	}
-
 }

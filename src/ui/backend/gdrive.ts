@@ -1,4 +1,4 @@
-import BackendUI, { repo as buiRepo } from "./backend.js";
+import BackendUI from "./backend.js";
 import { repo as formatRepo, getByMime, getByName } from "../../format/format.js";
 import GDrive from "../../backend/gdrive.js";
 import * as app from "../../my-mind.js";
@@ -57,7 +57,9 @@ export default class GDriveUI extends BackendUI<GDrive> {
 
 		try {
 			let data = await this.backend.load(id);
-			this.loadDone(data);
+			let format = getByMime(data.mime) || getByName(data.name) || formatRepo.get("native");
+			let json = format.from(data.data);
+			this.loadDone(json);
 		} catch (e) {
 			this.error(e);
 		}
@@ -73,16 +75,5 @@ export default class GDriveUI extends BackendUI<GDrive> {
 			id: this.backend.fileId
 		};
 		return data;
-	}
-
-	protected loadDone(data) {
-		try {
-			var format = getByMime(data.mime) || getByName(data.name) || formatRepo.get("native");
-			var json = format.from(data.data);
-		} catch (e) {
-			this.error(e);
-		}
-
-		super.loadDone(json);
 	}
 }

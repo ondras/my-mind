@@ -9,6 +9,11 @@ const SCOPE = "https://www.googleapis.com/auth/drive https://www.googleapis.com/
 const CLIENT_ID = "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com";
 const API_KEY = "AIzaSyCzu1qVxlgufneOYpBgDJXN6Z9SNVcHYWM";
 
+export interface LoadedData {
+	name: string;
+	data: string;
+	mime: string;
+}
 
 export default class GDrive extends Backend {
 	fileId: string | null = null;
@@ -75,7 +80,7 @@ export default class GDrive extends Backend {
 			method: "GET"
 		});
 
-		return new Promise((resolve, reject) => {
+		return new Promise<LoadedData>((resolve, reject) => {
 			request.execute(async response => {
 				if (!response || !response.id) {
 					return reject(response && response.error || new Error("Failed to download file"));

@@ -63,16 +63,8 @@ export default class WebDAVUI extends BackendUI<WebDAV> {
 
 		try {
 			let data = await this.backend.load(url);
-			this.loadDone(data);
-		} catch (e) {
-			this.error(e);
-		}
-	}
-
-	protected loadDone(data: string) {
-		try {
 			let json = formatRepo.get("native").from(data);
-			super.loadDone(json);
+			this.loadDone(json);
 		} catch (e) {
 			this.error(e);
 		}

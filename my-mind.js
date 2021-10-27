@@ -7,9 +7,6 @@
       __defProp(target, name, { get: all2[name], enumerable: true });
   };
 
-  // .js/mm.js
-  window.MM = { UI: {}, Backend: {}, Format: {} };
-
   // .js/html.js
   function node(name, attrs) {
     let node10 = document.createElement(name);
@@ -1299,7 +1296,6 @@
     }
   };
   var repo4 = new Map();
-  MM.UI.Backend = BackendUI;
   function buildList(list, select7) {
     let data = [];
     for (let id in list) {
@@ -1869,16 +1865,9 @@
     async load() {
       try {
         let data = await this.backend.load();
-        this.loadDone(data);
-      } catch (e) {
-        this.error(e);
-      }
-    }
-    loadDone(data) {
-      try {
         let format = getByName(data.name) || repo6.get("native");
         let json = format.from(data.data);
-        super.loadDone(json);
+        this.loadDone(json);
       } catch (e) {
         this.error(e);
       }
@@ -1967,15 +1956,8 @@ ${text}`);
       localStorage.setItem(`${this.prefix}.url`, this.url.value);
       try {
         let data = await this.backend.load(url);
-        this.loadDone(data);
-      } catch (e) {
-        this.error(e);
-      }
-    }
-    loadDone(data) {
-      try {
         let json = repo6.get("native").from(data);
-        super.loadDone(json);
+        this.loadDone(json);
       } catch (e) {
         this.error(e);
       }
@@ -2211,7 +2193,9 @@ ${text}`);
       setThrobber(true);
       try {
         let data = await this.backend.load(id);
-        this.loadDone(data);
+        let format = getByMime(data.mime) || getByName(data.name) || repo6.get("native");
+        let json = format.from(data.data);
+        this.loadDone(json);
       } catch (e) {
         this.error(e);
       }
@@ -2226,14 +2210,316 @@ ${text}`);
       };
       return data;
     }
-    loadDone(data) {
+  };
+
+  // .js/backend/firebase.js
+  var File2 = class extends Backend {
+    constructor() {
+      super("firebase");
+      this.current = {
+        id: null,
+        name: null,
+        data: null
+      };
+    }
+    connect(server, auth2) {
+      var config = {
+        apiKey: "AIzaSyBO_6uCK8pHjoz1c9htVwZi6Skpm8o4LtQ",
+        authDomain: "my-mind.firebaseapp.com",
+        databaseURL: "https://" + server + ".firebaseio.com",
+        projectId: "firebase-my-mind",
+        storageBucket: "firebase-my-mind.appspot.com",
+        messagingSenderId: "666556281676"
+      };
+      firebase.initializeApp(config);
+      this.ref = firebase.database().ref();
+      this.ref.child("names").on("value", function(snap) {
+        publish("firebase-list", this, snap.val() || {});
+      }, this);
+      if (auth2) {
+        return this.login(auth2);
+      }
+    }
+    save(data, id, name) {
+      this.ref.child("names/" + id).set(name);
+      return new Promise((resolve, reject) => {
+        this.ref.child("data/" + id).set(data, (result) => {
+          if (result) {
+            reject(result);
+          } else {
+            resolve();
+            this.listenStart(data, id);
+          }
+        });
+      });
+    }
+    load(id) {
+      return new Promise((resolve, reject) => {
+        this.ref.child("data/" + id).once("value", (snap) => {
+          var data = snap.val();
+          if (data) {
+            resolve(data);
+            this.listenStart(data, id);
+          } else {
+            reject(new Error("There is no such saved map"));
+          }
+        });
+      });
+    }
+    remove(id) {
+      this.ref.child("names/" + id).remove();
+      return new Promise((resolve, reject) => {
+        this.ref.child("data/" + id).remove((result) => {
+          result ? reject(result) : resolve();
+        });
+      });
+    }
+    reset() {
+      this.listenStop();
+    }
+    mergeWith(data, name) {
+      var id = this.current.id;
+      if (name != this.current.name) {
+        this.current.name = name;
+        this.ref.child("names/" + id).set(name);
+      }
+      var dataRef = this.ref.child("data/" + id);
+      var oldData = this.current.data;
+      this.listenStop();
+      this.recursiveRefMerge(dataRef, oldData, data);
+      this.listenStart(data, id);
+    }
+    recursiveRefMerge(ref, oldData, newData) {
+      var updateObject = {};
+      if (newData instanceof Array) {
+        for (var i = 0; i < newData.length; i++) {
+          var newValue = newData[i];
+          if (!(i in oldData)) {
+            updateObject[i] = newValue;
+          } else if (typeof newValue == "object") {
+            this.recursiveRefMerge(ref.child(i), oldData[i], newValue);
+          } else if (newValue !== oldData[i]) {
+            updateObject[i] = newValue;
+          }
+        }
+        for (var i = newData.length; i < oldData.length; i++) {
+          updateObject[i] = null;
+        }
+      } else {
+        for (var p in newData) {
+          var newValue = newData[p];
+          if (!(p in oldData)) {
+            updateObject[p] = newValue;
+          } else if (typeof newValue == "object") {
+            this.recursiveRefMerge(ref.child(p), oldData[p], newValue);
+          } else if (newValue !== oldData[p]) {
+            updateObject[p] = newValue;
+          }
+        }
+        for (var p in oldData) {
+          if (!(p in newData)) {
+            updateObject[p] = null;
+          }
+        }
+      }
+      if (Object.keys(updateObject).length) {
+        ref.update(updateObject);
+      }
+    }
+    listenStart(data, id) {
+      if (this.current.id && this.current.id == id) {
+        return;
+      }
+      this.listenStop();
+      this.current.id = id;
+      this.current.data = data;
+      this.ref.child("data/" + id).on("value", this.onValueChange, this);
+    }
+    listenStop() {
+      if (!this.current.id) {
+        return;
+      }
+      this.ref.child("data/" + this.current.id).off("value");
+      this.current.id = null;
+      this.current.name = null;
+      this.current.data = null;
+    }
+    onValueChange(snap) {
+      this.current.data = snap.val();
+      clearTimeout(this.changeTimeout);
+      this.changeTimeout = setTimeout(() => {
+        publish("firebase-change", this, this.current.data);
+      }, 200);
+    }
+    async login(type) {
+      var provider;
+      switch (type) {
+        case "github":
+          provider = new firebase.auth.GithubAuthProvider();
+          break;
+        case "facebook":
+          provider = new firebase.auth.FacebookAuthProvider();
+          break;
+        case "twitter":
+          provider = new firebase.auth.TwitterAuthProvider();
+          break;
+        case "google":
+          provider = new firebase.auth.GoogleAuthProvider();
+          break;
+      }
+      let result = await firebase.auth().signInWithPopup(provider);
+      return result.user;
+    }
+  };
+
+  // .js/ui/backend/firebase.js
+  var FirebaseUI = class extends BackendUI {
+    constructor() {
+      super(new File2(), "Firebase");
+      this.online = false;
+      const { server, auth: auth2, remove, go } = this;
+      server.value = localStorage.getItem(`${this.prefix}.server`) || "my-mind";
+      auth2.value = localStorage.getItem(`${this.prefix}.auth`) || "";
+      go.disabled = false;
+      remove.addEventListener("click", async (_) => {
+        var id = this.list.value;
+        if (!id) {
+          return;
+        }
+        setThrobber(true);
+        try {
+          await this.backend.remove(id);
+          setThrobber(false);
+        } catch (e) {
+          this.error(e);
+        }
+      });
+      subscribe("firebase-list", this);
+      subscribe("firebase-change", this);
+    }
+    get auth() {
+      return this.node.querySelector(".auth");
+    }
+    get server() {
+      return this.node.querySelector(".server");
+    }
+    get remove() {
+      return this.node.querySelector(".remove");
+    }
+    get list() {
+      return this.node.querySelector(".list");
+    }
+    async setState(data) {
       try {
-        var format = getByMime(data.mime) || getByName(data.name) || repo6.get("native");
-        var json = format.from(data.data);
+        await this.connect(data.s, data.a);
+        this.load(data.id);
       } catch (e) {
         this.error(e);
       }
-      super.loadDone(json);
+    }
+    getState() {
+      var data = {
+        id: currentMap.id,
+        b: this.id,
+        s: this.server.value
+      };
+      if (this.auth.value) {
+        data.a = this.auth.value;
+      }
+      return data;
+    }
+    show(mode2) {
+      super.show(mode2);
+      this.sync();
+    }
+    handleMessage(message, publisher, data) {
+      switch (message) {
+        case "firebase-list":
+          this.list.innerHTML = "";
+          if (Object.keys(data).length) {
+            buildList(data, this.list);
+          } else {
+            var o = document.createElement("option");
+            o.innerHTML = "(no maps saved)";
+            this.list.appendChild(o);
+          }
+          this.sync();
+          break;
+        case "firebase-change":
+          if (data) {
+            unsubscribe("item-change", this);
+            currentMap.mergeWith(data);
+            subscribe("item-change", this);
+          } else {
+            console.log("remote data disappeared");
+          }
+          break;
+        case "item-change":
+          clearTimeout(this.itemChangeTimeout);
+          this.itemChangeTimeout = setTimeout(() => this.onItemChange(), 200);
+          break;
+      }
+    }
+    reset() {
+      this.backend.reset();
+      unsubscribe("item-change", this);
+    }
+    onItemChange() {
+      var map = currentMap;
+      this.backend.mergeWith(map.toJSON(), map.name);
+    }
+    submit() {
+      if (!this.online) {
+        this.connect(this.server.value, this.auth.value);
+        return;
+      }
+      super.submit();
+    }
+    async save() {
+      setThrobber(true);
+      var map = currentMap;
+      try {
+        await this.backend.save(map.toJSON(), map.id, map.name);
+        this.saveDone();
+        subscribe("item-change", this);
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    async load(id = this.list.value) {
+      setThrobber(true);
+      try {
+        let data = await this.backend.load(id);
+        this.loadDone(data);
+        subscribe("item-change", this);
+      } catch (e) {
+        this.error(e);
+      }
+    }
+    async connect(server, auth2) {
+      this.server.value = server;
+      this.auth.value = auth2;
+      this.server.disabled = true;
+      this.auth.disabled = true;
+      localStorage.setItem(`${this.prefix}.server`, server);
+      localStorage.setItem(`${this.prefix}.auth`, auth2 || "");
+      this.go.disabled = true;
+      setThrobber(true);
+      await this.backend.connect(server, auth2);
+      setThrobber(false);
+      this.online = true;
+      this.sync();
+    }
+    sync() {
+      if (!this.online) {
+        this.go.textContent = "Connect";
+        return;
+      }
+      this.go.disabled = false;
+      if (this.mode == "load" && !this.list.value) {
+        this.go.disabled = true;
+      }
+      this.go.textContent = this.mode.charAt(0).toUpperCase() + this.mode.substring(1);
     }
   };
 
@@ -2244,7 +2530,7 @@ ${text}`);
   var select6 = node7.querySelector("#backend");
   var PREFIX = "mm.app";
   function init10() {
-    [LocalUI, GDriveUI, FileUI, WebDAVUI, ImageUI].forEach((ctor) => {
+    [LocalUI, FirebaseUI, GDriveUI, FileUI, WebDAVUI, ImageUI].forEach((ctor) => {
       let bui = new ctor();
       select6.append(bui.option);
     });
@@ -3284,7 +3570,6 @@ ${text}`);
     }
     return str;
   }
-  MM.Item = Item;
 
   // .js/map.js
   var UPDATE_OPTIONS2 = {

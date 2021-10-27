@@ -6,6 +6,7 @@ import File from "./backend/file.js";
 import WebDAV from "./backend/webdav.js";
 import Image from "./backend/image.js";
 import GDrive from "./backend/gdrive.js";
+import Firebase from "./backend/firebase.js";
 
 
 let currentMode: Mode = "load";
@@ -16,18 +17,11 @@ const select = node.querySelector<HTMLSelectElement>("#backend");
 const PREFIX = "mm.app";
 
 export function init() {
-	[Local, GDrive, File, WebDAV, Image].forEach(ctor => {
+	[Local, Firebase, GDrive, File, WebDAV, Image].forEach(ctor => {
 		let bui = new ctor();
 		select.append(bui.option);
-	})
-/*
-	var ids = ["local", "firebase", "gdrive", "file", "webdav", "image"];
-	ids.forEach(id => {
-		let ui = repo.get(id);
-		select.append(ui.option);
-		backends[id] = ui;
 	});
-*/
+
 	select.value = localStorage.getItem(`${PREFIX}.backend`) || "file";
 	select.addEventListener("change", syncBackend);
 

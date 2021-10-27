@@ -1,7 +1,7 @@
 import * as pubsub from "../../pubsub.js";
 import * as app from "../../my-mind.js";
 import * as io from "../io.js";
-import MindMap from "../../map.js";
+import MindMap, { Jsonified } from "../../map.js";
 import Backend from "../../backend/backend.js";
 
 
@@ -51,7 +51,7 @@ export default abstract class BackendUI<T extends Backend> {
 		pubsub.publish("save-done", this);
 	}
 
-	protected loadDone(json) {
+	protected loadDone(json: Jsonified) {
 		app.setThrobber(false);
 		try {
 			app.showMap(MindMap.fromJSON(json));
@@ -75,9 +75,6 @@ export default abstract class BackendUI<T extends Backend> {
 }
 
 export let repo = new Map<string, BackendUI<Backend>>();
-
-
-(MM.UI as any).Backend = BackendUI;
 
 export function buildList(list: Record<string, string>, select: HTMLSelectElement) {
 	let data = [];

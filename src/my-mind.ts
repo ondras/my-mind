@@ -1,5 +1,3 @@
-import "./mm.js";
-
 import Map from "./map.js";
 import Item from "./item.js";
 import * as pubsub from "./pubsub.js";
