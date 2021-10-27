@@ -8,7 +8,7 @@ export default class MMA extends FreeMind {
 
 	constructor() { super("mma", "Mind Map Architect"); }
 
-	protected parseAttributes = function(node, parent) {
+	protected parseAttributes = function(node: Element, parent) {
 		var json: Jsonified = {
 			children: [],
 			text: nl2br(node.getAttribute("title") || ""),
@@ -25,14 +25,12 @@ export default class MMA extends FreeMind {
 		if (color) {
 			var re = color.match(/^#(....)(....)(....)$/);
 			if (re) {
-				var r = parseInt(re[1], 16) >> 8;
-				var g = parseInt(re[2], 16) >> 8;
-				var b = parseInt(re[3], 16) >> 8;
-				r = Math.round(r/17).toString(16);
-				g = Math.round(g/17).toString(16);
-				b = Math.round(b/17).toString(16);
+				let parts = re.slice(1)
+								.map(str => parseInt(str, 16) >> 8)
+								.map(num => Math.round(num/17))
+								.map(num => num.toString(16));
+				json.color = "#" + parts.join("");
 			}
-			json.color = "#" + [r,g,b].join("");
 		}
 
 		json.icon = node.getAttribute("icon");

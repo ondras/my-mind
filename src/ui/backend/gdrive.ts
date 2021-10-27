@@ -1,24 +1,16 @@
-import BackendUI from "./backend.js";
+import BackendUI, { repo as buiRepo } from "./backend.js";
+import { repo as formatRepo, getByMime, getByName } from "../../format/format.js";
 import GDrive from "../../backend/gdrive.js";
 import * as app from "../../my-mind.js";
+import { fill as fillFormats } from "../format-select.js";
 
 
 export default class GDriveUI extends BackendUI<GDrive> {
 	constructor() {
 		super(new GDrive(), "Google Drive");
 
-		const { format } = this;
-
-		let options = [
-			MM.Format.JSON,
-			MM.Format.FreeMind,
-			MM.Format.MMA,
-			MM.Format.Mup,
-			MM.Format.Plaintext
-		].map(f => f.buildOption());
-		format.append(...options);
-
-		format.value = localStorage.getItem(`${this.prefix}.format`) || MM.Format.JSON.id;
+		fillFormats(this.format);
+		this.format.value = localStorage.getItem(`${this.prefix}.format`) || "native";
 	}
 
 	get format() { return this.node.querySelector<HTMLSelectElement>(".format"); }
@@ -26,7 +18,7 @@ export default class GDriveUI extends BackendUI<GDrive> {
 	async save() {
 		app.setThrobber(true);
 
-		var format = MM.Format.getById(this.format.value);
+		var format = formatRepo.get(this.format.value);
 		var json = app.currentMap.toJSON();
 		var data = format.to(json);
 		var name = app.currentMap.name;
@@ -85,7 +77,7 @@ export default class GDriveUI extends BackendUI<GDrive> {
 
 	protected loadDone(data) {
 		try {
-			var format = MM.Format.getByMime(data.mime) || MM.Format.getByName(data.name) || MM.Format.JSON;
+			var format = getByMime(data.mime) || getByName(data.name) || formatRepo.get("native");
 			var json = format.from(data.data);
 		} catch (e) {
 			this.error(e);

@@ -1,21 +1,16 @@
-import BackendUI, { Mode } from "./backend.js";
+import BackendUI, { Mode, repo as buiRepo } from "./backend.js";
 import * as app from "../../my-mind.js";
 import File, { LoadedData } from "../../backend/file.js";
+import { repo as formatRepo, getByName } from "../../format/format.js";
+import { fill, fill as fillFormats } from "../format-select.js";
 
 
 export default class FileUI extends BackendUI<File> {
 	constructor() {
 		super(new File(), "File");
 
-		const { format } = this;
-		format.append(
-			MM.Format.JSON.buildOption(),
-			MM.Format.FreeMind.buildOption(),
-			MM.Format.MMA.buildOption(),
-			MM.Format.Mup.buildOption(),
-			MM.Format.Plaintext.buildOption()
-		)
-		format.value = localStorage.getItem(this.prefix + "format") || "native";
+		fillFormats(this.format);
+		this.format.value = localStorage.getItem(this.prefix + "format") || "native";
 	}
 
 	protected get format() { return this.node.querySelector<HTMLSelectElement>(".format"); }
@@ -27,7 +22,7 @@ export default class FileUI extends BackendUI<File> {
 	}
 
 	save() {
-		let format = MM.Format.getById(this.format.value);
+		let format = formatRepo.get(this.format.value);
 		var json = app.currentMap.toJSON();
 		var data = format.to(json);
 
@@ -51,7 +46,7 @@ export default class FileUI extends BackendUI<File> {
 
 	protected loadDone(data: LoadedData) {
 		try {
-			let format = MM.Format.getByName(data.name) || MM.Format.JSON;
+			let format = getByName(data.name) || formatRepo.get("native");
 			let json = format.from(data.data);
 			super.loadDone(json);
 		} catch (e) {

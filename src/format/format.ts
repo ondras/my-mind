@@ -1,4 +1,5 @@
-import { Jsonified } from "../map.js";
+import { Jsonified as JsonifiedMap } from "../map.js";
+import { Jsonified as JsonifiedItem } from "../item.js";
 
 
 export default abstract class Format {
@@ -9,8 +10,8 @@ export default abstract class Format {
 		repo.set(id, this);
 	}
 
-	abstract to(data: Jsonified): string;
-	abstract from(data: string): Jsonified;
+	abstract to(data: JsonifiedMap | JsonifiedItem): string;
+	abstract from(data: string): JsonifiedMap;
 
 	get option() { return new Option(this.label, this.id); }
 }

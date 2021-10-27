@@ -3,6 +3,7 @@ import Item, { ChildItem } from "./item.js";
 import * as app from "./my-mind.js";
 import * as ui from "./ui/ui.js";
 import Action, * as actions from "./action.js";
+import { repo as formatRepo } from "./format/format.js";
 
 
 type Mode = "" | "copy" | "cut";
@@ -34,7 +35,7 @@ function onCopyCut(e: ClipboardEvent) {
 	}
 
 	let json = storedItem.toJSON();
-	let plaintext = MM.Format.Plaintext.to(json);
+	let plaintext = formatRepo.get("plaintext").to(json);
 
 	e.clipboardData.setData("text/plain", plaintext);
 	mode = e.type as Mode;
@@ -47,7 +48,7 @@ function onPaste(e: ClipboardEvent) {
 	let pasted = e.clipboardData.getData("text/plain");
 	if (!pasted) { return; }
 
-	if (storedItem && pasted == MM.Format.Plaintext.to(storedItem.toJSON())) {
+	if (storedItem && pasted == formatRepo.get("plaintext").to(storedItem.toJSON())) {
 		// pasted a previously copied/cut item
 		pasteItem(storedItem, app.currentItem);
 	} else {
@@ -84,7 +85,7 @@ function pasteItem(sourceItem: Item, targetItem: Item) {
 }
 
 function pastePlaintext(plaintext: string, targetItem: Item) {
-	let json = MM.Format.Plaintext.from(plaintext);
+	let json = formatRepo.get("plaintext").from(plaintext);
 	let map = Map.fromJSON(json);
 	let root = map.root;
 

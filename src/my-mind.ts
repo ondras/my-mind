@@ -1,10 +1,4 @@
 import "./mm.js";
-import "./format/format.js";
-import "./format/format.json.js";
-import "./format/format.freemind.js";
-import "./format/format.mma.js";
-import "./format/format.mup.js";
-import "./format/format.plaintext.js";
 
 import Map from "./map.js";
 import Item from "./item.js";

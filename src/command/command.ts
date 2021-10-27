@@ -238,7 +238,7 @@ new (class Pan extends Command {
 	];
 
 	protected chars: string[] = [];
-	protected interval: number;
+	protected interval: ReturnType<typeof setTimeout>;
 
 	constructor() { super("pan", "Pan the map"); }
 

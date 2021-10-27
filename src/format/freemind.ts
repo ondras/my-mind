@@ -7,7 +7,7 @@ export default class Native extends Format {
 	extension = "mm";
 	mime = "application/x-freemind";
 
-	constructor() { super("freemind", "FreeMind"); }
+	constructor(id="freemind", label="FreeMind") { super(id, label); }
 
 	to(data: JsonifiedMap) {
 		var doc = document.implementation.createDocument(null, null, null);

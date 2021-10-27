@@ -1,10 +1,11 @@
 import * as app from "../../my-mind.js";
 import BackendUI, { Mode, buildList } from "./backend.js";
 import Local from "../../backend/local.js";
+import { repo as formatRepo } from "../../format/format.js";
 
 
 interface State {
-	b: "local";
+	b: string;
 	id: string;
 }
 
@@ -61,7 +62,7 @@ export default class LocalUI extends BackendUI<Local> {
 
 	save() {
 		let json = app.currentMap.toJSON();
-		let data = MM.Format.JSON.to(json);
+		let data = formatRepo.get("native").to(json);
 
 		try {
 			this.backend.save(data, app.currentMap.id, app.currentMap.name);
@@ -74,7 +75,7 @@ export default class LocalUI extends BackendUI<Local> {
 	load(id = this.list.value) {
 		try {
 			let data = this.backend.load(id);
-			var json = MM.Format.JSON.from(data);
+			var json = formatRepo.get("native").from(data);
 			this.loadDone(json);
 		} catch (e) {
 			this.error(e);

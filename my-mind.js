@@ -1,388 +1,14 @@
 (() => {
   var __defProp = Object.defineProperty;
   var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
-  var __export = (target, all) => {
+  var __export = (target, all2) => {
     __markAsModule(target);
-    for (var name in all)
-      __defProp(target, name, { get: all[name], enumerable: true });
+    for (var name in all2)
+      __defProp(target, name, { get: all2[name], enumerable: true });
   };
 
   // .js/mm.js
-  window.MM = { UI: {}, Backend: {} };
-
-  // .js/repo.js
-  MM.Repo = {
-    id: "",
-    label: "",
-    getAll: function() {
-      var all = [];
-      for (var p in this) {
-        var val = this[p];
-        if (this.isPrototypeOf(val)) {
-          all.push(val);
-        }
-      }
-      return all;
-    },
-    getByProperty: function(property, value) {
-      return this.getAll().filter((item) => {
-        return item[property] == value;
-      })[0] || null;
-    },
-    getById: function(id) {
-      return this.getByProperty("id", id);
-    },
-    buildOption: function() {
-      var o = document.createElement("option");
-      o.value = this.id;
-      o.innerHTML = this.label;
-      return o;
-    }
-  };
-
-  // .js/format/format.js
-  var repo = new Map();
-
-  // .js/format/format.json.js
-  MM.Format.JSON = Object.create(MM.Format, {
-    id: { value: "json" },
-    label: { value: "Native (JSON)" },
-    extension: { value: "mymind" },
-    mime: { value: "application/vnd.mymind+json" }
-  });
-  MM.Format.JSON.to = function(data) {
-    return JSON.stringify(data, null, "	") + "\n";
-  };
-  MM.Format.JSON.from = function(data) {
-    return JSON.parse(data);
-  };
-
-  // .js/format/format.freemind.js
-  MM.Format.FreeMind = Object.create(MM.Format, {
-    id: { value: "freemind" },
-    label: { value: "FreeMind" },
-    extension: { value: "mm" },
-    mime: { value: "application/x-freemind" }
-  });
-  MM.Format.FreeMind.to = function(data) {
-    var doc = document.implementation.createDocument(null, null, null);
-    var map = doc.createElement("map");
-    map.setAttribute("version", "1.0.1");
-    map.appendChild(this._serializeItem(doc, data.root));
-    doc.appendChild(map);
-    var serializer = new XMLSerializer();
-    return serializer.serializeToString(doc);
-  };
-  MM.Format.FreeMind.from = function(data) {
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(data, "application/xml");
-    if (doc.documentElement.nodeName.toLowerCase() == "parsererror") {
-      throw new Error(doc.documentElement.textContent);
-    }
-    var root = doc.documentElement.getElementsByTagName("node")[0];
-    if (!root) {
-      throw new Error("No root node found");
-    }
-    var json = {
-      root: this._parseNode(root, { shape: "underline" })
-    };
-    json.root.layout = "map";
-    json.root.shape = "ellipse";
-    return json;
-  };
-  MM.Format.FreeMind._serializeItem = function(doc, json) {
-    var elm = this._serializeAttributes(doc, json);
-    (json.children || []).forEach(function(child) {
-      elm.appendChild(this._serializeItem(doc, child));
-    }, this);
-    return elm;
-  };
-  MM.Format.FreeMind._serializeAttributes = function(doc, json) {
-    var elm = doc.createElement("node");
-    elm.setAttribute("TEXT", MM.Format.br2nl(json.text));
-    elm.setAttribute("ID", json.id);
-    if (json.side) {
-      elm.setAttribute("POSITION", json.side);
-    }
-    if (json.shape == "box") {
-      elm.setAttribute("STYLE", "bubble");
-    }
-    if (json.collapsed) {
-      elm.setAttribute("FOLDED", "true");
-    }
-    if (json.notes) {
-      var notesElm = doc.createElement("richcontent");
-      notesElm.setAttribute("TYPE", "NOTE");
-      notesElm.appendChild(doc.createCDATASection("<html><head></head><body>" + json.notes + "</body></html>"));
-      elm.appendChild(notesElm);
-    }
-    return elm;
-  };
-  MM.Format.FreeMind._parseNode = function(node10, parent) {
-    var json = this._parseAttributes(node10, parent);
-    for (var i = 0; i < node10.childNodes.length; i++) {
-      var child = node10.childNodes[i];
-      if (child.nodeName.toLowerCase() == "node") {
-        json.children.push(this._parseNode(child, json));
-      }
-    }
-    return json;
-  };
-  MM.Format.FreeMind._parseAttributes = function(node10, parent) {
-    var json = {
-      children: [],
-      text: MM.Format.nl2br(node10.getAttribute("TEXT") || ""),
-      id: node10.getAttribute("ID")
-    };
-    var position = node10.getAttribute("POSITION");
-    if (position) {
-      json.side = position;
-    }
-    var style = node10.getAttribute("STYLE");
-    if (style == "bubble") {
-      json.shape = "box";
-    } else {
-      json.shape = parent.shape;
-    }
-    if (node10.getAttribute("FOLDED") == "true") {
-      json.collapsed = 1;
-    }
-    var children = node10.children;
-    for (var i = 0; i < children.length; i++) {
-      var child = children[i];
-      switch (child.nodeName.toLowerCase()) {
-        case "richcontent":
-          if (child.getAttribute("TYPE") == "NOTE") {
-            var body = child.querySelector("body > *");
-            if (body) {
-              var serializer = new XMLSerializer();
-              json.notes = serializer.serializeToString(body).trim();
-            }
-          }
-          break;
-        case "font":
-          if (child.getAttribute("ITALIC") == "true") {
-            json.text = "<i>" + json.text + "</i>";
-          }
-          if (child.getAttribute("BOLD") == "true") {
-            json.text = "<b>" + json.text + "</b>";
-          }
-          break;
-      }
-    }
-    return json;
-  };
-
-  // .js/format/format.mma.js
-  MM.Format.MMA = Object.create(MM.Format.FreeMind, {
-    id: { value: "mma" },
-    label: { value: "Mind Map Architect" },
-    extension: { value: "mma" }
-  });
-  MM.Format.MMA._parseAttributes = function(node10, parent) {
-    var json = {
-      children: [],
-      text: MM.Format.nl2br(node10.getAttribute("title") || ""),
-      shape: "box"
-    };
-    if (node10.getAttribute("expand") == "false") {
-      json.collapsed = 1;
-    }
-    var direction = node10.getAttribute("direction");
-    if (direction == "0") {
-      json.side = "left";
-    }
-    if (direction == "1") {
-      json.side = "right";
-    }
-    var color = node10.getAttribute("color");
-    if (color) {
-      var re = color.match(/^#(....)(....)(....)$/);
-      if (re) {
-        var r = parseInt(re[1], 16) >> 8;
-        var g = parseInt(re[2], 16) >> 8;
-        var b = parseInt(re[3], 16) >> 8;
-        r = Math.round(r / 17).toString(16);
-        g = Math.round(g / 17).toString(16);
-        b = Math.round(b / 17).toString(16);
-      }
-      json.color = "#" + [r, g, b].join("");
-    }
-    json.icon = node10.getAttribute("icon");
-    return json;
-  };
-  MM.Format.MMA._serializeAttributes = function(doc, json) {
-    var elm = doc.createElement("node");
-    elm.setAttribute("title", MM.Format.br2nl(json.text));
-    elm.setAttribute("expand", json.collapsed ? "false" : "true");
-    if (json.side) {
-      elm.setAttribute("direction", json.side == "left" ? "0" : "1");
-    }
-    if (json.color) {
-      var parts = json.color.match(/^#(.)(.)(.)$/);
-      var r = new Array(5).join(parts[1]);
-      var g = new Array(5).join(parts[2]);
-      var b = new Array(5).join(parts[3]);
-      elm.setAttribute("color", "#" + [r, g, b].join(""));
-    }
-    if (json.icon) {
-      elm.setAttribute("icon", json.icon);
-    }
-    return elm;
-  };
-
-  // .js/format/format.mup.js
-  MM.Format.Mup = Object.create(MM.Format, {
-    id: { value: "mup" },
-    label: { value: "MindMup" },
-    extension: { value: "mup" }
-  });
-  MM.Format.Mup.to = function(data) {
-    var root = this._MMtoMup(data.root);
-    return JSON.stringify(root, null, 2);
-  };
-  MM.Format.Mup.from = function(data) {
-    var source = JSON.parse(data);
-    var root = this._MupToMM(source);
-    root.layout = "map";
-    var map = {
-      root
-    };
-    return map;
-  };
-  MM.Format.Mup._MupToMM = function(item) {
-    var json = {
-      text: MM.Format.nl2br(item.title),
-      id: item.id,
-      shape: "box",
-      icon: item.icon
-    };
-    if (item.attr && item.attr.style && item.attr.style.background) {
-      json.color = item.attr.style.background;
-    }
-    if (item.attr && item.attr.collapsed) {
-      json.collapsed = 1;
-    }
-    if (item.ideas) {
-      var data = [];
-      for (var key in item.ideas) {
-        var child = this._MupToMM(item.ideas[key]);
-        var num = parseFloat(key);
-        child.side = num < 0 ? "left" : "right";
-        data.push({
-          child,
-          num
-        });
-      }
-      data.sort(function(a, b) {
-        return a.num - b.num;
-      });
-      json.children = data.map(function(item2) {
-        return item2.child;
-      });
-    }
-    return json;
-  };
-  MM.Format.Mup._MMtoMup = function(item, side) {
-    var result = {
-      id: item.id,
-      title: MM.Format.br2nl(item.text),
-      icon: item.icon,
-      attr: {}
-    };
-    if (item.color) {
-      result.attr.style = { background: item.color };
-    }
-    if (item.collapsed) {
-      result.attr.collapsed = true;
-    }
-    if (item.children) {
-      result.ideas = {};
-      for (var i = 0; i < item.children.length; i++) {
-        var child = item.children[i];
-        var childSide = side || child.side;
-        var key = i + 1;
-        if (childSide == "left") {
-          key *= -1;
-        }
-        result.ideas[key] = this._MMtoMup(child, childSide);
-      }
-    }
-    return result;
-  };
-
-  // .js/format/format.plaintext.js
-  MM.Format.Plaintext = Object.create(MM.Format, {
-    id: { value: "plaintext" },
-    label: { value: "Plain text" },
-    extension: { value: "txt" },
-    mime: { value: "application/vnd.mymind+txt" }
-  });
-  MM.Format.Plaintext.to = function(data) {
-    return this._serializeItem(data.root || data);
-  };
-  MM.Format.Plaintext.from = function(data) {
-    var lines = data.split("\n").filter(function(line) {
-      return line.match(/\S/);
-    });
-    var items = this._parseItems(lines);
-    if (items.length == 1) {
-      var result = {
-        root: items[0]
-      };
-    } else {
-      var result = {
-        root: {
-          text: "",
-          children: items
-        }
-      };
-    }
-    result.root.layout = "map";
-    return result;
-  };
-  MM.Format.Plaintext._serializeItem = function(item, depth) {
-    depth = depth || 0;
-    var lines = (item.children || []).map(function(child) {
-      return this._serializeItem(child, depth + 1);
-    }, this);
-    var prefix = new Array(depth + 1).join("	");
-    lines.unshift(prefix + item.text.replace(/\n/g, ""));
-    return lines.join("\n") + (depth ? "" : "\n");
-  };
-  MM.Format.Plaintext._parseItems = function(lines) {
-    var items = [];
-    if (!lines.length) {
-      return items;
-    }
-    var firstPrefix = this._parsePrefix(lines[0]);
-    var currentItem2 = null;
-    var childLines = [];
-    var convertChildLinesToChildren = function() {
-      if (!currentItem2 || !childLines.length) {
-        return;
-      }
-      var children = this._parseItems(childLines);
-      if (children.length) {
-        currentItem2.children = children;
-      }
-      childLines = [];
-    };
-    lines.forEach(function(line, index2) {
-      if (this._parsePrefix(line) == firstPrefix) {
-        convertChildLinesToChildren.call(this);
-        currentItem2 = { text: line.match(/^\s*(.*)/)[1] };
-        items.push(currentItem2);
-      } else {
-        childLines.push(line);
-      }
-    }, this);
-    convertChildLinesToChildren.call(this);
-    return items;
-  };
-  MM.Format.Plaintext._parsePrefix = function(line) {
-    return line.match(/^\s*/)[0];
-  };
+  window.MM = { UI: {}, Backend: {}, Format: {} };
 
   // .js/html.js
   function node(name, attrs) {
@@ -547,7 +173,7 @@
     var labels = [];
     var keys = [];
     commandNames.forEach((name) => {
-      let command = repo2.get(name);
+      let command = repo.get(name);
       if (!command) {
         console.warn(name);
         return;
@@ -901,7 +527,7 @@
   function onChange() {
     let value = select.value;
     if (value == "num") {
-      repo2.get("value").execute();
+      repo.get("value").execute();
     } else {
       let action2 = new SetValue(currentItem, value || null);
       action(action2);
@@ -922,7 +548,10 @@
       this.label = label;
       this.childDirection = childDirection;
       this.SPACING_CHILD = 4;
-      repo3.set(this.id, this);
+      repo2.set(this.id, this);
+    }
+    get option() {
+      return new Option(this.label, this.id);
     }
     getChildDirection(_child) {
       return this.childDirection;
@@ -1026,7 +655,7 @@
       return bbox;
     }
   };
-  var repo3 = new Map();
+  var repo2 = new Map();
 
   // .js/layout/graph.js
   var SPACING_RANK = 16;
@@ -1276,7 +905,7 @@
         this.layoutRoot(item);
       } else {
         var side = this.getChildDirection(item);
-        repo3.get(`graph-${side}`).update(item);
+        repo2.get(`graph-${side}`).update(item);
       }
     }
     getChildDirection(child) {
@@ -1384,18 +1013,16 @@
   // .js/ui/layout.js
   var select2 = document.querySelector("#layout");
   function init5() {
-    let layout = repo3.get("map");
-    select2.append(new Option(layout.label, layout.id));
+    let layout = repo2.get("map");
+    select2.append(layout.option);
     let label = buildGroup("Graph");
     let graphOptions = ["right", "left", "bottom", "top"].map((name) => {
-      let layout2 = repo3.get(`graph-${name}`);
-      return new Option(layout2.label, layout2.id);
+      return repo2.get(`graph-${name}`).option;
     });
     label.append(...graphOptions);
     label = buildGroup("Tree");
     let treeOptions = ["right", "left"].map((name) => {
-      let layout2 = repo3.get(`tree-${name}`);
-      return new Option(layout2.label, layout2.id);
+      return repo2.get(`tree-${name}`).option;
     });
     label.append(...treeOptions);
     select2.addEventListener("change", onChange2);
@@ -1411,7 +1038,7 @@
     getOption("map").disabled = !currentItem.isRoot;
   }
   function onChange2() {
-    var layout = repo3.get(select2.value);
+    var layout = repo2.get(select2.value);
     var action2 = new SetLayout(currentItem, layout);
     action(action2);
   }
@@ -1456,7 +1083,10 @@
     constructor(id, label) {
       this.id = id;
       this.label = label;
-      repo4.set(this.id, this);
+      repo3.set(this.id, this);
+    }
+    get option() {
+      return new Option(this.label, this.id);
     }
     update(item) {
       item.dom.content.style.borderColor = item.resolvedColor;
@@ -1470,7 +1100,7 @@
       return contentPosition[1] + Math.round(contentSize[1] * VERTICAL_OFFSET) + 0.5;
     }
   };
-  var repo4 = new Map();
+  var repo3 = new Map();
 
   // .js/shape/box.js
   var Box = class extends Shape {
@@ -1516,8 +1146,8 @@
   // .js/ui/shape.js
   var select4 = document.querySelector("#shape");
   function init7() {
-    repo4.forEach((shape) => {
-      select4.append(new Option(shape.label, shape.id));
+    repo3.forEach((shape) => {
+      select4.append(shape.option);
     });
     select4.addEventListener("change", onChange4);
   }
@@ -1530,7 +1160,7 @@
     select4.value = value;
   }
   function onChange4() {
-    let shape = repo4.get(this._select.value);
+    let shape = repo3.get(this._select.value);
     let action2 = new SetShape(currentItem, shape);
     action(action2);
   }
@@ -1603,7 +1233,7 @@
     constructor(backend, label) {
       this.backend = backend;
       this.label = label;
-      repo5.set(this.id, this);
+      repo4.set(this.id, this);
       this.prefix = `mm.app.${this.id}`;
       const { go, cancel } = this;
       cancel.addEventListener("click", (_) => hide2());
@@ -1668,7 +1298,7 @@
       }
     }
   };
-  var repo5 = new Map();
+  var repo4 = new Map();
   MM.UI.Backend = BackendUI;
   function buildList(list, select7) {
     let data = [];
@@ -1684,12 +1314,12 @@
   var Backend = class {
     constructor(id) {
       this.id = id;
-      repo6.set(id, this);
+      repo5.set(id, this);
     }
     reset() {
     }
   };
-  var repo6 = new Map();
+  var repo5 = new Map();
 
   // .js/backend/local.js
   var Local = class extends Backend {
@@ -1725,6 +1355,40 @@
       }
     }
   };
+
+  // .js/format/format.js
+  var Format = class {
+    constructor(id, label) {
+      this.id = id;
+      this.label = label;
+      repo6.set(id, this);
+    }
+    get option() {
+      return new Option(this.label, this.id);
+    }
+  };
+  var repo6 = new Map();
+  function getByProperty(property, value) {
+    let filtered = [...repo6.values()].filter((format) => format[property] == value);
+    return filtered[0] || null;
+  }
+  function getByName(name) {
+    let index2 = name.lastIndexOf(".");
+    if (index2 == -1) {
+      return null;
+    }
+    let extension = name.substring(index2 + 1).toLowerCase();
+    return getByProperty("extension", extension);
+  }
+  function getByMime(mime) {
+    return getByProperty("mime", mime);
+  }
+  function nl2br(str) {
+    return str.replace(/\n/g, "<br/>");
+  }
+  function br2nl(str) {
+    return str.replace(/<br\s*\/?>/g, "\n");
+  }
 
   // .js/ui/backend/local.js
   var LocalUI = class extends BackendUI {
@@ -1777,7 +1441,7 @@
     }
     save() {
       let json = currentMap.toJSON();
-      let data = MM.Format.JSON.to(json);
+      let data = repo6.get("native").to(json);
       try {
         this.backend.save(data, currentMap.id, currentMap.name);
         this.saveDone();
@@ -1788,7 +1452,7 @@
     load(id = this.list.value) {
       try {
         let data = this.backend.load(id);
-        var json = MM.Format.JSON.from(data);
+        var json = repo6.get("native").from(data);
         this.loadDone(json);
       } catch (e) {
         this.error(e);
@@ -1833,13 +1497,355 @@
     }
   };
 
+  // .js/format/native.js
+  var Native = class extends Format {
+    constructor() {
+      super("native", "Native (JSON)");
+      this.extension = "mymind";
+      this.mime = "application/vnd.mymind+json";
+    }
+    to(data) {
+      return JSON.stringify(data, null, "	") + "\n";
+    }
+    from(data) {
+      return JSON.parse(data);
+    }
+  };
+
+  // .js/format/freemind.js
+  var Native2 = class extends Format {
+    constructor(id = "freemind", label = "FreeMind") {
+      super(id, label);
+      this.extension = "mm";
+      this.mime = "application/x-freemind";
+    }
+    to(data) {
+      var doc = document.implementation.createDocument(null, null, null);
+      var map = doc.createElement("map");
+      map.setAttribute("version", "1.0.1");
+      map.appendChild(this.serializeItem(doc, data.root));
+      doc.appendChild(map);
+      var serializer = new XMLSerializer();
+      return serializer.serializeToString(doc);
+    }
+    from(data) {
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(data, "application/xml");
+      if (doc.documentElement.nodeName.toLowerCase() == "parsererror") {
+        throw new Error(doc.documentElement.textContent);
+      }
+      var root = doc.documentElement.getElementsByTagName("node")[0];
+      if (!root) {
+        throw new Error("No root node found");
+      }
+      var json = {
+        root: this.parseNode(root, { shape: "underline" })
+      };
+      json.root.layout = "map";
+      json.root.shape = "ellipse";
+      return json;
+    }
+    serializeItem(doc, json) {
+      var elm = this.serializeAttributes(doc, json);
+      (json.children || []).forEach((child) => {
+        elm.appendChild(this.serializeItem(doc, child));
+      });
+      return elm;
+    }
+    serializeAttributes(doc, json) {
+      var elm = doc.createElement("node");
+      elm.setAttribute("TEXT", br2nl(json.text));
+      elm.setAttribute("ID", json.id);
+      if (json.side) {
+        elm.setAttribute("POSITION", json.side);
+      }
+      if (json.shape == "box") {
+        elm.setAttribute("STYLE", "bubble");
+      }
+      if (json.collapsed) {
+        elm.setAttribute("FOLDED", "true");
+      }
+      if (json.notes) {
+        var notesElm = doc.createElement("richcontent");
+        notesElm.setAttribute("TYPE", "NOTE");
+        notesElm.appendChild(doc.createCDATASection("<html><head></head><body>" + json.notes + "</body></html>"));
+        elm.appendChild(notesElm);
+      }
+      return elm;
+    }
+    parseNode(node10, parent) {
+      var json = this.parseAttributes(node10, parent);
+      for (var i = 0; i < node10.childNodes.length; i++) {
+        var child = node10.childNodes[i];
+        if (child.nodeName.toLowerCase() == "node") {
+          json.children.push(this.parseNode(child, json));
+        }
+      }
+      return json;
+    }
+    parseAttributes(node10, parent) {
+      var json = {
+        children: [],
+        text: nl2br(node10.getAttribute("TEXT") || ""),
+        id: node10.getAttribute("ID")
+      };
+      var position = node10.getAttribute("POSITION");
+      if (position) {
+        json.side = position;
+      }
+      var style = node10.getAttribute("STYLE");
+      if (style == "bubble") {
+        json.shape = "box";
+      } else {
+        json.shape = parent.shape;
+      }
+      if (node10.getAttribute("FOLDED") == "true") {
+        json.collapsed = 1;
+      }
+      var children = node10.children;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        switch (child.nodeName.toLowerCase()) {
+          case "richcontent":
+            if (child.getAttribute("TYPE") == "NOTE") {
+              var body = child.querySelector("body > *");
+              if (body) {
+                var serializer = new XMLSerializer();
+                json.notes = serializer.serializeToString(body).trim();
+              }
+            }
+            break;
+          case "font":
+            if (child.getAttribute("ITALIC") == "true") {
+              json.text = "<i>" + json.text + "</i>";
+            }
+            if (child.getAttribute("BOLD") == "true") {
+              json.text = "<b>" + json.text + "</b>";
+            }
+            break;
+        }
+      }
+      return json;
+    }
+  };
+
+  // .js/format/mma.js
+  var MMA = class extends Native2 {
+    constructor() {
+      super("mma", "Mind Map Architect");
+      this.extension = "mma";
+      this.parseAttributes = function(node10, parent) {
+        var json = {
+          children: [],
+          text: nl2br(node10.getAttribute("title") || ""),
+          shape: "box"
+        };
+        if (node10.getAttribute("expand") == "false") {
+          json.collapsed = 1;
+        }
+        var direction = node10.getAttribute("direction");
+        if (direction == "0") {
+          json.side = "left";
+        }
+        if (direction == "1") {
+          json.side = "right";
+        }
+        var color = node10.getAttribute("color");
+        if (color) {
+          var re = color.match(/^#(....)(....)(....)$/);
+          if (re) {
+            let parts = re.slice(1).map((str) => parseInt(str, 16) >> 8).map((num) => Math.round(num / 17)).map((num) => num.toString(16));
+            json.color = "#" + parts.join("");
+          }
+        }
+        json.icon = node10.getAttribute("icon");
+        return json;
+      };
+      this.serializeAttributes = function(doc, json) {
+        var elm = doc.createElement("node");
+        elm.setAttribute("title", br2nl(json.text));
+        elm.setAttribute("expand", json.collapsed ? "false" : "true");
+        if (json.side) {
+          elm.setAttribute("direction", json.side == "left" ? "0" : "1");
+        }
+        if (json.color) {
+          var parts = json.color.match(/^#(.)(.)(.)$/);
+          var r = new Array(5).join(parts[1]);
+          var g = new Array(5).join(parts[2]);
+          var b = new Array(5).join(parts[3]);
+          elm.setAttribute("color", "#" + [r, g, b].join(""));
+        }
+        if (json.icon) {
+          elm.setAttribute("icon", json.icon);
+        }
+        return elm;
+      };
+    }
+  };
+
+  // .js/format/mup.js
+  var Native3 = class extends Format {
+    constructor() {
+      super("mup", "MindMup");
+      this.extension = "mup";
+    }
+    to(data) {
+      var root = MMtoMup(data.root);
+      return JSON.stringify(root, null, 2);
+    }
+    from(data) {
+      var source = JSON.parse(data);
+      var root = MupToMM(source);
+      root.layout = "map";
+      return { root };
+    }
+  };
+  function MupToMM(item) {
+    var json = {
+      text: nl2br(item.title),
+      id: item.id,
+      shape: "box",
+      icon: item.icon
+    };
+    if (item.attr && item.attr.style && item.attr.style.background) {
+      json.color = item.attr.style.background;
+    }
+    if (item.attr && item.attr.collapsed) {
+      json.collapsed = 1;
+    }
+    if (item.ideas) {
+      var data = [];
+      for (var key in item.ideas) {
+        var child = MupToMM(item.ideas[key]);
+        var num = parseFloat(key);
+        child.side = num < 0 ? "left" : "right";
+        data.push({
+          child,
+          num
+        });
+      }
+      data.sort(function(a, b) {
+        return a.num - b.num;
+      });
+      json.children = data.map((item2) => item2.child);
+    }
+    return json;
+  }
+  function MMtoMup(item, side) {
+    var result = {
+      id: item.id,
+      title: br2nl(item.text),
+      icon: item.icon,
+      attr: {}
+    };
+    if (item.color) {
+      result.attr.style = { background: item.color };
+    }
+    if (item.collapsed) {
+      result.attr.collapsed = true;
+    }
+    if (item.children) {
+      result.ideas = {};
+      for (var i = 0; i < item.children.length; i++) {
+        var child = item.children[i];
+        var childSide = side || child.side;
+        var key = i + 1;
+        if (childSide == "left") {
+          key *= -1;
+        }
+        result.ideas[key] = MMtoMup(child, childSide);
+      }
+    }
+    return result;
+  }
+
+  // .js/format/plaintext.js
+  var Plaintext = class extends Format {
+    constructor() {
+      super("plaintext", "Plain text");
+      this.extension = "txt";
+      this.mime = "application/vnd.mymind+txt";
+    }
+    to(data) {
+      return serializeItem("root" in data ? data.root : data);
+    }
+    from(data) {
+      var lines = data.split("\n").filter(function(line) {
+        return line.match(/\S/);
+      });
+      var items = parseItems(lines);
+      let result;
+      if (items.length == 1) {
+        result = {
+          root: items[0]
+        };
+      } else {
+        result = {
+          root: {
+            text: "",
+            children: items
+          }
+        };
+      }
+      result.root.layout = "map";
+      return result;
+    }
+  };
+  function serializeItem(item, depth = 0) {
+    var lines = (item.children || []).map((child) => {
+      return serializeItem(child, depth + 1);
+    });
+    var prefix = new Array(depth + 1).join("	");
+    lines.unshift(prefix + item.text.replace(/\n/g, ""));
+    return lines.join("\n") + (depth ? "" : "\n");
+  }
+  function parseItems(lines) {
+    var items = [];
+    if (!lines.length) {
+      return items;
+    }
+    var firstPrefix = parsePrefix(lines[0]);
+    var currentItem2 = null;
+    var childLines = [];
+    var convertChildLinesToChildren = function() {
+      if (!currentItem2 || !childLines.length) {
+        return;
+      }
+      var children = parseItems(childLines);
+      if (children.length) {
+        currentItem2.children = children;
+      }
+      childLines = [];
+    };
+    lines.forEach((line) => {
+      if (parsePrefix(line) == firstPrefix) {
+        convertChildLinesToChildren();
+        currentItem2 = { text: line.match(/^\s*(.*)/)[1] };
+        items.push(currentItem2);
+      } else {
+        childLines.push(line);
+      }
+    });
+    convertChildLinesToChildren();
+    return items;
+  }
+  function parsePrefix(line) {
+    return line.match(/^\s*/)[0];
+  }
+
+  // .js/ui/format-select.js
+  var all = [Native, Native2, MMA, Native3, Plaintext].map((ctor) => new ctor());
+  function fill(select7) {
+    let nodes = all.map((bui) => bui.option);
+    select7.append(...nodes);
+  }
+
   // .js/ui/backend/file.js
   var FileUI = class extends BackendUI {
     constructor() {
       super(new File(), "File");
-      const { format } = this;
-      format.append(MM.Format.JSON.buildOption(), MM.Format.FreeMind.buildOption(), MM.Format.MMA.buildOption(), MM.Format.Mup.buildOption(), MM.Format.Plaintext.buildOption());
-      format.value = localStorage.getItem(this.prefix + "format") || MM.Format.JSON.id;
+      fill(this.format);
+      this.format.value = localStorage.getItem(this.prefix + "format") || "native";
     }
     get format() {
       return this.node.querySelector(".format");
@@ -1849,7 +1855,7 @@
       this.go.textContent = mode2 == "save" ? "Save" : "Browse";
     }
     save() {
-      let format = MM.Format.getById(this.format.value);
+      let format = repo6.get(this.format.value);
       var json = currentMap.toJSON();
       var data = format.to(json);
       var name = currentMap.name + "." + format.extension;
@@ -1870,7 +1876,7 @@
     }
     loadDone(data) {
       try {
-        let format = MM.Format.getByName(data.name) || MM.Format.JSON;
+        let format = getByName(data.name) || repo6.get("native");
         let json = format.from(data.data);
         super.loadDone(json);
       } catch (e) {
@@ -1941,11 +1947,11 @@ ${text}`);
         if (url.charAt(url.length - 1) != "/") {
           url += "/";
         }
-        url += `${map.name}.${MM.Format.JSON.extension}`;
+        url += `${map.name}.${repo6.get("native").extension}`;
       }
       this.current = url;
       let json = map.toJSON();
-      let data = MM.Format.JSON.to(json);
+      let data = repo6.get("native").to(json);
       try {
         await this.backend.save(data, url);
         this.saveDone();
@@ -1968,7 +1974,7 @@ ${text}`);
     }
     loadDone(data) {
       try {
-        let json = MM.Format.JSON.from(data);
+        let json = repo6.get("native").from(data);
         super.loadDone(json);
       } catch (e) {
         this.error(e);
@@ -2095,9 +2101,8 @@ ${text}`);
     async pick() {
       await connect();
       var token = gapi.auth.getToken();
-      var formats = MM.Format.getAll();
       var mimeTypes = ["application/json; charset=UTF-8", "application/json"];
-      formats.forEach((format) => {
+      [...repo6.values()].forEach((format) => {
         if (format.mime) {
           mimeTypes.unshift(format.mime);
         }
@@ -2164,23 +2169,15 @@ ${text}`);
   var GDriveUI = class extends BackendUI {
     constructor() {
       super(new GDrive(), "Google Drive");
-      const { format } = this;
-      let options = [
-        MM.Format.JSON,
-        MM.Format.FreeMind,
-        MM.Format.MMA,
-        MM.Format.Mup,
-        MM.Format.Plaintext
-      ].map((f) => f.buildOption());
-      format.append(...options);
-      format.value = localStorage.getItem(`${this.prefix}.format`) || MM.Format.JSON.id;
+      fill(this.format);
+      this.format.value = localStorage.getItem(`${this.prefix}.format`) || "native";
     }
     get format() {
       return this.node.querySelector(".format");
     }
     async save() {
       setThrobber(true);
-      var format = MM.Format.getById(this.format.value);
+      var format = repo6.get(this.format.value);
       var json = currentMap.toJSON();
       var data = format.to(json);
       var name = currentMap.name;
@@ -2231,7 +2228,7 @@ ${text}`);
     }
     loadDone(data) {
       try {
-        var format = MM.Format.getByMime(data.mime) || MM.Format.getByName(data.name) || MM.Format.JSON;
+        var format = getByMime(data.mime) || getByName(data.name) || repo6.get("native");
         var json = format.from(data.data);
       } catch (e) {
         this.error(e);
@@ -2273,7 +2270,7 @@ ${text}`);
     if ("url" in parts && !("b" in parts)) {
       parts.b = "webdav";
     }
-    let backend = repo5.get(parts.b);
+    let backend = repo4.get(parts.b);
     if (backend) {
       backend.setState(parts);
       return;
@@ -2286,7 +2283,7 @@ ${text}`);
             b: "gdrive",
             id: state.ids[0]
           };
-          repo5.get("gdrive").setState(state);
+          repo4.get("gdrive").setState(state);
         } else {
           history.replaceState(null, "", ".");
         }
@@ -2314,7 +2311,7 @@ ${text}`);
   function syncBackend() {
     [...node7.querySelectorAll("div[id]")].forEach((node10) => node10.hidden = true);
     node7.querySelector(`#${select6.value}`).hidden = false;
-    repo5.get(select6.value).show(currentMode);
+    repo4.get(select6.value).show(currentMode);
   }
   function setCurrentBackend(backend) {
     if (currentBackend && currentBackend != backend) {
@@ -2364,7 +2361,7 @@ ${text}`);
     while (current2 != document) {
       let command = current2.dataset.command;
       if (command) {
-        repo2.get(command).execute();
+        repo.get(command).execute();
         return;
       }
       current2 = current2.parentNode;
@@ -2400,12 +2397,12 @@ ${text}`);
   function isMac() {
     return !!navigator.platform.match(/mac/i);
   }
-  var repo2 = new Map();
+  var repo = new Map();
   var Command = class {
     constructor(id, label) {
       this.label = label;
       this.editMode = false;
-      repo2.set(id, this);
+      repo.set(id, this);
     }
     get isValid() {
       return this.editMode === null || this.editMode == editing;
@@ -2460,7 +2457,7 @@ ${text}`);
         action2 = new InsertNewItem(parent, index2 + 1);
       }
       action(action2);
-      repo2.get("edit").execute();
+      repo.get("edit").execute();
       publish("command-sibling");
     }
   }();
@@ -2476,7 +2473,7 @@ ${text}`);
       let item = currentItem;
       let action2 = new InsertNewItem(item, item.children.length);
       action(action2);
-      repo2.get("edit").execute();
+      repo.get("edit").execute();
       publish("command-child");
     }
   }();
@@ -2840,10 +2837,10 @@ ${text}`);
         this.collapse();
       }
       if (data.layout) {
-        this._layout = repo3.get(data.layout);
+        this._layout = repo2.get(data.layout);
       }
       if (data.shape) {
-        this.shape = repo4.get(data.shape);
+        this.shape = repo3.get(data.shape);
       }
       (data.children || []).forEach((child) => {
         this.insertChild(Item.fromJSON(child));
@@ -2878,12 +2875,12 @@ ${text}`);
       if (this._collapsed != !!data.collapsed) {
         this[this._collapsed ? "expand" : "collapse"]();
       }
-      if (this.layout != data.layout) {
-        this._layout = repo3.get(data.layout);
+      if (this.layout.id != data.layout) {
+        this._layout = repo2.get(data.layout);
         dirty = 2;
       }
-      if (this.shape != data.shape) {
-        this.shape = repo4.get(data.shape);
+      if (this.shape.id != data.shape) {
+        this.shape = repo3.get(data.shape);
       }
       (data.children || []).forEach((child, index2) => {
         if (index2 >= this.children.length) {
@@ -3110,11 +3107,11 @@ ${text}`);
       }
       switch (depth) {
         case 0:
-          return repo4.get("ellipse");
+          return repo3.get("ellipse");
         case 1:
-          return repo4.get("box");
+          return repo3.get("box");
         default:
-          return repo4.get("underline");
+          return repo3.get("underline");
       }
     }
     get map() {
@@ -3194,7 +3191,7 @@ ${text}`);
           }
           break;
         case "blur":
-          repo2.get("finish").execute();
+          repo.get("finish").execute();
           break;
         case "click":
           if (this._collapsed) {
@@ -3299,7 +3296,7 @@ ${text}`);
       this.position = [0, 0];
       options = Object.assign({
         root: "My Mind Map",
-        layout: repo3.get("map")
+        layout: repo2.get("map")
       }, options);
       let root = new Item();
       root.text = options.root;
@@ -3406,20 +3403,20 @@ ${text}`);
       return this.moveTo(position);
     }
     getClosestItem(point) {
-      let all = [];
+      let all2 = [];
       function scan(item) {
         let rect = item.dom.content.getBoundingClientRect();
         let dx = rect.left + rect.width / 2 - point[0];
         let dy = rect.top + rect.height / 2 - point[1];
         let distance = dx * dx + dy * dy;
-        all.push({ dx, dy, item, distance });
+        all2.push({ dx, dy, item, distance });
         if (!item.isCollapsed()) {
           item.children.forEach(scan);
         }
       }
       scan(this._root);
-      all.sort((a, b) => a.distance - b.distance);
-      return all[0];
+      all2.sort((a, b) => a.distance - b.distance);
+      return all2[0];
     }
     getItemFor(node10) {
       let content = node10.closest(".content");
@@ -3467,7 +3464,7 @@ ${text}`);
     }
     get name() {
       let name = this._root.text;
-      return MM.Format.br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
+      return br2nl(name).replace(/\n/g, " ").replace(/<.*?>/g, "").trim();
     }
     get id() {
       return this._root.id;
@@ -3536,7 +3533,7 @@ ${text}`);
     if (isActive()) {
       return;
     }
-    let command = [...repo2.values()].find((command2) => {
+    let command = [...repo.values()].find((command2) => {
       if (!command2.isValid) {
         return false;
       }
@@ -3573,7 +3570,7 @@ ${text}`);
     port = port_;
     [...node9.querySelectorAll("[data-command]")].forEach((button) => {
       let commandName = button.dataset.command;
-      button.textContent = repo2.get(commandName).label;
+      button.textContent = repo.get(commandName).label;
     });
     port.addEventListener("mousedown", handleEvent2);
     node9.addEventListener("mousedown", handleEvent2);
@@ -3605,7 +3602,7 @@ ${text}`);
     if (!commandName) {
       return;
     }
-    let command = repo2.get(commandName);
+    let command = repo.get(commandName);
     if (!command.isValid) {
       return;
     }
@@ -3642,7 +3639,7 @@ ${text}`);
     });
     port2.addEventListener("dblclick", (e) => {
       let item = currentMap.getItemFor(e.target);
-      item && repo2.get("edit").execute();
+      item && repo.get("edit").execute();
     });
     port2.addEventListener("wheel", (e) => {
       const { deltaY } = e;
@@ -3670,7 +3667,7 @@ ${text}`);
       if (item == currentItem) {
         return;
       }
-      repo2.get("finish").execute();
+      repo.get("finish").execute();
     }
     current.cursor = point;
     if (item && !item.isRoot) {
@@ -3874,7 +3871,7 @@ ${text}`);
         break;
     }
     let json = storedItem.toJSON();
-    let plaintext = MM.Format.Plaintext.to(json);
+    let plaintext = repo6.get("plaintext").to(json);
     e.clipboardData.setData("text/plain", plaintext);
     mode = e.type;
   }
@@ -3887,7 +3884,7 @@ ${text}`);
     if (!pasted) {
       return;
     }
-    if (storedItem && pasted == MM.Format.Plaintext.to(storedItem.toJSON())) {
+    if (storedItem && pasted == repo6.get("plaintext").to(storedItem.toJSON())) {
       pasteItem(storedItem, currentItem);
     } else {
       pastePlaintext(pasted, currentItem);
@@ -3921,7 +3918,7 @@ ${text}`);
     }
   }
   function pastePlaintext(plaintext, targetItem) {
-    let json = MM.Format.Plaintext.from(plaintext);
+    let json = repo6.get("plaintext").from(plaintext);
     let map = Map2.fromJSON(json);
     let root = map.root;
     if (root.text) {
@@ -4071,14 +4068,14 @@ ${text}`);
       if (editing) {
         document.execCommand(this.command, null, null);
       } else {
-        repo2.get("edit").execute();
+        repo.get("edit").execute();
         let selection = getSelection();
         let range = selection.getRangeAt(0);
         range.selectNodeContents(currentItem.dom.text);
         selection.removeAllRanges();
         selection.addRange(range);
         this.execute();
-        repo2.get("finish").execute();
+        repo.get("finish").execute();
       }
     }
   };
@@ -4187,7 +4184,7 @@ ${text}`);
   function selectItem(item) {
     if (currentItem && currentItem != item) {
       if (editing) {
-        repo2.get("finish").execute();
+        repo.get("finish").execute();
       }
       currentItem.deselect();
     }

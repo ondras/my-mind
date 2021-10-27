@@ -1,4 +1,5 @@
 import Backend from "./backend.js";
+import { repo as formatRepo } from "../format/format.js";
 
 
 declare const google: any;
@@ -95,9 +96,8 @@ export default class GDrive extends Backend {
 		await connect();
 
 		var token = gapi.auth.getToken();
-		var formats = MM.Format.getAll();
 		var mimeTypes = ["application/json; charset=UTF-8", "application/json"];
-		formats.forEach(format => {
+		[...formatRepo.values()].forEach(format => {
 			if (format.mime) { mimeTypes.unshift(format.mime); }
 		});
 

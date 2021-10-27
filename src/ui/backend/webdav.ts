@@ -1,6 +1,7 @@
 import BackendUI from "./backend.js";
 import WebDAV from "../../backend/webdav.js";
 import * as app from "../../my-mind.js";
+import { repo as formatRepo } from "../../format/format.js";
 
 
 interface State {
@@ -37,12 +38,12 @@ export default class WebDAVUI extends BackendUI<WebDAV> {
 		if (url.match(/\.mymind$/)) { // complete file name
 		} else { // just a path
 			if (url.charAt(url.length-1) != "/") { url += "/"; }
-			url += `${map.name}.${MM.Format.JSON.extension}`;
+			url += `${map.name}.${formatRepo.get("native").extension}`;
 		}
 
 		this.current = url;
 		let json = map.toJSON();
-		let data = MM.Format.JSON.to(json);
+		let data = formatRepo.get("native").to(json);
 
 		try {
 			await this.backend.save(data, url);
@@ -70,7 +71,7 @@ export default class WebDAVUI extends BackendUI<WebDAV> {
 
 	protected loadDone(data: string) {
 		try {
-			let json = MM.Format.JSON.from(data);
+			let json = formatRepo.get("native").from(data);
 			super.loadDone(json);
 		} catch (e) {
 			this.error(e);
