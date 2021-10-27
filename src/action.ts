@@ -30,7 +30,7 @@ export class InsertNewItem extends Action {
 	}
 
 	do() {
-		this.parent.expand(); // FIXME remember?
+		this.parent.collapsed = false; // FIXME remember?
 		this.parent.insertChild(this.item, this.index);
 		app.selectItem(this.item);
 	}

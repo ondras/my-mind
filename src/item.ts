@@ -14,6 +14,7 @@ declare global {  // fixme
 	}
 }
 
+export const TOGGLE_SIZE = 7;
 export type Value = string | number | null;
 export type Status = "computed" | boolean | null;
 export type Side = "" | "left" | "right";
@@ -33,19 +34,6 @@ export type Jsonified = Partial<{
 	collapsed: boolean | number;
 	children: Jsonified[];
 }>
-
-const COLOR = "#999";
-
-/* RE explanation:
- *            _________________________________________________________________________ One of the three possible variants
- *             ____________________ scheme://x
- *                                  ___________________________ aa.bb.cc
- *                                                              _______________________ aa.bb/
- *                                                                                      ______ path, search
- *                                                                                            __________________________ end with a non-forbidden char
- *                                                                                                                      ______ end of word or end of string
- */
-const RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
 
 const UPDATE_OPTIONS = {
 	parent: true,
@@ -75,7 +63,7 @@ export default class Item {
 		icon: html.node("span"),
 		value: html.node("span"),
 		text: html.node("div"),
-		toggle: html.node("div")
+		toggle: buildToggle()
 	}
 
 	readonly children: ChildItem[] = [];
@@ -93,7 +81,6 @@ export default class Item {
 		dom.icon.classList.add("icon");
 		dom.value.classList.add("value");
 		dom.text.classList.add("text");
-		dom.toggle.classList.add("toggle");
 		dom.icon.classList.add("icon");
 
 		let foContent = svg.foreignObject();
@@ -104,7 +91,10 @@ export default class Item {
 		dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
 		/* toggle+children are appended when children exist */
 
-		dom.toggle.addEventListener("click", this);
+		dom.toggle.addEventListener("click", _ => {
+			this.collapsed = !this.collapsed;
+			app.selectItem(this);
+		});
 	}
 
 	get id() { return this._id; }
@@ -163,7 +153,7 @@ export default class Item {
 		if (this._status) { data.status = this._status; }
 		if (this._layout) { data.layout = this._layout.id; }
 		if (this._shape) { data.shape = this._shape.id; }
-		if (this._collapsed) { data.collapsed = 1; }
+		if (this._collapsed) { data.collapsed = true; }
 		if (this.children.length) {
 			data.children = this.children.map(child => child.toJSON());
 		}
@@ -193,7 +183,7 @@ export default class Item {
 				this._status = data.status;
 			}
 		}
-		if (data.collapsed) { this.collapse(); }
+		if (data.collapsed) { this.collapsed = !!data.collapsed; } // invoke setter -> set text
 		if (data.layout) { this._layout = layoutRepo.get(data.layout); }
 		if (data.shape) { this.shape = shapeRepo.get(data.shape); }
 
@@ -234,7 +224,7 @@ export default class Item {
 			dirty = 1;
 		}
 
-		if (this._collapsed != !!data.collapsed) { this[this._collapsed ? "expand" : "collapse"](); }
+		if (this._collapsed != !!data.collapsed) { this.collapsed = !!data.collapsed; }
 
 		// fixme does not work
 		if (this.layout.id != data.layout) {
@@ -320,19 +310,14 @@ export default class Item {
 		this.updateIcon();
 		this.updateValue();
 
-
 		const { resolvedLayout, resolvedShape, dom } = this;
 
-		dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
-		dom.node.classList.toggle("collapsed", this._collapsed);
 		dom.node.dataset.shape = resolvedShape.id; // applies css => modifies dimensions (necessary for layout)
 		dom.node.dataset.align = resolvedLayout.computeAlignment(this); // applies css => modifies dimensions (necessary for layout)
 
 		let fo = dom.content.parentNode as SVGForeignObjectElement;
 		fo.setAttribute("width", String(dom.content.offsetWidth));
 		fo.setAttribute("height", String(dom.content.offsetHeight));
-
-//		if (this.id == "ezwvmtko") debugger;
 
 		dom.connectors.innerHTML = "";
 		resolvedLayout.update(this);
@@ -352,24 +337,19 @@ export default class Item {
 	get notes() { return this._notes; }
 	set notes(notes: string) {
 		this._notes = notes;
-		this.update();
+		this.dom.notes.classList.toggle("notes-indicator-visible", !!notes);
 	}
 
-	collapse() {
-		if (this._collapsed) { return; }
-		this._collapsed = true;
-		this.update();
-	}
+	get collapsed() { return this._collapsed; }
+	set collapsed(collapsed: boolean) {
+		const { node, toggle } = this.dom;
 
-	expand() {
-		if (!this._collapsed) { return; }
-		this._collapsed = false;
-		this.update();
-		this.update({children:true});
-	}
+		this._collapsed = collapsed;
+		node.classList.toggle("collapsed", collapsed);
+		toggle.querySelector("path").setAttribute("d", collapsed ? D_PLUS : D_MINUS);
 
-	isCollapsed() {
-		return this._collapsed;
+		let children = !collapsed; // update children if expanded
+		this.update({children});
 	}
 
 	get value() { return this._value; }
@@ -565,11 +545,6 @@ export default class Item {
 			case "blur":
 				commandRepo.get("finish").execute();
 			break;
-
-			case "click":
-				if (this._collapsed) { this.expand(); } else { this.collapse(); }
-				app.selectItem(this);
-			break;
 		}
 	}
 
@@ -661,3 +636,29 @@ function generateId() {
 	}
 	return str;
 }
+
+const D_MINUS = `M ${-(TOGGLE_SIZE-2)} 0 L ${TOGGLE_SIZE-2} 0`;
+const D_PLUS = `${D_MINUS} M 0 ${-(TOGGLE_SIZE-2)} L 0 ${TOGGLE_SIZE-2}`;
+
+function buildToggle() {
+	const circleAttrs = {"cx":"0", "cy":"0", "r":String(TOGGLE_SIZE)};
+
+	let g = svg.group();
+	g.classList.add("toggle");
+	g.append(svg.node("circle", circleAttrs), svg.node("path"));
+
+	return g;
+}
+
+const COLOR = "#999";
+
+/* RE explanation:
+ *            _________________________________________________________________________ One of the three possible variants
+ *             ____________________ scheme://x
+ *                                  ___________________________ aa.bb.cc
+ *                                                              _______________________ aa.bb/
+ *                                                                                      ______ path, search
+ *                                                                                            __________________________ end with a non-forbidden char
+ *                                                                                                                      ______ end of word or end of string
+ */
+const RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;

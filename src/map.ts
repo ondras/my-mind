@@ -82,7 +82,7 @@ export default class Map {
 			while (true) {
 				if (node.parent == this) { break; }
 				node = node.parent as Item;
-				if (node.isCollapsed()) { hidden = true; }
+				if (node.collapsed) { hidden = true; }
 			}
 			if (!hidden) { return; } /* nothing bad happened, continue */
 		}
@@ -166,7 +166,7 @@ export default class Map {
 			let dy = rect.top + rect.height/2 - point[1];
 			let distance = dx*dx+dy*dy;
 			all.push({dx, dy, item, distance});
-			if (!item.isCollapsed()) { item.children.forEach(scan); }
+			if (!item.collapsed) { item.children.forEach(scan); }
 		}
 
 		scan(this._root);
@@ -235,10 +235,10 @@ export default class Map {
 	}
 
 	_getPickCandidates(currentRect, item, direction, candidates) {
-		if (!item.isCollapsed()) {
-			item.children.forEach(function(child) {
+		if (!item.collapsed) {
+			item.children.forEach(child => {
 				this._getPickCandidates(currentRect, child, direction, candidates);
-			}, this);
+			});
 		}
 
 		var node = item.dom.content;

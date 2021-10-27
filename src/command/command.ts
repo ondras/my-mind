@@ -293,7 +293,7 @@ new (class Fold extends Command {
 
 	execute() {
 		let item = app.currentItem;
-		if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
+		item.collapsed = !item.collapsed;
 		app.currentMap.ensureItemVisibility(item);
 	}
 });

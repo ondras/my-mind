@@ -1,9 +1,8 @@
 import Layout from "./layout.js";
-import Item from "../item.js";
+import Item, { TOGGLE_SIZE } from "../item.js";
 import * as svg from "../svg.js";
 
 
-type Point = [number, number];
 const SPACING_RANK = 32;
 const R = SPACING_RANK/4;
 const LINE_OFFSET = SPACING_RANK / 2;
@@ -54,30 +53,32 @@ export default class TreeLayout extends Layout {
 	protected drawLines(item: Item, side) {
 		const { size, resolvedShape, resolvedColor, children, dom } = item;
 
-		let pointAnchor: Point = [
-			(side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5,
+		const lineX = (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5;
+
+		let pointAnchor = [
+			lineX,
 			resolvedShape.getVerticalAnchor(item)
 		];
-		this.anchorToggle(item, pointAnchor, "bottom");
+		this.positionToggle(item, [pointAnchor[0], pointAnchor[1] + TOGGLE_SIZE]);
 
-		if (children.length == 0 || item.isCollapsed()) { return; }
+		if (children.length == 0 || item.collapsed) { return; }
 
 		let lastChild = children[children.length-1];
 		let lineEnd = [
-			pointAnchor[0],
+			lineX,
 			lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R
 		];
 		let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
 
-		let cornerEndX = lineEnd[0] + (side == "left" ? -R : R);
-		let sweep = (cornerEndX < lineEnd[0] ? 1 : 0);
+		let cornerEndX = lineX + (side == "left" ? -R : R);
+		let sweep = (cornerEndX < lineX ? 1 : 0);
 
 		children.forEach(child => {
 			const { resolvedShape, position } = child;
 			const y = resolvedShape.getVerticalAnchor(child) + position[1];
 
 			d.push(
-				`M ${pointAnchor[0]} ${y-R}`,
+				`M ${lineX} ${y-R}`,
 				`A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${y}`,
 				`L ${this.getChildAnchor(child, side)} ${y}`
 			);

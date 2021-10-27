@@ -95,7 +95,7 @@ export default class MapLayout extends GraphLayout {
 	}
 
 	protected drawRootConnectors(item: Item, side, children) {
-		if (children.length == 0 || item.isCollapsed()) { return; }
+		if (children.length == 0 || item.collapsed) { return; }
 
 		const { contentSize, contentPosition, resolvedShape, dom } = item;
 

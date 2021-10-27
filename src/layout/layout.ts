@@ -34,7 +34,7 @@ export default abstract class Layout {
 		}
 
 		/* direction for a child */
-		if (!item.isCollapsed()) {
+		if (!item.collapsed) {
 			var children = item.children;
 			for (var i=0;i<children.length;i++) {
 				var child = children[i];
@@ -65,34 +65,8 @@ export default abstract class Layout {
 		return children[index];
 	}
 
-	protected anchorToggle(item: Item, point: [number, number], side) {
-		var node = item.dom.toggle;
-		var w = node.offsetWidth;
-		var h = node.offsetHeight;
-		let [l, t] = point;
-
-		switch (side) {
-			case "left":
-				t -= h/2;
-				l -= w;
-			break;
-
-			case "right":
-				t -= h/2;
-			break;
-
-			case "top":
-				l -= w/2;
-				t -= h;
-			break;
-
-			case "bottom":
-				l -= w/2;
-			break;
-		}
-
-		node.style.left = Math.round(l) + "px";
-		node.style.top = Math.round(t) + "px";
+	protected positionToggle(item: Item, point: number[]) {
+		item.dom.toggle.setAttribute("transform", `translate(${point.map(Math.round)})`);
 	}
 
 	protected getChildAnchor(item, side) {

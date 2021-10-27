@@ -3,7 +3,6 @@ import Item from "../item.js";
 import * as svg from "../svg.js";
 
 
-type Point = [number, number];
 export const SPACING_RANK = 16;
 const R = SPACING_RANK/2;
 
@@ -75,13 +74,13 @@ export default class GraphLayout extends Layout {
 		if (children.length == 0) { return; }
 
 		// first part from this item
-		let itemAnchor: Point = [
+		let itemAnchor = [
 			contentPosition[0] + (side == "right" ? contentSize[0]+0.5 : -0.5),
 			resolvedShape.getVerticalAnchor(item)
 		];
 
-		this.anchorToggle(item, itemAnchor, side);
-		if (item.isCollapsed()) { return; }
+		this.positionToggle(item, itemAnchor);
+		if (item.collapsed) { return; }
 
 		let d: string[] = [];
 
@@ -93,11 +92,11 @@ export default class GraphLayout extends Layout {
 				this.getChildAnchor(child, side),
 				resolvedShape.getVerticalAnchor(child) + position[1]
 			];
-			let mid = (itemAnchor[0] + childAnchor[0])/2;
+			let midX = (itemAnchor[0] + childAnchor[0])/2;
 
 			d.push(
 				`M ${itemAnchor}`,
-				`C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`
+				`C ${[midX, itemAnchor[1]]} ${[midX, childAnchor[1]]} ${childAnchor}`
 			);
 			let path = svg.node("path", {d:d.join(" "), stroke:resolvedColor, fill:"none"});
 			dom.connectors.append(path);
@@ -157,7 +156,7 @@ export default class GraphLayout extends Layout {
 
 		const height = (children.length == 1 ? 2*R : R);
 
-		let itemAnchor: Point = [
+		let itemAnchor = [
 			resolvedShape.getHorizontalAnchor(item),
 			(side == "top" ? size[1] - contentSize[1] : resolvedShape.getVerticalAnchor(item))
 		];
@@ -165,9 +164,9 @@ export default class GraphLayout extends Layout {
 			itemAnchor[0],
 			(side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
 		];
-		this.anchorToggle(item, itemAnchor, side);
+		this.positionToggle(item, itemAnchor);
 
-		if (item.isCollapsed()) { return; }
+		if (item.collapsed) { return; }
 
 		let d: string[] = [];
 		d.push(`M ${itemAnchor}`, `L ${center}`)

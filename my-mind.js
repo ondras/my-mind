@@ -280,7 +280,7 @@
       this.item = new Item();
     }
     do() {
-      this.parent.expand();
+      this.parent.collapsed = false;
       this.parent.insertChild(this.item, this.index);
       selectItem(this.item);
     }
@@ -567,7 +567,7 @@
         top: "bottom",
         bottom: "top"
       };
-      if (!item.isCollapsed()) {
+      if (!item.collapsed) {
         var children = item.children;
         for (var i = 0; i < children.length; i++) {
           var child = children[i];
@@ -599,29 +599,8 @@
       index2 = (index2 + children.length) % children.length;
       return children[index2];
     }
-    anchorToggle(item, point, side) {
-      var node10 = item.dom.toggle;
-      var w = node10.offsetWidth;
-      var h = node10.offsetHeight;
-      let [l, t] = point;
-      switch (side) {
-        case "left":
-          t -= h / 2;
-          l -= w;
-          break;
-        case "right":
-          t -= h / 2;
-          break;
-        case "top":
-          l -= w / 2;
-          t -= h;
-          break;
-        case "bottom":
-          l -= w / 2;
-          break;
-      }
-      node10.style.left = Math.round(l) + "px";
-      node10.style.top = Math.round(t) + "px";
+    positionToggle(item, point) {
+      item.dom.toggle.setAttribute("transform", `translate(${point.map(Math.round)})`);
     }
     getChildAnchor(item, side) {
       let { position, contentPosition, contentSize } = item;
@@ -723,8 +702,8 @@
         contentPosition[0] + (side == "right" ? contentSize[0] + 0.5 : -0.5),
         resolvedShape.getVerticalAnchor(item)
       ];
-      this.anchorToggle(item, itemAnchor, side);
-      if (item.isCollapsed()) {
+      this.positionToggle(item, itemAnchor);
+      if (item.collapsed) {
         return;
       }
       let d = [];
@@ -735,8 +714,8 @@
           this.getChildAnchor(child, side),
           resolvedShape2.getVerticalAnchor(child) + position[1]
         ];
-        let mid = (itemAnchor[0] + childAnchor[0]) / 2;
-        d.push(`M ${itemAnchor}`, `C ${[mid, itemAnchor[1]]} ${[mid, childAnchor[1]]} ${childAnchor}`);
+        let midX = (itemAnchor[0] + childAnchor[0]) / 2;
+        d.push(`M ${itemAnchor}`, `C ${[midX, itemAnchor[1]]} ${[midX, childAnchor[1]]} ${childAnchor}`);
         let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
         dom.connectors.append(path2);
         return;
@@ -783,8 +762,8 @@
         itemAnchor[0],
         (side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
       ];
-      this.anchorToggle(item, itemAnchor, side);
-      if (item.isCollapsed()) {
+      this.positionToggle(item, itemAnchor);
+      if (item.collapsed) {
         return;
       }
       let d = [];
@@ -863,26 +842,27 @@
     }
     drawLines(item, side) {
       const { size, resolvedShape, resolvedColor, children, dom } = item;
+      const lineX = (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5;
       let pointAnchor = [
-        (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5,
+        lineX,
         resolvedShape.getVerticalAnchor(item)
       ];
-      this.anchorToggle(item, pointAnchor, "bottom");
-      if (children.length == 0 || item.isCollapsed()) {
+      this.positionToggle(item, [pointAnchor[0], pointAnchor[1] + TOGGLE_SIZE]);
+      if (children.length == 0 || item.collapsed) {
         return;
       }
       let lastChild = children[children.length - 1];
       let lineEnd = [
-        pointAnchor[0],
+        lineX,
         lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R2
       ];
       let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
-      let cornerEndX = lineEnd[0] + (side == "left" ? -R2 : R2);
-      let sweep = cornerEndX < lineEnd[0] ? 1 : 0;
+      let cornerEndX = lineX + (side == "left" ? -R2 : R2);
+      let sweep = cornerEndX < lineX ? 1 : 0;
       children.forEach((child) => {
         const { resolvedShape: resolvedShape2, position } = child;
         const y = resolvedShape2.getVerticalAnchor(child) + position[1];
-        d.push(`M ${pointAnchor[0]} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${cornerEndX} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
+        d.push(`M ${lineX} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${cornerEndX} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
       });
       let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
       dom.connectors.append(path);
@@ -975,7 +955,7 @@
       this.drawRootConnectors(item, "right", childrenRight);
     }
     drawRootConnectors(item, side, children) {
-      if (children.length == 0 || item.isCollapsed()) {
+      if (children.length == 0 || item.collapsed) {
         return;
       }
       const { contentSize, contentPosition, resolvedShape, dom } = item;
@@ -2954,18 +2934,13 @@ ${text}`);
     }
     execute() {
       let item = currentItem;
-      if (item.isCollapsed()) {
-        item.expand();
-      } else {
-        item.collapse();
-      }
+      item.collapsed = !item.collapsed;
       currentMap.ensureItemVisibility(item);
     }
   }();
 
   // .js/item.js
-  var COLOR = "#999";
-  var RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
+  var TOGGLE_SIZE = 7;
   var UPDATE_OPTIONS = {
     parent: true,
     children: false
@@ -2993,7 +2968,7 @@ ${text}`);
         icon: node("span"),
         value: node("span"),
         text: node("div"),
-        toggle: node("div")
+        toggle: buildToggle()
       };
       this.children = [];
       const { dom } = this;
@@ -3004,13 +2979,15 @@ ${text}`);
       dom.icon.classList.add("icon");
       dom.value.classList.add("value");
       dom.text.classList.add("text");
-      dom.toggle.classList.add("toggle");
       dom.icon.classList.add("icon");
       let foContent = foreignObject();
       dom.node.append(dom.connectors, foContent);
       foContent.append(dom.content);
       dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
-      dom.toggle.addEventListener("click", this);
+      dom.toggle.addEventListener("click", (_) => {
+        this.collapsed = !this.collapsed;
+        selectItem(this);
+      });
     }
     static fromJSON(data) {
       return new this().fromJSON(data);
@@ -3083,7 +3060,7 @@ ${text}`);
         data.shape = this._shape.id;
       }
       if (this._collapsed) {
-        data.collapsed = 1;
+        data.collapsed = true;
       }
       if (this.children.length) {
         data.children = this.children.map((child) => child.toJSON());
@@ -3120,7 +3097,7 @@ ${text}`);
         }
       }
       if (data.collapsed) {
-        this.collapse();
+        this.collapsed = !!data.collapsed;
       }
       if (data.layout) {
         this._layout = repo2.get(data.layout);
@@ -3159,7 +3136,7 @@ ${text}`);
         dirty = 1;
       }
       if (this._collapsed != !!data.collapsed) {
-        this[this._collapsed ? "expand" : "collapse"]();
+        this.collapsed = !!data.collapsed;
       }
       if (this.layout.id != data.layout) {
         this._layout = repo2.get(data.layout);
@@ -3231,8 +3208,6 @@ ${text}`);
       this.updateIcon();
       this.updateValue();
       const { resolvedLayout, resolvedShape, dom } = this;
-      dom.notes.classList.toggle("notes-indicator-visible", !!this.notes);
-      dom.node.classList.toggle("collapsed", this._collapsed);
       dom.node.dataset.shape = resolvedShape.id;
       dom.node.dataset.align = resolvedLayout.computeAlignment(this);
       let fo = dom.content.parentNode;
@@ -3258,25 +3233,18 @@ ${text}`);
     }
     set notes(notes3) {
       this._notes = notes3;
-      this.update();
+      this.dom.notes.classList.toggle("notes-indicator-visible", !!notes3);
     }
-    collapse() {
-      if (this._collapsed) {
-        return;
-      }
-      this._collapsed = true;
-      this.update();
-    }
-    expand() {
-      if (!this._collapsed) {
-        return;
-      }
-      this._collapsed = false;
-      this.update();
-      this.update({ children: true });
-    }
-    isCollapsed() {
+    get collapsed() {
       return this._collapsed;
+    }
+    set collapsed(collapsed) {
+      const { node: node10, toggle: toggle4 } = this.dom;
+      this._collapsed = collapsed;
+      node10.classList.toggle("collapsed", collapsed);
+      toggle4.querySelector("path").setAttribute("d", collapsed ? D_PLUS : D_MINUS);
+      let children = !collapsed;
+      this.update({ children });
     }
     get value() {
       return this._value;
@@ -3479,14 +3447,6 @@ ${text}`);
         case "blur":
           repo.get("finish").execute();
           break;
-        case "click":
-          if (this._collapsed) {
-            this.expand();
-          } else {
-            this.collapse();
-          }
-          selectItem(this);
-          break;
       }
     }
     updateStatus() {
@@ -3570,6 +3530,17 @@ ${text}`);
     }
     return str;
   }
+  var D_MINUS = `M ${-(TOGGLE_SIZE - 2)} 0 L ${TOGGLE_SIZE - 2} 0`;
+  var D_PLUS = `${D_MINUS} M 0 ${-(TOGGLE_SIZE - 2)} L 0 ${TOGGLE_SIZE - 2}`;
+  function buildToggle() {
+    const circleAttrs = { "cx": "0", "cy": "0", "r": String(TOGGLE_SIZE) };
+    let g = group();
+    g.classList.add("toggle");
+    g.append(node2("circle", circleAttrs), node2("path"));
+    return g;
+  }
+  var COLOR = "#999";
+  var RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
 
   // .js/map.js
   var UPDATE_OPTIONS2 = {
@@ -3631,7 +3602,7 @@ ${text}`);
             break;
           }
           node11 = node11.parent;
-          if (node11.isCollapsed()) {
+          if (node11.collapsed) {
             hidden = true;
           }
         }
@@ -3695,7 +3666,7 @@ ${text}`);
         let dy = rect.top + rect.height / 2 - point[1];
         let distance = dx * dx + dy * dy;
         all2.push({ dx, dy, item, distance });
-        if (!item.isCollapsed()) {
+        if (!item.collapsed) {
           item.children.forEach(scan);
         }
       }
@@ -3765,10 +3736,10 @@ ${text}`);
       return candidates[0].item;
     }
     _getPickCandidates(currentRect, item, direction, candidates) {
-      if (!item.isCollapsed()) {
-        item.children.forEach(function(child) {
+      if (!item.collapsed) {
+        item.children.forEach((child) => {
           this._getPickCandidates(currentRect, child, direction, candidates);
-        }, this);
+        });
       }
       var node10 = item.dom.content;
       var rect = node10.getBoundingClientRect();
