@@ -539,6 +539,12 @@
   });
 
   // .js/layout/layout.js
+  var OPPOSITE = {
+    left: "right",
+    right: "left",
+    top: "bottom",
+    bottom: "top"
+  };
   var Layout = class {
     constructor(id, label, childDirection = "right") {
       this.id = id;
@@ -561,12 +567,6 @@
       return "left";
     }
     pick(item, dir) {
-      var opposite = {
-        left: "right",
-        right: "left",
-        top: "bottom",
-        bottom: "top"
-      };
       if (!item.collapsed) {
         var children = item.children;
         for (var i = 0; i < children.length; i++) {
@@ -583,7 +583,7 @@
       var thisChildDirection = parentLayout.getChildDirection(item);
       if (thisChildDirection == dir) {
         return item;
-      } else if (thisChildDirection == opposite[dir]) {
+      } else if (thisChildDirection == OPPOSITE[dir]) {
         return item.parent;
       } else {
         return parentLayout.pickSibling(item, dir == "left" || dir == "top" ? -1 : 1);
@@ -638,11 +638,11 @@
   var R = SPACING_RANK / 2;
   var GraphLayout = class extends Layout {
     update(item) {
-      this.layoutItem(item, this.childDirection);
+      let totalHeight = this.layoutItem(item, this.childDirection);
       if (this.childDirection == "left" || this.childDirection == "right") {
         this.drawLinesHorizontal(item, this.childDirection);
       } else {
-        this.drawLinesVertical(item, this.childDirection);
+        this.drawLinesVertical(item, this.childDirection, totalHeight);
       }
     }
     layoutItem(item, rankDirection) {
@@ -676,6 +676,7 @@
         contentPosition = contentPosition.reverse();
       }
       item.contentPosition = contentPosition;
+      return rankIndex == 0 ? childSize : rankSize;
     }
     layoutChildren(children, rankDirection, offset, bbox) {
       var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
@@ -698,11 +699,16 @@
       if (children.length == 0) {
         return;
       }
+      const dirModifier = side == "right" ? 1 : -1;
       let itemAnchor = [
-        contentPosition[0] + (side == "right" ? contentSize[0] + 0.5 : -0.5),
+        contentPosition[0] + (side == "right" ? contentSize[0] : 0) + dirModifier * 0.5,
         resolvedShape.getVerticalAnchor(item)
       ];
-      this.positionToggle(item, itemAnchor);
+      let cross = [
+        itemAnchor[0] + dirModifier * R,
+        itemAnchor[1]
+      ];
+      this.positionToggle(item, cross);
       if (item.collapsed) {
         return;
       }
@@ -720,15 +726,11 @@
         dom.connectors.append(path2);
         return;
       }
-      let center = [
-        itemAnchor[0] + (side == "left" ? -R : R),
-        itemAnchor[1]
-      ];
-      d.push(`M ${itemAnchor}`, `L ${center}`);
+      d.push(`M ${itemAnchor}`, `L ${cross}`);
       const firstChild = children[0];
       const lastChild = children[children.length - 1];
-      const cornerEndX = center[0] + (side == "left" ? -R : R);
-      const sweep = cornerEndX < center[0] ? 1 : 0;
+      const cornerEndX = cross[0] + dirModifier * R;
+      const sweep = dirModifier > 0 ? 0 : 1;
       let firstAnchor = [
         this.getChildAnchor(firstChild, side),
         firstChild.resolvedShape.getVerticalAnchor(firstChild) + firstChild.position[1]
@@ -737,46 +739,49 @@
         this.getChildAnchor(lastChild, side),
         lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1]
       ];
-      d.push(`M ${firstAnchor}`, `L ${cornerEndX} ${firstAnchor[1]}`, `A ${R} ${R} 0 0 ${sweep} ${center[0]} ${firstAnchor[1] + R}`, `L ${center[0]} ${lastAnchor[1] - R}`, `A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${lastAnchor[1]}`, `L ${lastAnchor}`);
+      d.push(`M ${firstAnchor}`, `L ${cornerEndX} ${firstAnchor[1]}`, `A ${R} ${R} 0 0 ${sweep} ${cross[0]} ${firstAnchor[1] + R}`, `L ${cross[0]} ${lastAnchor[1] - R}`, `A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${lastAnchor[1]}`, `L ${lastAnchor}`);
       for (let i = 1; i < children.length - 1; i++) {
         const c = children[i];
         const y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
-        let lineStart = [center[0], y];
+        let lineStart = [cross[0], y];
         let childAnchor = [this.getChildAnchor(c, side), y];
         d.push(`M ${lineStart}`, `L ${childAnchor}`);
       }
       let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
       dom.connectors.append(path);
     }
-    drawLinesVertical(item, side) {
-      const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
+    drawLinesVertical(item, side, totalHeight) {
+      const { contentSize, resolvedShape, resolvedColor, children, dom } = item;
       if (children.length == 0) {
         return;
       }
-      const height = children.length == 1 ? 2 * R : R;
+      const dirModifier = side == "bottom" ? 1 : -1;
       let itemAnchor = [
         resolvedShape.getHorizontalAnchor(item),
-        side == "top" ? size[1] - contentSize[1] : resolvedShape.getVerticalAnchor(item)
+        side == "bottom" ? resolvedShape.getVerticalAnchor(item) : totalHeight - contentSize[1]
       ];
-      let center = [
+      let cross = [
         itemAnchor[0],
-        (side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
+        (side == "bottom" ? contentSize[1] : itemAnchor[1]) + (R * dirModifier + 0.5)
       ];
-      this.positionToggle(item, itemAnchor);
+      this.positionToggle(item, cross);
       if (item.collapsed) {
         return;
       }
       let d = [];
-      d.push(`M ${itemAnchor}`, `L ${center}`);
+      d.push(`M ${itemAnchor}`, `L ${cross}`);
       if (children.length == 1) {
+        let child = children[0];
+        let childAnchor = [cross[0], this.getChildAnchor(child, side)];
+        d.push(`M ${cross}`, `L ${childAnchor}`);
         let path2 = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
         dom.connectors.append(path2);
         return;
       }
       const firstChild = children[0];
       const lastChild = children[children.length - 1];
-      const cornerEndY = center[1] + (side == "top" ? -R : R);
-      const sweep = cornerEndY > center[1] ? 1 : 0;
+      const cornerEndY = cross[1] + dirModifier * R;
+      const sweep = dirModifier > 0 ? 1 : 0;
       let firstAnchor = [
         firstChild.resolvedShape.getHorizontalAnchor(firstChild) + firstChild.position[0],
         this.getChildAnchor(firstChild, side)
@@ -785,11 +790,11 @@
         lastChild.resolvedShape.getHorizontalAnchor(lastChild) + lastChild.position[0],
         this.getChildAnchor(lastChild, side)
       ];
-      d.push(`M ${firstAnchor}`, `L ${firstAnchor[0]} ${cornerEndY}`, `A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0] + R} ${center[1]}`, `L ${lastAnchor[0] - R} ${center[1]}`, `A ${R} ${R} 0 0 ${sweep} ${lastAnchor[0]} ${cornerEndY}`, `L ${lastAnchor}`);
+      d.push(`M ${firstAnchor}`, `L ${firstAnchor[0]} ${cornerEndY}`, `A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0] + R} ${cross[1]}`, `L ${lastAnchor[0] - R} ${cross[1]}`, `A ${R} ${R} 0 0 ${sweep} ${lastAnchor[0]} ${cornerEndY}`, `L ${lastAnchor}`);
       for (var i = 1; i < children.length - 1; i++) {
         const c = children[i];
         const x = c.resolvedShape.getHorizontalAnchor(c) + c.position[0];
-        let lineStart = [x, center[1]];
+        let lineStart = [x, cross[1]];
         let childAnchor = [x, this.getChildAnchor(c, side)];
         d.push(`M ${lineStart}`, `L ${childAnchor}`);
       }
@@ -808,8 +813,8 @@
   var LINE_OFFSET = SPACING_RANK2 / 2;
   var TreeLayout = class extends Layout {
     update(item) {
-      this.layoutItem(item, this.childDirection);
-      this.drawLines(item, this.childDirection);
+      let totalWidth = this.layoutItem(item, this.childDirection);
+      this.drawLines(item, this.childDirection, totalWidth);
     }
     layoutItem(item, rankDirection) {
       const { contentSize, children } = item;
@@ -828,6 +833,7 @@
         labelPos = rankSize - contentSize[0];
       }
       item.contentPosition = [labelPos, 0];
+      return rankSize;
     }
     layoutChildren(children, rankDirection, offset, bbox) {
       children.forEach((child) => {
@@ -840,14 +846,16 @@
         offset[1] += size[1] + this.SPACING_CHILD;
       });
     }
-    drawLines(item, side) {
-      const { size, resolvedShape, resolvedColor, children, dom } = item;
-      const lineX = (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5;
+    drawLines(item, side, totalWidth) {
+      const { resolvedShape, resolvedColor, children, dom } = item;
+      const dirModifier = side == "right" ? 1 : -1;
+      const lineX = (side == "left" ? totalWidth - LINE_OFFSET : LINE_OFFSET) + 0.5;
+      const toggleDistance = TOGGLE_SIZE + 2;
       let pointAnchor = [
         lineX,
         resolvedShape.getVerticalAnchor(item)
       ];
-      this.positionToggle(item, [pointAnchor[0], pointAnchor[1] + TOGGLE_SIZE]);
+      this.positionToggle(item, [pointAnchor[0], pointAnchor[1] + toggleDistance]);
       if (children.length == 0 || item.collapsed) {
         return;
       }
@@ -857,12 +865,11 @@
         lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R2
       ];
       let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
-      let cornerEndX = lineX + (side == "left" ? -R2 : R2);
-      let sweep = cornerEndX < lineX ? 1 : 0;
+      let sweep = dirModifier > 1 ? 1 : 0;
       children.forEach((child) => {
         const { resolvedShape: resolvedShape2, position } = child;
         const y = resolvedShape2.getVerticalAnchor(child) + position[1];
-        d.push(`M ${lineX} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${cornerEndX} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
+        d.push(`M ${lineX} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${lineX + dirModifier * R2} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
       });
       let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
       dom.connectors.append(path);
@@ -889,19 +896,19 @@
       while (!child.parent.isRoot) {
         child = child.parent;
       }
-      var side = child.side;
+      let side = child.side;
       if (side) {
         return side;
       }
-      var counts = { left: 0, right: 0 };
-      var children = child.parent.children;
+      let counts = { left: 0, right: 0 };
+      let children = child.parent.children;
       for (var i = 0; i < children.length; i++) {
-        var side = children[i].side;
-        if (!side) {
-          side = counts.right > counts.left ? "left" : "right";
-          children[i].side = side;
+        let side2 = children[i].side;
+        if (!side2) {
+          side2 = counts.right > counts.left ? "left" : "right";
+          children[i].side = side2;
         }
-        counts[side]++;
+        counts[side2]++;
       }
       return child.side;
     }
@@ -1096,7 +1103,7 @@
   new Ellipse();
 
   // .js/shape/underline.js
-  var VERTICAL_OFFSET2 = -3;
+  var VERTICAL_OFFSET2 = -4;
   var Underline = class extends Shape {
     constructor() {
       super("underline", "Underline");
@@ -1137,7 +1144,7 @@
     select4.value = value;
   }
   function onChange4() {
-    let shape = repo3.get(this._select.value);
+    let shape = repo3.get(select4.value);
     let action2 = new SetShape(currentItem, shape);
     action(action2);
   }

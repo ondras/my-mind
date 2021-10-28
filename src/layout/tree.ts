@@ -8,10 +8,9 @@ const R = SPACING_RANK/4;
 const LINE_OFFSET = SPACING_RANK / 2;
 
 export default class TreeLayout extends Layout {
-
 	update(item: Item) {
-		this.layoutItem(item, this.childDirection);
-		this.drawLines(item, this.childDirection);
+		let totalWidth = this.layoutItem(item, this.childDirection);
+		this.drawLines(item, this.childDirection, totalWidth);
 	}
 
 	protected layoutItem(item: Item, rankDirection) {
@@ -22,7 +21,7 @@ export default class TreeLayout extends Layout {
 
 		// node size
 		let rankSize = contentSize[0];
-		if (bbox[0]) {
+		if (bbox[0]) { // fixme
 			rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK);
 		}
 
@@ -35,6 +34,8 @@ export default class TreeLayout extends Layout {
 		if (rankDirection == "left") { labelPos = rankSize - contentSize[0]; }
 
 		item.contentPosition = [labelPos, 0];
+
+		return rankSize;
 	}
 
 	protected layoutChildren(children: Item[], rankDirection, offset, bbox) {
@@ -50,16 +51,18 @@ export default class TreeLayout extends Layout {
 		});
 	}
 
-	protected drawLines(item: Item, side) {
-		const { size, resolvedShape, resolvedColor, children, dom } = item;
+	protected drawLines(item: Item, side, totalWidth: number) {
+		const { resolvedShape, resolvedColor, children, dom } = item;
 
-		const lineX = (side == "left" ? size[0] - LINE_OFFSET : LINE_OFFSET) + 0.5;
+		const dirModifier = (side == "right" ? 1 : -1);
+		const lineX = (side == "left" ? totalWidth - LINE_OFFSET : LINE_OFFSET) + 0.5;
+		const toggleDistance = TOGGLE_SIZE + 2;
 
 		let pointAnchor = [
 			lineX,
 			resolvedShape.getVerticalAnchor(item)
 		];
-		this.positionToggle(item, [pointAnchor[0], pointAnchor[1] + TOGGLE_SIZE]);
+		this.positionToggle(item, [pointAnchor[0], pointAnchor[1] + toggleDistance]);
 
 		if (children.length == 0 || item.collapsed) { return; }
 
@@ -70,8 +73,7 @@ export default class TreeLayout extends Layout {
 		];
 		let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
 
-		let cornerEndX = lineX + (side == "left" ? -R : R);
-		let sweep = (cornerEndX < lineX ? 1 : 0);
+		let sweep = (dirModifier > 1 ? 1 : 0);
 
 		children.forEach(child => {
 			const { resolvedShape, position } = child;
@@ -79,10 +81,10 @@ export default class TreeLayout extends Layout {
 
 			d.push(
 				`M ${lineX} ${y-R}`,
-				`A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${y}`,
+				`A ${R} ${R} 0 0 ${sweep} ${lineX + dirModifier*R} ${y}`,
 				`L ${this.getChildAnchor(child, side)} ${y}`
 			);
-		})
+		});
 
 		let path = svg.node("path", {d:d.join(" "), stroke:resolvedColor, fill:"none"});
 		dom.connectors.append(path);

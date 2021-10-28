@@ -1,10 +1,19 @@
 import Item from "../item.js";
 
 
+export type Direction = "left" | "right" | "top" | "bottom";
+
+const OPPOSITE: Record<Direction, Direction> = {
+	left: "right",
+	right: "left",
+	top: "bottom",
+	bottom: "top"
+}
+
 export default abstract class Layout {
 	protected SPACING_CHILD = 4;
 
-	constructor(readonly id:string, readonly label:string, protected childDirection="right") {
+	constructor(readonly id:string, readonly label:string, protected childDirection: Direction="right") {
 		repo.set(this.id, this);
 	}
 
@@ -26,13 +35,6 @@ export default abstract class Layout {
 	}
 
 	pick(item, dir) {
-		var opposite = {
-			left: "right",
-			right: "left",
-			top: "bottom",
-			bottom: "top"
-		}
-
 		/* direction for a child */
 		if (!item.collapsed) {
 			var children = item.children;
@@ -48,7 +50,7 @@ export default abstract class Layout {
 		var thisChildDirection = parentLayout.getChildDirection(item);
 		if (thisChildDirection == dir) {
 			return item;
-		} else if (thisChildDirection == opposite[dir]) {
+		} else if (thisChildDirection == OPPOSITE[dir]) {
 			return item.parent;
 		} else {
 			return parentLayout.pickSibling(item, (dir == "left" || dir == "top" ? -1 : +1));

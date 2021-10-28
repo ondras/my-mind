@@ -1,6 +1,6 @@
 import GraphLayout, { SPACING_RANK } from "./graph.js";
 import Item, { ChildItem } from "../item.js";
-import { repo } from "./layout.js";
+import { repo, Direction } from "./layout.js";
 import * as svg from "../svg.js";
 
 
@@ -22,13 +22,13 @@ export default class MapLayout extends GraphLayout {
 		}
 		/* child is now the sub-root node */
 
-		var side = child.side;
+		let side = child.side;
 		if (side) { return side; }
 
-		var counts = {left:0, right:0};
-		var children = child.parent.children;
+		let counts = {left:0, right:0};
+		let children = child.parent.children;
 		for (var i=0;i<children.length;i++) {
-			var side = children[i].side;
+			let side = children[i].side;
 			if (!side) {
 				side = (counts.right > counts.left ? "left" : "right");
 				children[i].side = side;
@@ -36,7 +36,7 @@ export default class MapLayout extends GraphLayout {
 			counts[side]++;
 		}
 
-		return child.side;
+		return child.side as Direction; // we have a guaranteed side now
 	}
 
 	pickSibling(item: Item, dir) {

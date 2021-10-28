@@ -9,12 +9,12 @@ const R = SPACING_RANK/2;
 export default class GraphLayout extends Layout {
 
 	update(item: Item) {
-		this.layoutItem(item, this.childDirection);
+		let totalHeight = this.layoutItem(item, this.childDirection);
 
 		if (this.childDirection == "left" || this.childDirection == "right") {
 			this.drawLinesHorizontal(item, this.childDirection);
 		} else {
-			this.drawLinesVertical(item, this.childDirection);
+			this.drawLinesVertical(item, this.childDirection, totalHeight);
 		}
 	}
 
@@ -49,6 +49,8 @@ export default class GraphLayout extends Layout {
 		let contentPosition = [Math.round((childSize - contentSize[childIndex])/2), labelPos];
 		if (rankIndex == 0) { contentPosition = contentPosition.reverse(); }
 		item.contentPosition = contentPosition;
+
+		return (rankIndex == 0 ? childSize : rankSize);
 	}
 
 	protected layoutChildren(children, rankDirection, offset, bbox) {
@@ -73,13 +75,20 @@ export default class GraphLayout extends Layout {
 		const { contentPosition, contentSize, resolvedShape, resolvedColor, children, dom } = item;
 		if (children.length == 0) { return; }
 
+		const dirModifier = (side == "right" ? 1 : -1);
+
 		// first part from this item
 		let itemAnchor = [
-			contentPosition[0] + (side == "right" ? contentSize[0]+0.5 : -0.5),
+			contentPosition[0] + (side == "right" ? contentSize[0] : 0) + dirModifier*0.5,
 			resolvedShape.getVerticalAnchor(item)
 		];
 
-		this.positionToggle(item, itemAnchor);
+		let cross = [
+			itemAnchor[0] + dirModifier*R,
+			itemAnchor[1]
+		];
+
+		this.positionToggle(item, cross);
 		if (item.collapsed) { return; }
 
 		let d: string[] = [];
@@ -103,19 +112,15 @@ export default class GraphLayout extends Layout {
 			return;
 		}
 
-		let center = [
-			itemAnchor[0] + (side == "left" ? -R : R),
-			itemAnchor[1]
-		];
 
-		// short line from this item to center
-		d.push(`M ${itemAnchor}`, `L ${center}`);
+		// short line from this item to crossroads
+		d.push(`M ${itemAnchor}`, `L ${cross}`);
 
 		// rounded connectors for first/last child
 		const firstChild = children[0];
 		const lastChild = children[children.length-1];
-		const cornerEndX = center[0] + (side == "left" ? -R : R);
-		const sweep = (cornerEndX < center[0] ? 1 : 0);
+		const cornerEndX = cross[0] + dirModifier*R;
+		const sweep = (dirModifier > 0  ? 0 : 1);
 
 		let firstAnchor = [
 			this.getChildAnchor(firstChild, side),
@@ -129,8 +134,8 @@ export default class GraphLayout extends Layout {
 		d.push(
 			`M ${firstAnchor}`,
 			`L ${cornerEndX} ${firstAnchor[1]}`,
-			`A ${R} ${R} 0 0 ${sweep} ${center[0]} ${firstAnchor[1]+R}`,
-			`L ${center[0]} ${lastAnchor[1]-R}`,
+			`A ${R} ${R} 0 0 ${sweep} ${cross[0]} ${firstAnchor[1]+R}`,
+			`L ${cross[0]} ${lastAnchor[1]-R}`,
 			`A ${R} ${R} 0 0 ${sweep} ${cornerEndX} ${lastAnchor[1]}`,
 			`L ${lastAnchor}`
 		);
@@ -140,7 +145,7 @@ export default class GraphLayout extends Layout {
 			const c = children[i];
 			const y = c.resolvedShape.getVerticalAnchor(c) + c.position[1];
 
-			let lineStart = [center[0], y];
+			let lineStart = [cross[0], y];
 			let childAnchor = [this.getChildAnchor(c, side), y];
 
 			d.push(`M ${lineStart}`, `L ${childAnchor}`);
@@ -150,28 +155,33 @@ export default class GraphLayout extends Layout {
 		dom.connectors.append(path);
 	}
 
-	protected drawLinesVertical(item, side) {
-		const { contentSize, size, resolvedShape, resolvedColor, children, dom } = item;
+	protected drawLinesVertical(item, side, totalHeight: number) {
+		const { contentSize, resolvedShape, resolvedColor, children, dom } = item;
 		if (children.length == 0) { return; }
 
-		const height = (children.length == 1 ? 2*R : R);
+		const dirModifier = (side == "bottom" ? 1 : -1);
 
 		let itemAnchor = [
 			resolvedShape.getHorizontalAnchor(item),
-			(side == "top" ? size[1] - contentSize[1] : resolvedShape.getVerticalAnchor(item))
+			(side == "bottom" ? resolvedShape.getVerticalAnchor(item) : totalHeight - contentSize[1])
 		];
-		let center = [
+		let cross = [
 			itemAnchor[0],
-			(side == "top" ? itemAnchor[1] - height : contentSize[1] + height) + 0.5
+			(side == "bottom" ? contentSize[1] : itemAnchor[1]) + (R*dirModifier + 0.5)
 		];
-		this.positionToggle(item, itemAnchor);
+
+		this.positionToggle(item, cross);
 
 		if (item.collapsed) { return; }
 
 		let d: string[] = [];
-		d.push(`M ${itemAnchor}`, `L ${center}`)
+		d.push(`M ${itemAnchor}`, `L ${cross}`)
 
 		if (children.length == 1) {
+			let child = children[0];
+			let childAnchor = [cross[0], this.getChildAnchor(child, side)];
+			d.push(`M ${cross}`, `L ${childAnchor}`);
+
 			let path = svg.node("path", {d:d.join(" "), stroke:resolvedColor, fill:"none"});
 			dom.connectors.append(path);
 			return;
@@ -180,8 +190,8 @@ export default class GraphLayout extends Layout {
 		// rounded connectors for first/last child
 		const firstChild = children[0];
 		const lastChild = children[children.length-1];
-		const cornerEndY = center[1] + (side == "top" ? -R : R);
-		const sweep = (cornerEndY > center[1] ? 1 : 0);
+		const cornerEndY = cross[1] + dirModifier*R;
+		const sweep = (dirModifier > 0 ? 1 : 0);
 
 		let firstAnchor = [
 			firstChild.resolvedShape.getHorizontalAnchor(firstChild) + firstChild.position[0],
@@ -195,8 +205,8 @@ export default class GraphLayout extends Layout {
 		d.push(
 			`M ${firstAnchor}`,
 			`L ${firstAnchor[0]} ${cornerEndY}`,
-			`A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0]+R} ${center[1]}`,
-			`L ${lastAnchor[0]-R} ${center[1]}`,
+			`A ${R} ${R} 0 0 ${sweep} ${firstAnchor[0]+R} ${cross[1]}`,
+			`L ${lastAnchor[0]-R} ${cross[1]}`,
 			`A ${R} ${R} 0 0 ${sweep} ${lastAnchor[0]} ${cornerEndY}`,
 			`L ${lastAnchor}`
 		);
@@ -204,7 +214,7 @@ export default class GraphLayout extends Layout {
 		for (var i=1; i<children.length-1; i++) {
 			const c = children[i];
 			const x = c.resolvedShape.getHorizontalAnchor(c) + c.position[0];
-			let lineStart = [x, center[1]];
+			let lineStart = [x, cross[1]];
 			let childAnchor = [x, this.getChildAnchor(c, side)];
 			d.push(`M ${lineStart}`, `L ${childAnchor}`);
 		}

@@ -3,7 +3,7 @@ import Item from "../item.js";
 import * as svg from "../svg.js";
 
 
-const VERTICAL_OFFSET = -3;
+const VERTICAL_OFFSET = -4;
 
 export default class Underline extends Shape {
 	constructor() {
@@ -25,7 +25,7 @@ export default class Underline extends Shape {
 		dom.connectors.append(path);
 	}
 
-	getVerticalAnchor(item) {
+	getVerticalAnchor(item: Item) {
 		const { contentPosition, contentSize } = item;
 		return contentPosition[1] + contentSize[1] + VERTICAL_OFFSET + 0.5;
 	}

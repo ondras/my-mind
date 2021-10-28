@@ -26,7 +26,7 @@ export function update() {
 }
 
 function onChange() {
-	let shape = repo.get(this._select.value);
+	let shape = repo.get(select.value);
 	let action = new actions.SetShape(app.currentItem, shape);
 	app.action(action);
 }
