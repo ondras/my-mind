@@ -3,13 +3,16 @@ BIN := $(shell npm bin)
 TSC := $(BIN)/tsc
 LESSC := $(BIN)/lessc
 ESBUILD := $(BIN)/esbuild
-GCC := $(BIN)/google-closure-compiler
 
 JS := .js
 FLAG := $(JS)/.tsflag
 APP := my-mind.js
+STYLE := my-mind.css map.css
 
-all: $(APP)
+all: $(APP) $(STYLE)
+
+%.css: css/*.less
+	$(LESSC) css/$*.less > $@
 
 $(APP): $(FLAG)
 	$(ESBUILD) --bundle $(JS)/$(APP) > $@
@@ -19,9 +22,9 @@ $(FLAG): $(shell find src -type f)
 	touch $@
 
 watch: all
-	while inotifywait -e MODIFY -r src ; do $(MAKE) $^ ; done
+	while inotifywait -e MODIFY -r src css ; do $(MAKE) $^ ; done
 
 clean:
-	rm -rf $(JS) $(APP)
+	rm -rf $(JS) $(APP) $(STYLE)
 
 .PHONY: all clean watch

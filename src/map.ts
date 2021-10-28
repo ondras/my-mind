@@ -1,9 +1,12 @@
 import Item, { Jsonified as JsonifiedItem } from "./item.js";
-import * as svg from "./svg.js";
-import * as app from "./my-mind.js";
 import Layout, { repo as layoutRepo } from "./layout/layout.js";
 import { br2nl } from "./format/format.js";
+import * as svg from "./svg.js";
+import * as html from "./html.js";
+import * as app from "./my-mind.js";
 
+
+let css = "";
 
 const UPDATE_OPTIONS = {
 	children: true
@@ -20,6 +23,7 @@ export type Jsonified = {
 
 export default class Map {
 	readonly node = svg.node("svg");
+	protected style = html.node("style");
 	protected _root: Item;
 	protected position = [0, 0];
 
@@ -28,6 +32,8 @@ export default class Map {
 			root: "My Mind Map",
 			layout: layoutRepo.get("map")
 		}, options);
+
+		this.style.textContent = css;
 
 		let root = new Item();
 		root.text = options.root;
@@ -53,11 +59,11 @@ export default class Map {
 
 	get root() { return this._root; }
 	protected set root(root: Item) {
-		const { node } = this;
+		const { node, style } = this;
 		this._root = root;
 
 		node.innerHTML = "";
-		node.append(root.dom.node);
+		node.append(root.dom.node, style);
 
 		root.parent = this;
 	}
@@ -125,6 +131,7 @@ export default class Map {
 
 	show(where: HTMLElement) {
 		where.append(this.node);
+
 		this.update();
 		this.center();
 		app.selectItem(this._root);
@@ -226,7 +233,7 @@ export default class Map {
 		var candidates = [];
 		var currentRect = item.dom.content.getBoundingClientRect();
 
-		this._getPickCandidates(currentRect, this._root, direction, candidates);
+		this.getPickCandidates(currentRect, this._root, direction, candidates);
 		if (!candidates.length) { return item; }
 
 		candidates.sort((a, b) => a.dist - b.dist);
@@ -234,10 +241,10 @@ export default class Map {
 		return candidates[0].item;
 	}
 
-	_getPickCandidates(currentRect, item, direction, candidates) {
+	protected getPickCandidates(currentRect, item, direction, candidates) {
 		if (!item.collapsed) {
 			item.children.forEach(child => {
-				this._getPickCandidates(currentRect, child, direction, candidates);
+				this.getPickCandidates(currentRect, child, direction, candidates);
 			});
 		}
 
@@ -276,4 +283,9 @@ export default class Map {
 		this.node.style.left = `${point[0]}px`;
 		this.node.style.top = `${point[1]}px`;
 	}
+}
+
+export async function init() {
+	let response = await fetch("map.css");
+	css = await response.text();
 }

@@ -1,5 +1,5 @@
 import BackendUI from "./backend.js";
-import Image from "../../backend/image.js";
+import Image, { Format } from "../../backend/image.js";
 
 
 export default class ImageUI extends BackendUI<Image> {
@@ -7,7 +7,9 @@ export default class ImageUI extends BackendUI<Image> {
 		super(new Image(), "Image");
 	}
 
-	save() { this.backend.save(); }
+	protected get format() { return this.node.querySelector<HTMLSelectElement>(".format"); }
+
+	save() { this.backend.save(this.format.value as Format); }
 
 	load() {}
 }

@@ -213,6 +213,7 @@
     toggle: () => toggle2
   });
   var node4 = document.querySelector("#notes");
+  var iframe = node4.querySelector("iframe");
   function toggle2() {
     node4.hidden = !node4.hidden;
   }
@@ -222,21 +223,13 @@
     }
     node4.hidden = true;
   }
-  function update(html2) {
-    if (html2.trim().length === 0) {
-      currentItem.notes = null;
-    } else {
-      currentItem.notes = html2;
-    }
-    currentItem.update();
-  }
   function onMessage(e) {
     if (!e.data || !e.data.action) {
       return;
     }
     switch (e.data.action) {
       case "setContent":
-        update(e.data.value);
+        currentItem.notes = e.data.value.trim();
         break;
       case "closeEditor":
         close2();
@@ -244,6 +237,12 @@
     }
   }
   function init2() {
+    subscribe("item-select", (_message, publisher) => {
+      iframe.contentWindow.postMessage({
+        action: "setContent",
+        value: publisher.notes
+      }, "*");
+    });
     window.addEventListener("message", onMessage);
   }
 
@@ -505,13 +504,13 @@
   var value_exports = {};
   __export(value_exports, {
     init: () => init4,
-    update: () => update2
+    update: () => update
   });
   var select = document.querySelector("#value");
   function init4() {
     select.addEventListener("change", onChange);
   }
-  function update2() {
+  function update() {
     let value = currentItem.value;
     if (value === null) {
       value = "";
@@ -535,7 +534,7 @@
   var layout_exports = {};
   __export(layout_exports, {
     init: () => init5,
-    update: () => update3
+    update: () => update2
   });
 
   // .js/layout/layout.js
@@ -1011,7 +1010,7 @@
     label.append(...treeOptions);
     select2.addEventListener("change", onChange2);
   }
-  function update3() {
+  function update2() {
     var value = "";
     var layout = currentItem.layout;
     if (layout) {
@@ -1040,13 +1039,13 @@
   var icon_exports = {};
   __export(icon_exports, {
     init: () => init6,
-    update: () => update4
+    update: () => update3
   });
   var select3 = document.querySelector("#icons");
   function init6() {
     select3.addEventListener("change", onChange3);
   }
-  function update4() {
+  function update3() {
     select3.value = currentItem.icon || "";
   }
   function onChange3() {
@@ -1058,7 +1057,7 @@
   var shape_exports = {};
   __export(shape_exports, {
     init: () => init7,
-    update: () => update5
+    update: () => update4
   });
 
   // .js/shape/shape.js
@@ -1135,7 +1134,7 @@
     });
     select4.addEventListener("change", onChange4);
   }
-  function update5() {
+  function update4() {
     let value = "";
     let shape = currentItem.shape;
     if (shape) {
@@ -1153,7 +1152,7 @@
   var status_exports = {};
   __export(status_exports, {
     init: () => init8,
-    update: () => update6
+    update: () => update5
   });
   var select5 = document.querySelector("#status");
   var STATUS_MAP = {
@@ -1175,7 +1174,7 @@
   function init8() {
     select5.addEventListener("change", onChange5);
   }
-  function update6() {
+  function update5() {
     select5.value = statusToString(currentItem.status);
   }
   function onChange5() {
@@ -1877,14 +1876,14 @@
       return this.request("GET", url);
     }
     async request(method, url, data) {
-      let init17 = {
+      let init19 = {
         method,
         credentials: "include"
       };
       if (data) {
-        init17.body = data;
+        init19.body = data;
       }
-      let response = await fetch(url, init17);
+      let response = await fetch(url, init19);
       let text = await response.text();
       if (response.status == 200) {
         return text;
@@ -1956,24 +1955,35 @@ ${text}`);
     constructor() {
       super("image");
     }
-    save() {
-      let serializer = new XMLSerializer();
-      let xml = serializer.serializeToString(currentMap.node);
-      let base64 = btoa(xml);
-      let img = new Image();
-      img.src = `data:image/svg+xml;base64,${base64}`;
-      img.onload = () => {
-        let canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        canvas.getContext("2d").drawImage(img, 0, 0);
-        canvas.toBlob((blob) => {
-          let link = document.createElement("a");
-          link.download = currentMap.name;
-          link.href = URL.createObjectURL(blob);
-          link.click();
-        }, "image/png");
-      };
+    save(format) {
+      const serializer = new XMLSerializer();
+      const encoder = new TextEncoder();
+      let xmlStr = serializer.serializeToString(currentMap.node);
+      let encoded = encoder.encode(xmlStr);
+      let byteString = [...encoded].map((byte) => String.fromCharCode(byte)).join("");
+      let base64 = btoa(byteString);
+      let svgUrl = `data:image/svg+xml;base64,${base64}`;
+      if (format == "svg") {
+        this.download(svgUrl);
+      } else if (format == "png") {
+        let img = new Image();
+        img.src = svgUrl;
+        img.onload = () => {
+          let canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext("2d").drawImage(img, 0, 0);
+          canvas.toBlob((blob) => {
+            this.download(URL.createObjectURL(blob));
+          }, "image/png");
+        };
+      }
+    }
+    download(href) {
+      let link = document.createElement("a");
+      link.download = currentMap.name;
+      link.href = href;
+      link.click();
     }
   };
 
@@ -1982,8 +1992,11 @@ ${text}`);
     constructor() {
       super(new ImageBackend(), "Image");
     }
+    get format() {
+      return this.node.querySelector(".format");
+    }
     save() {
-      this.backend.save();
+      this.backend.save(this.format.value);
     }
     load() {
     }
@@ -2609,24 +2622,74 @@ ${text}`);
     }
   }
 
+  // .js/ui/context-menu.js
+  var node8 = document.querySelector("#context-menu");
+  var port;
+  function init11(port_) {
+    port = port_;
+    [...node8.querySelectorAll("[data-command]")].forEach((button) => {
+      let commandName = button.dataset.command;
+      button.textContent = repo.get(commandName).label;
+    });
+    port.addEventListener("mousedown", handleEvent);
+    node8.addEventListener("mousedown", handleEvent);
+    close3();
+  }
+  function open(point) {
+    node8.hidden = false;
+    let w = node8.offsetWidth;
+    let h = node8.offsetHeight;
+    let left = point[0];
+    let top = point[1];
+    if (left > port.offsetWidth / 2) {
+      left -= w;
+    }
+    if (top > port.offsetHeight / 2) {
+      top -= h;
+    }
+    node8.style.left = `${left}px`;
+    node8.style.top = `${top}px`;
+  }
+  function handleEvent(e) {
+    if (e.currentTarget != node8) {
+      close3();
+      return;
+    }
+    e.stopPropagation();
+    e.preventDefault();
+    let commandName = e.target.dataset.command;
+    if (!commandName) {
+      return;
+    }
+    let command = repo.get(commandName);
+    if (!command.isValid) {
+      return;
+    }
+    command.execute();
+    close3();
+  }
+  function close3() {
+    node8.hidden = true;
+  }
+
   // .js/ui/ui.js
-  var node8 = document.querySelector(".ui");
+  var node9 = document.querySelector("#ui");
   function isActive() {
-    return node8.contains(document.activeElement);
+    return node9.contains(document.activeElement);
   }
   function toggle3() {
-    node8.hidden = !node8.hidden;
+    node9.hidden = !node9.hidden;
     publish("ui-change", this);
   }
   function getWidth() {
-    return node8.hidden ? 0 : node8.offsetWidth;
+    return node9.hidden ? 0 : node9.offsetWidth;
   }
-  function update7() {
+  function update6() {
     [layout_exports, shape_exports, icon_exports, value_exports, status_exports].forEach((ui5) => ui5.update());
   }
   function onClick2(e) {
     let target = e.target;
-    if (target == node8.querySelector("#toggle")) {
+    if (target == node9.querySelector("#toggle")) {
       toggle3();
       return;
     }
@@ -2640,7 +2703,7 @@ ${text}`);
       current2 = current2.parentNode;
     }
   }
-  function init11() {
+  function init12(port4) {
     [
       layout_exports,
       shape_exports,
@@ -2653,16 +2716,15 @@ ${text}`);
       notes_exports,
       io_exports
     ].forEach((ui5) => ui5.init());
-    subscribe("item-select", update7);
+    init11(port4);
+    subscribe("item-select", update6);
     subscribe("item-change", (_message, publisher) => {
       if (publisher == currentItem) {
-        update7();
+        update6();
       }
     });
-    node8.addEventListener("click", onClick2);
-    window.addEventListener("load", (_) => {
-      restore();
-    });
+    node9.addEventListener("click", onClick2);
+    restore();
   }
 
   // .js/command/command.js
@@ -2947,7 +3009,7 @@ ${text}`);
   }();
 
   // .js/item.js
-  var TOGGLE_SIZE = 7;
+  var TOGGLE_SIZE = 6;
   var UPDATE_OPTIONS = {
     parent: true,
     children: false
@@ -2958,7 +3020,7 @@ ${text}`);
       this._parent = null;
       this._collapsed = false;
       this._icon = null;
-      this._notes = null;
+      this._notes = "";
       this._value = null;
       this._status = null;
       this._color = null;
@@ -2995,6 +3057,7 @@ ${text}`);
         this.collapsed = !this.collapsed;
         selectItem(this);
       });
+      this.updateToggle();
     }
     static fromJSON(data) {
       return new this().fromJSON(data);
@@ -3187,13 +3250,6 @@ ${text}`);
     }
     select() {
       this.dom.node.classList.add("current");
-      if (window.editor) {
-        if (this.notes) {
-          window.editor.setContent(this.notes);
-        } else {
-          window.editor.setContent("");
-        }
-      }
       this.map.ensureItemVisibility(this);
       publish("item-select", this);
     }
@@ -3218,8 +3274,8 @@ ${text}`);
       dom.node.dataset.shape = resolvedShape.id;
       dom.node.dataset.align = resolvedLayout.computeAlignment(this);
       let fo = dom.content.parentNode;
-      fo.setAttribute("width", String(dom.content.offsetWidth));
-      fo.setAttribute("height", String(dom.content.offsetHeight));
+      fo.setAttribute("width", String(dom.content.scrollWidth));
+      fo.setAttribute("height", String(dom.content.scrollHeight));
       dom.connectors.innerHTML = "";
       resolvedLayout.update(this);
       resolvedShape.update(this);
@@ -3246,10 +3302,8 @@ ${text}`);
       return this._collapsed;
     }
     set collapsed(collapsed) {
-      const { node: node10, toggle: toggle4 } = this.dom;
       this._collapsed = collapsed;
-      node10.classList.toggle("collapsed", collapsed);
-      toggle4.querySelector("path").setAttribute("d", collapsed ? D_PLUS : D_MINUS);
+      this.updateToggle();
       let children = !collapsed;
       this.update({ children });
     }
@@ -3495,6 +3549,11 @@ ${text}`);
         dom.value.textContent = String(Math.round(resolved) == resolved ? resolved : resolved.toFixed(3));
       }
     }
+    updateToggle() {
+      const { node: node10, toggle: toggle4 } = this.dom;
+      node10.classList.toggle("collapsed", this._collapsed);
+      toggle4.querySelector("path").setAttribute("d", this._collapsed ? D_PLUS : D_MINUS);
+    }
   };
   function findLinks(node10) {
     var children = [].slice.call(node10.childNodes);
@@ -3550,17 +3609,20 @@ ${text}`);
   var RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
 
   // .js/map.js
+  var css = "";
   var UPDATE_OPTIONS2 = {
     children: true
   };
   var Map2 = class {
     constructor(options) {
       this.node = node2("svg");
+      this.style = node("style");
       this.position = [0, 0];
       options = Object.assign({
         root: "My Mind Map",
         layout: repo2.get("map")
       }, options);
+      this.style.textContent = css;
       let root = new Item();
       root.text = options.root;
       root.layout = options.layout;
@@ -3583,10 +3645,10 @@ ${text}`);
       return this._root;
     }
     set root(root) {
-      const { node: node10 } = this;
+      const { node: node10, style } = this;
       this._root = root;
       node10.innerHTML = "";
-      node10.append(root.dom.node);
+      node10.append(root.dom.node, style);
       root.parent = this;
     }
     mergeWith(data) {
@@ -3735,17 +3797,17 @@ ${text}`);
     pick(item, direction) {
       var candidates = [];
       var currentRect = item.dom.content.getBoundingClientRect();
-      this._getPickCandidates(currentRect, this._root, direction, candidates);
+      this.getPickCandidates(currentRect, this._root, direction, candidates);
       if (!candidates.length) {
         return item;
       }
       candidates.sort((a, b) => a.dist - b.dist);
       return candidates[0].item;
     }
-    _getPickCandidates(currentRect, item, direction, candidates) {
+    getPickCandidates(currentRect, item, direction, candidates) {
       if (!item.collapsed) {
         item.children.forEach((child) => {
-          this._getPickCandidates(currentRect, child, direction, candidates);
+          this.getPickCandidates(currentRect, child, direction, candidates);
         });
       }
       var node10 = item.dom.content;
@@ -3790,9 +3852,13 @@ ${text}`);
       this.node.style.top = `${point[1]}px`;
     }
   };
+  async function init13() {
+    let response = await fetch("map.css");
+    css = await response.text();
+  }
 
   // .js/keyboard.js
-  function handleEvent(e) {
+  function handleEvent2(e) {
     if (isActive()) {
       return;
     }
@@ -3807,9 +3873,9 @@ ${text}`);
       command.execute(e);
     }
   }
-  function init12() {
-    window.addEventListener("keydown", handleEvent);
-    window.addEventListener("keypress", handleEvent);
+  function init14() {
+    window.addEventListener("keydown", handleEvent2);
+    window.addEventListener("keypress", handleEvent2);
   }
   function keyOK(key, e) {
     if ("keyCode" in key && e.type != "keydown") {
@@ -3826,56 +3892,6 @@ ${text}`);
     return true;
   }
 
-  // .js/menu.js
-  var node9 = document.querySelector("#menu");
-  var port;
-  function init13(port_) {
-    port = port_;
-    [...node9.querySelectorAll("[data-command]")].forEach((button) => {
-      let commandName = button.dataset.command;
-      button.textContent = repo.get(commandName).label;
-    });
-    port.addEventListener("mousedown", handleEvent2);
-    node9.addEventListener("mousedown", handleEvent2);
-    close3();
-  }
-  function open(point) {
-    node9.hidden = false;
-    let w = node9.offsetWidth;
-    let h = node9.offsetHeight;
-    let left = point[0];
-    let top = point[1];
-    if (left > port.offsetWidth / 2) {
-      left -= w;
-    }
-    if (top > port.offsetHeight / 2) {
-      top -= h;
-    }
-    node9.style.left = `${left}px`;
-    node9.style.top = `${top}px`;
-  }
-  function handleEvent2(e) {
-    if (e.currentTarget != node9) {
-      close3();
-      return;
-    }
-    e.stopPropagation();
-    e.preventDefault();
-    let commandName = e.target.dataset.command;
-    if (!commandName) {
-      return;
-    }
-    let command = repo.get(commandName);
-    if (!command.isValid) {
-      return;
-    }
-    command.execute();
-    close3();
-  }
-  function close3() {
-    node9.hidden = true;
-  }
-
   // .js/mouse.js
   var TOUCH_DELAY = 500;
   var SHADOW_OFFSET = 5;
@@ -3889,7 +3905,7 @@ ${text}`);
     previousDragState: null
   };
   var port2;
-  function init14(port_) {
+  function init15(port_) {
     port2 = port_;
     port2.addEventListener("touchstart", onDragStart);
     port2.addEventListener("mousedown", onDragStart);
@@ -4113,7 +4129,7 @@ ${text}`);
   // .js/clipboard.js
   var storedItem = null;
   var mode = "";
-  function init15() {
+  function init16() {
     document.body.addEventListener("cut", onCopyCut);
     document.body.addEventListener("copy", onCopyCut);
     document.body.addEventListener("paste", onPaste);
@@ -4200,6 +4216,16 @@ ${text}`);
     storedItem.dom.node.classList.remove("cut");
     storedItem = null;
     mode = "";
+  }
+
+  // .js/title.js
+  function onItemChange(_message, publisher) {
+    if (publisher.isRoot && publisher.map == currentMap) {
+      document.title = currentMap.name + " :: My Mind";
+    }
+  }
+  function init17() {
+    subscribe("item-change", onItemChange);
   }
 
   // .js/command/select.js
@@ -4428,7 +4454,7 @@ ${text}`);
   }();
 
   // .js/my-mind.js
-  var port3 = document.querySelector("#port");
+  var port3 = document.querySelector("main");
   var throbber = document.querySelector("#throbber");
   var fontSize = 100;
   var currentMap;
@@ -4453,6 +4479,7 @@ ${text}`);
     }
     currentItem = item;
     currentItem.select();
+    document.activeElement.blur();
   }
   function adjustFontSize(diff) {
     fontSize = Math.max(30, fontSize + 10 * diff);
@@ -4471,23 +4498,19 @@ ${text}`);
     editing = false;
     return currentItem.stopEditing();
   }
-  function init16() {
-    init11();
-    init15();
-    init12();
-    init13(port3);
-    init14(port3);
-    subscribe("item-change", (_message, publisher) => {
-      if (publisher.isRoot && publisher.map == currentMap) {
-        document.title = currentMap.name + " :: My Mind";
-      }
-    });
+  async function init18() {
+    await init13();
     subscribe("ui-change", syncPort);
     window.addEventListener("resize", syncPort);
     window.addEventListener("beforeunload", (e) => {
       e.preventDefault();
       return "";
     });
+    init16();
+    init14();
+    init15(port3);
+    init17();
+    init12(port3);
     syncPort();
     showMap(new Map2());
   }
@@ -4495,8 +4518,7 @@ ${text}`);
     let portSize = [window.innerWidth - getWidth(), window.innerHeight];
     port3.style.width = portSize[0] + "px";
     port3.style.height = portSize[1] + "px";
-    throbber.style.right = 20 + getWidth() + "px";
     currentMap && currentMap.ensureItemVisibility(currentItem);
   }
-  init16();
+  init18();
 })();

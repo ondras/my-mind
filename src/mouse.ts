@@ -1,5 +1,5 @@
 import Item, { ChildItem } from "./item.js";
-import * as menu from "./menu.js";
+import * as menu from "./ui/context-menu.js";
 import * as app from "./my-mind.js";
 import Action, * as actions from "./action.js";
 import { repo as commandRepo } from "./command/command.js";

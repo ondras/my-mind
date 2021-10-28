@@ -12,10 +12,11 @@ import * as help from "./help.js";
 import * as notes from "./notes.js";
 import * as tip from "./tip.js";
 import * as io from "./io.js";
+import * as menu from "./context-menu.js";
 import { repo as commandRepo } from "../command/command.js";
 
 
-const node = document.querySelector<HTMLElement>(".ui");
+const node = document.querySelector<HTMLElement>("#ui");
 
 export function isActive() {
 	return node.contains(document.activeElement);
@@ -53,11 +54,10 @@ function onClick(e: MouseEvent) {
 	}
 }
 
-export function init() {
-	[
-		layout, shape, icon, value, status, color,
-		help, tip, notes, io
-	].forEach(ui => ui.init());
+export function init(port: HTMLElement) {
+	[layout, shape, icon, value, status, color,
+	help, tip, notes, io].forEach(ui => ui.init());
+	menu.init(port);
 
 	pubsub.subscribe("item-select", update);
 	pubsub.subscribe("item-change", (_message: string, publisher: any) => {
@@ -66,7 +66,5 @@ export function init() {
 
 	node.addEventListener("click", onClick);
 
-	window.addEventListener("load", _ => {
-		io.restore(); // fixme proc az na load?
-	});
+	io.restore();
 }

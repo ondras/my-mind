@@ -1,8 +1,3 @@
-@import url(ui.css);
-@import url(item.css);
-@import url(shape.css);
-@import url(menu.css);
-
 * {
 	font-family: source sans pro, sans-serif;
 }
@@ -12,51 +7,46 @@ html, body {
 	overflow: hidden;
 	height: 100%;
 	background-color: #eed;
-	-webkit-user-select: none; /* no magnifier on hold */
+	-webkit-user-select: none; // no magnifier on hold
 }
 
-[contenteditable] { /* allow for editable items */
+[contenteditable] { // allow for editable items
 	-webkit-user-select: auto;
-}
-
-ul {
-	margin: 0;
-	padding: 0;
-	list-style: none;
 }
 
 svg {
 	position: absolute;
-	overflow: visible; /* shadow */
+	overflow: visible; // shadow
 }
 
-#port {
-	overflow: hidden;
-	font-size: 15px;
+main {
+	position: relative; // anchor for #tip
+}
+
+button:not(:disabled) {
+	cursor: pointer;
 }
 
 #throbber {
 	position: absolute;
 	top: 50px;
 	left: -60px;
-	width: 50px;
-	height: 50px;
-	background-image: url(throbber.gif);
 }
 
 .ghost {
-	position: absolute !important; /* to prevent collision with .content */
+	position: absolute !important; // to prevent collision with .content
 	opacity: 0.5;
 	z-index: 1;
 }
 
 #tip {
-	position: fixed;
+	position: absolute;
 	z-index: 1;
 	left: 10px;
 	bottom: 5px;
 	transition: all 500ms;
 	font-size: 1rem; /* do not scale with map zoom */
+
 }
 
 #tip:before {
@@ -72,3 +62,8 @@ svg {
 #tip.hidden {
 	opacity: 0;
 }
+
+@import "font.less";
+@import "pane.less";
+@import "context-menu.less";
+@import "print.less" print;

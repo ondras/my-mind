@@ -6,43 +6,24 @@
 		<title>My Mind</title>
 		<link rel="icon" href="favicon.ico" />
 
-		<link rel="stylesheet" type="text/css" href="/vendor/pell/css/pell.min.css">
-
-		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-app.js"></script>
-		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-database.js"></script>
-		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-auth.js"></script>
-
-		<link rel="stylesheet" href="css/font.css" />
-		<link rel="stylesheet" href="css/style.css" />
-		<link rel="stylesheet" href="css/print.css" media="print" />
+		<link rel="stylesheet" href="my-mind.css" />
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
 		<base target="_blank" />
 
-		<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-383250-18"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'UA-383250-18');
-</script>
-
-
 	</head>
 	<body>
-		<ul id="port">
-			<div id="tip">Type <code>:screenshot --selector .item</code> in Firefox Console to save the Map as an image! For more tips/news, follow <a href="https://twitter.com/my_mind_app">@my_mind_app</a>.</div>
+		<main>
+			<div id="tip">Type <code>:screenshot --selector svg</code> in Firefox Console to save the Map as an image! For more tips/news, follow <a href="https://twitter.com/my_mind_app">@my_mind_app</a>.</div>
 <!--			<div id="tip">Press ‘Tab’ to Insert Child, ‘Enter’ to Insert Sibling Node. For more tips/news, follow <a href="https://twitter.com/my_mind_app">@my_mind_app</a>.</div> -->
-		</ul>
+		</main>
 
-		<div class="ui">
+		<div id="ui" class="pane">
 			<h3>My Mind</h3>
 			<p>
-				<button data-command="new" title="New"><img src="icons/new.png" alt="New" /></button>
-				<button data-command="load" title="Open"><img src="icons/open.png" alt="Open" /></button>
-				<button data-command="save" title="Save"><img src="icons/save.png" alt="Save" /></button>
-				<button data-command="save-as" title="Save as"><img src="icons/save-as.png" alt="Save as" /></button>
+				<button data-command="new" title="New"><img src="img/new.png" alt="New" /></button>
+				<button data-command="load" title="Open"><img src="img/open.png" alt="Open" /></button>
+				<button data-command="save" title="Save"><img src="img/save.png" alt="Save" /></button>
+				<button data-command="save-as" title="Save as"><img src="img/save-as.png" alt="Save as" /></button>
 			</p>
 
 			<p>
@@ -890,14 +871,14 @@
 			<a id="github" href="https://github.com/ondras/my-mind" title="GitHub project page"><img src="github.png" alt="GitHub project page" /></a>
 			<a id="privacy" href="https://my-mind.github.io/PRIVACY.txt">Privacy policy</a>
 			<button id="toggle" title="Toggle UI"></button>
-			<button data-command="help" title="Help"><img src="icons/help.png" alt="Help" /></button>
-			<button data-command="notes" title="Notes"><img src="icons/notes.png" alt="Notes" /></button>
+			<button data-command="help" title="Help"><img src="img/help.png" alt="Help" /></button>
+			<button data-command="notes" title="Notes"><img src="img/notes.png" alt="Notes" /></button>
 
-			<div id="throbber"></div>
+			<img id="throbber" src="img/throbber.gif" />
 		</div>
 
 
-		<div id="io" class="ui" hidden>
+		<div id="io" class="pane" hidden>
 			<h3></h3>
 			<p>
 				<span>Storage</span>
@@ -917,6 +898,13 @@
 
 			<div id="image">
 				<p class="desc">Export your design as a PNG image.</p>
+				<p data-for="save">
+					<span>Format</span>
+					<select class="format">
+						<option value="png">PNG</option>
+						<option value="svg">SVG</option>
+					</select>
+				</p>
 				<p data-for="save">
 					<button class="go"></button><button class="cancel">Cancel</button>
 				</p>
@@ -987,7 +975,7 @@
 			</div>
 		</div>
 
-		<div id="help" class="ui" hidden>
+		<div id="help" class="pane" hidden>
 			<h3>Help</h3>
 
 			<p><span>Navigation</span></p>
@@ -1003,12 +991,12 @@
 			<table class="other"></table>
 		</div>
 
-		<div id="notes" class="ui" hidden>
+		<div id="notes" class="pane" hidden>
 			<h3>Topic Notes</h3>
-			<iframe id="notes-editor" sandbox="allow-scripts" src="editor.html"></iframe>
+			<iframe sandbox="allow-scripts" src="editor.html"></iframe>
 		</div>
 
-		<div id="menu">
+		<div id="context-menu">
 			<button data-command="notes"></button>
 			<span></span>
 			<button data-command="insert-child"></button>
@@ -1022,27 +1010,19 @@
 			<button data-command="redo"></button>
 			<button data-command="center"></button>
 		</div>
-		<script>
-			window.onload = function() {
-				window.editor = {
-					postMessage: function(action, value) {
-						var iframeElm = document.getElementById('notes-editor');
-						iframeElm.contentWindow.postMessage({
-							action: action,
-							value: value
-						}, '*');
-					},
-					setContent: function(html) {
-						this.postMessage('setContent', html);
-					},
-					getContent: function() {
-						return this.postMessage('getContent');
-					}
-				};
 
-			}
-		</script>
-		<script src="/vendor/pell/src/pell.min.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-app.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-database.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase-auth.js"></script>
+
 		<script src="my-mind.js"></script>
+
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-383250-18"></script>
+		<script>
+		  window.dataLayer = window.dataLayer || [];
+		  function gtag(){dataLayer.push(arguments);}
+		  gtag("js", new Date());
+		  gtag("config", "UA-383250-18");
+		</script>
 	</body>
 </html>

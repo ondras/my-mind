@@ -1,7 +1,7 @@
-import { repo as commandRepo } from "./command/command.js";
+import { repo as commandRepo } from "../command/command.js";
 
 
-let node = document.querySelector<HTMLElement>("#menu");
+let node = document.querySelector<HTMLElement>("#context-menu");
 let port: HTMLElement;
 
 

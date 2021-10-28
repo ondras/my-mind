@@ -14,7 +14,7 @@ declare global {  // fixme
 	}
 }
 
-export const TOGGLE_SIZE = 7;
+export const TOGGLE_SIZE = 6;
 export type Value = string | number | null;
 export type Status = "computed" | boolean | null;
 export type Side = "" | "left" | "right";
@@ -45,7 +45,7 @@ export default class Item {
 	protected _parent: Item | Map | null = null;
 	protected _collapsed = false;
 	protected _icon: string | null = null;
-	protected _notes: string | null = null;
+	protected _notes = "";
 	protected _value: Value = null;
 	protected _status: Status = null;
 	protected _color: string | null = null;
@@ -95,6 +95,8 @@ export default class Item {
 			this.collapsed = !this.collapsed;
 			app.selectItem(this);
 		});
+
+		this.updateToggle();
 	}
 
 	get id() { return this._id; }
@@ -271,13 +273,6 @@ export default class Item {
 
 	select() {
 		this.dom.node.classList.add("current");
-		if (window.editor) {
-			if (this.notes) {
-				window.editor.setContent(this.notes);
-			} else {
-				window.editor.setContent('');
-			}
-		}
 		this.map.ensureItemVisibility(this);
 		pubsub.publish("item-select", this);
 	}
@@ -316,8 +311,8 @@ export default class Item {
 		dom.node.dataset.align = resolvedLayout.computeAlignment(this); // applies css => modifies dimensions (necessary for layout)
 
 		let fo = dom.content.parentNode as SVGForeignObjectElement;
-		fo.setAttribute("width", String(dom.content.offsetWidth));
-		fo.setAttribute("height", String(dom.content.offsetHeight));
+		fo.setAttribute("width", String(dom.content.scrollWidth));
+		fo.setAttribute("height", String(dom.content.scrollHeight));
 
 		dom.connectors.innerHTML = "";
 		resolvedLayout.update(this);
@@ -342,11 +337,8 @@ export default class Item {
 
 	get collapsed() { return this._collapsed; }
 	set collapsed(collapsed: boolean) {
-		const { node, toggle } = this.dom;
-
 		this._collapsed = collapsed;
-		node.classList.toggle("collapsed", collapsed);
-		toggle.querySelector("path").setAttribute("d", collapsed ? D_PLUS : D_MINUS);
+		this.updateToggle();
 
 		let children = !collapsed; // update children if expanded
 		this.update({children});
@@ -588,6 +580,12 @@ export default class Item {
 			let resolved = this.resolvedValue; // computed values are rounded to 3 decimals if need rounding
 			dom.value.textContent = String(Math.round(resolved) == resolved ? resolved : resolved.toFixed(3));
 		}
+	}
+
+	protected updateToggle() {
+		const { node, toggle } = this.dom;
+		node.classList.toggle("collapsed", this._collapsed);
+		toggle.querySelector("path").setAttribute("d", this._collapsed ? D_PLUS : D_MINUS);
 	}
 }
 
