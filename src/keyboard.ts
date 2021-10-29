@@ -2,6 +2,8 @@ import * as ui from "./ui/ui.js";
 import { repo as commandRepo, Key } from "./command/command.js";
 
 
+type EventProp = keyof KeyboardEvent;
+
 function handleEvent(e: KeyboardEvent) {
 	// ignore keyboard when the activeElement resides somewhere inside of the UI pane
 	if (ui.isActive()) { return; }
@@ -19,16 +21,8 @@ function handleEvent(e: KeyboardEvent) {
 
 export function init() {
 	window.addEventListener("keydown", handleEvent);
-	window.addEventListener("keypress", handleEvent);
 }
 
 function keyOK(key: Key, e: KeyboardEvent) {
-	type EventProp = keyof KeyboardEvent;
-
-	if ("keyCode" in key && e.type != "keydown") { return false; }
-	if ("charCode" in key && e.type != "keypress") { return false; }
-	for (let p in key) {
-		if (key[p as EventProp] != e[p as EventProp]) { return false; }
-	}
-	return true;
+	return Object.entries(key).every(([key, value]) => e[key as EventProp] == value);
 }

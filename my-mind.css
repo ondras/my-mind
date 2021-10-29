@@ -32,7 +32,7 @@ button:not(:disabled) {
   z-index: 1;
   left: 10px;
   bottom: 5px;
-  font-size: 1rem;
+  font-size: 14px;
 }
 #tip::before {
   content: "Tip: ";
@@ -194,6 +194,10 @@ button:not(:disabled) {
 }
 .pane#help[hidden] {
   transform: translate(-100%, 0);
+}
+.pane#help p {
+  text-transform: uppercase;
+  font-size: 80%;
 }
 .pane#help table {
   width: 100%;

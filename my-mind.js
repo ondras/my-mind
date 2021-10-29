@@ -99,34 +99,12 @@
   });
   var node3 = document.querySelector("#help");
   var MAP = {
-    8: "Backspace",
-    9: "Tab",
-    13: "\u21A9",
-    32: "Spacebar",
-    33: "PgUp",
-    34: "PgDown",
-    35: "End",
-    36: "Home",
-    37: "\u2190",
-    38: "\u2191",
-    39: "\u2192",
-    40: "\u2193",
-    45: "Insert",
-    46: "Delete",
-    65: "A",
-    68: "D",
-    83: "S",
-    87: "W",
-    112: "F1",
-    113: "F2",
-    114: "F3",
-    115: "F4",
-    116: "F5",
-    117: "F6",
-    118: "F7",
-    119: "F8",
-    120: "F9",
-    121: "F10",
+    "Enter": "\u21A9",
+    "Space": "Spacebar",
+    "ArrowLeft": "\u2190",
+    "ArrowUp": "\u2191",
+    "ArrowRight": "\u2192",
+    "ArrowDown": "\u2193",
     "-": "\u2212"
   };
   function toggle() {
@@ -192,12 +170,17 @@
     if (key.shiftKey) {
       str += "Shift+";
     }
-    if (key.charCode) {
-      var ch = String.fromCharCode(key.charCode);
+    if (key.key) {
+      let ch = key.key;
       str += MAP[ch] || ch.toUpperCase();
     }
-    if (key.keyCode) {
-      str += MAP[key.keyCode] || String.fromCharCode(key.keyCode);
+    if (key.code) {
+      let code = key.code;
+      if (code.startsWith("Key")) {
+        str += code.substring(3);
+      } else {
+        str += MAP[code] || code;
+      }
     }
     return str;
   }
@@ -902,15 +885,14 @@
         return side;
       }
       let counts = { left: 0, right: 0 };
-      let children = child.parent.children;
-      for (var i = 0; i < children.length; i++) {
-        let side2 = children[i].side;
+      child.parent.children.forEach((sibling) => {
+        let side2 = sibling.side;
         if (!side2) {
           side2 = counts.right > counts.left ? "left" : "right";
-          children[i].side = side2;
+          sibling.side = side2;
         }
         counts[side2]++;
-      }
+      });
       return child.side;
     }
     pickSibling(item, dir) {
@@ -2752,7 +2734,7 @@ ${text}`);
   new class Notes extends Command {
     constructor() {
       super("notes", "Notes");
-      this.keys = [{ keyCode: "M".charCodeAt(0), ctrlKey: true }];
+      this.keys = [{ code: "KeyM", ctrlKey: true }];
     }
     execute() {
       toggle2();
@@ -2761,7 +2743,7 @@ ${text}`);
   new class Undo extends Command {
     constructor() {
       super("undo", "Undo");
-      this.keys = [{ keyCode: "Z".charCodeAt(0), ctrlKey: true }];
+      this.keys = [{ code: "KeyZ", ctrlKey: true }];
     }
     get isValid() {
       return super.isValid && canBack();
@@ -2773,7 +2755,7 @@ ${text}`);
   new class Redo extends Command {
     constructor() {
       super("redo", "Redo");
-      this.keys = [{ keyCode: "Y".charCodeAt(0), ctrlKey: true }];
+      this.keys = [{ code: "KeyY", ctrlKey: true }];
     }
     get isValid() {
       return super.isValid && canForward();
@@ -2785,7 +2767,7 @@ ${text}`);
   new class InsertSibling extends Command {
     constructor() {
       super("insert-sibling", "Insert a sibling");
-      this.keys = [{ keyCode: 13 }];
+      this.keys = [{ code: "Enter" }];
     }
     execute() {
       let item = currentItem;
@@ -2806,8 +2788,8 @@ ${text}`);
     constructor() {
       super("insert-child", "Insert a child");
       this.keys = [
-        { keyCode: 9, ctrlKey: false },
-        { keyCode: 45 }
+        { code: "Tab", ctrlKey: false },
+        { code: "Insert" }
       ];
     }
     execute() {
@@ -2821,7 +2803,7 @@ ${text}`);
   new class Delete extends Command {
     constructor() {
       super("delete", "Delete an item");
-      this.keys = [{ keyCode: isMac() ? 8 : 46 }];
+      this.keys = [{ code: isMac() ? "Backspace" : "Delete" }];
     }
     get isValid() {
       return super.isValid && !currentItem.isRoot;
@@ -2835,8 +2817,8 @@ ${text}`);
     constructor() {
       super("swap", "Swap sibling");
       this.keys = [
-        { keyCode: 38, ctrlKey: true },
-        { keyCode: 40, ctrlKey: true }
+        { code: "ArrowUp", ctrlKey: true },
+        { code: "ArrowDown", ctrlKey: true }
       ];
     }
     execute(e) {
@@ -2844,7 +2826,7 @@ ${text}`);
       if (current2.isRoot || current2.parent.children.length < 2) {
         return;
       }
-      let diff = e.keyCode == 38 ? -1 : 1;
+      let diff = e.code == "ArrowUp" ? -1 : 1;
       let action2 = new Swap(current2, diff);
       action(action2);
     }
@@ -2853,8 +2835,8 @@ ${text}`);
     constructor() {
       super("side", "Change side");
       this.keys = [
-        { keyCode: 37, ctrlKey: true },
-        { keyCode: 39, ctrlKey: true }
+        { code: "ArrowLeft", ctrlKey: true },
+        { codew: "ArrowRight", ctrlKey: true }
       ];
     }
     execute(e) {
@@ -2862,7 +2844,7 @@ ${text}`);
       if (current2.isRoot || !current2.parent.isRoot) {
         return;
       }
-      let side = e.keyCode == 37 ? "left" : "right";
+      let side = e.code == "ArrowLeft" ? "left" : "right";
       let action2 = new SetSide(currentItem, side);
       action(action2);
     }
@@ -2870,7 +2852,7 @@ ${text}`);
   new class Save extends Command {
     constructor() {
       super("save", "Save map");
-      this.keys = [{ keyCode: "S".charCodeAt(0), ctrlKey: true, shiftKey: false }];
+      this.keys = [{ code: "KeyS", ctrlKey: true, shiftKey: false }];
     }
     execute() {
       quickSave();
@@ -2879,7 +2861,7 @@ ${text}`);
   new class SaveAs extends Command {
     constructor() {
       super("save-as", "Save as\u2026");
-      this.keys = [{ keyCode: "S".charCodeAt(0), ctrlKey: true, shiftKey: true }];
+      this.keys = [{ code: "KeyS", ctrlKey: true, shiftKey: true }];
     }
     execute() {
       show("save");
@@ -2888,7 +2870,7 @@ ${text}`);
   new class Load extends Command {
     constructor() {
       super("load", "Load map");
-      this.keys = [{ keyCode: "O".charCodeAt(0), ctrlKey: true }];
+      this.keys = [{ code: "KeyO", ctrlKey: true }];
     }
     execute() {
       show("load");
@@ -2897,7 +2879,7 @@ ${text}`);
   new class Center extends Command {
     constructor() {
       super("center", "Center map");
-      this.keys = [{ keyCode: 35 }];
+      this.keys = [{ code: "End" }];
     }
     execute() {
       currentMap.center();
@@ -2906,7 +2888,7 @@ ${text}`);
   new class New extends Command {
     constructor() {
       super("new", "New map");
-      this.keys = [{ keyCode: "N".charCodeAt(0), ctrlKey: true }];
+      this.keys = [{ code: "KeyN", ctrlKey: true }];
     }
     execute() {
       if (!confirm("Throw away your current map and start a new one?")) {
@@ -2919,25 +2901,25 @@ ${text}`);
   new class ZoomIn extends Command {
     constructor() {
       super("zoom-in", "Zoom in");
-      this.keys = [{ charCode: "+".charCodeAt(0) }];
+      this.keys = [{ key: "+" }];
     }
     execute() {
-      adjustFontSize(1);
+      currentMap.adjustFontSize(1);
     }
   }();
   new class ZoomOut extends Command {
     constructor() {
       super("zoom-out", "Zoom out");
-      this.keys = [{ charCode: "-".charCodeAt(0) }];
+      this.keys = [{ key: "-" }];
     }
     execute() {
-      adjustFontSize(-1);
+      currentMap.adjustFontSize(-1);
     }
   }();
   new class Help extends Command {
     constructor() {
       super("help", "Show/hide help");
-      this.keys = [{ charCode: "?".charCodeAt(0) }];
+      this.keys = [{ key: "?" }];
     }
     execute() {
       toggle();
@@ -2946,7 +2928,7 @@ ${text}`);
   new class UI extends Command {
     constructor() {
       super("ui", "Show/hide UI");
-      this.keys = [{ charCode: "*".charCodeAt(0) }];
+      this.keys = [{ key: "*" }];
     }
     execute() {
       toggle3();
@@ -2956,46 +2938,46 @@ ${text}`);
     constructor() {
       super("pan", "Pan the map");
       this.keys = [
-        { keyCode: "W".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false },
-        { keyCode: "A".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false },
-        { keyCode: "S".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false },
-        { keyCode: "D".charCodeAt(0), ctrlKey: false, altKey: false, metaKey: false }
+        { code: "KeyW", ctrlKey: false, altKey: false, metaKey: false },
+        { code: "KeyA", ctrlKey: false, altKey: false, metaKey: false },
+        { code: "KeyS", ctrlKey: false, altKey: false, metaKey: false },
+        { code: "KeyD", ctrlKey: false, altKey: false, metaKey: false }
       ];
-      this.chars = [];
+      this.codes = [];
     }
     execute(e) {
-      var ch = String.fromCharCode(e.keyCode);
-      var index2 = this.chars.indexOf(ch);
+      const { code } = e;
+      var index2 = this.codes.indexOf(code);
       if (index2 > -1) {
         return;
       }
-      if (!this.chars.length) {
+      if (!this.codes.length) {
         window.addEventListener("keyup", this);
         this.interval = setInterval(() => this.step(), 50);
       }
-      this.chars.push(ch);
+      this.codes.push(code);
       this.step();
     }
     step() {
       const dirs = {
-        "W": [0, 1],
-        "A": [1, 0],
-        "S": [0, -1],
-        "D": [-1, 0]
+        "KeyW": [0, 1],
+        "KeyA": [1, 0],
+        "KeyS": [0, -1],
+        "KeyD": [-1, 0]
       };
       let offset = [0, 0];
-      this.chars.forEach((ch) => {
-        offset[0] += dirs[ch][0] * PAN_AMOUNT;
-        offset[1] += dirs[ch][1] * PAN_AMOUNT;
+      this.codes.forEach((code) => {
+        offset[0] += dirs[code][0] * PAN_AMOUNT;
+        offset[1] += dirs[code][1] * PAN_AMOUNT;
       });
       currentMap.moveBy(offset);
     }
     handleEvent(e) {
-      var ch = String.fromCharCode(e.keyCode);
-      var index2 = this.chars.indexOf(ch);
+      const { code } = e;
+      var index2 = this.codes.indexOf(code);
       if (index2 > -1) {
-        this.chars.splice(index2, 1);
-        if (!this.chars.length) {
+        this.codes.splice(index2, 1);
+        if (!this.codes.length) {
           window.removeEventListener("keyup", this);
           clearInterval(this.interval);
         }
@@ -3005,7 +2987,7 @@ ${text}`);
   new class Fold extends Command {
     constructor() {
       super("fold", "Fold/Unfold");
-      this.keys = [{ charCode: "f".charCodeAt(0), ctrlKey: false }];
+      this.keys = [{ key: "f", ctrlKey: false }];
     }
     execute() {
       let item = currentItem;
@@ -3280,12 +3262,17 @@ ${text}`);
       this.updateIcon();
       this.updateValue();
       const { resolvedLayout, resolvedShape, dom } = this;
-      dom.node.dataset.shape = resolvedShape.id;
-      dom.node.dataset.align = resolvedLayout.computeAlignment(this);
-      let fo = dom.content.parentNode;
-      fo.setAttribute("width", String(dom.content.scrollWidth));
-      fo.setAttribute("height", String(dom.content.scrollHeight));
-      dom.connectors.innerHTML = "";
+      const { content, node: node10, connectors } = dom;
+      node10.dataset.shape = resolvedShape.id;
+      node10.dataset.align = resolvedLayout.computeAlignment(this);
+      let fo = content.parentNode;
+      let size = [
+        Math.max(content.offsetWidth, content.scrollWidth),
+        Math.max(content.offsetHeight, content.scrollHeight)
+      ];
+      fo.setAttribute("width", String(size[0]));
+      fo.setAttribute("height", String(size[1]));
+      connectors.innerHTML = "";
       resolvedLayout.update(this);
       resolvedShape.update(this);
       if (options.parent && parent) {
@@ -3507,7 +3494,7 @@ ${text}`);
           this.map.ensureItemVisibility(this);
           break;
         case "keydown":
-          if (e.keyCode == 9) {
+          if (e.code == "Tab") {
             e.preventDefault();
           }
           break;
@@ -3624,11 +3611,13 @@ ${text}`);
       this.node = node2("svg");
       this.style = node("style");
       this.position = [0, 0];
+      this.fontSize = 15;
       let resolvedOptions = Object.assign({
         root: "My Mind Map",
         layout: repo2.get("map")
       }, options);
       this.style.textContent = css;
+      this.node.style.fontSize = `${this.fontSize}px`;
       let root = new Item();
       root.text = resolvedOptions.root;
       root.layout = resolvedOptions.layout;
@@ -3656,6 +3645,12 @@ ${text}`);
       node10.innerHTML = "";
       node10.append(root.dom.node, style);
       root.parent = this;
+    }
+    adjustFontSize(diff) {
+      this.fontSize = Math.max(8, this.fontSize + 2 * diff);
+      this.node.style.fontSize = `${this.fontSize}px`;
+      this.update();
+      this.ensureItemVisibility(currentItem);
     }
     mergeWith(data) {
       let ids = [];
@@ -3880,21 +3875,9 @@ ${text}`);
   }
   function init14() {
     window.addEventListener("keydown", handleEvent2);
-    window.addEventListener("keypress", handleEvent2);
   }
   function keyOK(key, e) {
-    if ("keyCode" in key && e.type != "keydown") {
-      return false;
-    }
-    if ("charCode" in key && e.type != "keypress") {
-      return false;
-    }
-    for (let p in key) {
-      if (key[p] != e[p]) {
-        return false;
-      }
-    }
-    return true;
+    return Object.entries(key).every(([key2, value]) => e[key2] == value);
   }
 
   // .js/mouse.js
@@ -3931,7 +3914,7 @@ ${text}`);
         return;
       }
       let dir = deltaY > 0 ? -1 : 1;
-      adjustFontSize(dir);
+      currentMap.adjustFontSize(dir);
     });
     port2.addEventListener("contextmenu", (e) => {
       onDragEnd(e);
@@ -4243,20 +4226,20 @@ ${text}`);
     constructor() {
       super("select", "Move selection");
       this.keys = [
-        { keyCode: 38, ctrlKey: false },
-        { keyCode: 37, ctrlKey: false },
-        { keyCode: 40, ctrlKey: false },
-        { keyCode: 39, ctrlKey: false }
+        { code: "ArrowLeft", ctrlKey: false },
+        { code: "ArrowUp", ctrlKey: false },
+        { code: "ArrowRight", ctrlKey: false },
+        { code: "ArrowDown", ctrlKey: false }
       ];
     }
     execute(e) {
       let dirs = {
-        37: "left",
-        38: "top",
-        39: "right",
-        40: "bottom"
+        "ArrowLeft": "left",
+        "ArrowUp": "top",
+        "ArrowRight": "right",
+        "ArrowDown": "bottom"
       };
-      let dir = dirs[e.keyCode];
+      let dir = dirs[e.code];
       let layout = currentItem.resolvedLayout;
       let item = layout.pick(currentItem, dir);
       selectItem(item);
@@ -4265,7 +4248,7 @@ ${text}`);
   new class SelectRoot extends Command {
     constructor() {
       super("select-root", "Select root");
-      this.keys = [{ keyCode: 36 }];
+      this.keys = [{ code: "Home" }];
     }
     execute() {
       let item = currentItem;
@@ -4279,7 +4262,7 @@ ${text}`);
     new class SelectParent extends Command {
       constructor() {
         super("select-parent", "Select parent");
-        this.keys = [{ keyCode: 8 }];
+        this.keys = [{ code: "Backspace" }];
       }
       execute() {
         if (currentItem.isRoot) {
@@ -4295,8 +4278,8 @@ ${text}`);
     constructor() {
       super("edit", "Edit item");
       this.keys = [
-        { keyCode: 32 },
-        { keyCode: 113 }
+        { code: "Space" },
+        { code: "F2" }
       ];
     }
     execute() {
@@ -4306,7 +4289,7 @@ ${text}`);
   new class Finish extends Command {
     constructor() {
       super("finish", "Finish editing");
-      this.keys = [{ keyCode: 13, altKey: false, ctrlKey: false, shiftKey: false }];
+      this.keys = [{ code: "Enter", altKey: false, ctrlKey: false, shiftKey: false }];
       this.editMode = true;
     }
     execute() {
@@ -4324,8 +4307,8 @@ ${text}`);
     constructor() {
       super("newline", "Line break");
       this.keys = [
-        { keyCode: 13, shiftKey: true },
-        { keyCode: 13, ctrlKey: true }
+        { code: "Enter", shiftKey: true },
+        { code: "Enter", ctrlKey: true }
       ];
       this.editMode = true;
     }
@@ -4340,7 +4323,7 @@ ${text}`);
   new class Cancel extends Command {
     constructor() {
       super("cancel", "Cancel");
-      this.keys = [{ keyCode: 27 }];
+      this.keys = [{ code: "Escape" }];
       this.editMode = null;
     }
     execute() {
@@ -4381,35 +4364,35 @@ ${text}`);
   new class Bold extends Style {
     constructor() {
       super("bold", "Bold");
-      this.keys = [{ keyCode: "B".charCodeAt(0), ctrlKey: true }];
+      this.keys = [{ code: "KeyB", ctrlKey: true }];
       this.command = "bold";
     }
   }();
   new class Underline2 extends Style {
     constructor() {
       super("underline", "Underline");
-      this.keys = [{ keyCode: "U".charCodeAt(0), ctrlKey: true }];
+      this.keys = [{ code: "KeyU", ctrlKey: true }];
       this.command = "underline";
     }
   }();
   new class Italic extends Style {
     constructor() {
       super("italic", "Italic");
-      this.keys = [{ keyCode: "I".charCodeAt(0), ctrlKey: true }];
+      this.keys = [{ code: "KeyI", ctrlKey: true }];
       this.command = "italic";
     }
   }();
   new class Strikethrough extends Style {
     constructor() {
       super("strikethrough", "Strike-through");
-      this.keys = [{ keyCode: "S".charCodeAt(0), ctrlKey: true }];
+      this.keys = [{ code: "KeyS", ctrlKey: true }];
       this.command = "strikeThrough";
     }
   }();
   new class Value extends Command {
     constructor() {
       super("value", "Set value");
-      this.keys = [{ charCode: "v".charCodeAt(0), ctrlKey: false, metaKey: false }];
+      this.keys = [{ key: "v", ctrlKey: false, metaKey: false }];
     }
     execute() {
       let item = currentItem;
@@ -4429,7 +4412,7 @@ ${text}`);
   new class Yes extends Command {
     constructor() {
       super("yes", "Yes");
-      this.keys = [{ charCode: "y".charCodeAt(0), ctrlKey: false }];
+      this.keys = [{ key: "y", ctrlKey: false }];
     }
     execute() {
       let item = currentItem;
@@ -4441,11 +4424,11 @@ ${text}`);
   new class No extends Command {
     constructor() {
       super("no", "No");
-      this.keys = [{ charCode: "n".charCodeAt(0), ctrlKey: false }];
+      this.keys = [{ key: "n", ctrlKey: false }];
     }
     execute() {
       let item = currentItem;
-      let status = item.status === false ? null : true;
+      let status = item.status === false ? null : false;
       let action2 = new SetStatus(item, status);
       action(action2);
     }
@@ -4453,7 +4436,7 @@ ${text}`);
   new class Computed extends Command {
     constructor() {
       super("computed", "Computed");
-      this.keys = [{ charCode: "c".charCodeAt(0), ctrlKey: false, metaKey: false }];
+      this.keys = [{ key: "c", ctrlKey: false, metaKey: false }];
     }
     execute() {
       let item = currentItem;
@@ -4466,7 +4449,6 @@ ${text}`);
   // .js/my-mind.js
   var port3 = document.querySelector("main");
   var throbber = document.querySelector("#throbber");
-  var fontSize = 100;
   var currentMap;
   var currentItem;
   var editing = false;
@@ -4489,12 +4471,6 @@ ${text}`);
     }
     currentItem = item;
     currentItem.select();
-    currentMap.ensureItemVisibility(currentItem);
-  }
-  function adjustFontSize(diff) {
-    fontSize = Math.max(30, fontSize + 10 * diff);
-    port3.style.fontSize = `${fontSize}%`;
-    currentMap.update();
     currentMap.ensureItemVisibility(currentItem);
   }
   function setThrobber(visible) {

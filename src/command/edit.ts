@@ -9,8 +9,8 @@ import { ChildItem, Status } from "../item.js";
 
 new (class Edit extends Command {
 	keys = [
-		{keyCode: 32},
-		{keyCode: 113}
+		{code:"Space"},
+		{code:"F2"}
 	];
 
 	constructor() { super("edit", "Edit item"); }
@@ -19,7 +19,7 @@ new (class Edit extends Command {
 });
 
 new (class Finish extends Command {
-	keys = [{keyCode: 13, altKey:false, ctrlKey:false, shiftKey:false}];
+	keys = [{code:"Enter", altKey:false, ctrlKey:false, shiftKey:false}];
 	editMode = true;
 
 	constructor() { super("finish", "Finish editing"); }
@@ -38,8 +38,8 @@ new (class Finish extends Command {
 
 new (class Newline extends Command {
 	keys = [
-		{keyCode: 13, shiftKey:true},
-		{keyCode: 13, ctrlKey:true}
+		{code:"Enter", shiftKey:true},
+		{code:"Enter", ctrlKey:true}
 	];
 	editMode = true;
 
@@ -55,7 +55,7 @@ new (class Newline extends Command {
 });
 
 new (class Cancel extends Command {
-	keys = [{keyCode: 27}];
+	keys = [{code:"Escape"}];
 	editMode = null;
 
 	constructor() { super("cancel", "Cancel"); }
@@ -97,35 +97,35 @@ abstract class Style extends Command {
 }
 
 new (class Bold extends Style {
-	keys = [{keyCode: "B".charCodeAt(0), ctrlKey:true}];
+	keys = [{code:"KeyB", ctrlKey:true}];
 	command = "bold";
 
 	constructor() { super("bold", "Bold"); }
 });
 
 new (class Underline extends Style {
-	keys = [{keyCode: "U".charCodeAt(0), ctrlKey:true}];
+	keys = [{code:"KeyU", ctrlKey:true}];
 	command = "underline";
 
 	constructor() { super("underline", "Underline"); }
 });
 
 new (class Italic extends Style {
-	keys = [{keyCode: "I".charCodeAt(0), ctrlKey:true}];
+	keys = [{code:"KeyI", ctrlKey:true}];
 	command = "italic";
 
 	constructor() { super("italic", "Italic"); }
 });
 
 new (class Strikethrough extends Style {
-	keys = [{keyCode: "S".charCodeAt(0), ctrlKey:true}];
+	keys = [{code:"KeyS", ctrlKey:true}];
 	command = "strikeThrough";
 
 	constructor() { super("strikethrough", "Strike-through"); }
 });
 
 new (class Value extends Command {
-	keys = [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}];
+	keys = [{key:"v", ctrlKey:false, metaKey:false}];
 
 	constructor() { super("value", "Set value"); }
 
@@ -144,7 +144,7 @@ new (class Value extends Command {
 });
 
 new (class Yes extends Command {
-	keys = [{charCode: "y".charCodeAt(0), ctrlKey:false}];
+	keys = [{key:"y", ctrlKey:false}];
 
 	constructor() { super("yes", "Yes"); }
 
@@ -157,20 +157,20 @@ new (class Yes extends Command {
 });
 
 new (class No extends Command {
-	keys = [{charCode: "n".charCodeAt(0), ctrlKey:false}];
+	keys = [{key:"n", ctrlKey:false}];
 
 	constructor() { super("no", "No"); }
 
 	execute() {
 		let item = app.currentItem;
-		let status = (item.status === false ? null : true);
+		let status = (item.status === false ? null : false);
 		let action = new actions.SetStatus(item, status);
 		app.action(action);
 	}
 });
 
 new (class Computed extends Command {
-	keys = [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}];
+	keys = [{key:"c", ctrlKey:false, metaKey:false}];
 
 	constructor() { super("computed", "Computed"); }
 

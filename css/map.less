@@ -2,26 +2,22 @@
 	font-family: source sans pro, sans-serif;
 }
 
-svg {
-	font-size: 15px;
+// root item
+svg > .item {
+	> foreignObject > .content {
+		font-weight: bold;
+		border-width: 2px;
+		font-size: 140%;
+	}
 
-	// root item
-	> .item {
-		> foreignObject > .content {
-			font-weight: bold;
-			border-width: 2px;
-			font-size: 140%;
-		}
+	> .toggle {
+		display: none;
+	}
 
-		> .toggle {
-			display: none;
-		}
-
-		// first children
-		> .item > foreignObject > .content {
-			border-width: 2px;
-			font-size: 120%;
-		}
+	// first children
+	> .item > foreignObject > .content {
+		border-width: 2px;
+		font-size: 120%;
 	}
 }
 

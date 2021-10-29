@@ -33,7 +33,7 @@ export default abstract class Command {
 
 
 new (class Notes extends Command {
-	keys = [{keyCode: "M".charCodeAt(0), ctrlKey: true}];
+	keys = [{code:"KeyM", ctrlKey:true}];
 
 	constructor() { super("notes", "Notes"); }
 
@@ -41,7 +41,7 @@ new (class Notes extends Command {
 })();
 
 new (class Undo extends Command {
-	keys = [{keyCode: "Z".charCodeAt(0), ctrlKey: true}];
+	keys = [{code:"KeyZ", ctrlKey:true}];
 
 	constructor() { super("undo", "Undo"); }
 
@@ -52,7 +52,7 @@ new (class Undo extends Command {
 
 
 new (class Redo extends Command {
-	keys = [{keyCode: "Y".charCodeAt(0), ctrlKey: true}];
+	keys = [{code:"KeyY", ctrlKey:true}];
 
 	constructor() { super("redo", "Redo"); }
 
@@ -62,7 +62,7 @@ new (class Redo extends Command {
 });
 
 new (class InsertSibling extends Command {
-	keys = [{keyCode: 13}];
+	keys = [{code:"Enter"}];
 
 	constructor() { super("insert-sibling", "Insert a sibling"); }
 
@@ -86,8 +86,8 @@ new (class InsertSibling extends Command {
 
 new (class InsertChild extends Command {
 	keys = [
-		{keyCode: 9, ctrlKey:false},
-		{keyCode: 45}
+		{code:"Tab", ctrlKey:false},
+		{code:"Insert"}
 	];
 
 	constructor() { super("insert-child", "Insert a child"); }
@@ -104,7 +104,7 @@ new (class InsertChild extends Command {
 });
 
 new (class Delete extends Command {
-	keys = [{keyCode: isMac() ? 8 : 46}]; // Mac keyboards' "delete" button generates 8 (backspace)
+	keys = [{code: isMac() ? "Backspace" : "Delete"}]; // Mac keyboards' "delete" button generates "Backspace"
 
 	constructor() { super("delete", "Delete an item"); }
 
@@ -119,8 +119,8 @@ new (class Delete extends Command {
 
 new (class Swap extends Command {
 	keys = [
-		{keyCode: 38, ctrlKey:true},
-		{keyCode: 40, ctrlKey:true},
+		{code:"ArrowUp", ctrlKey:true},
+		{code:"ArrowDown", ctrlKey:true},
 	];
 
 	constructor() { super("swap", "Swap sibling"); }
@@ -129,7 +129,7 @@ new (class Swap extends Command {
 		let current = app.currentItem as ChildItem;
 		if (current.isRoot || current.parent.children.length < 2) { return; }
 
-		let diff: -1 | 1 = (e.keyCode == 38 ? -1 : 1);
+		let diff: -1 | 1 = (e.code == "ArrowUp" ? -1 : 1);
 		let action = new actions.Swap(current, diff);
 		app.action(action);
 	}
@@ -137,24 +137,25 @@ new (class Swap extends Command {
 
 new (class SetSide extends Command {
 	keys = [
-		{keyCode: 37, ctrlKey:true},
-		{keyCode: 39, ctrlKey:true}
+		{code:"ArrowLeft", ctrlKey:true},
+		{codew:"ArrowRight", ctrlKey:true}
 	];
 
 	constructor() { super("side", "Change side"); }
 
 	execute(e: KeyboardEvent) {
 		let current = app.currentItem as ChildItem;
+		// applies only to direct root descendants
 		if (current.isRoot || !current.parent.isRoot) { return; }
 
-		let side: Side = (e.keyCode == 37 ? "left" : "right");
+		let side: Side = (e.code == "ArrowLeft" ? "left" : "right");
 		let action = new actions.SetSide(app.currentItem, side);
 		app.action(action);
 	}
 });
 
 new (class Save extends Command {
-	keys = [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:false}];
+	keys = [{code:"KeyS", ctrlKey:true, shiftKey:false}];
 
 	constructor() { super("save", "Save map"); }
 
@@ -162,7 +163,7 @@ new (class Save extends Command {
 });
 
 new (class SaveAs extends Command {
-	keys = [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}];
+	keys = [{code:"KeyS", ctrlKey:true, shiftKey:true}];
 
 	constructor() { super("save-as", "Save as…"); }
 
@@ -170,7 +171,7 @@ new (class SaveAs extends Command {
 });
 
 new (class Load extends Command {
-	keys = [{keyCode: "O".charCodeAt(0), ctrlKey:true}];
+	keys = [{code:"KeyO", ctrlKey:true}];
 
 	constructor() { super("load", "Load map"); }
 
@@ -178,7 +179,7 @@ new (class Load extends Command {
 });
 
 new (class Center extends Command {
-	keys = [{keyCode: 35}];
+	keys = [{code:"End"}];
 
 	constructor() { super("center", "Center map"); }
 
@@ -186,7 +187,7 @@ new (class Center extends Command {
 });
 
 new (class New extends Command {
-	keys = [{keyCode: "N".charCodeAt(0), ctrlKey:true}];
+	keys = [{code:"KeyN", ctrlKey:true}];
 
 	constructor() { super("new", "New map"); }
 
@@ -198,23 +199,23 @@ new (class New extends Command {
 });
 
 new (class ZoomIn extends Command {
-	keys = [{charCode:"+".charCodeAt(0)}];
+	keys = [{key:"+"}];
 
 	constructor() { super("zoom-in", "Zoom in"); }
 
-	execute() { app.adjustFontSize(1); }
+	execute() { app.currentMap.adjustFontSize(1); }
 });
 
 new (class ZoomOut extends Command {
-	keys = [{charCode:"-".charCodeAt(0)}];
+	keys = [{key:"-"}];
 
 	constructor() { super("zoom-out", "Zoom out"); }
 
-	execute() { app.adjustFontSize(-1); }
+	execute() { app.currentMap.adjustFontSize(-1); }
 });
 
 new (class Help extends Command {
-	keys = [{charCode: "?".charCodeAt(0)}];
+	keys = [{key:"?"}];
 
 	constructor() { super("help", "Show/hide help"); }
 
@@ -222,7 +223,7 @@ new (class Help extends Command {
 });
 
 new (class UI extends Command {
-	keys = [{charCode: "*".charCodeAt(0)}];
+	keys = [{key:"*"}];
 
 	constructor() { super("ui", "Show/hide UI"); }
 
@@ -231,54 +232,54 @@ new (class UI extends Command {
 
 new (class Pan extends Command {
 	keys = [
-		{keyCode: "W".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
-		{keyCode: "A".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
-		{keyCode: "S".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
-		{keyCode: "D".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false}
+		{code:"KeyW", ctrlKey:false, altKey:false, metaKey:false},
+		{code:"KeyA", ctrlKey:false, altKey:false, metaKey:false},
+		{code:"KeyS", ctrlKey:false, altKey:false, metaKey:false},
+		{code:"KeyD", ctrlKey:false, altKey:false, metaKey:false}
 	];
 
-	protected chars: string[] = [];
+	protected codes: string[] = [];
 	protected interval?: ReturnType<typeof setTimeout>;
 
 	constructor() { super("pan", "Pan the map"); }
 
 	execute(e: KeyboardEvent) {
-		var ch = String.fromCharCode(e.keyCode);
-		var index = this.chars.indexOf(ch);
+		const { code } = e;
+		var index = this.codes.indexOf(code);
 		if (index > -1) { return; }
 
-		if (!this.chars.length) {
+		if (!this.codes.length) {
 			window.addEventListener("keyup", this);
 			this.interval = setInterval(() => this.step(), 50);
 		}
 
-		this.chars.push(ch);
+		this.codes.push(code);
 		this.step();
 	}
 
 	protected step() {
 		const dirs: Record<string, number[]> = {
-			"W": [0, 1],
-			"A": [1, 0],
-			"S": [0, -1],
-			"D": [-1, 0]
+			"KeyW": [0, 1],
+			"KeyA": [1, 0],
+			"KeyS": [0, -1],
+			"KeyD": [-1, 0]
 		}
 		let offset = [0, 0];
 
-		this.chars.forEach(ch => {
-			offset[0] += dirs[ch][0] * PAN_AMOUNT;
-			offset[1] += dirs[ch][1] * PAN_AMOUNT;
+		this.codes.forEach(code => {
+			offset[0] += dirs[code][0] * PAN_AMOUNT;
+			offset[1] += dirs[code][1] * PAN_AMOUNT;
 		});
 
 		app.currentMap.moveBy(offset);
 	}
 
 	handleEvent(e: KeyboardEvent) {
-		var ch = String.fromCharCode(e.keyCode);
-		var index = this.chars.indexOf(ch);
+		const { code } = e;
+		var index = this.codes.indexOf(code);
 		if (index > -1) {
-			this.chars.splice(index, 1);
-			if (!this.chars.length) {
+			this.codes.splice(index, 1);
+			if (!this.codes.length) {
 				window.removeEventListener("keyup", this);
 				clearInterval(this.interval);
 			}
@@ -287,7 +288,7 @@ new (class Pan extends Command {
 });
 
 new (class Fold extends Command {
-	keys = [{charCode: "f".charCodeAt(0), ctrlKey:false}];
+	keys = [{key: "f", ctrlKey:false}];
 
 	constructor() { super("fold", "Fold/Unfold"); }
 

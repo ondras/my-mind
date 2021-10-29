@@ -2,35 +2,13 @@ import { repo as commandRepo, Key } from "../command/command.js";
 
 
 const node = document.querySelector<HTMLElement>("#help")!;
-const MAP: Record<number | string, string> = {
-	8: "Backspace",
-	9: "Tab",
-	13: "↩",
-	32: "Spacebar",
-	33: "PgUp",
-	34: "PgDown",
-	35: "End",
-	36: "Home",
-	37: "←",
-	38: "↑",
-	39: "→",
-	40: "↓",
-	45: "Insert",
-	46: "Delete",
-	65: "A",
-	68: "D",
-	83: "S",
-	87: "W",
-	112: "F1",
-	113: "F2",
-	114: "F3",
-	115: "F4",
-	116: "F5",
-	117: "F6",
-	118: "F7",
-	119: "F8",
-	120: "F9",
-	121: "F10",
+const MAP: Record<string, string> = {
+	"Enter": "↩",
+	"Space": "Spacebar",
+	"ArrowLeft": "←",
+	"ArrowUp": "↑",
+	"ArrowRight": "→",
+	"ArrowDown": "↓",
 	"-": "−"
 }
 
@@ -97,11 +75,18 @@ function formatKey(key: Key) {
 	if (key.ctrlKey) { str += "Ctrl+"; }
 	if (key.altKey) { str += "Alt+"; }
 	if (key.shiftKey) { str += "Shift+"; }
-	if (key.charCode) {
-		var ch = String.fromCharCode(key.charCode);
+	if (key.key) {
+		let ch = key.key;
 		str += MAP[ch] || ch.toUpperCase();
 	}
-	if (key.keyCode) { str += MAP[key.keyCode] || String.fromCharCode(key.keyCode); }
+	if (key.code) {
+		let code = key.code;
+		if (code.startsWith("Key")) {
+			str += code.substring(3);
+		} else {
+			str += MAP[code] || code;
+		}
+	}
 	return str;
 }
 

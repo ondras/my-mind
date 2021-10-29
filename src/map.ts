@@ -31,6 +31,7 @@ export default class Map {
 	protected style = html.node("style");
 	protected _root!: Item;
 	protected position = [0, 0];
+	protected fontSize = 15;
 
 	constructor(options?: Partial<Options>) {
 		let resolvedOptions = Object.assign({
@@ -39,6 +40,7 @@ export default class Map {
 		}, options);
 
 		this.style.textContent = css;
+		this.node.style.fontSize = `${this.fontSize}px`;
 
 		let root = new Item();
 		root.text = resolvedOptions.root;
@@ -72,6 +74,14 @@ export default class Map {
 
 		root.parent = this;
 	}
+
+	adjustFontSize(diff: -1 | 1) {
+		this.fontSize = Math.max(8, this.fontSize + 2*diff);
+		this.node.style.fontSize = `${this.fontSize}px`;
+		this.update();
+		this.ensureItemVisibility(app.currentItem);
+	}
+
 
 	mergeWith(data: Jsonified) {
 		// store a sequence of nodes to be selected when merge is over

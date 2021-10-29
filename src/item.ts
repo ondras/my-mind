@@ -312,15 +312,20 @@ export default class Item {
 		this.updateValue();
 
 		const { resolvedLayout, resolvedShape, dom } = this;
+		const { content, node, connectors } = dom;
 
-		dom.node.dataset.shape = resolvedShape.id; // applies css => modifies dimensions (necessary for layout)
-		dom.node.dataset.align = resolvedLayout.computeAlignment(this); // applies css => modifies dimensions (necessary for layout)
+		node.dataset.shape = resolvedShape.id; // applies css => modifies dimensions (necessary for layout)
+		node.dataset.align = resolvedLayout.computeAlignment(this); // applies css => modifies dimensions (necessary for layout)
 
-		let fo = dom.content.parentNode as SVGForeignObjectElement;
-		fo.setAttribute("width", String(dom.content.scrollWidth));
-		fo.setAttribute("height", String(dom.content.scrollHeight));
+		let fo = content.parentNode as SVGForeignObjectElement;
+		let size = [
+			Math.max(content.offsetWidth, content.scrollWidth),
+			Math.max(content.offsetHeight, content.scrollHeight)
+		]
+		fo.setAttribute("width", String(size[0]));
+		fo.setAttribute("height", String(size[1]));
 
-		dom.connectors.innerHTML = "";
+		connectors.innerHTML = "";
 		resolvedLayout.update(this);
 		resolvedShape.update(this); // needs layout -> draws second
 
@@ -534,7 +539,7 @@ export default class Item {
 			break;
 
 			case "keydown":
-				if ((e as KeyboardEvent).keyCode == 9) { e.preventDefault(); } // TAB has a special meaning in this app, do not use it to change focus
+				if ((e as KeyboardEvent).code == "Tab") { e.preventDefault(); } // TAB has a special meaning in this app, do not use it to change focus
 			break;
 
 			case "blur":

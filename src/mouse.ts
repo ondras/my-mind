@@ -57,7 +57,7 @@ export function init(port_: HTMLElement) {
 		if (!deltaY) { return; }
 
 		let dir: -1 | 1 = (deltaY > 0 ? -1 : 1);
-		app.adjustFontSize(dir);
+		app.currentMap.adjustFontSize(dir);
 	});
 
 	port.addEventListener("contextmenu", e => {

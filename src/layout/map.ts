@@ -26,15 +26,14 @@ export default class MapLayout extends GraphLayout {
 		if (side) { return side; }
 
 		let counts = {left:0, right:0};
-		let children = child.parent.children;
-		for (var i=0;i<children.length;i++) {
-			let side = children[i].side;
+		child.parent.children.forEach(sibling => {
+			let side = sibling.side;
 			if (!side) {
 				side = (counts.right > counts.left ? "left" : "right");
-				children[i].side = side;
+				sibling.side = side;
 			}
 			counts[side]++;
-		}
+		});
 
 		return child.side as Direction; // we have a guaranteed side now
 	}

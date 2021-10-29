@@ -1,9 +1,6 @@
 * {
   font-family: source sans pro, sans-serif;
 }
-svg {
-  font-size: 15px;
-}
 svg > .item > foreignObject > .content {
   font-weight: bold;
   border-width: 2px;

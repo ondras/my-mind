@@ -16,7 +16,6 @@ import "./command/edit.js";
 
 const port = document.querySelector<HTMLElement>("main")!;
 const throbber = document.querySelector<HTMLElement>("#throbber")!;
-let fontSize = 100;
 
 export let currentMap: Map;
 export let currentItem: Item;
@@ -42,13 +41,6 @@ export function selectItem(item: Item) {
 	}
 	currentItem = item;
 	currentItem.select();
-	currentMap.ensureItemVisibility(currentItem);
-}
-
-export function adjustFontSize(diff: -1 | 1) {
-	fontSize = Math.max(30, fontSize + 10*diff);
-	port.style.fontSize = `${fontSize}%`;
-	currentMap.update();
 	currentMap.ensureItemVisibility(currentItem);
 }
 
