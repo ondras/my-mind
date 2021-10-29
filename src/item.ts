@@ -68,7 +68,7 @@ export default class Item {
 
 	readonly children: ChildItem[] = [];
 
-	static fromJSON(data) {
+	static fromJSON(data: Jsonified) {
 		return new this().fromJSON(data);
 	}
 
@@ -76,17 +76,19 @@ export default class Item {
 		const { dom } = this;
 		dom.node.classList.add("item");
 		dom.content.classList.add("content");
-		dom.notes.classList.add("notes-indicator");
+		dom.notes.classList.add("notes");
 		dom.status.classList.add("status");
 		dom.icon.classList.add("icon");
 		dom.value.classList.add("value");
 		dom.text.classList.add("text");
 		dom.icon.classList.add("icon");
 
-		let foContent = svg.foreignObject();
-		dom.node.append(dom.connectors, foContent);
+		this.notes = ""; // hide the node
 
-		foContent.append(dom.content);
+		let fo = svg.foreignObject();
+		dom.node.append(dom.connectors, fo);
+
+		fo.append(dom.content);
 
 		dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
 		/* toggle+children are appended when children exist */
@@ -332,7 +334,7 @@ export default class Item {
 	get notes() { return this._notes; }
 	set notes(notes: string) {
 		this._notes = notes;
-		this.dom.notes.classList.toggle("notes-indicator-visible", !!notes);
+		this.dom.notes.hidden = !notes;
 	}
 
 	get collapsed() { return this._collapsed; }

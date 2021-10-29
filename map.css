@@ -1,110 +1,99 @@
 * {
   font-family: source sans pro, sans-serif;
 }
-.item.cut {
-  opacity: 0.5;
+svg {
+  font-size: 15px;
 }
-.item.collapsed .item {
+svg > .item > foreignObject > .content {
+  font-weight: bold;
+  border-width: 2px;
+  font-size: 140%;
+}
+svg > .item > .toggle {
   display: none;
+}
+svg > .item > .item > foreignObject > .content {
+  border-width: 2px;
+  font-size: 120%;
+}
+.item .cut {
+  opacity: 0.5;
 }
 .item .icon {
   font-size: x-large;
 }
 .item foreignObject {
-  /* shadow */
   overflow: visible;
 }
-.content {
+.item .content {
   position: relative;
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
   cursor: pointer;
 }
-.content > * {
+.item .content > * {
   flex: none;
 }
-.text {
+.item.collapsed .item {
+  display: none;
+}
+.item .text {
   text-align: center;
   min-width: 0.5em;
   min-height: 1.3em;
   line-height: 1.3em;
   outline: none;
 }
-[data-align=left] > foreignObject > .content > :not(.text) {
-  margin-right: 0.3em;
-}
-[data-align=right] > foreignObject > .content {
-  flex-direction: row-reverse;
-}
-[data-align=right] > foreignObject > .content > :not(.text) {
-  margin-left: 0.3em;
-}
-.value {
+.item .value {
   opacity: 0.7;
 }
-.value:not(:empty):before {
+.item .value:not(:empty)::before {
   content: "(";
 }
-.value:not(:empty):after {
+.item .value:not(:empty)::after {
   content: ")";
 }
-.status {
+.item .status {
   font-size: 150%;
   line-height: 1;
 }
-.status.yes:after {
+.item .status.yes::after {
   content: "✔";
   color: #0f0;
 }
-.status.no:after {
+.item .status.no::after {
   content: "✘";
   color: #f00;
 }
-canvas {
-  position: absolute;
-  left: 0;
-  top: 0;
+.item .toggle {
+  cursor: pointer;
 }
-.notes-indicator {
+.item .toggle:not(:hover) {
+  opacity: 0.7;
+}
+.item .toggle circle {
+  stroke: #00f;
+  fill: #88f;
+}
+.item .toggle path {
+  stroke: #fff;
+  stroke-width: 2;
+}
+.item .notes {
   width: 16px;
-  height: 100%;
+  height: 16px;
   background: url("../img/notes-indicator.png") right center no-repeat;
   position: absolute;
   top: -8px;
   right: 0;
   opacity: 0.4;
+}
+.item:not(.current):not(.collapsed) > .toggle {
   display: none;
 }
-.notes-indicator-visible {
-  display: block;
-}
-.toggle {
-  cursor: pointer;
-  text-align: center;
-  font-weight: bold;
-  font-family: sans-serif;
-  opacity: 0.7;
-}
-.toggle circle {
-  stroke: #00f;
-  fill: #88f;
-}
-.toggle path {
-  stroke: #fff;
-  stroke-width: 2;
-}
-.toggle:hover {
-  opacity: 1;
-}
-.toggle:before {
-  content: "−";
-}
-.collapsed > .toggle:before {
-  content: "+";
-}
-:not(.current):not(.collapsed) > .toggle {
-  display: none;
+.item.current > foreignObject > .content {
+  background-color: rgba(255, 255, 187, 0.9);
 }
 [data-shape=box] > foreignObject > .content {
   padding: 0.15em 0.4em;
@@ -118,26 +107,14 @@ canvas {
   border-radius: 50%;
   padding: 0.5em 1em;
 }
-/* current */
-.current > foreignObject > .content {
-  background-color: rgba(255, 255, 187, 0.9);
+[data-align=left] > foreignObject > .content > :not(.text):not(.notes) {
+  margin-right: 0.3em;
 }
-/* root */
-svg {
-  font-size: 15px;
+[data-align=right] > foreignObject > .content {
+  flex-direction: row-reverse;
 }
-svg > .item > foreignObject > .content {
-  font-weight: bold;
-  border-width: 2px;
-  font-size: 140%;
-}
-svg > .item > .toggle {
-  display: none;
-}
-/* 1st children */
-svg > .item > .item > foreignObject > .content {
-  border-width: 2px;
-  font-size: 120%;
+[data-align=right] > foreignObject > .content > :not(.text):not(.notes) {
+  margin-left: 0.3em;
 }
 @font-face {
   font-family: source sans pro;

@@ -27,12 +27,6 @@ button:not(:disabled) {
 	cursor: pointer;
 }
 
-#throbber {
-	position: absolute;
-	top: 50px;
-	left: -60px;
-}
-
 .ghost {
 	position: absolute !important; // to prevent collision with .content
 	opacity: 0.5;
@@ -44,23 +38,15 @@ button:not(:disabled) {
 	z-index: 1;
 	left: 10px;
 	bottom: 5px;
-	transition: all 500ms;
-	font-size: 1rem; /* do not scale with map zoom */
+	font-size: 1rem; // do not scale with map zoom
 
-}
+	&::before { content: "Tip: "; }
 
-#tip:before {
-	content: "Tip: ";
-}
-
-#tip code {
-	padding: 0 4px;
-	border-radius: 4px;
-	background-color: rgba(0, 0, 0, 0.1);
-}
-
-#tip.hidden {
-	opacity: 0;
+	code {
+		padding: 0 4px;
+		border-radius: 4px;
+		background-color: rgba(0, 0, 0, 0.1);
+	}
 }
 
 @import "font.less";

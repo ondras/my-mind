@@ -3043,15 +3043,16 @@ ${text}`);
       const { dom } = this;
       dom.node.classList.add("item");
       dom.content.classList.add("content");
-      dom.notes.classList.add("notes-indicator");
+      dom.notes.classList.add("notes");
       dom.status.classList.add("status");
       dom.icon.classList.add("icon");
       dom.value.classList.add("value");
       dom.text.classList.add("text");
       dom.icon.classList.add("icon");
-      let foContent = foreignObject();
-      dom.node.append(dom.connectors, foContent);
-      foContent.append(dom.content);
+      this.notes = "";
+      let fo = foreignObject();
+      dom.node.append(dom.connectors, fo);
+      fo.append(dom.content);
       dom.content.append(dom.status, dom.value, dom.icon, dom.text, dom.notes);
       dom.toggle.addEventListener("click", (_) => {
         this.collapsed = !this.collapsed;
@@ -3296,7 +3297,7 @@ ${text}`);
     }
     set notes(notes3) {
       this._notes = notes3;
-      this.dom.notes.classList.toggle("notes-indicator-visible", !!notes3);
+      this.dom.notes.hidden = !notes3;
     }
     get collapsed() {
       return this._collapsed;
@@ -3948,6 +3949,7 @@ ${text}`);
       }
       repo.get("finish").execute();
     }
+    document.activeElement.blur();
     current.cursor = point;
     if (item && !item.isRoot) {
       current.mode = "drag";

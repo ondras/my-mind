@@ -22,11 +22,6 @@ main {
 button:not(:disabled) {
   cursor: pointer;
 }
-#throbber {
-  position: absolute;
-  top: 50px;
-  left: -60px;
-}
 .ghost {
   position: absolute !important;
   opacity: 0.5;
@@ -37,20 +32,15 @@ button:not(:disabled) {
   z-index: 1;
   left: 10px;
   bottom: 5px;
-  transition: all 500ms;
   font-size: 1rem;
-  /* do not scale with map zoom */
 }
-#tip:before {
+#tip::before {
   content: "Tip: ";
 }
 #tip code {
   padding: 0 4px;
   border-radius: 4px;
   background-color: rgba(0, 0, 0, 0.1);
-}
-#tip.hidden {
-  opacity: 0;
 }
 @font-face {
   font-family: source sans pro;
@@ -74,6 +64,11 @@ button:not(:disabled) {
   -webkit-transform: translate(100%, 0);
   transform: translate(100%, 0);
 }
+.pane #throbber {
+  position: absolute;
+  top: 50px;
+  left: -60px;
+}
 .pane h3 {
   background-color: #34495e;
   color: #fff;
@@ -89,10 +84,10 @@ button:not(:disabled) {
   font-size: 13px;
   border-radius: 4px;
   padding: 4px;
-  -moz-box-sizing: border-box;
   box-sizing: border-box;
   -webkit-font-smoothing: subpixel-antialiased;
   transition: all 250ms linear;
+  width: 100%;
 }
 .pane select:hover,
 .pane input:hover,
@@ -100,90 +95,52 @@ button:not(:disabled) {
 .pane input:focus {
   border-color: #32465a;
 }
-.pane select,
-.pane input,
-.pane #color {
-  width: 168px;
-}
-.pane .go {
-  font-weight: bold;
-}
 .pane p {
   margin: 8px 16px;
 }
 .pane p.desc {
   font-size: 13px;
 }
-.pane button:first-child {
-  margin-left: 0 !important;
+.pane p.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
-.pane button:last-child {
-  margin-right: 0 !important;
-}
-.pane button[data-command=help] {
-  position: absolute;
-  left: -50px;
-  top: 5px;
-}
-.pane button[data-command=notes] {
-  position: absolute;
-  left: -90px;
-  top: 5px;
-}
-.pane table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.pane table td:first-child {
-  padding-left: 16px;
-}
-.pane table td:last-child {
-  text-align: right;
-  padding-right: 16px;
-}
-.pane span {
+.pane label span {
   text-transform: uppercase;
   font-size: 80%;
 }
-.pane #color {
+.pane#ui {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
 }
-.pane [data-color] {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  margin-right: 2px;
-  border: 1px solid transparent;
-}
-.pane [data-color]:hover,
-.pane [data-color]:first-child {
-  border-color: #000;
-}
-.pane #github {
-  position: absolute;
-  right: 8px;
-  bottom: 6px;
-}
-.pane #github img {
-  vertical-align: middle;
-}
-.pane #privacy {
-  position: absolute;
-  left: 8px;
-  bottom: 6px;
+.pane#ui .scrollable {
+  flex: auto;
+  overflow: auto;
 }
 .pane#ui button {
   border: none;
   padding: 0;
-  margin: 0 4px;
   background-color: transparent;
   width: 32px;
 }
-.pane#ui #toggle {
-  z-index: 999;
+.pane#ui button img {
+  display: block;
+}
+.pane#ui button[data-command=help] {
   position: absolute;
-  left: -23px;
+  left: -50px;
+  top: 5px;
+}
+.pane#ui button[data-command=notes] {
+  position: absolute;
+  left: -90px;
+  top: 5px;
+}
+.pane#ui #toggle {
+  position: absolute;
+  left: -20px;
   top: 48%;
   width: 35px;
   height: 35px;
@@ -203,6 +160,31 @@ button:not(:disabled) {
 .pane#ui[hidden] #toggle::after {
   content: "←";
 }
+.pane#ui #color {
+  display: flex;
+  flex-direction: row;
+}
+.pane#ui #color [data-color] {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  margin-right: 2px;
+  border: 1px solid transparent;
+}
+.pane#ui #color [data-color]:hover,
+.pane#ui #color [data-color]:first-child {
+  border-color: #000;
+}
+.pane#ui footer {
+  display: flex;
+  flex-direction: row;
+  padding: 6px 8px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.pane#ui footer img {
+  display: block;
+}
 .pane#help {
   overflow-y: auto;
   right: auto;
@@ -214,23 +196,29 @@ button:not(:disabled) {
   transform: translate(-100%, 0);
 }
 .pane#help table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 80%;
+}
+.pane#help table td:first-child {
+  padding-left: 16px;
+}
+.pane#help table td:last-child {
+  text-align: right;
+  padding-right: 16px;
 }
 .pane#io button {
   width: 45%;
 }
-.pane#io button:nth-child(odd) {
-  float: left;
+.pane#io button.go {
+  font-weight: bold;
 }
-.pane#io button:nth-child(even) {
-  float: right;
-}
-#notes {
+.pane#notes {
   width: 50%;
   display: flex;
   flex-direction: column;
 }
-#notes iframe {
+.pane#notes iframe {
   border: 0;
   width: 100%;
   flex: auto;

@@ -2,133 +2,106 @@
 	font-family: source sans pro, sans-serif;
 }
 
-.item.cut {
-	opacity: 0.5;
+svg {
+	font-size: 15px;
+
+	// root item
+	> .item {
+		> foreignObject > .content {
+			font-weight: bold;
+			border-width: 2px;
+			font-size: 140%;
+		}
+
+		> .toggle {
+			display: none;
+		}
+
+		// first children
+		> .item > foreignObject > .content {
+			border-width: 2px;
+			font-size: 120%;
+		}
+	}
 }
 
-.item.collapsed .item {
-	display: none;
-}
+.item {
+	.cut { opacity: 0.5; }
+	.icon { font-size: x-large; }
+	foreignObject { overflow: visible; } // shadow
 
-.item .icon {
-	font-size: x-large;
-}
+	.content {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		white-space: nowrap;
+		cursor: pointer;
 
-.item foreignObject { /* shadow */
-	overflow: visible;
-}
+		> * { flex: none; }
+	}
 
-.content {
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-	white-space: nowrap;
-	cursor: pointer;
-}
+	&.collapsed .item { display: none; }
 
-.content > * {
-	flex: none;
-}
+	.text {
+		text-align: center;
+		min-width: 0.5em;
+		min-height: 1.3em;
+		line-height: 1.3em;
+		outline: none;
+	}
 
-.text {
-	text-align: center;
-	min-width: 0.5em;
-	min-height: 1.3em;
-	line-height: 1.3em;
-	outline: none;
-}
+	.value {
+		opacity: 0.7;
+		&:not(:empty)::before { content: "("; }
+		&:not(:empty)::after { content: ")"; }
+	}
 
-[data-align=left] > foreignObject > .content > :not(.text) {
-	margin-right: 0.3em;
-}
+	.status {
+		font-size: 150%;
+		line-height: 1;
+		&.yes::after {
+			content: "✔";
+			color: #0f0;
+		}
 
-[data-align=right] > foreignObject > .content {
-	flex-direction: row-reverse;
-}
-[data-align=right] > foreignObject > .content > :not(.text) {
-	margin-left: 0.3em;
-}
+		&.no::after {
+			content: "✘";
+			color: #f00;
+		}
+	}
 
-.value {
-	opacity: 0.7;
-}
 
-.value:not(:empty):before {
-	content: "(";
-}
+	.toggle {
+		cursor: pointer;
 
-.value:not(:empty):after {
-	content: ")";
-}
+		&:not(:hover) { opacity: 0.7; }
 
-.status {
-	font-size: 150%;
-	line-height: 1;
-}
+		circle {
+			stroke: #00f;
+			fill: #88f;
+		}
 
-.status.yes:after {
-	content: "✔";
-	color: #0f0;
-}
+		path {
+			stroke: #fff;
+			stroke-width: 2;
+		}
+	}
 
-.status.no:after {
-	content: "✘";
-	color: #f00;
-}
+	.notes {
+		width: 16px;
+		height: 16px;
+		background: url("../img/notes-indicator.png") right center no-repeat;
+		position: absolute;
+		top: -8px;
+		right: 0;
+		opacity: 0.4;
+	}
 
-canvas {
-	position: absolute;
-	left: 0;
-	top: 0;
-}
+	&:not(.current):not(.collapsed) > .toggle { display: none; } // visible only when (its item is) selected or collapsed
 
-.notes-indicator {
-	width: 16px;
-	height: 100%;
-	background: url("../img/notes-indicator.png") right center no-repeat; // fixme nefunguje v exportu
-	position: absolute;
-	top: -8px;
-	right: 0; // fixme dostava chybne margin zprava
-	opacity: 0.4;
-	display: none;
-}
-
-.notes-indicator-visible {
-	display: block;
-}
-
-.toggle {
-	cursor: pointer;
-	text-align: center;
-	font-weight: bold;
-	font-family: sans-serif;
-	opacity: 0.7;
-}
-
-.toggle circle {
-	stroke: #00f;
-	fill: #88f;
-}
-
-.toggle path {
-	stroke: #fff;
-	stroke-width: 2;
-}
-
-.toggle:hover {
-	opacity: 1;
-}
-
-.toggle:before {
-	content: "−";
-}
-
-.collapsed > .toggle:before {
-	content: "+";
-}
-
-:not(.current):not(.collapsed) > .toggle {
-	display: none;
+	&.current > foreignObject > .content {
+		background-color: rgba(255, 255, 187, 0.9);
+	}
 }
 
 [data-shape=box] > foreignObject > .content {
@@ -145,33 +118,13 @@ canvas {
 	padding: 0.5em 1em;
 }
 
-/* current */
-
-.current > foreignObject > .content {
-	background-color: rgba(255, 255, 187, 0.9);
+[data-align=left] > foreignObject > .content > :not(.text):not(.notes) {
+	margin-right: 0.3em;
 }
 
-/* root */
-
-svg {
-	font-size: 15px;
-}
-
-svg > .item > foreignObject > .content {
-	font-weight: bold;
-	border-width: 2px;
-	font-size: 140%;
-}
-
-svg > .item > .toggle {
-	display: none;
-}
-
-/* 1st children */
-
-svg > .item > .item > foreignObject > .content {
-	border-width: 2px;
-	font-size: 120%;
+[data-align=right] > foreignObject > .content {
+	flex-direction: row-reverse;
+	> :not(.text):not(.notes) { margin-left: 0.3em; }
 }
 
 @import "font.less";

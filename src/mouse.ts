@@ -3,10 +3,7 @@ import * as menu from "./ui/context-menu.js";
 import * as app from "./my-mind.js";
 import Action, * as actions from "./action.js";
 import { repo as commandRepo } from "./command/command.js";
-
-
-// FIXME
-type Direction = "left" | "right" | "top" | "bottom";
+import { Direction } from "./layout/layout.js";
 
 
 const TOUCH_DELAY = 500;
@@ -36,9 +33,6 @@ let current: Current = {
 	ghostPosition: [],
 	previousDragState: null
 };
-/*
-	_oldDragState: null,
-*/
 let port: HTMLElement;
 
 export function init(port_: HTMLElement) {
@@ -86,6 +80,9 @@ function onDragStart(e: MouseEvent | TouchEvent) {
 		if (item == app.currentItem) { return; } // ignore dnd on edited node
 		commandRepo.get("finish").execute(); // clicked elsewhere => finalize edit
 	}
+
+	// ui loses focus, so that keyboard shortcuts can work
+	(document.activeElement as HTMLElement).blur();
 
 	// we can safely start drag
 	current.cursor = point;
