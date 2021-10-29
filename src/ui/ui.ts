@@ -16,7 +16,7 @@ import * as menu from "./context-menu.js";
 import { repo as commandRepo } from "../command/command.js";
 
 
-const node = document.querySelector<HTMLElement>("#ui");
+const node = document.querySelector<HTMLElement>("#ui")!;
 
 export function isActive() {
 	return node.contains(document.activeElement);
@@ -24,7 +24,7 @@ export function isActive() {
 
 export function toggle() {
 	node.hidden = !node.hidden;
-	pubsub.publish("ui-change", this);
+	pubsub.publish("ui-change");
 }
 
 export function getWidth() {
@@ -43,14 +43,18 @@ function onClick(e: MouseEvent) {
 		return;
 	}
 
-	let current: Node = target;
-	while (current != document) {
+	let current: Element = target;
+	while (true) {
 		let command = (current as HTMLElement).dataset.command;
 		if (command) {
-			commandRepo.get(command).execute();
+			commandRepo.get(command)!.execute();
 			return;
 		}
-		current = current.parentNode;
+		if (current.parentNode instanceof Element) {
+			current = current.parentNode;
+		} else {
+			return;
+		}
 	}
 }
 

@@ -5,11 +5,17 @@ import { Jsonified } from "../map.js";
 
 declare const firebase: any;
 
-export default class File extends Backend {
-	protected ref;
-	protected changeTimeout: ReturnType<typeof setTimeout>;
+interface Current {
+	id: string | null;
+	name: string | null;
+	data: Jsonified | null;
+}
 
-	protected current = {
+export default class Firebase extends Backend {
+	protected ref: any;
+	protected changeTimeout?: ReturnType<typeof setTimeout>;
+
+	protected current: Current = {
 		id: null,
 		name: null,
 		data: null
@@ -17,7 +23,7 @@ export default class File extends Backend {
 
 	constructor() { super("firebase"); }
 
-	connect(server, auth) {
+	connect(server: string, auth?: string) {
 		// fixme move to constants?
 		var config = {
 			apiKey: "AIzaSyBO_6uCK8pHjoz1c9htVwZi6Skpm8o4LtQ",
@@ -31,7 +37,7 @@ export default class File extends Backend {
 
 		this.ref = firebase.database().ref();
 
-		this.ref.child("names").on("value", function(snap) {
+		this.ref.child("names").on("value", (snap:any) => {
 			pubsub.publish("firebase-list", this, snap.val() || {});
 		}, this);
 
@@ -42,9 +48,9 @@ export default class File extends Backend {
 		this.ref.child("names/" + id).set(name);
 
 		return new Promise<void>((resolve, reject) => {
-			this.ref.child("data/" + id).set(data, result => {
-				if (result) {
-					reject(result);
+			this.ref.child("data/" + id).set(data, (err?: any) => {
+				if (err) {
+					reject(err);
 				} else {
 					resolve();
 					this.listenStart(data, id);
@@ -55,7 +61,7 @@ export default class File extends Backend {
 
 	load(id: string) {
 		return new Promise<Jsonified>((resolve, reject) => {
-			this.ref.child("data/" + id).once("value", snap => {
+			this.ref.child("data/" + id).once("value", (snap:any) => {
 				var data = snap.val();
 				if (data) {
 					resolve(data);
@@ -71,8 +77,8 @@ export default class File extends Backend {
 		this.ref.child("names/" + id).remove();
 
 		return new Promise<void>((resolve, reject) => {
-			this.ref.child("data/" + id).remove(result => {
-				result ? reject(result) : resolve();
+			this.ref.child("data/" + id).remove((err?:any) => {
+				err ? reject(err) : resolve();
 			});
 		});
 	}
@@ -84,14 +90,13 @@ export default class File extends Backend {
 	/**
 	 * Merge current (remote) data with updated map
 	 */
-	mergeWith(data, name) {
-		var id = this.current.id;
+	mergeWith(data: Jsonified, name: string) {
+		let id = this.current.id!;
 
 		if (name != this.current.name) {
 			this.current.name = name;
 			this.ref.child("names/" + id).set(name);
 		}
-
 
 		var dataRef = this.ref.child("data/" + id);
 		var oldData = this.current.data;
@@ -106,8 +111,8 @@ export default class File extends Backend {
 	 * @param {object} oldData
 	 * @param {object} newData
 	 */
-	protected recursiveRefMerge(ref, oldData, newData) {
-		var updateObject = {};
+	protected recursiveRefMerge(ref: any, oldData: any, newData: any) {
+		let updateObject: Record<string, any> = {};
 
 		if (newData instanceof Array) { /* merge arrays */
 
@@ -149,7 +154,7 @@ export default class File extends Backend {
 		if (Object.keys(updateObject).length) { ref.update(updateObject); }
 	}
 
-	protected listenStart(data, id) {
+	protected listenStart(data: Jsonified, id: string) {
 		if (this.current.id && this.current.id == id) { return; }
 
 		this.listenStop();
@@ -173,7 +178,7 @@ export default class File extends Backend {
 	 * Monitored remote ref changed.
 	 * FIXME move timeout logic to ui.backend.firebase?
 	 */
-	protected onValueChange(snap) {
+	protected onValueChange(snap:any) {
 		this.current.data = snap.val();
 
 		clearTimeout(this.changeTimeout);
@@ -182,7 +187,7 @@ export default class File extends Backend {
 		}, 200);
 	}
 
-	protected async login(type) {
+	protected async login(type: string) {
 		var provider;
 		switch (type) {
 			case "github":

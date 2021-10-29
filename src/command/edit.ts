@@ -46,7 +46,7 @@ new (class Newline extends Command {
 	constructor() { super("newline", "Line break"); }
 
 	execute() {
-		let range = getSelection().getRangeAt(0);
+		let range = getSelection()!.getRangeAt(0);
 		let br = document.createElement("br");
 		range.insertNode(br);
 		range.setStartAfter(br);
@@ -78,20 +78,20 @@ new (class Cancel extends Command {
 
 abstract class Style extends Command {
 	editMode = null;
-	command: string;
+	command!: string;
 
 	execute() {
 		if (app.editing) {
-			document.execCommand(this.command, null, null);
+			document.execCommand(this.command, false);
 		} else {
-			commandRepo.get("edit").execute();
-			let selection = getSelection();
+			commandRepo.get("edit")!.execute();
+			let selection = getSelection()!;
 			let range = selection.getRangeAt(0);
 			range.selectNodeContents(app.currentItem.dom.text);
 			selection.removeAllRanges();
 			selection.addRange(range);
 			this.execute();
-			commandRepo.get("finish").execute();
+			commandRepo.get("finish")!.execute();
 		}
 	}
 }
@@ -137,7 +137,7 @@ new (class Value extends Command {
 
 		if (!newValue.length) { newValue = null; }
 
-		let numValue = parseFloat(newValue);
+		let numValue = Number(newValue);
 		let action = new actions.SetValue(item, isNaN(numValue) ? newValue : numValue);
 		app.action(action);
 	}

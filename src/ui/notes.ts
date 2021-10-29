@@ -3,8 +3,8 @@ import * as app from "../my-mind.js";
 import * as pubsub from "../pubsub.js";
 
 
-const node = document.querySelector<HTMLElement>("#notes");
-const iframe = node.querySelector<HTMLIFrameElement>("iframe");
+const node = document.querySelector<HTMLElement>("#notes")!;
+const iframe = node.querySelector<HTMLIFrameElement>("iframe")!;
 
 export function toggle() {
 	node.hidden = !node.hidden;
@@ -30,7 +30,7 @@ function onMessage(e: MessageEvent) {
 
 export function init() {
 	pubsub.subscribe("item-select", (_message: string, publisher: Item) => {
-		iframe.contentWindow.postMessage({
+		iframe.contentWindow && iframe.contentWindow.postMessage({
 			action: "setContent",
 			value: publisher.notes
 		}, "*");

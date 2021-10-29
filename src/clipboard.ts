@@ -32,12 +32,14 @@ function onCopyCut(e: ClipboardEvent) {
 			storedItem = app.currentItem;
 			storedItem.dom.node.classList.add("cut");
 		break;
+
+		default: return; // TS needs non-null storedItem
 	}
 
 	let json = storedItem.toJSON();
-	let plaintext = formatRepo.get("plaintext").to(json);
+	let plaintext = formatRepo.get("plaintext")!.to(json);
 
-	e.clipboardData.setData("text/plain", plaintext);
+	e.clipboardData!.setData("text/plain", plaintext);
 	mode = e.type as Mode;
 }
 
@@ -45,10 +47,10 @@ function onPaste(e: ClipboardEvent) {
 	if (ui.isActive() || app.editing) { return; }
 	e.preventDefault();
 
-	let pasted = e.clipboardData.getData("text/plain");
+	let pasted = e.clipboardData!.getData("text/plain");
 	if (!pasted) { return; }
 
-	if (storedItem && pasted == formatRepo.get("plaintext").to(storedItem.toJSON())) {
+	if (storedItem && pasted == formatRepo.get("plaintext")!.to(storedItem.toJSON())) {
 		// pasted a previously copied/cut item
 		pasteItem(storedItem, app.currentItem);
 	} else {
@@ -70,7 +72,7 @@ function pasteItem(sourceItem: Item, targetItem: Item) {
 			while (true) {
 				if (item == sourceItem) { return; } // moving to a child => forbidden
 				if (item.parent instanceof Map) { break; }
-				item = item.parent;
+				item = item.parent as Item;
 			}
 
 			action = new actions.MoveItem(sourceItem as ChildItem, targetItem);
@@ -85,7 +87,7 @@ function pasteItem(sourceItem: Item, targetItem: Item) {
 }
 
 function pastePlaintext(plaintext: string, targetItem: Item) {
-	let json = formatRepo.get("plaintext").from(plaintext);
+	let json = formatRepo.get("plaintext")!.from(plaintext);
 	let map = Map.fromJSON(json);
 	let root = map.root;
 
@@ -102,7 +104,7 @@ function pastePlaintext(plaintext: string, targetItem: Item) {
 function endCut() {
 	if (mode != "cut") { return; }
 
-	storedItem.dom.node.classList.remove("cut");
+	storedItem!.dom.node.classList.remove("cut");
 	storedItem = null;
 	mode = "";
 }

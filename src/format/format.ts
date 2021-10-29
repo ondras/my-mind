@@ -3,8 +3,8 @@ import { Jsonified as JsonifiedItem } from "../item.js";
 
 
 export default abstract class Format {
-	extension: string;
-	mime: string;
+	extension?: string;
+	mime?: string;
 
 	constructor(readonly id:string, readonly label:string) {
 		repo.set(id, this);
@@ -19,7 +19,9 @@ export default abstract class Format {
 export let repo = new Map<string, Format>();
 
 function getByProperty(property: string, value: string) {
-	let filtered = [...repo.values()].filter(format => format[property] == value);
+	type FormatProp = keyof Format;
+
+	let filtered = [...repo.values()].filter(format => format[property as FormatProp] == value);
 	return (filtered[0] || null);
 }
 

@@ -17,7 +17,7 @@ export default class WebDAVUI extends BackendUI<WebDAV> {
 		this.url.value = localStorage.getItem(`${this.prefix}.url`) || "";
 	}
 
-	get url() { return this.node.querySelector<HTMLInputElement>(".url"); }
+	get url() { return this.node.querySelector<HTMLInputElement>(".url")!; }
 
 	getState(): State {
 		let data = { url: this.current };
@@ -38,12 +38,12 @@ export default class WebDAVUI extends BackendUI<WebDAV> {
 		if (url.match(/\.mymind$/)) { // complete file name
 		} else { // just a path
 			if (url.charAt(url.length-1) != "/") { url += "/"; }
-			url += `${map.name}.${formatRepo.get("native").extension}`;
+			url += `${map.name}.${formatRepo.get("native")!.extension}`;
 		}
 
 		this.current = url;
 		let json = map.toJSON();
-		let data = formatRepo.get("native").to(json);
+		let data = formatRepo.get("native")!.to(json);
 
 		try {
 			await this.backend.save(data, url);
@@ -63,7 +63,7 @@ export default class WebDAVUI extends BackendUI<WebDAV> {
 
 		try {
 			let data = await this.backend.load(url);
-			let json = formatRepo.get("native").from(data);
+			let json = formatRepo.get("native")!.from(data);
 			this.loadDone(json);
 		} catch (e) {
 			this.error(e);

@@ -1,4 +1,4 @@
-import Layout from "./layout.js";
+import Layout, { Direction } from "./layout.js";
 import Item from "../item.js";
 import * as svg from "../svg.js";
 
@@ -21,28 +21,32 @@ export default class GraphLayout extends Layout {
 	/**
 	 * Generic graph child layout routine. Updates item's orthogonal size according to the sum of its children.
 	 */
-	protected layoutItem(item, rankDirection) {
-		var rankIndex = (rankDirection == "left" || rankDirection == "right" ? 0 : 1);
-		var childIndex = (rankIndex+1) % 2;
+	protected layoutItem(item: Item, rankDirection: Direction) {
+		const { contentSize, children } = item;
 
-		const { contentSize } = item;
+		let rankIndex = (rankDirection == "left" || rankDirection == "right" ? 0 : 1);
+		let childIndex = (rankIndex+1) % 2;
+		let rankSize = contentSize[rankIndex];
+		let childSize = contentSize[childIndex];
 
-		// children size
-		var bbox = this.computeChildrenBBox(item.children, childIndex);
+		if (!item.collapsed && children.length > 0) {
+			// children size
+			let bbox = this.computeChildrenBBox(children, childIndex);
 
-		// node size
-		var rankSize = contentSize[rankIndex];
-		if (bbox[rankIndex]) { rankSize += bbox[rankIndex] + SPACING_RANK; }
-		var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
+			// node size
+			rankSize += bbox[rankIndex] + SPACING_RANK;
 
-		var offset = [0, 0];
-		if (rankDirection == "right") { offset[0] = contentSize[0] + SPACING_RANK; }
-		if (rankDirection == "bottom") { offset[1] = contentSize[1] + SPACING_RANK; }
-		offset[childIndex] = Math.round((childSize - bbox[childIndex])/2);
-		this.layoutChildren(item.children, rankDirection, offset, bbox);
+			childSize = Math.max(childSize, bbox[childIndex]);
+			let offset = [0, 0];
+			if (rankDirection == "right") { offset[0] = contentSize[0] + SPACING_RANK; }
+			if (rankDirection == "bottom") { offset[1] = contentSize[1] + SPACING_RANK; }
+			offset[childIndex] = Math.round((childSize - bbox[childIndex])/2);
+			this.layoutChildren(children, rankDirection, offset, bbox);
 
-		/* label position */
-		var labelPos = 0;
+		}
+
+		// content position
+		let labelPos = 0;
 		if (rankDirection == "left") { labelPos = rankSize - contentSize[0]; }
 		if (rankDirection == "top") { labelPos = rankSize - contentSize[1]; }
 
@@ -53,7 +57,7 @@ export default class GraphLayout extends Layout {
 		return (rankIndex == 0 ? childSize : rankSize);
 	}
 
-	protected layoutChildren(children, rankDirection, offset, bbox) {
+	protected layoutChildren(children: Item[], rankDirection: Direction, offset: number[], bbox: number[]) {
 		var rankIndex = (rankDirection == "left" || rankDirection == "right" ? 0 : 1);
 		var childIndex = (rankIndex+1) % 2;
 
@@ -71,7 +75,7 @@ export default class GraphLayout extends Layout {
 		return bbox;
 	}
 
-	protected drawLinesHorizontal(item: Item, side) {
+	protected drawLinesHorizontal(item: Item, side: Direction) {
 		const { contentPosition, contentSize, resolvedShape, resolvedColor, children, dom } = item;
 		if (children.length == 0) { return; }
 
@@ -155,7 +159,7 @@ export default class GraphLayout extends Layout {
 		dom.connectors.append(path);
 	}
 
-	protected drawLinesVertical(item, side, totalHeight: number) {
+	protected drawLinesVertical(item: Item, side: Direction, totalHeight: number) {
 		const { contentSize, resolvedShape, resolvedColor, children, dom } = item;
 		if (children.length == 0) { return; }
 

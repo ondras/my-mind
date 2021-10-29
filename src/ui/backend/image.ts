@@ -7,7 +7,7 @@ export default class ImageUI extends BackendUI<Image> {
 		super(new Image(), "Image");
 	}
 
-	protected get format() { return this.node.querySelector<HTMLSelectElement>(".format"); }
+	protected get format() { return this.node.querySelector<HTMLSelectElement>(".format")!; }
 
 	save() { this.backend.save(this.format.value as Format); }
 

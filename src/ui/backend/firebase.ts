@@ -1,4 +1,4 @@
-import BackendUI, { buildList } from "./backend.js";
+import BackendUI, { buildList, Mode } from "./backend.js";
 import Firebase from "../../backend/firebase.js";
 import * as pubsub from "../../pubsub.js";
 import * as app from "../../my-mind.js";
@@ -14,7 +14,7 @@ interface State {
 
 export default class FirebaseUI extends BackendUI<Firebase> {
 	protected online = false;
-	protected itemChangeTimeout: ReturnType<typeof setTimeout>;
+	protected itemChangeTimeout?: ReturnType<typeof setTimeout>;
 
 	constructor() {
 		super(new Firebase(), "Firebase");
@@ -39,10 +39,10 @@ export default class FirebaseUI extends BackendUI<Firebase> {
 		pubsub.subscribe("firebase-change", this);
 	}
 
-	get auth() { return this.node.querySelector<HTMLInputElement>(".auth"); }
-	get server() { return this.node.querySelector<HTMLInputElement>(".server"); }
-	get remove() { return this.node.querySelector(".remove"); }
-	get list() { return this.node.querySelector<HTMLSelectElement>(".list"); }
+	get auth() { return this.node.querySelector<HTMLInputElement>(".auth")!; }
+	get server() { return this.node.querySelector<HTMLInputElement>(".server")!; }
+	get remove() { return this.node.querySelector(".remove")!; }
+	get list() { return this.node.querySelector<HTMLSelectElement>(".list")!; }
 
 	async setState(data: State) {
 		try {
@@ -61,12 +61,12 @@ export default class FirebaseUI extends BackendUI<Firebase> {
 		return data;
 	}
 
-	show(mode) {
+	show(mode: Mode) {
 		super.show(mode);
 		this.sync();
 	}
 
-	handleMessage(message, publisher, data) {
+	handleMessage(message: string, _publisher?: any, data? : any) {
 		switch (message) {
 			case "firebase-list":
 				this.list.innerHTML = "";
@@ -137,9 +137,9 @@ export default class FirebaseUI extends BackendUI<Firebase> {
 		} catch (e) { this.error(e); }
 	}
 
-	protected async connect(server: string, auth: string) {
+	protected async connect(server: string, auth?: string) {
 		this.server.value = server;
-		this.auth.value = auth;
+		this.auth.value = auth || "";
 		this.server.disabled = true;
 		this.auth.disabled = true;
 

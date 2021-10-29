@@ -8,7 +8,7 @@ export default class MMA extends FreeMind {
 
 	constructor() { super("mma", "Mind Map Architect"); }
 
-	protected parseAttributes = function(node: Element, parent) {
+	protected parseAttributes(node: Element, parent: Jsonified) {
 		var json: Jsonified = {
 			children: [],
 			text: nl2br(node.getAttribute("title") || ""),
@@ -33,19 +33,19 @@ export default class MMA extends FreeMind {
 			}
 		}
 
-		json.icon = node.getAttribute("icon");
+		json.icon = node.getAttribute("icon") || "";
 
 		return json;
 	}
 
-	protected serializeAttributes = function(doc, json) {
+	protected serializeAttributes = function(doc: XMLDocument, json: Jsonified) {
 		var elm = doc.createElement("node");
 		elm.setAttribute("title", br2nl(json.text));
 		elm.setAttribute("expand", json.collapsed ? "false" : "true");
 
 		if (json.side) { elm.setAttribute("direction", json.side == "left" ? "0" : "1"); }
 		if (json.color) {
-			var parts = json.color.match(/^#(.)(.)(.)$/);
+			var parts = json.color.match(/^#(.)(.)(.)$/)!;
 			var r = new Array(5).join(parts[1]);
 			var g = new Array(5).join(parts[2]);
 			var b = new Array(5).join(parts[3]);

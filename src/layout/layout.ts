@@ -1,4 +1,4 @@
-import Item from "../item.js";
+import Item, { ChildItem } from "../item.js";
 
 
 export type Direction = "left" | "right" | "top" | "bottom";
@@ -28,13 +28,13 @@ export default abstract class Layout {
 		return this.childDirection;
 	}
 
-	computeAlignment(item) {
-		let direction = (item.isRoot ? this.childDirection : item.parent.resolvedLayout.getChildDirection(item));
+	computeAlignment(item: Item) {
+		let direction = (item.isRoot ? this.childDirection : (item as ChildItem).parent.resolvedLayout.getChildDirection(item));
 		if (direction == "left") { return "right"; }
 		return "left";
 	}
 
-	pick(item, dir) {
+	pick(item: Item, dir: Direction) {
 		/* direction for a child */
 		if (!item.collapsed) {
 			var children = item.children;
@@ -46,18 +46,20 @@ export default abstract class Layout {
 
 		if (item.isRoot) { return item; }
 
-		var parentLayout = item.parent.resolvedLayout;
+		let childItem = item as ChildItem;
+
+		var parentLayout = childItem.parent.resolvedLayout;
 		var thisChildDirection = parentLayout.getChildDirection(item);
 		if (thisChildDirection == dir) {
-			return item;
+			return childItem;
 		} else if (thisChildDirection == OPPOSITE[dir]) {
-			return item.parent;
+			return childItem.parent;
 		} else {
-			return parentLayout.pickSibling(item, (dir == "left" || dir == "top" ? -1 : +1));
+			return parentLayout.pickSibling(childItem, (dir == "left" || dir == "top" ? -1 : +1));
 		}
 	}
 
-	pickSibling(item, dir) {
+	pickSibling(item: ChildItem, dir: number) {
 		if (item.isRoot) { return item; }
 
 		var children = item.parent.children;
@@ -71,7 +73,7 @@ export default abstract class Layout {
 		item.dom.toggle.setAttribute("transform", `translate(${point.map(Math.round)})`);
 	}
 
-	protected getChildAnchor(item, side) {
+	protected getChildAnchor(item: Item, side: Direction) {
 		let { position, contentPosition, contentSize } = item;
 		if (side == "left" || side == "right") {
 			var pos = position[0] + contentPosition[0];
@@ -83,9 +85,9 @@ export default abstract class Layout {
 		return pos;
 	}
 
-	protected computeChildrenBBox(children, childIndex) {
-		// FIXME pocita i kdyz jsou skryte
-		var bbox = [0, 0];
+	protected computeChildrenBBox(children: Item[], childIndex: number) {
+		// makes sense only when not collapsed
+		let bbox = [0, 0];
 		var rankIndex = (childIndex+1) % 2;
 
 		children.forEach(child => {

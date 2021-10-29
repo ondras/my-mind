@@ -1,5 +1,5 @@
 import Item, { Jsonified as JsonifiedItem } from "./item.js";
-import Layout, { repo as layoutRepo } from "./layout/layout.js";
+import Layout, { repo as layoutRepo, Direction } from "./layout/layout.js";
 import { br2nl } from "./format/format.js";
 import * as svg from "./svg.js";
 import * as html from "./html.js";
@@ -17,6 +17,11 @@ interface Options {
 	layout: Layout;
 }
 
+interface PickCandidate {
+	item: Item;
+	dist: number;
+}
+
 export type Jsonified = {
 	root: JsonifiedItem;
 }
@@ -24,20 +29,20 @@ export type Jsonified = {
 export default class Map {
 	readonly node = svg.node("svg");
 	protected style = html.node("style");
-	protected _root: Item;
+	protected _root!: Item;
 	protected position = [0, 0];
 
 	constructor(options?: Partial<Options>) {
-		options = Object.assign({
+		let resolvedOptions = Object.assign({
 			root: "My Mind Map",
-			layout: layoutRepo.get("map")
+			layout: layoutRepo.get("map")!
 		}, options);
 
 		this.style.textContent = css;
 
 		let root = new Item();
-		root.text = options.root;
-		root.layout = options.layout;
+		root.text = resolvedOptions.root;
+		root.layout = resolvedOptions.layout;
 		this.root = root;
 	}
 
@@ -70,7 +75,7 @@ export default class Map {
 
 	mergeWith(data: Jsonified) {
 		// store a sequence of nodes to be selected when merge is over
-		var ids = [];
+		let ids: string[] = [];
 		var current = app.currentItem;
 		var node = current;
 		while (true) {
@@ -99,8 +104,8 @@ export default class Map {
 		app.editing && app.stopEditing();
 
 		/* get all items by their id */
-		var idMap = {};
-		var scan = function(item) {
+		var idMap: Record<string, Item> = {};
+		var scan = function(item: Item) {
 			idMap[item.id] = item;
 			item.children.forEach(scan);
 		}
@@ -108,7 +113,7 @@ export default class Map {
 
 		/* select the nearest existing parent */
 		while (ids.length) {
-			var id = ids.shift();
+			var id = ids.shift()!;
 			if (id in idMap) {
 				app.selectItem(idMap[id]);
 				return;
@@ -183,9 +188,9 @@ export default class Map {
 		return all[0];
 	}
 
-	getItemFor(node: Element): Item | null {
+	getItemFor(node: Element): Item | undefined {
 		let content = node.closest(".content");
-		if (!content) { return null; }
+		if (!content) { return; }
 
 		function scanForContent(item: Item): Item | undefined {
 			if (item.dom.content == content) { return item; }
@@ -194,8 +199,6 @@ export default class Map {
 				let found = scanForContent(child);
 				if (found) { return found; }
 			}
-
-			return null;
 		}
 
 		return scanForContent(this._root);
@@ -229,8 +232,8 @@ export default class Map {
 
 	get id() { return this._root.id; }
 
-	pick(item: Item, direction) {
-		var candidates = [];
+	pick(item: Item, direction: Direction) {
+		let candidates: PickCandidate[] = [];
 		var currentRect = item.dom.content.getBoundingClientRect();
 
 		this.getPickCandidates(currentRect, this._root, direction, candidates);
@@ -241,7 +244,7 @@ export default class Map {
 		return candidates[0].item;
 	}
 
-	protected getPickCandidates(currentRect, item, direction, candidates) {
+	protected getPickCandidates(currentRect: DOMRect, item: Item, direction: Direction, candidates: PickCandidate[]) {
 		if (!item.collapsed) {
 			item.children.forEach(child => {
 				this.getPickCandidates(currentRect, child, direction, candidates);

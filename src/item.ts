@@ -17,12 +17,11 @@ declare global {  // fixme
 export const TOGGLE_SIZE = 6;
 export type Value = string | number | null;
 export type Status = "computed" | boolean | null;
-export type Side = "" | "left" | "right";
+export type Side = "left" | "right" | null;
 export type ChildItem = Item & { parent: Item };
 
 export type Jsonified = Partial<{
 	id: string;
-	text: string;
 	notes: string;
 	side: Side;
 	color: string;
@@ -33,7 +32,9 @@ export type Jsonified = Partial<{
 	shape: string;
 	collapsed: boolean | number;
 	children: Jsonified[];
-}>
+}> & {
+	text: string;
+}
 
 const UPDATE_OPTIONS = {
 	parent: true,
@@ -44,11 +45,11 @@ export default class Item {
 	protected _id = generateId();
 	protected _parent: Item | Map | null = null;
 	protected _collapsed = false;
-	protected _icon: string | null = null;
+	protected _icon = "";
 	protected _notes = "";
+	protected _color = "";
 	protected _value: Value = null;
 	protected _status: Status = null;
-	protected _color: string | null = null;
 	protected _side: Side | null = null; // side preference
 	protected _shape: Shape | null = null;
 	protected _layout: Layout | null = null;
@@ -116,8 +117,8 @@ export default class Item {
 
 	get position() {
 		const { node } = this.dom;
-		const transform = node.getAttribute("transform");
-		return transform.match(/\d+/g).map(Number);
+		const transform = node.getAttribute("transform")!;
+		return transform.match(/\d+/g)!.map(Number); // fixme store in some property?
 	}
 	set position(position: number[]) {
 		const { node } = this.dom;
@@ -188,8 +189,8 @@ export default class Item {
 			}
 		}
 		if (data.collapsed) { this.collapsed = !!data.collapsed; } // invoke setter -> set text
-		if (data.layout) { this._layout = layoutRepo.get(data.layout); }
-		if (data.shape) { this.shape = shapeRepo.get(data.shape); }
+		if (data.layout) { this._layout = layoutRepo.get(data.layout)!; }
+		if (data.shape) { this.shape = shapeRepo.get(data.shape)!; }
 
 		(data.children || []).forEach(child => {
 			this.insertChild(Item.fromJSON(child));
@@ -204,22 +205,22 @@ export default class Item {
 		if (this.text != data.text && !this.dom.text.contentEditable) { this.text = data.text; }
 
 		if (this._side != data.side) {
-			this._side = data.side;
+			this._side = data.side || null;
 			dirty = 1;
 		}
 
 		if (this._color != data.color) {
-			this._color = data.color;
+			this._color = data.color || "";
 			dirty = 2;
 		}
 
 		if (this._icon != data.icon) {
-			this._icon = data.icon;
+			this._icon = data.icon || "";
 			dirty = 1;
 		}
 
 		if (this._value != data.value) {
-			this._value = data.value;
+			this._value = data.value || null;
 			dirty = 1;
 		}
 
@@ -231,13 +232,17 @@ export default class Item {
 		if (this._collapsed != !!data.collapsed) { this.collapsed = !!data.collapsed; }
 
 		// fixme does not work
-		if (this.layout.id != data.layout) {
-			this._layout = layoutRepo.get(data.layout);
-			dirty = 2;
+		let ourShapeId = (this._shape ? this._shape.id : null);
+		if (ourShapeId != data.shape) {
+			this._shape = (data.shape ? shapeRepo.get(data.shape)! : null);
+			dirty = 1;
 		}
 
-		// fixme does not work
-		if (this.shape.id != data.shape) { this.shape = shapeRepo.get(data.shape); }
+		let ourLayoutId = (this._layout ? this._layout.id : null)
+		if (ourLayoutId != data.layout) {
+			this._layout = (data.layout ? layoutRepo.get(data.layout)! : null);
+			dirty = 2;
+		}
 
 		(data.children || []).forEach((child, index) => {
 			if (index >= this.children.length) { /* new child */
@@ -254,7 +259,7 @@ export default class Item {
 		});
 
 		// remove dead children
-		var newLength = (data.children || []).length;
+		let newLength = (data.children || []).length;
 		while (this.children.length > newLength) { this.removeChild(this.children[this.children.length-1]); }
 
 		if (dirty == 1) { this.update({children:false}); }
@@ -264,7 +269,7 @@ export default class Item {
 	clone() {
 		var data = this.toJSON();
 
-		var removeId = function(obj) {
+		var removeId = function(obj: Jsonified) {
 			delete obj.id;
 			obj.children && obj.children.forEach(removeId);
 		}
@@ -275,7 +280,6 @@ export default class Item {
 
 	select() {
 		this.dom.node.classList.add("current");
-		this.map.ensureItemVisibility(this);
 		pubsub.publish("item-select", this);
 	}
 
@@ -321,7 +325,7 @@ export default class Item {
 		resolvedShape.update(this); // needs layout -> draws second
 
 		// recurse upwards?
-		if (options.parent) { parent.update({children:false}); } // explicit children:false when the parent is a Map
+		if (options.parent && parent) { parent.update({children:false}); } // explicit children:false when the parent is a Map
 	}
 
 	get text() { return this.dom.text.innerHTML; }
@@ -334,7 +338,7 @@ export default class Item {
 	get notes() { return this._notes; }
 	set notes(notes: string) {
 		this._notes = notes;
-		this.dom.notes.hidden = !notes;
+		this.dom.notes.hidden = !notes; // no update necessary
 	}
 
 	get collapsed() { return this._collapsed; }
@@ -395,13 +399,13 @@ export default class Item {
 	}
 
 	get side() { return this._side; }
-	set side(side: Side) {
+	set side(side: Side | null) {
 		this._side = side;
 		// no .update() call, because the whole map needs updating
 	}
 
 	get color() { return this._color; }
-	set color(color: string | null) {
+	set color(color: string) {
 		this._color = color;
 		this.update({children:true});
 	}
@@ -443,9 +447,9 @@ export default class Item {
 			node = node.parent as Item; // always item, cannot be Map (would be root)
 		}
 		switch (depth) {
-			case 0: return shapeRepo.get("ellipse");
-			case 1: return shapeRepo.get("box");
-			default: return shapeRepo.get("underline");
+			case 0: return shapeRepo.get("ellipse")!;
+			case 1: return shapeRepo.get("box")!;
+			default: return shapeRepo.get("underline")!;
 		}
 	}
 
@@ -473,7 +477,7 @@ export default class Item {
 			this.dom.node.appendChild(this.dom.toggle);
 		}
 
-		if (arguments.length < 2) { index = this.children.length; }
+		if (index === undefined) { index = this.children.length; }
 
 		var next = null;
 		if (index < this.children.length) { next = this.children[index].dom.node; }
@@ -486,14 +490,11 @@ export default class Item {
 	removeChild(child: Item) {
 		var index = this.children.indexOf(child as ChildItem);
 		this.children.splice(index, 1);
-		var node = child.dom.node;
-		node.parentNode.removeChild(node);
+		child.dom.node.remove();
 
 		child.parent = null;
 
-		if (!this.children.length) {
-			this.dom.toggle.parentNode.removeChild(this.dom.toggle);
-		}
+		(!this.children.length) && this.dom.toggle.remove();
 
 		this.update();
 	}
@@ -501,8 +502,8 @@ export default class Item {
 	startEditing() {
 		this.originalText = this.text;
 		this.dom.text.contentEditable = "true";
-		this.dom.text.focus(); /* switch to 2b */
-		document.execCommand("styleWithCSS", null, "false");
+		this.dom.text.focus();
+		document.execCommand("styleWithCSS", false, "false");
 
 		this.dom.text.addEventListener("input", this);
 		this.dom.text.addEventListener("keydown", this);
@@ -516,28 +517,28 @@ export default class Item {
 
 		this.dom.text.blur();
 		this.dom.text.contentEditable = "false";
-		var result = this.dom.text.innerHTML;
+		let result = this.dom.text.innerHTML;
 		this.dom.text.innerHTML = this.originalText;
 		this.originalText = "";
 
-		this.update(); /* text changed */
+		this.update(); // text changed
 
 		return result;
 	}
 
-	handleEvent(e) {
+	handleEvent(e: Event) {
 		switch (e.type) {
 			case "input":
 				this.update();
-				this.map.ensureItemVisibility(this);
+				this.map!.ensureItemVisibility(this);
 			break;
 
 			case "keydown":
-				if (e.keyCode == 9) { e.preventDefault(); } // TAB has a special meaning in this app, do not use it to change focus
+				if ((e as KeyboardEvent).keyCode == 9) { e.preventDefault(); } // TAB has a special meaning in this app, do not use it to change focus
 			break;
 
 			case "blur":
-				commandRepo.get("finish").execute();
+				commandRepo.get("finish")!.execute();
 			break;
 		}
 	}
@@ -587,43 +588,43 @@ export default class Item {
 	protected updateToggle() {
 		const { node, toggle } = this.dom;
 		node.classList.toggle("collapsed", this._collapsed);
-		toggle.querySelector("path").setAttribute("d", this._collapsed ? D_PLUS : D_MINUS);
+		toggle.querySelector("path")!.setAttribute("d", this._collapsed ? D_PLUS : D_MINUS);
 	}
 }
 
 
-function findLinks(node) {
-	var children = [].slice.call(node.childNodes);
-	for (var i=0;i<children.length;i++) {
-		var child = children[i];
-		switch (child.nodeType) {
-			case 1: /* element */
-				if (child.nodeName.toLowerCase() == "a") { continue; }
-				findLinks(child);
-			break;
+function findLinks(node: Element) {
+	let children = [...node.childNodes];
+	for (let i=0;i<children.length;i++) {
+		let child = children[i];
 
-			case 3: /* text */
-				var result = child.nodeValue.match(RE);
-				if (result) {
-					var before = child.nodeValue.substring(0, result.index);
-					var after = child.nodeValue.substring(result.index + result[0].length);
-					var link = document.createElement("a");
-					link.innerHTML = link.href = result[0];
+		if (child instanceof Element) {
+			if (child.nodeName.toLowerCase() == "a") { continue; }
+			findLinks(child);
+		}
 
-					if (before) {
-						node.insertBefore(document.createTextNode(before), child);
-					}
+		if (child instanceof Text) {
+			let str = child.nodeValue!;
+			let result = str.match(RE);
+			if (!result) { continue; }
 
-					node.insertBefore(link, child);
+			let before = str.substring(0, result.index);
+			let after = str.substring(result.index! + result[0].length);
+			var link = document.createElement("a");
+			link.innerHTML = link.href = result[0];
 
-					if (after) {
-						child.nodeValue = after;
-						i--; /* re-try with the aftertext */
-					} else {
-						node.removeChild(child);
-					}
-				}
-			break;
+			if (before) {
+				node.insertBefore(document.createTextNode(before), child);
+			}
+
+			node.insertBefore(link, child);
+
+			if (after) {
+				child.nodeValue = after;
+				i--; // re-try with the aftertext
+			} else {
+				child.remove();
+			}
 		}
 	}
 }

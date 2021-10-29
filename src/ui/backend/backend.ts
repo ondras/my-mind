@@ -8,7 +8,7 @@ import Backend from "../../backend/backend.js";
 export type Mode = "load" | "save";
 
 export default abstract class BackendUI<T extends Backend> {
-	protected mode: Mode;
+	protected mode: Mode = "load";
 	protected prefix: string;
 
 	constructor(protected backend: T, protected label: string) {
@@ -21,17 +21,17 @@ export default abstract class BackendUI<T extends Backend> {
 	}
 
 	get id() { return this.backend.id; }
-	get node() { return document.querySelector(`#${this.id}`); }
-	get cancel() { return this.node.querySelector<HTMLButtonElement>(".cancel"); }
-	get go() { return this.node.querySelector<HTMLButtonElement>(".go"); }
+	get node() { return document.querySelector(`#${this.id}`)!; }
+	get cancel() { return this.node.querySelector<HTMLButtonElement>(".cancel")!; }
+	get go() { return this.node.querySelector<HTMLButtonElement>(".go")!; }
 	get option() { return new Option(this.label, this.id); }
 
 	abstract save(): void;
 	abstract load(): void;
 
 	reset() { this.backend.reset(); }
-	setState(_data: any) {} // fixme any?
-	getState() { return null; }
+	setState(_data: unknown) {} // fixme any?
+	getState(): unknown { return {}; }
 
 	show(mode: Mode) {
 		this.mode = mode;
@@ -61,9 +61,10 @@ export default abstract class BackendUI<T extends Backend> {
 		}
 	}
 
-	protected error(e: Error) {
+	protected error(e: unknown) {
 		app.setThrobber(false);
-		alert("IO error: " + e.message);
+		let message = (e instanceof Error ? e.message : e);
+		alert(`IO error: ${message}`);
 	}
 
 	protected submit() {

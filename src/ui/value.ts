@@ -3,7 +3,7 @@ import * as app from "../my-mind.js";
 import { repo as commandRepo } from "../command/command.js";
 
 
-const select = document.querySelector<HTMLSelectElement>("#value");
+const select = document.querySelector<HTMLSelectElement>("#value")!;
 
 export function init() {
 	select.addEventListener("change", onChange);
@@ -20,7 +20,7 @@ export function update() {
 function onChange() {
 	let value = select.value;
 	if (value == "num") {
-		commandRepo.get("value").execute();
+		commandRepo.get("value")!.execute();
 	} else {
 		let action = new actions.SetValue(app.currentItem, value || null);
 		app.action(action);

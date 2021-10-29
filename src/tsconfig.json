@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"outDir": "../.js",
 		"target": "es2019",
-		"strict": false,
+		"strict": true,
 		"allowJs": true,
 		"noEmitOnError": true,
 		"incremental": true,

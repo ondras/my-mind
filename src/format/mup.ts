@@ -1,6 +1,6 @@
 import Format, { nl2br, br2nl } from "./format.js";
 import { Jsonified as JsonifiedMap } from "../map.js";
-import { Jsonified as JsonifiedItem } from "../item.js";
+import { Jsonified as JsonifiedItem, Side } from "../item.js";
 
 
 export default class Native extends Format {
@@ -61,7 +61,7 @@ function MupToMM(item: any) { // fixme
 	return json;
 }
 
-function MMtoMup(item: JsonifiedItem, side?) {
+function MMtoMup(item: JsonifiedItem, side?: Side) {
 	var result: any = { // fixme
 		id: item.id,
 		title: br2nl(item.text),

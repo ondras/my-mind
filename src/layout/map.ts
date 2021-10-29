@@ -12,7 +12,7 @@ export default class MapLayout extends GraphLayout {
 			this.layoutRoot(item);
 		} else {
 			var side = this.getChildDirection(item as ChildItem);
-			repo.get(`graph-${side}`).update(item);
+			repo.get(`graph-${side}`)!.update(item);
 		}
 	}
 
@@ -39,7 +39,7 @@ export default class MapLayout extends GraphLayout {
 		return child.side as Direction; // we have a guaranteed side now
 	}
 
-	pickSibling(item: Item, dir) {
+	pickSibling(item: ChildItem, dir: number) {
 		if (item.isRoot) { return item; }
 
 		const parent = item.parent as Item;
@@ -71,11 +71,11 @@ export default class MapLayout extends GraphLayout {
 			}
 		});
 
-		var bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
-		var bboxRight = this.computeChildrenBBox(childrenRight, 1);
-		var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
+		let bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
+		let bboxRight = this.computeChildrenBBox(childrenRight, 1);
+		let height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
 
-		var left = 0;
+		let left = 0;
 		this.layoutChildren(childrenLeft, "left", [left, Math.round((height-bboxLeft[1])/2)], bboxLeft);
 		left += bboxLeft[0];
 
@@ -94,7 +94,7 @@ export default class MapLayout extends GraphLayout {
 		this.drawRootConnectors(item, "right", childrenRight);
 	}
 
-	protected drawRootConnectors(item: Item, side, children) {
+	protected drawRootConnectors(item: Item, direction: Direction, children: Item[]) {
 		if (children.length == 0 || item.collapsed) { return; }
 
 		const { contentSize, contentPosition, resolvedShape, dom } = item;
@@ -106,7 +106,7 @@ export default class MapLayout extends GraphLayout {
 		let paths = children.map(child => {
 			const { resolvedColor, resolvedShape, position } = child;
 
-			let x2 = this.getChildAnchor(child, side);
+			let x2 = this.getChildAnchor(child, direction);
 			let y2 = resolvedShape.getVerticalAnchor(child) + position[1];
 			let angle = Math.atan2(y2-y1, x2-x1) + Math.PI/2;
 			let dx = Math.cos(angle) * half;

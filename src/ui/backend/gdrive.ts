@@ -5,6 +5,11 @@ import * as app from "../../my-mind.js";
 import { fill as fillFormats } from "../format-select.js";
 
 
+interface State {
+	id: string;
+	b: string;
+}
+
 export default class GDriveUI extends BackendUI<GDrive> {
 	constructor() {
 		super(new GDrive(), "Google Drive");
@@ -13,16 +18,16 @@ export default class GDriveUI extends BackendUI<GDrive> {
 		this.format.value = localStorage.getItem(`${this.prefix}.format`) || "native";
 	}
 
-	get format() { return this.node.querySelector<HTMLSelectElement>(".format"); }
+	get format() { return this.node.querySelector<HTMLSelectElement>(".format")!; }
 
 	async save() {
 		app.setThrobber(true);
 
-		var format = formatRepo.get(this.format.value);
-		var json = app.currentMap.toJSON();
-		var data = format.to(json);
-		var name = app.currentMap.name;
-		var mime = "text/plain";
+		let format = formatRepo.get(this.format.value)!;
+		let json = app.currentMap.toJSON();
+		let data = format.to(json);
+		let name = app.currentMap.name;
+		let mime = "text/plain";
 
 		if (format.mime) {
 			mime = format.mime;
@@ -42,14 +47,14 @@ export default class GDriveUI extends BackendUI<GDrive> {
 		app.setThrobber(true);
 
 		try {
-			let id = await this.backend.pick()
+			let id = await this.backend.pick();
 			this.picked(id);
 		} catch (e) {
 			this.error(e);
 		}
 	}
 
-	protected async picked(id) {
+	protected async picked(id: string | null) {
 		app.setThrobber(false);
 		if (!id) { return;  }
 
@@ -65,14 +70,14 @@ export default class GDriveUI extends BackendUI<GDrive> {
 		}
 	}
 
-	setState(data) {
+	setState(data: State) {
 		this.picked(data.id);
 	}
 
 	getState() {
-		var data = {
+		let data: State = {
 			b: this.id,
-			id: this.backend.fileId
+			id: this.backend.fileId!
 		};
 		return data;
 	}

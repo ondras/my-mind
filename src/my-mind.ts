@@ -14,8 +14,8 @@ import "./command/select.js";
 import "./command/edit.js";
 
 
-const port = document.querySelector<HTMLElement>("main");
-const throbber = document.querySelector<HTMLElement>("#throbber");
+const port = document.querySelector<HTMLElement>("main")!;
+const throbber = document.querySelector<HTMLElement>("#throbber")!;
 let fontSize = 100;
 
 export let currentMap: Map;
@@ -37,12 +37,12 @@ export function action(action: Action) {
 
 export function selectItem(item: Item) {
 	if (currentItem && currentItem != item) {
-		if (editing) { commandRepo.get("finish").execute(); }
+		if (editing) { commandRepo.get("finish")!.execute(); }
 		currentItem.deselect();
 	}
 	currentItem = item;
 	currentItem.select();
-	(document.activeElement as HTMLElement).blur();
+	currentMap.ensureItemVisibility(currentItem);
 }
 
 export function adjustFontSize(diff: -1 | 1) {

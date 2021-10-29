@@ -1,4 +1,4 @@
-import Layout from "./layout.js";
+import Layout, { Direction } from "./layout.js";
 import Item, { TOGGLE_SIZE } from "../item.js";
 import * as svg from "../svg.js";
 
@@ -13,32 +13,32 @@ export default class TreeLayout extends Layout {
 		this.drawLines(item, this.childDirection, totalWidth);
 	}
 
-	protected layoutItem(item: Item, rankDirection) {
+	protected layoutItem(item: Item, rankDirection: Direction) {
 		const { contentSize, children } = item;
-
-		// children size
-		let bbox = this.computeChildrenBBox(children, 1);
-
-		// node size
 		let rankSize = contentSize[0];
-		if (bbox[0]) { // fixme
+
+		if (!item.collapsed && children.length > 0) {
+			// children size
+			let bbox = this.computeChildrenBBox(children, 1);
+
+			// node size
 			rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK);
+
+			let offset = [SPACING_RANK, contentSize[1]+this.SPACING_CHILD];
+			if (rankDirection == "left") { offset[0] = rankSize - bbox[0] - SPACING_RANK; }
+			this.layoutChildren(children, rankDirection, offset, bbox);
 		}
 
-		let offset = [SPACING_RANK, contentSize[1]+this.SPACING_CHILD];
-		if (rankDirection == "left") { offset[0] = rankSize - bbox[0] - SPACING_RANK; }
-		this.layoutChildren(children, rankDirection, offset, bbox);
 
 		// label position
 		let labelPos = 0;
 		if (rankDirection == "left") { labelPos = rankSize - contentSize[0]; }
-
 		item.contentPosition = [labelPos, 0];
 
 		return rankSize;
 	}
 
-	protected layoutChildren(children: Item[], rankDirection, offset, bbox) {
+	protected layoutChildren(children: Item[], rankDirection: Direction, offset: number[], bbox: number[]) {
 		children.forEach(child => {
 			const { size } = child;
 
@@ -51,11 +51,11 @@ export default class TreeLayout extends Layout {
 		});
 	}
 
-	protected drawLines(item: Item, side, totalWidth: number) {
+	protected drawLines(item: Item, direction: Direction, totalWidth: number) {
 		const { resolvedShape, resolvedColor, children, dom } = item;
 
-		const dirModifier = (side == "right" ? 1 : -1);
-		const lineX = (side == "left" ? totalWidth - LINE_OFFSET : LINE_OFFSET) + 0.5;
+		const dirModifier = (direction == "right" ? 1 : -1);
+		const lineX = (direction == "left" ? totalWidth - LINE_OFFSET : LINE_OFFSET) + 0.5;
 		const toggleDistance = TOGGLE_SIZE + 2;
 
 		let pointAnchor = [
@@ -82,7 +82,7 @@ export default class TreeLayout extends Layout {
 			d.push(
 				`M ${lineX} ${y-R}`,
 				`A ${R} ${R} 0 0 ${sweep} ${lineX + dirModifier*R} ${y}`,
-				`L ${this.getChildAnchor(child, side)} ${y}`
+				`L ${this.getChildAnchor(child, direction)} ${y}`
 			);
 		});
 

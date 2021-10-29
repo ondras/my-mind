@@ -1,6 +1,7 @@
 import * as pubsub from "../pubsub.js";
 import { Mode, repo } from "./backend/backend.js";
 
+import BackendUI from "./backend/backend.js";
 import Local from "./backend/local.js";
 import File from "./backend/file.js";
 import WebDAV from "./backend/webdav.js";
@@ -9,11 +10,13 @@ import GDrive from "./backend/gdrive.js";
 import Firebase from "./backend/firebase.js";
 
 
-let currentMode: Mode = "load";
-let currentBackend = null;
+type BUI = BackendUI<any>;
 
-const node = document.querySelector<HTMLElement>("#io");
-const select = node.querySelector<HTMLSelectElement>("#backend");
+let currentMode: Mode = "load";
+let currentBackend: BUI | null = null;
+
+const node = document.querySelector<HTMLElement>("#io")!;
+const select = node.querySelector<HTMLSelectElement>("#backend")!;
 const PREFIX = "mm.app";
 
 export function init() {
@@ -62,7 +65,7 @@ export function restore() {
 					b: "gdrive",
 					id: state.ids[0]
 				};
-				repo.get("gdrive").setState(state);
+				repo.get("gdrive")!.setState(state);
 			} else {
 				history.replaceState(null, "", ".");
 			}
@@ -74,7 +77,7 @@ export function restore() {
 export function show(mode: Mode) {
 	currentMode = mode;
 	node.hidden = false;
-	node.querySelector("h3").textContent = mode;
+	node.querySelector("h3")!.textContent = mode;
 
 	syncBackend();
 }
@@ -93,11 +96,11 @@ export function quickSave() {
 
 function syncBackend() {
 	[...node.querySelectorAll<HTMLElement>("div[id]")].forEach(node => node.hidden = true);
-	node.querySelector<HTMLElement>(`#${select.value}`).hidden = false;
-	repo.get(select.value).show(currentMode);
+	node.querySelector<HTMLElement>(`#${select.value}`)!.hidden = false;
+	repo.get(select.value)!.show(currentMode);
 }
 
-function setCurrentBackend(backend) {
+function setCurrentBackend(backend: BUI | null) {
 	if (currentBackend && currentBackend != backend) { currentBackend.reset(); }
 
 	if (backend) { localStorage.setItem(`${PREFIX}.backend`, backend.id); }
@@ -108,7 +111,7 @@ function setCurrentBackend(backend) {
 }
 
 function updateURL() {
-	let data = currentBackend && currentBackend.getState();
+	let data = currentBackend && currentBackend.getState() as Record<string, string>;
 	if (!data) {
 		history.replaceState(null, "", ".");
 	} else {

@@ -23,10 +23,12 @@ export function init() {
 }
 
 function keyOK(key: Key, e: KeyboardEvent) {
+	type EventProp = keyof KeyboardEvent;
+
 	if ("keyCode" in key && e.type != "keydown") { return false; }
 	if ("charCode" in key && e.type != "keypress") { return false; }
 	for (let p in key) {
-		if (key[p] != e[p]) { return false; }
+		if (key[p as EventProp] != e[p as EventProp]) { return false; }
 	}
 	return true;
 }

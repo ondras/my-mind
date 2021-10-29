@@ -25,8 +25,8 @@ export default class File extends Backend {
 		input.type = "file";
 
 		return new Promise<LoadedData>((resolve, reject) => {
-			input.onchange = e => {
-				let file = (e.target as HTMLInputElement).files[0];
+			input.onchange = _ => {
+				let file = input.files![0];
 				if (!file) { return; }
 
 				var reader = new FileReader();

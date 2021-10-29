@@ -7,13 +7,10 @@ import * as app from "../my-mind.js";
 import { repo } from "../shape/shape.js";
 
 
-const select = document.querySelector<HTMLSelectElement>("#shape");
+const select = document.querySelector<HTMLSelectElement>("#shape")!;
 
 export function init() {
-	repo.forEach(shape => {
-		select.append(shape.option);
-	});
-
+	repo.forEach(shape => select.append(shape.option));
 	select.addEventListener("change", onChange);
 }
 
@@ -26,7 +23,7 @@ export function update() {
 }
 
 function onChange() {
-	let shape = repo.get(select.value);
+	let shape = repo.get(select.value)!;
 	let action = new actions.SetShape(app.currentItem, shape);
 	app.action(action);
 }

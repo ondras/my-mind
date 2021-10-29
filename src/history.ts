@@ -1,12 +1,15 @@
+import Action from "./action.js";
+
+
 let index = 0; // points to the last undoed action
-let actions = [];
+let actions: Action[] = [];
 
 export function reset() {
 	index = 0;
 	actions = [];
 }
 
-export function push(action) {
+export function push(action: Action) {
 	if (index < actions.length) { // remove undoed actions
 		actions.splice(index, actions.length-index);
 	}

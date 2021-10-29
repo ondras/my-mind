@@ -3,13 +3,14 @@ import * as app from "../my-mind.js";
 import { Status } from "../item.js";
 
 
-const select = document.querySelector<HTMLSelectElement>("#status");
+const select = document.querySelector<HTMLSelectElement>("#status")!;
 
-const STATUS_MAP = {
+const STATUS_MAP: Record<string, boolean | null> = {
 	"yes": true,
 	"no": false,
 	"": null
 }
+type SelectValue = "computed" | keyof typeof STATUS_MAP;
 
 function statusToString(status: Status) {
 	for (let key in STATUS_MAP) {
@@ -18,8 +19,8 @@ function statusToString(status: Status) {
 	return String(status);
 }
 
-function stringToStatus(str: string) {
-	return (str in STATUS_MAP ? STATUS_MAP[str] : str);
+function stringToStatus(str: SelectValue) {
+	return (str in STATUS_MAP ? STATUS_MAP[str] : str) as Status;
 }
 
 export function init() {

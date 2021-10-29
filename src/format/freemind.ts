@@ -1,6 +1,6 @@
 import Format, { nl2br, br2nl } from "./format.js";
 import { Jsonified as JsonifiedMap } from "../map.js";
-import { Jsonified as JsonifiedItem} from "../item.js";
+import { Jsonified as JsonifiedItem, Side } from "../item.js";
 
 
 export default class Native extends Format {
@@ -24,7 +24,9 @@ export default class Native extends Format {
 	from(data: string): JsonifiedMap {
 		var parser = new DOMParser();
 		var doc = parser.parseFromString(data, "application/xml");
-		if (doc.documentElement.nodeName.toLowerCase() == "parsererror") { throw new Error(doc.documentElement.textContent); }
+		if (doc.documentElement.nodeName.toLowerCase() == "parsererror") {
+			throw new Error(doc.documentElement.textContent || "");
+		}
 
 		var root = doc.documentElement.getElementsByTagName("node")[0];
 		if (!root) { throw new Error("No root node found"); }
@@ -38,7 +40,7 @@ export default class Native extends Format {
 		return json;
 	}
 
-	protected serializeItem(doc, json) {
+	protected serializeItem(doc: XMLDocument, json: JsonifiedItem) {
 		var elm = this.serializeAttributes(doc, json);
 
 		(json.children || []).forEach(child => {
@@ -48,10 +50,10 @@ export default class Native extends Format {
 		return elm;
 	}
 
-	protected serializeAttributes(doc, json) {
+	protected serializeAttributes(doc: XMLDocument, json: JsonifiedItem) {
 		var elm = doc.createElement("node");
 		elm.setAttribute("TEXT", br2nl(json.text));
-		elm.setAttribute("ID", json.id);
+		json.id && elm.setAttribute("ID", json.id);
 
 		if (json.side) { elm.setAttribute("POSITION", json.side); }
 		if (json.shape == "box") { elm.setAttribute("STYLE", "bubble"); }
@@ -68,28 +70,28 @@ export default class Native extends Format {
 		return elm;
 	}
 
-	protected parseNode(node, parent) {
+	protected parseNode(node: Element, parent: Partial<JsonifiedItem>) {
 		var json = this.parseAttributes(node, parent);
 
 		for (var i=0;i<node.childNodes.length;i++) {
 			var child = node.childNodes[i];
-			if (child.nodeName.toLowerCase() == "node") {
-				json.children.push(this.parseNode(child, json));
+			if (child instanceof Element && child.nodeName.toLowerCase() == "node") {
+				json.children!.push(this.parseNode(child, json));
 			}
 		}
 
 		return json;
 	}
 
-	protected parseAttributes(node, parent) {
+	protected parseAttributes(node: Element, parent: Partial<JsonifiedItem>) {
 		var json: JsonifiedItem = {
 			children: [],
 			text: nl2br(node.getAttribute("TEXT") || ""),
-			id: node.getAttribute("ID")
+			id: node.getAttribute("ID")!
 		};
 
 		var position = node.getAttribute("POSITION");
-		if (position) { json.side = position; }
+		if (position) { json.side = position as Side; }
 
 		var style = node.getAttribute("STYLE");
 		if (style == "bubble") {

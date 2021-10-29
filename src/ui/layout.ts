@@ -7,21 +7,21 @@ import * as app from "../my-mind.js";
 import { repo } from "../layout/layout.js";
 
 
-const select = document.querySelector<HTMLSelectElement>("#layout");
+const select = document.querySelector<HTMLSelectElement>("#layout")!;
 
 export function init() {
-	let layout = repo.get("map");
+	let layout = repo.get("map")!;
 	select.append(layout.option);
 
 	let label = buildGroup("Graph");
 	let graphOptions = ["right", "left", "bottom", "top"].map(name => {
-		return repo.get(`graph-${name}`).option;
+		return repo.get(`graph-${name}`)!.option;
 	});
 	label.append(...graphOptions);
 
 	label = buildGroup("Tree");
 	let treeOptions = ["right", "left"].map(name => {
-		return repo.get(`tree-${name}`).option;
+		return repo.get(`tree-${name}`)!.option;
 	});
 	label.append(...treeOptions);
 
@@ -39,14 +39,13 @@ export function update() {
 }
 
 function onChange() {
-	var layout = repo.get(select.value);
-
+	let layout = repo.get(select.value)!;
 	var action = new actions.SetLayout(app.currentItem, layout);
 	app.action(action);
 }
 
 function getOption(value: string) {
-	return select.querySelector<HTMLOptionElement>(`option[value="${value}"]`);
+	return select.querySelector<HTMLOptionElement>(`option[value="${value}"]`)!;
 }
 
 function buildGroup(label: string) {

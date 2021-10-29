@@ -1,10 +1,8 @@
 import * as app from "../my-mind.js";
 import Command, { isMac } from "./command.js";
 import Item, { ChildItem } from "../item.js";
+import { Direction } from "../layout/layout.js";
 
-
-// fixme
-type Direction = "left" | "right" | "top" | "bottom";
 
 new (class Select extends Command {
 	keys = [
@@ -16,7 +14,7 @@ new (class Select extends Command {
 
 	constructor() { super("select", "Move selection"); }
 
-	execute(e?: KeyboardEvent) {
+	execute(e: KeyboardEvent) {
 		let dirs: Record<number, Direction> = {
 			37: "left",
 			38: "top",

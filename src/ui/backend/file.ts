@@ -1,6 +1,6 @@
 import BackendUI, { Mode } from "./backend.js";
 import * as app from "../../my-mind.js";
-import File, { LoadedData } from "../../backend/file.js";
+import File from "../../backend/file.js";
 import { repo as formatRepo, getByName } from "../../format/format.js";
 import { fill as fillFormats } from "../format-select.js";
 
@@ -13,7 +13,7 @@ export default class FileUI extends BackendUI<File> {
 		this.format.value = localStorage.getItem(this.prefix + "format") || "native";
 	}
 
-	protected get format() { return this.node.querySelector<HTMLSelectElement>(".format"); }
+	protected get format() { return this.node.querySelector<HTMLSelectElement>(".format")!; }
 
 	show(mode: Mode) {
 		super.show(mode);
@@ -22,7 +22,7 @@ export default class FileUI extends BackendUI<File> {
 	}
 
 	save() {
-		let format = formatRepo.get(this.format.value);
+		let format = formatRepo.get(this.format.value)!;
 		var json = app.currentMap.toJSON();
 		var data = format.to(json);
 
@@ -38,11 +38,11 @@ export default class FileUI extends BackendUI<File> {
 	async load() {
 		try {
 			let data = await this.backend.load();
-			let format = getByName(data.name) || formatRepo.get("native");
+			let format = getByName(data.name) || formatRepo.get("native")!;
 			let json = format.from(data.data);
 			this.loadDone(json);
 		} catch (e) {
-			this.error(e)
+			this.error(e);
 		}
 	}
 

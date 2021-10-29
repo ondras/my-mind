@@ -25,6 +25,7 @@ export class Multi extends Action {
 
 export class InsertNewItem extends Action {
 	item = new Item();
+
 	constructor(protected parent: Item, protected index: number) {
 		super();
 	}
@@ -81,9 +82,9 @@ export class RemoveItem extends Action {
 export class MoveItem extends Action {
 	protected oldParent: Item;
 	protected oldIndex: number;
-	protected oldSide: Side;
+	protected oldSide: Side | null;
 
-	constructor(protected item: ChildItem, protected newParent: Item, protected newIndex?: number, protected newSide: Side = "") {
+	constructor(protected item: ChildItem, protected newParent: Item, protected newIndex?: number, protected newSide: Side = null) {
 		super();
 		this.oldParent = item.parent;
 		this.oldIndex = this.oldParent.children.indexOf(item);
@@ -135,7 +136,7 @@ export class Swap extends Action {
 }
 
 export class SetLayout extends Action {
-	protected oldLayout: Layout;
+	protected oldLayout: Layout | null;
 
 	constructor(protected item: Item, protected layout: Layout) {
 		super();
@@ -152,7 +153,7 @@ export class SetLayout extends Action {
 }
 
 export class SetShape extends Action {
-	protected oldShape: Shape;
+	protected oldShape: Shape | null;
 
 	constructor(protected item: Item, protected shape: Shape) {
 		super();
@@ -259,7 +260,7 @@ export class SetIcon extends Action {
 }
 
 export class SetSide extends Action {
-	protected oldSide: Side;
+	protected oldSide: Side | null;
 
 	constructor(protected item: Item, protected side: Side) {
 		super();
@@ -268,11 +269,11 @@ export class SetSide extends Action {
 
 	do() {
 		this.item.side = this.side;
-		this.item.map.update();
+		this.item.update({children:true});
 	}
 
 	undo() {
 		this.item.side = this.oldSide;
-		this.item.map.update();
+		this.item.update({children:true});
 	}
 }

@@ -1,8 +1,8 @@
 import { repo as commandRepo, Key } from "../command/command.js";
 
 
-const node = document.querySelector<HTMLElement>("#help");
-const MAP = {
+const node = document.querySelector<HTMLElement>("#help")!;
+const MAP: Record<number | string, string> = {
 	8: "Backspace",
 	9: "Tab",
 	13: "↩",
@@ -39,7 +39,7 @@ export function toggle() {
 }
 
 export function init() {
-	let t = node.querySelector<HTMLTableElement>(".navigation");
+	let t = node.querySelector<HTMLTableElement>(".navigation")!;
 	buildRow(t, "pan");
 	buildRow(t, "select");
 	buildRow(t, "select-root");
@@ -48,14 +48,14 @@ export function init() {
 	buildRow(t, "zoom-in", "zoom-out");
 	buildRow(t, "fold");
 
-	t = node.querySelector(".manipulation");
+	t = node.querySelector(".manipulation")!;
 	buildRow(t, "insert-sibling");
 	buildRow(t, "insert-child");
 	buildRow(t, "swap");
 	buildRow(t, "side");
 	buildRow(t, "delete");
 
-	t = node.querySelector(".editing");
+	t = node.querySelector(".editing")!;
 	buildRow(t, "value");
 	buildRow(t, "yes", "no", "computed");
 	buildRow(t, "edit");
@@ -65,7 +65,7 @@ export function init() {
 	buildRow(t, "underline");
 	buildRow(t, "strikethrough");
 
-	t = node.querySelector(".other");
+	t = node.querySelector(".other")!;
 	buildRow(t, "undo", "redo");
 	buildRow(t, "save");
 	buildRow(t, "save-as");
@@ -78,8 +78,8 @@ export function init() {
 function buildRow(table: HTMLTableElement, ...commandNames: string[]) {
 	var row = table.insertRow(-1);
 
-	var labels = [];
-	var keys = [];
+	let labels: string[] = [];
+	let keys: string[] = [];
 
 	commandNames.forEach(name => {
 		let command = commandRepo.get(name);

@@ -24,12 +24,12 @@ export default class GDrive extends Backend {
 		this.fileId = null;
 	}
 
-	async save(data, name, mime) {
+	async save(data: string, name: string, mime: string) {
 		await connect();
 		this.fileId = await this.send(data, name, mime);
 	}
 
-	protected send(data, name, mime) {
+	protected send(data: string, name: string, mime: string) {
 		var path = "/upload/drive/v2/files";
 		var method = "POST";
 		if (this.fileId) {
@@ -59,7 +59,7 @@ export default class GDrive extends Backend {
 		});
 
 		return new Promise<string>((resolve, reject) => {
-			request.execute(response => {
+			request.execute((response:any) => {
 				if (!response) {
 					reject(new Error("Failed to upload to Google Drive"));
 				} else if (response.error) {
@@ -71,7 +71,7 @@ export default class GDrive extends Backend {
 		});
 	}
 
-	async load(id) {
+	async load(id: string) {
 		await connect();
 		this.fileId = id;
 
@@ -81,7 +81,7 @@ export default class GDrive extends Backend {
 		});
 
 		return new Promise<LoadedData>((resolve, reject) => {
-			request.execute(async response => {
+			request.execute(async (response:any) => {
 				if (!response || !response.id) {
 					return reject(response && response.error || new Error("Failed to download file"));
 				}
@@ -110,13 +110,13 @@ export default class GDrive extends Backend {
 			.setMimeTypes(mimeTypes.join(","))
 			.setMode(google.picker.DocsViewMode.LIST);
 
-		return new Promise(resolve => {
+		return new Promise<string | null>(resolve => {
 			let picker = new google.picker.PickerBuilder()
 				.enableFeature(google.picker.Feature.NAV_HIDDEN)
 				.addView(view)
 				.setOAuthToken(token.access_token)
 				.setDeveloperKey(API_KEY)
-				.setCallback(data => {
+				.setCallback((data:any) => {
 					switch (data[google.picker.Response.ACTION]) {
 						case google.picker.Action.PICKED:
 							var doc = data[google.picker.Response.DOCUMENTS][0];
@@ -135,7 +135,7 @@ export default class GDrive extends Backend {
 }
 
 async function connect() {
-	if (window["gapi"] && gapi.auth.getToken()) {
+	if ("gapi" in window && gapi.auth.getToken()) {
 		return;
 	} else {
 		await loadGapi();
@@ -144,14 +144,14 @@ async function connect() {
 }
 
 function loadGapi() {
-	if (window["gapi"]) { return; }
+	if ("gapi" in window) { return; }
 
 	let script = document.createElement("script");
 	let name = ("cb"+Math.random()).replace(".", "");
 	script.src = "https://apis.google.com/js/client:picker.js?onload=" + name;
 	document.body.append(script);
 
-	return new Promise(resolve => window[name] = resolve);
+	return new Promise(resolve => (window as any)[name] = resolve);
 }
 
 async function auth(forceUI = false) {
@@ -160,12 +160,12 @@ async function auth(forceUI = false) {
 			"client_id": CLIENT_ID,
 			"scope": SCOPE,
 			"immediate": !forceUI
-		}, async token => {
+		}, async (token:any) => {
 			if (token && !token.error) { // done
 				resolve();
 			} else if (!forceUI) { // try again with ui
 				try {
-					await this.auth(true);
+					await auth(true);
 					resolve();
 				} catch (e) { reject(e); }
 			} else { // bad luck

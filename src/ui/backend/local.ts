@@ -21,8 +21,8 @@ export default class LocalUI extends BackendUI<Local> {
 		});
 	}
 
-	protected get list() { return this.node.querySelector<HTMLSelectElement>(".list"); }
-	protected get remove() { return this.node.querySelector<HTMLButtonElement>(".remove"); }
+	protected get list() { return this.node.querySelector<HTMLSelectElement>(".list")!; }
+	protected get remove() { return this.node.querySelector<HTMLButtonElement>(".remove")!; }
 
 	show(mode: Mode) {
 		super.show(mode);
@@ -62,7 +62,7 @@ export default class LocalUI extends BackendUI<Local> {
 
 	save() {
 		let json = app.currentMap.toJSON();
-		let data = formatRepo.get("native").to(json);
+		let data = formatRepo.get("native")!.to(json);
 
 		try {
 			this.backend.save(data, app.currentMap.id, app.currentMap.name);
@@ -75,7 +75,7 @@ export default class LocalUI extends BackendUI<Local> {
 	load(id = this.list.value) {
 		try {
 			let data = this.backend.load(id);
-			var json = formatRepo.get("native").from(data);
+			var json = formatRepo.get("native")!.from(data);
 			this.loadDone(json);
 		} catch (e) {
 			this.error(e);

@@ -167,8 +167,8 @@
   }
   function buildRow(table, ...commandNames) {
     var row = table.insertRow(-1);
-    var labels = [];
-    var keys = [];
+    let labels = [];
+    let keys = [];
     commandNames.forEach((name) => {
       let command = repo.get(name);
       if (!command) {
@@ -238,7 +238,7 @@
   }
   function init2() {
     subscribe("item-select", (_message, publisher) => {
-      iframe.contentWindow.postMessage({
+      iframe.contentWindow && iframe.contentWindow.postMessage({
         action: "setContent",
         value: publisher.notes
       }, "*");
@@ -320,7 +320,7 @@
     }
   };
   var MoveItem = class extends Action {
-    constructor(item, newParent, newIndex, newSide = "") {
+    constructor(item, newParent, newIndex, newSide = null) {
       super();
       this.item = item;
       this.newParent = newParent;
@@ -477,11 +477,11 @@
     }
     do() {
       this.item.side = this.side;
-      this.item.map.update();
+      this.item.update({ children: true });
     }
     undo() {
       this.item.side = this.oldSide;
-      this.item.map.update();
+      this.item.update({ children: true });
     }
   };
 
@@ -495,7 +495,7 @@
   }
   function onClick(e) {
     e.preventDefault();
-    let color = e.target.dataset.color || null;
+    let color = e.target.dataset.color || "";
     let action2 = new SetColor(currentItem, color);
     action(action2);
   }
@@ -578,14 +578,15 @@
       if (item.isRoot) {
         return item;
       }
-      var parentLayout = item.parent.resolvedLayout;
+      let childItem = item;
+      var parentLayout = childItem.parent.resolvedLayout;
       var thisChildDirection = parentLayout.getChildDirection(item);
       if (thisChildDirection == dir) {
-        return item;
+        return childItem;
       } else if (thisChildDirection == OPPOSITE[dir]) {
-        return item.parent;
+        return childItem.parent;
       } else {
-        return parentLayout.pickSibling(item, dir == "left" || dir == "top" ? -1 : 1);
+        return parentLayout.pickSibling(childItem, dir == "left" || dir == "top" ? -1 : 1);
       }
     }
     pickSibling(item, dir) {
@@ -617,7 +618,7 @@
       return pos;
     }
     computeChildrenBBox(children, childIndex) {
-      var bbox = [0, 0];
+      let bbox = [0, 0];
       var rankIndex = (childIndex + 1) % 2;
       children.forEach((child) => {
         const { size } = child;
@@ -645,25 +646,26 @@
       }
     }
     layoutItem(item, rankDirection) {
-      var rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
-      var childIndex = (rankIndex + 1) % 2;
-      const { contentSize } = item;
-      var bbox = this.computeChildrenBBox(item.children, childIndex);
-      var rankSize = contentSize[rankIndex];
-      if (bbox[rankIndex]) {
+      const { contentSize, children } = item;
+      let rankIndex = rankDirection == "left" || rankDirection == "right" ? 0 : 1;
+      let childIndex = (rankIndex + 1) % 2;
+      let rankSize = contentSize[rankIndex];
+      let childSize = contentSize[childIndex];
+      if (!item.collapsed && children.length > 0) {
+        let bbox = this.computeChildrenBBox(children, childIndex);
         rankSize += bbox[rankIndex] + SPACING_RANK;
+        childSize = Math.max(childSize, bbox[childIndex]);
+        let offset = [0, 0];
+        if (rankDirection == "right") {
+          offset[0] = contentSize[0] + SPACING_RANK;
+        }
+        if (rankDirection == "bottom") {
+          offset[1] = contentSize[1] + SPACING_RANK;
+        }
+        offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
+        this.layoutChildren(children, rankDirection, offset, bbox);
       }
-      var childSize = Math.max(bbox[childIndex], contentSize[childIndex]);
-      var offset = [0, 0];
-      if (rankDirection == "right") {
-        offset[0] = contentSize[0] + SPACING_RANK;
-      }
-      if (rankDirection == "bottom") {
-        offset[1] = contentSize[1] + SPACING_RANK;
-      }
-      offset[childIndex] = Math.round((childSize - bbox[childIndex]) / 2);
-      this.layoutChildren(item.children, rankDirection, offset, bbox);
-      var labelPos = 0;
+      let labelPos = 0;
       if (rankDirection == "left") {
         labelPos = rankSize - contentSize[0];
       }
@@ -817,16 +819,16 @@
     }
     layoutItem(item, rankDirection) {
       const { contentSize, children } = item;
-      let bbox = this.computeChildrenBBox(children, 1);
       let rankSize = contentSize[0];
-      if (bbox[0]) {
+      if (!item.collapsed && children.length > 0) {
+        let bbox = this.computeChildrenBBox(children, 1);
         rankSize = Math.max(rankSize, bbox[0] + SPACING_RANK2);
+        let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
+        if (rankDirection == "left") {
+          offset[0] = rankSize - bbox[0] - SPACING_RANK2;
+        }
+        this.layoutChildren(children, rankDirection, offset, bbox);
       }
-      let offset = [SPACING_RANK2, contentSize[1] + this.SPACING_CHILD];
-      if (rankDirection == "left") {
-        offset[0] = rankSize - bbox[0] - SPACING_RANK2;
-      }
-      this.layoutChildren(children, rankDirection, offset, bbox);
       let labelPos = 0;
       if (rankDirection == "left") {
         labelPos = rankSize - contentSize[0];
@@ -845,10 +847,10 @@
         offset[1] += size[1] + this.SPACING_CHILD;
       });
     }
-    drawLines(item, side, totalWidth) {
+    drawLines(item, direction, totalWidth) {
       const { resolvedShape, resolvedColor, children, dom } = item;
-      const dirModifier = side == "right" ? 1 : -1;
-      const lineX = (side == "left" ? totalWidth - LINE_OFFSET : LINE_OFFSET) + 0.5;
+      const dirModifier = direction == "right" ? 1 : -1;
+      const lineX = (direction == "left" ? totalWidth - LINE_OFFSET : LINE_OFFSET) + 0.5;
       const toggleDistance = TOGGLE_SIZE + 2;
       let pointAnchor = [
         lineX,
@@ -868,7 +870,7 @@
       children.forEach((child) => {
         const { resolvedShape: resolvedShape2, position } = child;
         const y = resolvedShape2.getVerticalAnchor(child) + position[1];
-        d.push(`M ${lineX} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${lineX + dirModifier * R2} ${y}`, `L ${this.getChildAnchor(child, side)} ${y}`);
+        d.push(`M ${lineX} ${y - R2}`, `A ${R2} ${R2} 0 0 ${sweep} ${lineX + dirModifier * R2} ${y}`, `L ${this.getChildAnchor(child, direction)} ${y}`);
       });
       let path = node2("path", { d: d.join(" "), stroke: resolvedColor, fill: "none" });
       dom.connectors.append(path);
@@ -939,10 +941,10 @@
           childrenRight.push(child);
         }
       });
-      var bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
-      var bboxRight = this.computeChildrenBBox(childrenRight, 1);
-      var height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
-      var left = 0;
+      let bboxLeft = this.computeChildrenBBox(childrenLeft, 1);
+      let bboxRight = this.computeChildrenBBox(childrenRight, 1);
+      let height = Math.max(bboxLeft[1], bboxRight[1], contentSize[1]);
+      let left = 0;
       this.layoutChildren(childrenLeft, "left", [left, Math.round((height - bboxLeft[1]) / 2)], bboxLeft);
       left += bboxLeft[0];
       if (childrenLeft.length) {
@@ -960,7 +962,7 @@
       this.drawRootConnectors(item, "left", childrenLeft);
       this.drawRootConnectors(item, "right", childrenRight);
     }
-    drawRootConnectors(item, side, children) {
+    drawRootConnectors(item, direction, children) {
       if (children.length == 0 || item.collapsed) {
         return;
       }
@@ -970,7 +972,7 @@
       const half = this.LINE_THICKNESS / 2;
       let paths = children.map((child) => {
         const { resolvedColor, resolvedShape: resolvedShape2, position } = child;
-        let x2 = this.getChildAnchor(child, side);
+        let x2 = this.getChildAnchor(child, direction);
         let y2 = resolvedShape2.getVerticalAnchor(child) + position[1];
         let angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
         let dx = Math.cos(angle) * half;
@@ -1021,7 +1023,7 @@
     getOption("map").disabled = !currentItem.isRoot;
   }
   function onChange2() {
-    var layout = repo2.get(select2.value);
+    let layout = repo2.get(select2.value);
     var action2 = new SetLayout(currentItem, layout);
     action(action2);
   }
@@ -1049,7 +1051,7 @@
     select3.value = currentItem.icon || "";
   }
   function onChange3() {
-    let action2 = new SetIcon(currentItem, select3.value || null);
+    let action2 = new SetIcon(currentItem, select3.value);
     action(action2);
   }
 
@@ -1129,9 +1131,7 @@
   // .js/ui/shape.js
   var select4 = document.querySelector("#shape");
   function init7() {
-    repo3.forEach((shape) => {
-      select4.append(shape.option);
-    });
+    repo3.forEach((shape) => select4.append(shape.option));
     select4.addEventListener("change", onChange4);
   }
   function update4() {
@@ -1216,6 +1216,7 @@
     constructor(backend, label) {
       this.backend = backend;
       this.label = label;
+      this.mode = "load";
       repo4.set(this.id, this);
       this.prefix = `mm.app.${this.id}`;
       const { go, cancel } = this;
@@ -1243,7 +1244,7 @@
     setState(_data) {
     }
     getState() {
-      return null;
+      return {};
     }
     show(mode2) {
       this.mode = mode2;
@@ -1268,7 +1269,8 @@
     }
     error(e) {
       setThrobber(false);
-      alert("IO error: " + e.message);
+      let message = e instanceof Error ? e.message : e;
+      alert(`IO error: ${message}`);
     }
     submit() {
       switch (this.mode) {
@@ -1460,8 +1462,8 @@
       const { input } = this;
       input.type = "file";
       return new Promise((resolve, reject) => {
-        input.onchange = (e) => {
-          let file = e.target.files[0];
+        input.onchange = (_) => {
+          let file = input.files[0];
           if (!file) {
             return;
           }
@@ -1514,7 +1516,7 @@
       var parser = new DOMParser();
       var doc = parser.parseFromString(data, "application/xml");
       if (doc.documentElement.nodeName.toLowerCase() == "parsererror") {
-        throw new Error(doc.documentElement.textContent);
+        throw new Error(doc.documentElement.textContent || "");
       }
       var root = doc.documentElement.getElementsByTagName("node")[0];
       if (!root) {
@@ -1537,7 +1539,7 @@
     serializeAttributes(doc, json) {
       var elm = doc.createElement("node");
       elm.setAttribute("TEXT", br2nl(json.text));
-      elm.setAttribute("ID", json.id);
+      json.id && elm.setAttribute("ID", json.id);
       if (json.side) {
         elm.setAttribute("POSITION", json.side);
       }
@@ -1559,7 +1561,7 @@
       var json = this.parseAttributes(node10, parent);
       for (var i = 0; i < node10.childNodes.length; i++) {
         var child = node10.childNodes[i];
-        if (child.nodeName.toLowerCase() == "node") {
+        if (child instanceof Element && child.nodeName.toLowerCase() == "node") {
           json.children.push(this.parseNode(child, json));
         }
       }
@@ -1616,33 +1618,6 @@
     constructor() {
       super("mma", "Mind Map Architect");
       this.extension = "mma";
-      this.parseAttributes = function(node10, parent) {
-        var json = {
-          children: [],
-          text: nl2br(node10.getAttribute("title") || ""),
-          shape: "box"
-        };
-        if (node10.getAttribute("expand") == "false") {
-          json.collapsed = 1;
-        }
-        var direction = node10.getAttribute("direction");
-        if (direction == "0") {
-          json.side = "left";
-        }
-        if (direction == "1") {
-          json.side = "right";
-        }
-        var color = node10.getAttribute("color");
-        if (color) {
-          var re = color.match(/^#(....)(....)(....)$/);
-          if (re) {
-            let parts = re.slice(1).map((str) => parseInt(str, 16) >> 8).map((num) => Math.round(num / 17)).map((num) => num.toString(16));
-            json.color = "#" + parts.join("");
-          }
-        }
-        json.icon = node10.getAttribute("icon");
-        return json;
-      };
       this.serializeAttributes = function(doc, json) {
         var elm = doc.createElement("node");
         elm.setAttribute("title", br2nl(json.text));
@@ -1662,6 +1637,33 @@
         }
         return elm;
       };
+    }
+    parseAttributes(node10, parent) {
+      var json = {
+        children: [],
+        text: nl2br(node10.getAttribute("title") || ""),
+        shape: "box"
+      };
+      if (node10.getAttribute("expand") == "false") {
+        json.collapsed = 1;
+      }
+      var direction = node10.getAttribute("direction");
+      if (direction == "0") {
+        json.side = "left";
+      }
+      if (direction == "1") {
+        json.side = "right";
+      }
+      var color = node10.getAttribute("color");
+      if (color) {
+        var re = color.match(/^#(....)(....)(....)$/);
+        if (re) {
+          let parts = re.slice(1).map((str) => parseInt(str, 16) >> 8).map((num) => Math.round(num / 17)).map((num) => num.toString(16));
+          json.color = "#" + parts.join("");
+        }
+      }
+      json.icon = node10.getAttribute("icon") || "";
+      return json;
     }
   };
 
@@ -1782,13 +1784,13 @@
     return lines.join("\n") + (depth ? "" : "\n");
   }
   function parseItems(lines) {
-    var items = [];
+    let items = [];
     if (!lines.length) {
       return items;
     }
     var firstPrefix = parsePrefix(lines[0]);
-    var currentItem2 = null;
-    var childLines = [];
+    let currentItem2 = null;
+    let childLines = [];
     var convertChildLinesToChildren = function() {
       if (!currentItem2 || !childLines.length) {
         return;
@@ -2107,7 +2109,7 @@ ${text}`);
     }
   };
   async function connect() {
-    if (window["gapi"] && gapi.auth.getToken()) {
+    if ("gapi" in window && gapi.auth.getToken()) {
       return;
     } else {
       await loadGapi();
@@ -2115,7 +2117,7 @@ ${text}`);
     }
   }
   function loadGapi() {
-    if (window["gapi"]) {
+    if ("gapi" in window) {
       return;
     }
     let script = document.createElement("script");
@@ -2135,7 +2137,7 @@ ${text}`);
           resolve();
         } else if (!forceUI) {
           try {
-            await this.auth(true);
+            await auth(true);
             resolve();
           } catch (e) {
             reject(e);
@@ -2159,11 +2161,11 @@ ${text}`);
     }
     async save() {
       setThrobber(true);
-      var format = repo6.get(this.format.value);
-      var json = currentMap.toJSON();
-      var data = format.to(json);
-      var name = currentMap.name;
-      var mime = "text/plain";
+      let format = repo6.get(this.format.value);
+      let json = currentMap.toJSON();
+      let data = format.to(json);
+      let name = currentMap.name;
+      let mime = "text/plain";
       if (format.mime) {
         mime = format.mime;
       } else {
@@ -2204,7 +2206,7 @@ ${text}`);
       this.picked(data.id);
     }
     getState() {
-      var data = {
+      let data = {
         b: this.id,
         id: this.backend.fileId
       };
@@ -2213,7 +2215,7 @@ ${text}`);
   };
 
   // .js/backend/firebase.js
-  var File2 = class extends Backend {
+  var Firebase = class extends Backend {
     constructor() {
       super("firebase");
       this.current = {
@@ -2233,7 +2235,7 @@ ${text}`);
       };
       firebase.initializeApp(config);
       this.ref = firebase.database().ref();
-      this.ref.child("names").on("value", function(snap) {
+      this.ref.child("names").on("value", (snap) => {
         publish("firebase-list", this, snap.val() || {});
       }, this);
       if (auth2) {
@@ -2243,9 +2245,9 @@ ${text}`);
     save(data, id, name) {
       this.ref.child("names/" + id).set(name);
       return new Promise((resolve, reject) => {
-        this.ref.child("data/" + id).set(data, (result) => {
-          if (result) {
-            reject(result);
+        this.ref.child("data/" + id).set(data, (err) => {
+          if (err) {
+            reject(err);
           } else {
             resolve();
             this.listenStart(data, id);
@@ -2269,8 +2271,8 @@ ${text}`);
     remove(id) {
       this.ref.child("names/" + id).remove();
       return new Promise((resolve, reject) => {
-        this.ref.child("data/" + id).remove((result) => {
-          result ? reject(result) : resolve();
+        this.ref.child("data/" + id).remove((err) => {
+          err ? reject(err) : resolve();
         });
       });
     }
@@ -2278,7 +2280,7 @@ ${text}`);
       this.listenStop();
     }
     mergeWith(data, name) {
-      var id = this.current.id;
+      let id = this.current.id;
       if (name != this.current.name) {
         this.current.name = name;
         this.ref.child("names/" + id).set(name);
@@ -2290,7 +2292,7 @@ ${text}`);
       this.listenStart(data, id);
     }
     recursiveRefMerge(ref, oldData, newData) {
-      var updateObject = {};
+      let updateObject = {};
       if (newData instanceof Array) {
         for (var i = 0; i < newData.length; i++) {
           var newValue = newData[i];
@@ -2375,7 +2377,7 @@ ${text}`);
   // .js/ui/backend/firebase.js
   var FirebaseUI = class extends BackendUI {
     constructor() {
-      super(new File2(), "Firebase");
+      super(new Firebase(), "Firebase");
       this.online = false;
       const { server, auth: auth2, remove, go } = this;
       server.value = localStorage.getItem(`${this.prefix}.server`) || "my-mind";
@@ -2432,7 +2434,7 @@ ${text}`);
       super.show(mode2);
       this.sync();
     }
-    handleMessage(message, publisher, data) {
+    handleMessage(message, _publisher, data) {
       switch (message) {
         case "firebase-list":
           this.list.innerHTML = "";
@@ -2498,7 +2500,7 @@ ${text}`);
     }
     async connect(server, auth2) {
       this.server.value = server;
-      this.auth.value = auth2;
+      this.auth.value = auth2 || "";
       this.server.disabled = true;
       this.auth.disabled = true;
       localStorage.setItem(`${this.prefix}.server`, server);
@@ -2679,7 +2681,7 @@ ${text}`);
   }
   function toggle3() {
     node9.hidden = !node9.hidden;
-    publish("ui-change", this);
+    publish("ui-change");
   }
   function getWidth() {
     return node9.hidden ? 0 : node9.offsetWidth;
@@ -2694,13 +2696,17 @@ ${text}`);
       return;
     }
     let current2 = target;
-    while (current2 != document) {
+    while (true) {
       let command = current2.dataset.command;
       if (command) {
         repo.get(command).execute();
         return;
       }
-      current2 = current2.parentNode;
+      if (current2.parentNode instanceof Element) {
+        current2 = current2.parentNode;
+      } else {
+        return;
+      }
     }
   }
   function init12(port4) {
@@ -3019,11 +3025,11 @@ ${text}`);
       this._id = generateId();
       this._parent = null;
       this._collapsed = false;
-      this._icon = null;
+      this._icon = "";
       this._notes = "";
+      this._color = "";
       this._value = null;
       this._status = null;
-      this._color = null;
       this._side = null;
       this._shape = null;
       this._layout = null;
@@ -3187,19 +3193,19 @@ ${text}`);
         this.text = data.text;
       }
       if (this._side != data.side) {
-        this._side = data.side;
+        this._side = data.side || null;
         dirty = 1;
       }
       if (this._color != data.color) {
-        this._color = data.color;
+        this._color = data.color || "";
         dirty = 2;
       }
       if (this._icon != data.icon) {
-        this._icon = data.icon;
+        this._icon = data.icon || "";
         dirty = 1;
       }
       if (this._value != data.value) {
-        this._value = data.value;
+        this._value = data.value || null;
         dirty = 1;
       }
       if (this._status != data.status) {
@@ -3209,12 +3215,15 @@ ${text}`);
       if (this._collapsed != !!data.collapsed) {
         this.collapsed = !!data.collapsed;
       }
-      if (this.layout.id != data.layout) {
-        this._layout = repo2.get(data.layout);
-        dirty = 2;
+      let ourShapeId = this._shape ? this._shape.id : null;
+      if (ourShapeId != data.shape) {
+        this._shape = data.shape ? repo3.get(data.shape) : null;
+        dirty = 1;
       }
-      if (this.shape.id != data.shape) {
-        this.shape = repo3.get(data.shape);
+      let ourLayoutId = this._layout ? this._layout.id : null;
+      if (ourLayoutId != data.layout) {
+        this._layout = data.layout ? repo2.get(data.layout) : null;
+        dirty = 2;
       }
       (data.children || []).forEach((child, index2) => {
         if (index2 >= this.children.length) {
@@ -3229,7 +3238,7 @@ ${text}`);
           }
         }
       });
-      var newLength = (data.children || []).length;
+      let newLength = (data.children || []).length;
       while (this.children.length > newLength) {
         this.removeChild(this.children[this.children.length - 1]);
       }
@@ -3251,7 +3260,6 @@ ${text}`);
     }
     select() {
       this.dom.node.classList.add("current");
-      this.map.ensureItemVisibility(this);
       publish("item-select", this);
     }
     deselect() {
@@ -3280,7 +3288,7 @@ ${text}`);
       dom.connectors.innerHTML = "";
       resolvedLayout.update(this);
       resolvedShape.update(this);
-      if (options.parent) {
+      if (options.parent && parent) {
         parent.update({ children: false });
       }
     }
@@ -3452,7 +3460,7 @@ ${text}`);
       if (!this.children.length) {
         this.dom.node.appendChild(this.dom.toggle);
       }
-      if (arguments.length < 2) {
+      if (index2 === void 0) {
         index2 = this.children.length;
       }
       var next = null;
@@ -3466,19 +3474,16 @@ ${text}`);
     removeChild(child) {
       var index2 = this.children.indexOf(child);
       this.children.splice(index2, 1);
-      var node10 = child.dom.node;
-      node10.parentNode.removeChild(node10);
+      child.dom.node.remove();
       child.parent = null;
-      if (!this.children.length) {
-        this.dom.toggle.parentNode.removeChild(this.dom.toggle);
-      }
+      !this.children.length && this.dom.toggle.remove();
       this.update();
     }
     startEditing() {
       this.originalText = this.text;
       this.dom.text.contentEditable = "true";
       this.dom.text.focus();
-      document.execCommand("styleWithCSS", null, "false");
+      document.execCommand("styleWithCSS", false, "false");
       this.dom.text.addEventListener("input", this);
       this.dom.text.addEventListener("keydown", this);
       this.dom.text.addEventListener("blur", this);
@@ -3489,7 +3494,7 @@ ${text}`);
       this.dom.text.removeEventListener("blur", this);
       this.dom.text.blur();
       this.dom.text.contentEditable = "false";
-      var result = this.dom.text.innerHTML;
+      let result = this.dom.text.innerHTML;
       this.dom.text.innerHTML = this.originalText;
       this.originalText = "";
       this.update();
@@ -3557,35 +3562,35 @@ ${text}`);
     }
   };
   function findLinks(node10) {
-    var children = [].slice.call(node10.childNodes);
-    for (var i = 0; i < children.length; i++) {
-      var child = children[i];
-      switch (child.nodeType) {
-        case 1:
-          if (child.nodeName.toLowerCase() == "a") {
-            continue;
-          }
-          findLinks(child);
-          break;
-        case 3:
-          var result = child.nodeValue.match(RE);
-          if (result) {
-            var before = child.nodeValue.substring(0, result.index);
-            var after = child.nodeValue.substring(result.index + result[0].length);
-            var link = document.createElement("a");
-            link.innerHTML = link.href = result[0];
-            if (before) {
-              node10.insertBefore(document.createTextNode(before), child);
-            }
-            node10.insertBefore(link, child);
-            if (after) {
-              child.nodeValue = after;
-              i--;
-            } else {
-              node10.removeChild(child);
-            }
-          }
-          break;
+    let children = [...node10.childNodes];
+    for (let i = 0; i < children.length; i++) {
+      let child = children[i];
+      if (child instanceof Element) {
+        if (child.nodeName.toLowerCase() == "a") {
+          continue;
+        }
+        findLinks(child);
+      }
+      if (child instanceof Text) {
+        let str = child.nodeValue;
+        let result = str.match(RE);
+        if (!result) {
+          continue;
+        }
+        let before = str.substring(0, result.index);
+        let after = str.substring(result.index + result[0].length);
+        var link = document.createElement("a");
+        link.innerHTML = link.href = result[0];
+        if (before) {
+          node10.insertBefore(document.createTextNode(before), child);
+        }
+        node10.insertBefore(link, child);
+        if (after) {
+          child.nodeValue = after;
+          i--;
+        } else {
+          child.remove();
+        }
       }
     }
   }
@@ -3619,14 +3624,14 @@ ${text}`);
       this.node = node2("svg");
       this.style = node("style");
       this.position = [0, 0];
-      options = Object.assign({
+      let resolvedOptions = Object.assign({
         root: "My Mind Map",
         layout: repo2.get("map")
       }, options);
       this.style.textContent = css;
       let root = new Item();
-      root.text = options.root;
-      root.layout = options.layout;
+      root.text = resolvedOptions.root;
+      root.layout = resolvedOptions.layout;
       this.root = root;
     }
     static fromJSON(data) {
@@ -3653,7 +3658,7 @@ ${text}`);
       root.parent = this;
     }
     mergeWith(data) {
-      var ids = [];
+      let ids = [];
       var current2 = currentItem;
       var node10 = current2;
       while (true) {
@@ -3747,7 +3752,7 @@ ${text}`);
     getItemFor(node10) {
       let content = node10.closest(".content");
       if (!content) {
-        return null;
+        return;
       }
       function scanForContent(item) {
         if (item.dom.content == content) {
@@ -3759,7 +3764,6 @@ ${text}`);
             return found;
           }
         }
-        return null;
       }
       return scanForContent(this._root);
     }
@@ -3796,7 +3800,7 @@ ${text}`);
       return this._root.id;
     }
     pick(item, direction) {
-      var candidates = [];
+      let candidates = [];
       var currentRect = item.dom.content.getBoundingClientRect();
       this.getPickCandidates(currentRect, this._root, direction, candidates);
       if (!candidates.length) {
@@ -3896,7 +3900,7 @@ ${text}`);
   // .js/mouse.js
   var TOUCH_DELAY = 500;
   var SHADOW_OFFSET = 5;
-  var touchContextTimeout = null;
+  var touchContextTimeout;
   var current = {
     mode: "",
     cursor: [],
@@ -4026,11 +4030,12 @@ ${text}`);
     current.ghostPosition = [rect.left, rect.top];
   }
   function moveGhost(delta) {
-    let { ghost, ghostPosition } = current;
+    let { ghostPosition } = current;
+    let ghost = current.ghost;
     ghostPosition[0] += delta[0];
     ghostPosition[1] += delta[1];
-    ghost.style.left = ghostPosition[0] + "px";
-    ghost.style.top = ghostPosition[1] + "px";
+    ghost.style.left = `${ghostPosition[0]}px`;
+    ghost.style.top = `${ghostPosition[1]}px`;
   }
   function finishDragDrop(state) {
     visualizeDragState(null);
@@ -4041,9 +4046,10 @@ ${text}`);
         action2 = new MoveItem(current.item, target);
         break;
       case "sibling":
-        let index2 = target.parent.children.indexOf(target);
+        let targetChildItem = target;
+        let index2 = targetChildItem.parent.children.indexOf(targetChildItem);
         let targetIndex = index2 + (direction == "right" || direction == "bottom" ? 1 : 0);
-        action2 = new MoveItem(current.item, target.parent, targetIndex, target.side);
+        action2 = new MoveItem(current.item, targetChildItem.parent, targetIndex, targetChildItem.side);
         break;
       default:
         return;
@@ -4150,6 +4156,8 @@ ${text}`);
         storedItem = currentItem;
         storedItem.dom.node.classList.add("cut");
         break;
+      default:
+        return;
     }
     let json = storedItem.toJSON();
     let plaintext = repo6.get("plaintext").to(json);
@@ -4357,7 +4365,7 @@ ${text}`);
     }
     execute() {
       if (editing) {
-        document.execCommand(this.command, null, null);
+        document.execCommand(this.command, false);
       } else {
         repo.get("edit").execute();
         let selection = getSelection();
@@ -4413,7 +4421,7 @@ ${text}`);
       if (!newValue.length) {
         newValue = null;
       }
-      let numValue = parseFloat(newValue);
+      let numValue = Number(newValue);
       let action2 = new SetValue(item, isNaN(numValue) ? newValue : numValue);
       action(action2);
     }
@@ -4481,7 +4489,7 @@ ${text}`);
     }
     currentItem = item;
     currentItem.select();
-    document.activeElement.blur();
+    currentMap.ensureItemVisibility(currentItem);
   }
   function adjustFontSize(diff) {
     fontSize = Math.max(30, fontSize + 10 * diff);

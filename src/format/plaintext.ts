@@ -53,12 +53,12 @@ function serializeItem(item: JsonifiedItem, depth=0): string {
 
 
 function parseItems(lines: string[]) {
-	var items = [];
+	let items: JsonifiedItem[] = [];
 	if (!lines.length) { return items; }
 	var firstPrefix = parsePrefix(lines[0]);
 
-	var currentItem = null;
-	var childLines = [];
+	let currentItem: JsonifiedItem | null = null;
+	let childLines: string[] = [];
 
 	/* finalize a block of sub-children by converting them to items and appending */
 	var convertChildLinesToChildren = function() {
@@ -71,7 +71,7 @@ function parseItems(lines: string[]) {
 	lines.forEach(line => {
 		if (parsePrefix(line) == firstPrefix) { /* new top-level item! */
 			convertChildLinesToChildren(); /* finalize previous item */
-			currentItem = {text:line.match(/^\s*(.*)/)[1]};
+			currentItem = {text:line.match(/^\s*(.*)/)![1]};
 			items.push(currentItem);
 		} else { /* prepare as a future child */
 			childLines.push(line);
@@ -84,5 +84,5 @@ function parseItems(lines: string[]) {
 }
 
 function parsePrefix(line: string) {
-	return line.match(/^\s*/)[0];
+	return line.match(/^\s*/)![0];
 }

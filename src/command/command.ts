@@ -22,7 +22,7 @@ export let repo = new Map<string, Command>();
 
 export default abstract class Command {
 	editMode: boolean | null = false;
-	keys: Key[];
+	keys!: Key[];
 
 	constructor(id: string, readonly label: string) { repo.set(id, this); }
 
@@ -78,7 +78,7 @@ new (class InsertSibling extends Command {
 		}
 		app.action(action);
 
-		repo.get("edit").execute();
+		repo.get("edit")!.execute();
 
 		pubsub.publish("command-sibling");
 	}
@@ -97,7 +97,7 @@ new (class InsertChild extends Command {
 		let action = new actions.InsertNewItem(item, item.children.length);
 		app.action(action);
 
-		repo.get("edit").execute();
+		repo.get("edit")!.execute();
 
 		pubsub.publish("command-child");
 	}
@@ -125,7 +125,7 @@ new (class Swap extends Command {
 
 	constructor() { super("swap", "Swap sibling"); }
 
-	execute(e?: KeyboardEvent) {
+	execute(e: KeyboardEvent) {
 		let current = app.currentItem as ChildItem;
 		if (current.isRoot || current.parent.children.length < 2) { return; }
 
@@ -143,7 +143,7 @@ new (class SetSide extends Command {
 
 	constructor() { super("side", "Change side"); }
 
-	execute(e?: KeyboardEvent) {
+	execute(e: KeyboardEvent) {
 		let current = app.currentItem as ChildItem;
 		if (current.isRoot || !current.parent.isRoot) { return; }
 
@@ -238,11 +238,11 @@ new (class Pan extends Command {
 	];
 
 	protected chars: string[] = [];
-	protected interval: ReturnType<typeof setTimeout>;
+	protected interval?: ReturnType<typeof setTimeout>;
 
 	constructor() { super("pan", "Pan the map"); }
 
-	execute(e?: KeyboardEvent) {
+	execute(e: KeyboardEvent) {
 		var ch = String.fromCharCode(e.keyCode);
 		var index = this.chars.indexOf(ch);
 		if (index > -1) { return; }
@@ -257,7 +257,7 @@ new (class Pan extends Command {
 	}
 
 	protected step() {
-		const dirs = {
+		const dirs: Record<string, number[]> = {
 			"W": [0, 1],
 			"A": [1, 0],
 			"S": [0, -1],

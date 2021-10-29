@@ -24,7 +24,7 @@ interface DragState {
 	direction: Direction
 }
 
-let touchContextTimeout = null;
+let touchContextTimeout: ReturnType<typeof setTimeout>;
 let current: Current = {
 	mode: "",
 	cursor: [],
@@ -49,7 +49,7 @@ export function init(port_: HTMLElement) {
 
 	port.addEventListener("dblclick", e => {
 		let item = app.currentMap.getItemFor(e.target as HTMLElement);
-		item && commandRepo.get("edit").execute();
+		item && commandRepo.get("edit")!.execute();
 	});
 
 	port.addEventListener("wheel", e => {
@@ -78,7 +78,7 @@ function onDragStart(e: MouseEvent | TouchEvent) {
 	let item = app.currentMap.getItemFor(e.target as HTMLElement);
 	if (app.editing) {
 		if (item == app.currentItem) { return; } // ignore dnd on edited node
-		commandRepo.get("finish").execute(); // clicked elsewhere => finalize edit
+		commandRepo.get("finish")!.execute(); // clicked elsewhere => finalize edit
 	}
 
 	// ui loses focus, so that keyboard shortcuts can work
@@ -107,7 +107,7 @@ function onDragStart(e: MouseEvent | TouchEvent) {
 	if (e.type == "touchstart") { // context menu here, after we have the item
 		touchContextTimeout = setTimeout(function() {
 			item && app.selectItem(item);
-			menu.open(point);
+			menu.open(point as number[]);
 		}, TOUCH_DELAY);
 
 		port.addEventListener("touchmove", onDragMove);
@@ -132,7 +132,7 @@ function onDragMove(e: MouseEvent | TouchEvent) {
 		case "drag":
 			if (!current.ghost) {
 				port.style.cursor = "move";
-				buildGhost(current.item);
+				buildGhost(current.item!);
 			}
 			moveGhost(delta);
 			let state = computeDragState();
@@ -178,11 +178,13 @@ function buildGhost(item: Item) {
 }
 
 function moveGhost(delta: number[]) {
-	let { ghost, ghostPosition } = current;
+	let { ghostPosition } = current;
+	let ghost = current.ghost!;
+
 	ghostPosition[0] += delta[0];
 	ghostPosition[1] += delta[1];
-	ghost.style.left = ghostPosition[0] + "px";
-	ghost.style.top = ghostPosition[1] + "px";
+	ghost.style.left = `${ghostPosition[0]}px`;
+	ghost.style.top = `${ghostPosition[1]}px`;
 }
 
 function finishDragDrop(state: DragState) {
@@ -197,9 +199,10 @@ function finishDragDrop(state: DragState) {
 		break;
 
 		case "sibling":
-			let index = (target as ChildItem).parent.children.indexOf(target as ChildItem);
+			let targetChildItem = target as ChildItem;
+			let index = targetChildItem.parent.children.indexOf(targetChildItem);
 			let targetIndex = index + (direction == "right" || direction == "bottom" ? 1 : 0);
-			action = new actions.MoveItem(current.item as ChildItem, (target as ChildItem).parent, targetIndex, target.side);
+			action = new actions.MoveItem(current.item as ChildItem, targetChildItem.parent, targetIndex, targetChildItem.side);
 		break;
 
 		default: return; break;
@@ -212,7 +215,7 @@ function finishDragDrop(state: DragState) {
  * Compute a state object for a drag: current result (""/"append"/"sibling"), parent/sibling, direction
  */
 function computeDragState() {
-	let rect = current.ghost.getBoundingClientRect();
+	let rect = current.ghost!.getBoundingClientRect();
 	let point = [rect.left + rect.width/2, rect.top + rect.height/2];
 	let closest = app.currentMap.getClosestItem(point);
 	let target = closest.item;
@@ -229,7 +232,7 @@ function computeDragState() {
 		tmp = tmp.parent as Item;
 	}
 
-	let itemContentSize = current.item.contentSize;
+	let itemContentSize = current.item!.contentSize;
 	let targetContentSize = target.contentSize;
 	const w = Math.max(itemContentSize[0], targetContentSize[0]);
 	const h = Math.max(itemContentSize[1], targetContentSize[1]);
