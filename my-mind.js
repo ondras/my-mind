@@ -1,5 +1,7 @@
 (() => {
   var __defProp = Object.defineProperty;
+  var __reflectGet = Reflect.get;
+  var __reflectSet = Reflect.set;
   var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
   var __export = (target, all2) => {
     __markAsModule(target);
