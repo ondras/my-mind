@@ -1,7 +1,5 @@
 (() => {
   var __defProp = Object.defineProperty;
-  var __reflectGet = Reflect.get;
-  var __reflectSet = Reflect.set;
   var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
   var __export = (target, all2) => {
     __markAsModule(target);
@@ -391,18 +389,18 @@
       this.item.color = this.oldColor;
     }
   };
-  var SetFontColor = class extends Action {
-    constructor(item, fontColor) {
+  var SetTextColor = class extends Action {
+    constructor(item, textColor) {
       super();
       this.item = item;
-      this.fontColor = fontColor;
-      this.oldFontColor = item.fontColor;
+      this.textColor = textColor;
+      this.oldTextColor = item.textColor;
     }
     do() {
-      this.item.fontColor = this.fontColor;
+      this.item.textColor = this.textColor;
     }
     undo() {
-      this.item.fontColor = this.oldFontColor;
+      this.item.textColor = this.oldTextColor;
     }
   };
   var SetText = class extends Action {
@@ -499,12 +497,12 @@
     action(action2);
   }
 
-  // .js/ui/fontcolor.js
-  var fontcolor_exports = {};
-  __export(fontcolor_exports, {
+  // .js/ui/text-color.js
+  var text_color_exports = {};
+  __export(text_color_exports, {
     init: () => init4
   });
-  var node6 = document.querySelector("#fontColor");
+  var node6 = document.querySelector("#text-color");
   function init4() {
     node6.addEventListener("click", onClick2);
     [...node6.querySelectorAll("[data-color]")].forEach((item) => {
@@ -514,7 +512,7 @@
   function onClick2(e) {
     e.preventDefault();
     let color = e.target.dataset.color || "";
-    let action2 = new SetFontColor(currentItem, color);
+    let action2 = new SetTextColor(currentItem, color);
     action(action2);
   }
 
@@ -1092,9 +1090,6 @@
     }
     update(item) {
       item.dom.content.style.borderColor = item.resolvedColor;
-    }
-    updateFontColor(item) {
-      item.dom.text.style.color = item.resolvedFontColor;
     }
     getHorizontalAnchor(item) {
       const { contentPosition, contentSize } = item;
@@ -2738,7 +2733,7 @@ ${text}`);
       value_exports,
       status_exports,
       color_exports,
-      fontcolor_exports,
+      text_color_exports,
       help_exports,
       tip_exports,
       notes_exports,
@@ -3050,7 +3045,7 @@ ${text}`);
       this._icon = "";
       this._notes = "";
       this._color = "";
-      this._fontColor = "";
+      this._textColor = "";
       this._value = null;
       this._status = null;
       this._side = null;
@@ -3144,8 +3139,8 @@ ${text}`);
       if (this._color) {
         data.color = this._color;
       }
-      if (this._fontColor) {
-        data.fontColor = this._fontColor;
+      if (this._textColor) {
+        data.textColor = this._textColor;
       }
       if (this._icon) {
         data.icon = this._icon;
@@ -3184,8 +3179,8 @@ ${text}`);
       if (data.color) {
         this._color = data.color;
       }
-      if (data.fontColor) {
-        this._fontColor = data.fontColor;
+      if (data.textColor) {
+        this._textColor = data.textColor;
       }
       if (data.icon) {
         this._icon = data.icon;
@@ -3229,8 +3224,8 @@ ${text}`);
         this._color = data.color || "";
         dirty = 2;
       }
-      if (this._fontColor != data.fontColor) {
-        this._fontColor = data.fontColor || "";
+      if (this._textColor != data.textColor) {
+        this._textColor = data.textColor || "";
         dirty = 2;
       }
       if (this._icon != data.icon) {
@@ -3314,6 +3309,7 @@ ${text}`);
       this.updateValue();
       const { resolvedLayout, resolvedShape, dom } = this;
       const { content, node: node11, connectors } = dom;
+      dom.text.style.color = this.resolvedTextColor;
       node11.dataset.shape = resolvedShape.id;
       node11.dataset.align = resolvedLayout.computeAlignment(this);
       let fo = content.parentNode;
@@ -3326,7 +3322,6 @@ ${text}`);
       connectors.innerHTML = "";
       resolvedLayout.update(this);
       resolvedShape.update(this);
-      resolvedShape.updateFontColor(this);
       if (options.parent && parent) {
         parent.update({ children: false });
       }
@@ -3434,22 +3429,22 @@ ${text}`);
       }
       return COLOR;
     }
-    get fontColor() {
-      return this._fontColor;
+    get textColor() {
+      return this._textColor;
     }
-    set fontColor(fontColor) {
-      this._fontColor = fontColor;
+    set textColor(textColor) {
+      this._textColor = textColor;
       this.update({ children: true });
     }
-    get resolvedFontColor() {
-      if (this._fontColor) {
-        return this._fontColor;
+    get resolvedTextColor() {
+      if (this._textColor) {
+        return this._textColor;
       }
       const { parent } = this;
       if (parent instanceof Item) {
-        return parent.resolvedFontColor;
+        return parent.resolvedTextColor;
       }
-      return COLOR_FONT;
+      return "";
     }
     get layout() {
       return this._layout;
@@ -3668,7 +3663,6 @@ ${text}`);
     return g;
   }
   var COLOR = "#999";
-  var COLOR_FONT = "#000";
   var RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
 
   // .js/map.js

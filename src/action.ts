@@ -186,20 +186,20 @@ export class SetColor extends Action {
 	}
 }
 
-export class SetFontColor extends Action {
-	protected oldFontColor: string;
+export class SetTextColor extends Action {
+	protected oldTextColor: string;
 
-	constructor(protected item: Item, protected fontColor: string) {
+	constructor(protected item: Item, protected textColor: string) {
 		super();
-		this.oldFontColor = item.fontColor;
+		this.oldTextColor = item.textColor;
 	}
 
 	do() {
-		this.item.fontColor = this.fontColor;
+		this.item.textColor = this.textColor;
 	}
 
 	undo() {
-		this.item.fontColor = this.oldFontColor;
+		this.item.textColor = this.oldTextColor;
 	}
 }
 

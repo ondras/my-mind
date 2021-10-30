@@ -14,10 +14,6 @@ export default class Shape {
 		item.dom.content.style.borderColor = item.resolvedColor;
 	}
 
-	updateFontColor(item: Item) {
-		item.dom.text.style.color = item.resolvedFontColor
-	}
-
 	getHorizontalAnchor(item: Item) {
 		const { contentPosition, contentSize } = item;
 		return Math.round(contentPosition[0] + contentSize[0]/2) + 0.5;

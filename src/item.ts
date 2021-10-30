@@ -8,12 +8,6 @@ import Layout, { repo as layoutRepo } from "./layout/layout.js";
 import Map from "./map.js";
 
 
-declare global {  // fixme
-	interface Window {
-		editor: any;
-	}
-}
-
 export const TOGGLE_SIZE = 6;
 export type Value = string | number | null;
 export type Status = "computed" | boolean | null;
@@ -25,7 +19,7 @@ export type Jsonified = Partial<{
 	notes: string;
 	side: Side;
 	color: string;
-	fontColor: string;
+	textColor: string;
 	icon: string;
 	value: Value;
 	status: Status | "yes" | "no";
@@ -49,7 +43,7 @@ export default class Item {
 	protected _icon = "";
 	protected _notes = "";
 	protected _color = "";
-	protected _fontColor = "";
+	protected _textColor = "";
 	protected _value: Value = null;
 	protected _status: Status = null;
 	protected _side: Side | null = null; // side preference
@@ -155,7 +149,7 @@ export default class Item {
 
 		if (this._side) { data.side = this._side; }
 		if (this._color) { data.color = this._color; }
-		if (this._fontColor) { data.fontColor = this._fontColor; }
+		if (this._textColor) { data.textColor = this._textColor; }
 		if (this._icon) { data.icon = this._icon; }
 		if (this._value) { data.value = this._value; }
 		if (this._status) { data.status = this._status; }
@@ -179,7 +173,7 @@ export default class Item {
 		if (data.notes) { this.notes = data.notes; }
 		if (data.side) { this._side = data.side; }
 		if (data.color) { this._color = data.color; }
-		if (data.fontColor) { this._fontColor = data.fontColor; }
+		if (data.textColor) { this._textColor = data.textColor; }
 		if (data.icon) { this._icon = data.icon; }
 		if (data.value) { this._value = data.value; }
 		if (data.status) {
@@ -218,8 +212,8 @@ export default class Item {
 			dirty = 2;
 		}
 
-		if (this._fontColor != data.fontColor) {
-			this._fontColor = data.fontColor || "";
+		if (this._textColor != data.textColor) {
+			this._textColor = data.textColor || "";
 			dirty = 2;
 		}
 
@@ -323,6 +317,7 @@ export default class Item {
 		const { resolvedLayout, resolvedShape, dom } = this;
 		const { content, node, connectors } = dom;
 
+		dom.text.style.color = this.resolvedTextColor;
 		node.dataset.shape = resolvedShape.id; // applies css => modifies dimensions (necessary for layout)
 		node.dataset.align = resolvedLayout.computeAlignment(this); // applies css => modifies dimensions (necessary for layout)
 
@@ -337,7 +332,6 @@ export default class Item {
 		connectors.innerHTML = "";
 		resolvedLayout.update(this);
 		resolvedShape.update(this); // needs layout -> draws second
-		resolvedShape.updateFontColor(this);
 
 		// recurse upwards?
 		if (options.parent && parent) { parent.update({children:false}); } // explicit children:false when the parent is a Map
@@ -433,18 +427,18 @@ export default class Item {
 		return COLOR;
 	}
 
-	get fontColor() { return this._fontColor; }
-	set fontColor(fontColor: string) {
-		this._fontColor = fontColor;
+	get textColor() { return this._textColor; }
+	set textColor(textColor: string) {
+		this._textColor = textColor;
 		this.update({children:true});
 	}
-	get resolvedFontColor(): string {
-		if (this._fontColor) { return this._fontColor; }
+	get resolvedTextColor(): string {
+		if (this._textColor) { return this._textColor; }
 
 		const { parent } = this;
-		if (parent instanceof Item) { return parent.resolvedFontColor; }
+		if (parent instanceof Item) { return parent.resolvedTextColor; }
 
-		return COLOR_FONT;
+		return "";
 	}
 
 	get layout() { return this._layout; }
@@ -681,7 +675,6 @@ function buildToggle() {
 }
 
 const COLOR = "#999";
-const COLOR_FONT = "#000";
 
 /* RE explanation:
  *            _________________________________________________________________________ One of the three possible variants

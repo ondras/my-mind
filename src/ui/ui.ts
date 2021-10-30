@@ -2,7 +2,7 @@ import * as pubsub from "../pubsub.js";
 import * as app from "../my-mind.js";
 
 import * as color from "./color.js";
-import * as fontColor from "./fontcolor.js";
+import * as textColor from "./text-color.js";
 import * as value from "./value.js";
 import * as layout from "./layout.js";
 import * as icon from "./icon.js";
@@ -60,7 +60,7 @@ function onClick(e: MouseEvent) {
 }
 
 export function init(port: HTMLElement) {
-	[layout, shape, icon, value, status, color, fontColor,
+	[layout, shape, icon, value, status, color, textColor,
 	help, tip, notes, io].forEach(ui => ui.init());
 	menu.init(port);
 
