@@ -159,19 +159,19 @@ button:not(:disabled) {
 .pane#ui[hidden] #toggle::after {
   content: "←";
 }
-.pane#ui #color {
+.pane#ui .color-picker {
   display: flex;
   flex-direction: row;
 }
-.pane#ui #color [data-color] {
+.pane#ui .color-picker [data-color] {
   width: 14px;
   height: 14px;
   border-radius: 3px;
   margin-right: 2px;
   border: 1px solid transparent;
 }
-.pane#ui #color [data-color]:hover,
-.pane#ui #color [data-color]:first-child {
+.pane#ui .color-picker [data-color]:hover,
+.pane#ui .color-picker [data-color]:first-child {
   border-color: #000;
 }
 .pane#ui #icons {
