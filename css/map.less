@@ -1,0 +1,126 @@
+* {
+	font-family: source sans pro, sans-serif;
+}
+
+// root item
+svg > .item {
+	> foreignObject > .content {
+		font-weight: bold;
+		border-width: 2px;
+		font-size: 140%;
+	}
+
+	> .toggle {
+		display: none;
+	}
+
+	// first children
+	> .item > foreignObject > .content {
+		border-width: 2px;
+		font-size: 120%;
+	}
+}
+
+.item {
+	.cut { opacity: 0.5; }
+	.icon { font-size: x-large; }
+	foreignObject { overflow: visible; } // shadow
+
+	.content {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		white-space: nowrap;
+		cursor: pointer;
+
+		> * { flex: none; }
+	}
+
+	&.collapsed .item { display: none; }
+
+	.text {
+		text-align: center;
+		min-width: 0.5em;
+		min-height: 1.3em;
+		line-height: 1.3em;
+		outline: none;
+	}
+
+	.value {
+		opacity: 0.7;
+		&:not(:empty)::before { content: "("; }
+		&:not(:empty)::after { content: ")"; }
+	}
+
+	.status {
+		font-size: 150%;
+		line-height: 1;
+		&.yes::after {
+			content: "✔";
+			color: #0f0;
+		}
+
+		&.no::after {
+			content: "✘";
+			color: #f00;
+		}
+	}
+
+
+	.toggle {
+		cursor: pointer;
+
+		&:not(:hover) { opacity: 0.7; }
+
+		circle {
+			stroke: #00f;
+			fill: #88f;
+		}
+
+		path {
+			stroke: #fff;
+			stroke-width: 2;
+		}
+	}
+
+	.notes {
+		width: 16px;
+		height: 16px;
+		background: url("../img/notes-indicator.png") right center no-repeat;
+		position: absolute;
+		top: -8px;
+		right: 0;
+		opacity: 0.4;
+	}
+
+	&:not(.current):not(.collapsed) > .toggle { display: none; } // visible only when (its item is) selected or collapsed
+
+	&.current > foreignObject > .content {
+		background-color: rgba(255, 255, 187, 0.9);
+	}
+}
+
+[data-shape=box] > foreignObject > .content {
+	padding: 0.15em 0.4em;
+	background-color: #fff;
+	border: 1px solid #666;
+	border-radius: 3px;
+}
+
+[data-shape=ellipse] > foreignObject > .content {
+	background-color: #fff;
+	border: 1px solid #666;
+	border-radius: 50%;
+	padding: 0.5em 1em;
+}
+
+[data-align=left] > foreignObject > .content > :not(.text):not(.notes) {
+	margin-right: 0.3em;
+}
+
+[data-align=right] > foreignObject > .content {
+	flex-direction: row-reverse;
+	> :not(.text):not(.notes) { margin-left: 0.3em; }
+}
+
+@import "font.less";
