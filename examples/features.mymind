@@ -152,19 +152,16 @@
 					{
 						"id": "pjqwdjad",
 						"text": "Bool node statuses",
-						"value": "maybe",
 						"status": "computed",
 						"children": [
 							{
 								"id": "jsrxnhgy",
 								"text": "Yes/No",
-								"value": "yes",
 								"status": "no"
 							},
 							{
 								"id": "oqzwbzvf",
 								"text": "Auto-propagation to parent",
-								"value": "no",
 								"status": "computed"
 							}
 						]

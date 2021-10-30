@@ -1,0 +1,26 @@
+#context-menu {
+ 	&:not([hidden]) { display: flex; }
+
+	position: absolute;
+	border: 1px solid #666;
+	background-color: #fff;
+	box-shadow: 0 0 3px #666;
+	flex-direction: column;
+	width: 130px;
+
+	button {
+		background-color: transparent;
+		border: none;
+		margin: 0;
+		padding: 3px 6px;
+		font-size: 15px;
+		text-align: left;
+		&:hover { font-weight: bold; }
+	}
+
+	span {
+		border-top: 1px solid #666;
+		margin-top: 4px;
+		padding-top: 4px;
+	}
+}

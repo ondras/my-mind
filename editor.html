@@ -11,7 +11,7 @@
             padding: 0;
         }
 
-        #notes-content {
+        main {
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -24,7 +24,8 @@
     </style>
 </head>
 <body>
-    <div id="notes-content"></div>
+    <main></main>
+    <script src="https://unpkg.com/pell"></script>
     <script>
 
         var sendMessage = function(action, value) {
@@ -48,12 +49,10 @@
             }
         }, false);
 
-        window.onload = function() {
-
             window.editor = window.pell.init({
-                element: document.getElementById('notes-content'),
-                onChange: function(html) {
-                    sendMessage('setContent', html);
+                element: document.querySelector("main"),
+                onChange(html) {
+                    sendMessage("setContent", html);
                 },
                 defaultParagraphSeparator: 'div',
                 styleWithCSS: false,
@@ -95,8 +94,6 @@
                     selected: 'pell-button-selected'
                 }
             })
-        }
     </script>
-    <script src="https://unpkg.com/pell"></script>
 </body>
 </html>

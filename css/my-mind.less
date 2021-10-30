@@ -1,0 +1,54 @@
+* {
+	font-family: source sans pro, sans-serif;
+}
+
+html, body {
+	margin: 0;
+	overflow: hidden;
+	height: 100%;
+	background-color: #eed;
+	-webkit-user-select: none; // no magnifier on hold
+}
+
+[contenteditable] { // allow for editable items
+	-webkit-user-select: auto;
+}
+
+svg {
+	position: absolute;
+	overflow: visible; // shadow
+}
+
+main {
+	position: relative; // anchor for #tip
+}
+
+button:not(:disabled) {
+	cursor: pointer;
+}
+
+.ghost {
+	position: absolute !important; // to prevent collision with .content
+	opacity: 0.5;
+	z-index: 1;
+}
+
+#tip {
+	position: absolute;
+	z-index: 1;
+	left: 10px;
+	bottom: 5px;
+
+	&::before { content: "Tip: "; }
+
+	code {
+		padding: 0 4px;
+		border-radius: 4px;
+		background-color: rgba(0, 0, 0, 0.1);
+	}
+}
+
+@import "font.less";
+@import "pane.less";
+@import "context-menu.less";
+@import "print.less" print;
