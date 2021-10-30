@@ -32,7 +32,6 @@ button:not(:disabled) {
   z-index: 1;
   left: 10px;
   bottom: 5px;
-  font-size: 14px;
 }
 #tip::before {
   content: "Tip: ";
@@ -101,7 +100,7 @@ button:not(:disabled) {
 .pane p.desc {
   font-size: 13px;
 }
-.pane p.row {
+.pane p.row:not([hidden]) {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -174,6 +173,13 @@ button:not(:disabled) {
 .pane#ui #color [data-color]:hover,
 .pane#ui #color [data-color]:first-child {
   border-color: #000;
+}
+.pane#ui #icons {
+  font-size: inherit;
+}
+.pane#ui #icons,
+.pane#ui #icons option {
+  font-family: FontAwesome;
 }
 .pane#ui footer {
   display: flex;

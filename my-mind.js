@@ -1294,7 +1294,7 @@
       this.prefix = "mm.map";
     }
     save(data, id, name) {
-      localStorage.setItem(this.prefix + id, data);
+      localStorage.setItem(`${this.prefix}.${id}`, data);
       let names = this.list();
       names[id] = name;
       localStorage.setItem(`${this.prefix}.names`, JSON.stringify(names));
@@ -2557,10 +2557,11 @@ ${text}`);
         } else {
           history.replaceState(null, "", ".");
         }
-        return;
       } catch (e) {
       }
+      return;
     }
+    setThrobber(false);
   }
   function show(mode2) {
     currentMode = mode2;

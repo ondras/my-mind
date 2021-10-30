@@ -1,4 +1,5 @@
 import * as pubsub from "../pubsub.js";
+import * as app from "../my-mind.js";
 import { Mode, repo } from "./backend/backend.js";
 
 import BackendUI from "./backend/backend.js";
@@ -69,9 +70,11 @@ export function restore() {
 			} else {
 				history.replaceState(null, "", ".");
 			}
-			return;
 		} catch (e) { }
+		return;
 	}
+
+	app.setThrobber(false);
 }
 
 export function show(mode: Mode) {

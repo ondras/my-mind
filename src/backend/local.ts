@@ -7,7 +7,7 @@ export default class Local extends Backend {
 	constructor() { super("local"); }
 
 	save(data: string, id: string, name: string) {
-		localStorage.setItem(this.prefix + id, data);
+		localStorage.setItem(`${this.prefix}.${id}`, data);
 
 		let names = this.list();
 		names[id] = name;

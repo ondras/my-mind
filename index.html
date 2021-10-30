@@ -13,7 +13,8 @@
 	</head>
 	<body>
 		<main>
-			<div id="tip">Type <code>:screenshot --selector svg</code> in Firefox Console to save the Map as an image! For more tips/news, follow <a href="https://twitter.com/my_mind_app">@my_mind_app</a>.</div>
+			<div id="tip">This app's internals have been recently overhauled &ndash; report any <a href="https://github.com/ondras/my-mind/issues">issues</a> you encounter! For more tips/news, follow <a href="https://twitter.com/my_mind_app">@my_mind_app</a>.</div>
+<!--			<div id="tip">Type <code>:screenshot --selector svg</code> in Firefox Console to save the Map as an image! For more tips/news, follow <a href="https://twitter.com/my_mind_app">@my_mind_app</a>.</div> -->
 <!--			<div id="tip">Press ‘Tab’ to Insert Child, ‘Enter’ to Insert Sibling Node. For more tips/news, follow <a href="https://twitter.com/my_mind_app">@my_mind_app</a>.</div> -->
 		</main>
 
@@ -80,7 +81,7 @@
 
 			<p>
 				<label><span>Icons</span>
-				<select id="icons" class="fa-select">
+				<select id="icons">
 					<option value=''>None</option>
 					<option value='fa-500px'>&#xf26e; 500px</option>
 					<option value='fa-address-book'>&#xf2b9; address-book</option>
@@ -904,7 +905,7 @@
 			</div>
 
 			<div id="image">
-				<p class="desc">Export your design as a PNG image.</p>
+				<p class="desc">Export your design as an image.</p>
 				<p data-for="save">
 					<label><span>Format</span>
 					<select class="format">
@@ -912,7 +913,7 @@
 						<option value="svg">SVG</option>
 					</select></label>
 				</p>
-				<p class="row" data-for="save">
+				<p class="row">
 					<button class="go"></button><button class="cancel">Cancel</button>
 				</p>
 			</div>

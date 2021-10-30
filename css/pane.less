@@ -46,7 +46,7 @@
 	p {
 		margin: 8px 16px;
 		&.desc { font-size: 13px; }
-		&.row {
+		&.row:not([hidden]) {
 			display: flex;
 			flex-direction: row;
 			align-items: center;
@@ -127,6 +127,11 @@
 
 				&:hover, &:first-child { border-color: #000; }
 			}
+		}
+
+		#icons {
+			font-size: inherit;
+			&, option { font-family: FontAwesome; }
 		}
 
 		footer {
