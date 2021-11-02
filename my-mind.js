@@ -882,7 +882,7 @@
         lastChild.resolvedShape.getVerticalAnchor(lastChild) + lastChild.position[1] - R2
       ];
       let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
-      let sweep = dirModifier > 1 ? 1 : 0;
+      let sweep = dirModifier > 0 ? 0 : 1;
       children.forEach((child) => {
         const { resolvedShape: resolvedShape2, position } = child;
         const y = resolvedShape2.getVerticalAnchor(child) + position[1];
