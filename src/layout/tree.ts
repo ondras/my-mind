@@ -73,7 +73,7 @@ export default class TreeLayout extends Layout {
 		];
 		let d = [`M ${pointAnchor}`, `L ${lineEnd}`];
 
-		let sweep = (dirModifier > 1 ? 1 : 0);
+		let sweep = (dirModifier > 0 ? 0 : 1);
 
 		children.forEach(child => {
 			const { resolvedShape, position } = child;
