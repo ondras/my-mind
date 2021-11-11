@@ -2,7 +2,6 @@ import BackendUI, { buildList, Mode } from "./backend.js";
 import Firebase from "../../backend/firebase.js";
 import * as pubsub from "../../pubsub.js";
 import * as app from "../../my-mind.js";
-import { Jsonified } from "../../map.js";
 
 
 interface State {
@@ -91,7 +90,7 @@ export default class FirebaseUI extends BackendUI<Firebase> {
 			break;
 
 			case "item-change":
-				clearTimeout(this.itemChangeTimeout);
+				clearTimeout(this.itemChangeTimeout!);
 				this.itemChangeTimeout = setTimeout(() => this.onItemChange(), 200);
 			break;
 		}

@@ -138,7 +138,7 @@ new (class Swap extends Command {
 new (class SetSide extends Command {
 	keys = [
 		{code:"ArrowLeft", ctrlKey:true},
-		{codew:"ArrowRight", ctrlKey:true}
+		{code:"ArrowRight", ctrlKey:true}
 	];
 
 	constructor() { super("side", "Change side"); }
@@ -281,7 +281,7 @@ new (class Pan extends Command {
 			this.codes.splice(index, 1);
 			if (!this.codes.length) {
 				window.removeEventListener("keyup", this);
-				clearInterval(this.interval);
+				clearInterval(this.interval!);
 			}
 		}
 	}
