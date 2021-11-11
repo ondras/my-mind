@@ -181,7 +181,7 @@ export default class Firebase extends Backend {
 	protected onValueChange(snap:any) {
 		this.current.data = snap.val();
 
-		clearTimeout(this.changeTimeout);
+		clearTimeout(this.changeTimeout!);
 		this.changeTimeout = setTimeout(() => {
 			pubsub.publish("firebase-change", this, this.current.data);
 		}, 200);

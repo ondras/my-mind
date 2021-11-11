@@ -2871,7 +2871,7 @@ ${text}`);
       super("side", "Change side");
       this.keys = [
         { code: "ArrowLeft", ctrlKey: true },
-        { codew: "ArrowRight", ctrlKey: true }
+        { code: "ArrowRight", ctrlKey: true }
       ];
     }
     execute(e) {
