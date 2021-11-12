@@ -1221,6 +1221,7 @@
   __export(io_exports, {
     hide: () => hide2,
     init: () => init11,
+    isActive: () => isActive,
     quickSave: () => quickSave,
     restore: () => restore,
     show: () => show
@@ -2546,6 +2547,9 @@ ${text}`);
   var node8 = document.querySelector("#io");
   var select6 = node8.querySelector("#backend");
   var PREFIX = "mm.app";
+  function isActive() {
+    return node8.contains(document.activeElement);
+  }
   function init11() {
     [LocalUI, FirebaseUI, GDriveUI, FileUI, WebDAVUI, ImageUI].forEach((ctor) => {
       let bui = new ctor();
@@ -2692,8 +2696,8 @@ ${text}`);
 
   // .js/ui/ui.js
   var node10 = document.querySelector("#ui");
-  function isActive() {
-    return node10.contains(document.activeElement);
+  function isActive2() {
+    return node10.contains(document.activeElement) || isActive();
   }
   function toggle3() {
     node10.hidden = !node10.hidden;
@@ -3923,7 +3927,7 @@ ${text}`);
 
   // .js/keyboard.js
   function handleEvent2(e) {
-    if (isActive()) {
+    if (isActive2()) {
       return;
     }
     let command = [...repo.values()].find((command2) => {
@@ -4190,7 +4194,7 @@ ${text}`);
     document.body.addEventListener("paste", onPaste);
   }
   function onCopyCut(e) {
-    if (isActive() || editing) {
+    if (isActive2() || editing) {
       return;
     }
     e.preventDefault();
@@ -4212,7 +4216,7 @@ ${text}`);
     mode = e.type;
   }
   function onPaste(e) {
-    if (isActive() || editing) {
+    if (isActive2() || editing) {
       return;
     }
     e.preventDefault();
