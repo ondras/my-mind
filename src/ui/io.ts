@@ -20,6 +20,10 @@ const node = document.querySelector<HTMLElement>("#io")!;
 const select = node.querySelector<HTMLSelectElement>("#backend")!;
 const PREFIX = "mm.app";
 
+export function isActive() {
+	return node.contains(document.activeElement);
+}
+
 export function init() {
 	[Local, Firebase, GDrive, File, WebDAV, Image].forEach(ctor => {
 		let bui = new ctor();

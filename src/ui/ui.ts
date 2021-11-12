@@ -20,7 +20,7 @@ import { repo as commandRepo } from "../command/command.js";
 const node = document.querySelector<HTMLElement>("#ui")!;
 
 export function isActive() {
-	return node.contains(document.activeElement);
+	return node.contains(document.activeElement) || io.isActive();
 }
 
 export function toggle() {
