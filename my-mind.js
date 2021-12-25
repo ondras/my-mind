@@ -1973,7 +1973,7 @@ ${text}`);
     constructor() {
       super("image");
     }
-    save(format) {
+    async save(format) {
       const serializer = new XMLSerializer();
       const encoder = new TextEncoder();
       let xmlStr = serializer.serializeToString(currentMap.node);
@@ -1981,20 +1981,19 @@ ${text}`);
       let byteString = [...encoded].map((byte) => String.fromCharCode(byte)).join("");
       let base64 = btoa(byteString);
       let svgUrl = `data:image/svg+xml;base64,${base64}`;
-      if (format == "svg") {
-        this.download(svgUrl);
-      } else if (format == "png") {
-        let img = new Image();
-        img.src = svgUrl;
-        img.onload = () => {
+      switch (format) {
+        case "svg":
+          return svgUrl;
+        case "png":
+          let img = await waitForImageLoad(svgUrl);
           let canvas = document.createElement("canvas");
           canvas.width = img.width;
           canvas.height = img.height;
           canvas.getContext("2d").drawImage(img, 0, 0);
-          canvas.toBlob((blob) => {
-            this.download(URL.createObjectURL(blob));
-          }, "image/png");
-        };
+          return new Promise((resolve) => {
+            canvas.toBlob((blob) => resolve(URL.createObjectURL(blob)), "image/png");
+          });
+          break;
       }
     }
     download(href) {
@@ -2004,6 +2003,13 @@ ${text}`);
       link.click();
     }
   };
+  async function waitForImageLoad(src) {
+    let img = new Image();
+    img.src = src;
+    return new Promise((resolve) => {
+      img.onload = () => resolve(img);
+    });
+  }
 
   // .js/ui/backend/image.js
   var ImageUI = class extends BackendUI {
@@ -2013,8 +2019,9 @@ ${text}`);
     get format() {
       return this.node.querySelector(".format");
     }
-    save() {
-      this.backend.save(this.format.value);
+    async save() {
+      let url = await this.backend.save(this.format.value);
+      this.backend.download(url);
     }
     load() {
     }
