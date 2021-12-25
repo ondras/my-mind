@@ -9,7 +9,10 @@ export default class ImageUI extends BackendUI<Image> {
 
 	protected get format() { return this.node.querySelector<HTMLSelectElement>(".format")!; }
 
-	save() { this.backend.save(this.format.value as Format); }
+	async save() {
+		let url = await this.backend.save(this.format.value as Format);
+		this.backend.download(url);
+	}
 
 	load() {}
 }

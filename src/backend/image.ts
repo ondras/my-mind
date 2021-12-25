@@ -7,7 +7,7 @@ export type Format = "svg" | "png";
 export default class ImageBackend extends Backend {
 	constructor() { super("image"); }
 
-	save(format: Format) {
+	async save(format: Format): Promise<string> {
 		const serializer = new XMLSerializer();
 		const encoder = new TextEncoder();
 
@@ -17,29 +17,35 @@ export default class ImageBackend extends Backend {
 		let base64 = btoa(byteString);
 		let svgUrl = `data:image/svg+xml;base64,${base64}`;
 
-		if (format == "svg") {
-			this.download(svgUrl);
-		} else if (format == "png") {
-			let img = new Image();
-			img.src = svgUrl;
+		switch (format) {
+			case "svg": return svgUrl;
 
-			img.onload = () => {
+			case "png":
+				let img = await waitForImageLoad(svgUrl);
 				let canvas = document.createElement("canvas");
 				canvas.width = img.width;
 				canvas.height = img.height;
 				canvas.getContext("2d")!.drawImage(img, 0, 0);
 
-				canvas.toBlob(blob => {
-					this.download(URL.createObjectURL(blob));
-				}, "image/png");
-			}
+				return new Promise(resolve => {
+					canvas.toBlob(blob => resolve(URL.createObjectURL(blob)), "image/png");
+				});
+			break;
 		}
 	}
 
-	protected download(href: string) {
+	download(href: string) {
 		let link = document.createElement("a");
 		link.download = app.currentMap.name;
 		link.href = href;
 		link.click();
 	}
+}
+
+async function waitForImageLoad(src: string): Promise<HTMLImageElement> {
+	let img = new Image();
+	img.src = src;
+	return new Promise(resolve => {
+		img.onload = () => resolve(img);
+	});
 }
