@@ -3156,10 +3156,10 @@ ${text}`);
       if (this._icon) {
         data.icon = this._icon;
       }
-      if (this._value) {
+      if (this._value !== null) {
         data.value = this._value;
       }
-      if (this._status) {
+      if (this._status !== null) {
         data.status = this._status;
       }
       if (this._layout) {
@@ -3196,10 +3196,10 @@ ${text}`);
       if (data.icon) {
         this._icon = data.icon;
       }
-      if (data.value) {
+      if (data.value !== void 0) {
         this._value = data.value;
       }
-      if (data.status) {
+      if (data.status !== void 0) {
         if (data.status == "yes") {
           this._status = true;
         } else if (data.status == "no") {
