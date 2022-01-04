@@ -151,8 +151,8 @@ export default class Item {
 		if (this._color) { data.color = this._color; }
 		if (this._textColor) { data.textColor = this._textColor; }
 		if (this._icon) { data.icon = this._icon; }
-		if (this._value) { data.value = this._value; }
-		if (this._status) { data.status = this._status; }
+		if (this._value !== null) { data.value = this._value; }
+		if (this._status !== null) { data.status = this._status; }
 		if (this._layout) { data.layout = this._layout.id; }
 		if (this._shape) { data.shape = this._shape.id; }
 		if (this._collapsed) { data.collapsed = true; }
@@ -175,8 +175,8 @@ export default class Item {
 		if (data.color) { this._color = data.color; }
 		if (data.textColor) { this._textColor = data.textColor; }
 		if (data.icon) { this._icon = data.icon; }
-		if (data.value) { this._value = data.value; }
-		if (data.status) {
+		if (data.value !== undefined) { this._value = data.value; }
+		if (data.status !== undefined) {
 			// backwards compatibility for yes/no
 			if (data.status == "yes") {
 				this._status = true;
