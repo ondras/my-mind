@@ -36,6 +36,10 @@ To dockerize My Mind
    
    `docker run -d --name=my-mind -p 80:80 my-mind`
 
+4. Access My Mind
+   
+   `http://localhost`
+
 ## Contributing
 
 Do you want to participate?
