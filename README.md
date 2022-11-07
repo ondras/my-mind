@@ -15,7 +15,7 @@ New to Mind maps? They are useful, aesthetic and cool! Read more about these spe
 ## Installation
 Note: there is also an online version, which can be found at [my-mind.github.io](https://my-mind.github.io/)
 
-* Download the zip by clicking [here]([archive/master.zip](https://github.com/ondras/my-mind/archive/refs/heads/master.zip)) and extract the archive, or clone the repository using git
+* Download the zip by clicking [here](https://github.com/ondras/my-mind/archive/refs/heads/master.zip) and extract the archive, or clone the repository using git
 * Put the app somewhere where it is accessible via your local webserver
   * Open it using a `http://localhost` URL
   * ~~Open index.html in your webbrowser~~ currently not working
