@@ -46,7 +46,7 @@ In the "save as" select the webdav and for the save location input the address f
 
 ## Docker server loading
 
-select the webdav and for the load location input the address for the current server ex: if you chose `http://192.168.1.18:8000/(filename you chose in caddyfile)` above when you built the image
+In the 'open' select the webdav and for the load location input the address for the current server ex: if you chose `http://192.168.1.18:8000/(filename you chose in caddyfile)` above when you built the image, then you can bookmark the resulting address at the top to always have it accessible
 
 ## Contributing
 
