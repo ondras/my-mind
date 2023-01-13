@@ -27,6 +27,7 @@
 		}
 		webdav
 	}
+	#change file name to what you want below marked in quotes
 	rewrite @notoptget "/My Mind Map.mymind"
 	# remove `browse` below to prevent displaying
 	file_server browse
