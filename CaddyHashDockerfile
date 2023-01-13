@@ -1,0 +1,3 @@
+FROM caddy:2-alpine
+
+RUN caddy hash-password --plaintext test

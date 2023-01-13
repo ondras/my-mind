@@ -1,0 +1,34 @@
+# referenced from:https://github.com/Alamantus/FeatherWiki/pull/1 : https://github.com/Flameborn/
+#---
+# Feather Wiki example Caddyfile for Caddy 2
+#---
+# This configuration expects Feather Wiki to be named 'index.html'
+# and should be a server version (https://codeberg.org/Alamantus/FeatherWiki#server-saving).
+# As the webdav directive is not built-in, select it when
+# downloading your caddy binary from
+# https://caddyserver.com/download?package=github.com%2Fmholt%2Fcaddy-webdav
+# or use
+# `xcaddy --with github.com/mholt/caddy-webdav`
+#---
+# Change this to the domain where FeatherWiki is uploaded
+# NOTE: Since saving is protected via basicauth, ensure
+# HTTPS is used when accessing your wiki
+# if 'http://' isn't specified, Caddy redirects to HTTPS by default.
+# You *can* set this to localhost to run locally.
+<Add IP HERE>:80 {
+	@notget not method GET
+	@notoptget not method OPTIONS or not method GET
+
+	route @notget {
+		# The default user and pass is test. You can generate your own
+		# password via 'caddy hash-password'
+		basicauth @notoptget {
+			test $2a$14$OEW51Xqqmg6p5pu0sQmz2eS7oRPr7hCRGHt0hWYFXJu0vrofxXOby
+		}
+		webdav
+	}
+	rewrite @notoptget "/My Mind Map.mymind"
+	# remove `browse` below to prevent displaying
+	file_server browse
+}
+
