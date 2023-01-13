@@ -42,6 +42,8 @@ Like so: `docker build -f CaddyHashDockerfile -t caddyhash .` the hash will be p
 
 In the "save as" select the webdav and for the save location input the address for the current server ex: if you chose `http://192.168.1.18:8000` above when you built the image
 
+![Screenshot](saved.png)
+
 ## Docker server loading
 
 select the webdav and for the load location input the address for the current server ex: if you chose `http://192.168.1.18:8000/(filename you chose in caddyfile)` above when you built the image
