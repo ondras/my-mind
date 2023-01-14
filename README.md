@@ -25,11 +25,11 @@ Note: there is also an online version, which can be found at [my-mind.github.io]
 
 1. Clone this repo
 
-2. Change the defaults in the Caddyfile to match your needs ie: the user and password - default: test and test, and the file name the .mymind will be saved as - default: My Mind Map.mymind
+2. Change the defaults in the Caddyfile to match your needs ie: the user and the hashed password - default: test and test, and the file name the .mymind will be saved as - default: My Mind Map.mymind
 
-3. `docker build -t victim/caddymindmap .`
+3. `docker build -t caddymindmap .`
 
-4. `docker run --name=caddymindmap --restart always -d -p 8000:80 -v /<Path to this repo>/:/srv -v caddy_data:/data victim/caddymindmap`
+4. `docker run --name=caddymindmap --restart always -d -p 8000:80 -v /<Path to this repo>/:/srv -v caddy_data:/data caddymindmap`
 
 5. Go to http://(YOUR IP HERE):8000 and away you go
 
