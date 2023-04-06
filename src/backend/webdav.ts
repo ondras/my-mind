@@ -22,7 +22,7 @@ export default class WebDAV extends Backend {
 		let response = await fetch(url, init);
 		let text = await response.text();
 
-		if (response.status == 200) {
+		if (response.ok) {
 			return text;
 		} else {
 			throw new Error(`HTTP/${response.status}\n\n${text}`);
