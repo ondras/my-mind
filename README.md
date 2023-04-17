@@ -21,6 +21,25 @@ Note: there is also an online version, which can be found at [my-mind.github.io]
   * ~~Open index.html in your webbrowser~~ currently not working
 * Done! If need be, you can find the manual [here](https://github.com/ondras/my-mind/wiki)
 
+## Docker
+To dockerize My Mind 
+
+1. Clone the repo 
+   
+   `git clone git@github.com:ondras/my-mind.git`
+
+2. Build the image
+   
+   `docker build -t my-mind .`
+
+3. Run container
+   
+   `docker run -d --name=my-mind -p 80:80 my-mind`
+
+4. Access My Mind
+   
+   `http://localhost`
+
 ## Contributing
 
 Do you want to participate?
