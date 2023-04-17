@@ -1,8 +1,7 @@
 MAKEOPTS := "-r"
-BIN := $(shell npm bin)
-TSC := $(BIN)/tsc
-LESSC := $(BIN)/lessc
-ESBUILD := $(BIN)/esbuild
+TSC := npm exec -- tsc
+LESSC := npm exec -- lessc
+ESBUILD := npm exec -- esbuild
 
 JS := .js
 FLAG := $(JS)/.tsflag
