@@ -4583,3 +4583,19 @@ ${text}`);
   }
   init19();
 })();
+
+
+// javascript to disable the button if empty
+var nameInput = document.getElementById("url");
+var submitButton = document.getElementById("go");
+
+
+function checkForm() {
+  if (nameInput.value.trim() !== "") {
+      submitButton.removeAttribute("disabled");
+  } else {
+      submitButton.setAttribute("disabled", "true");
+  }
+}
+
+nameInput.addEventListener("input", checkForm);
