@@ -3049,6 +3049,9 @@ ${text}`);
     children: false
   };
   var Item = class {
+    static fromJSON(data) {
+      return new this().fromJSON(data);
+    }
     constructor() {
       this._id = generateId();
       this._parent = null;
@@ -3094,9 +3097,6 @@ ${text}`);
         selectItem(this);
       });
       this.updateToggle();
-    }
-    static fromJSON(data) {
-      return new this().fromJSON(data);
     }
     get id() {
       return this._id;
@@ -4388,10 +4388,7 @@ ${text}`);
       this.editMode = true;
     }
     execute() {
-      let range = getSelection().getRangeAt(0);
-      let br = document.createElement("br");
-      range.insertNode(br);
-      range.setStartAfter(br);
+      document.execCommand("insertLineBreak", false);
       currentItem.update({ parent: true, children: true });
     }
   }();

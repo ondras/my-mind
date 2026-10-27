@@ -46,10 +46,7 @@ new (class Newline extends Command {
 	constructor() { super("newline", "Line break"); }
 
 	execute() {
-		let range = getSelection()!.getRangeAt(0);
-		let br = document.createElement("br");
-		range.insertNode(br);
-		range.setStartAfter(br);
+		document.execCommand("insertLineBreak", false);
 		app.currentItem.update({parent:true, children:true});
 	}
 });
